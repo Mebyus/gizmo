@@ -1,0 +1,69 @@
+package ast
+
+import (
+	"github.com/mebyus/gizmo/ast/toplvl"
+	"github.com/mebyus/gizmo/source"
+)
+
+// <NamespaceBlock> = "namespace" "{" { <TopLevel> } "}"
+type NamespaceBlock struct {
+	Name ScopedIdentifier
+
+	// Saved in order they appear inside namespace block
+	Nodes []TopLevel
+}
+
+// <TopLevel> = <Function> | <Method> | <Type> | <Var> | <Const> | <Template>
+type TopLevel interface {
+	Node
+
+	// dummy discriminator method
+	TopLevel()
+
+	Kind() toplvl.Kind
+}
+
+// Dummy provides quick, easy to use implementation of discriminator TopLevel() method
+//
+// Used for embedding into other (non-dummy) type specifier nodes
+type nodeTopLevel struct{}
+
+func (nodeTopLevel) TopLevel() {}
+
+// <TopFunctionDeclaration> = [ "pub" ] <FunctionDeclaration>
+type TopFunctionDeclaration struct {
+	nodeTopLevel
+
+	Declaration FunctionDeclaration
+
+	Public bool
+}
+
+var _ TopLevel = TopFunctionDeclaration{}
+
+func (t TopFunctionDeclaration) Kind() toplvl.Kind {
+	return toplvl.Decl
+}
+
+func (t TopFunctionDeclaration) Pin() source.Pos {
+	return t.Declaration.Name.Pos
+}
+
+// <TopFunctionDefinition> = [ "pub" ] <FunctionDefinition>
+type TopFunctionDefinition struct {
+	nodeTopLevel
+
+	Definition FunctionDefinition
+
+	Public bool
+}
+
+var _ TopLevel = TopFunctionDefinition{}
+
+func (t TopFunctionDefinition) Kind() toplvl.Kind {
+	return toplvl.Fn
+}
+
+func (t TopFunctionDefinition) Pin() source.Pos {
+	return t.Definition.Head.Name.Pos
+}

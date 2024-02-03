@@ -18,11 +18,6 @@ type Operand any
 // token.Kind is DecimalInteger, DecimalFloat, Character, String, Nil, True, False
 type BasicLiteral token.Token
 
-// <Identifier> = word
-//
-// token.Kind is Identifier
-type Identifier token.Token
-
 // <ParenthesizedExpression> = "(" <Expression> ")"
 type ParenthesizedExpression struct {
 	Inner Expression

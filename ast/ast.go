@@ -4,42 +4,34 @@ import (
 	"github.com/mebyus/gizmo/source"
 )
 
-// <UnitBlock> = "unit" <UnitName> "{" { <Statement> ";" } "}"
+type Node interface {
+	source.Pin
+}
+
+// <UnitBlock> = "unit" <UnitName> "{" { <Statement> } "}"
 type UnitBlock struct {
 	Name Identifier
 
-	Statements []Statement
+	Block BlockStatement
 }
 
-// <Statement> = <BlockStatement> | <AssignStatement> | <DefineStatement> | <IfStatement> |
+// Smallest piece of processed source code inside a unit. In most
+// cases this represents a file with source code. Exceptions may include
+// source code generated at compile time
 //
-//	<DeferStatement> | <ExpressionStatement> | <ReturnStatement> | <MatchStatement> |
-//	<LoopStatement> | <VarStatement>
-type Statement any
+// <UnitAtom> = [ <UnitBlock> ] { <Namespace> }
+type UnitAtom struct {
+	// Can be nil in case UnitBlock is not present
+	Unit *UnitBlock
+
+	// Saved in order they appear in source code
+	Blocks []NamespaceBlock
+}
 
 // <ReturnStatement> = "return" <Expression> ";"
 // type ReturnStatement struct {
 // 	Expression Expression
 // }
-
-// <SimpleAssignStatement> = <Identifier> "=" <Expression>
-type AssignStatement struct {
-	Target     Identifier
-	Expression Expression
-}
-
-// <AddAssign> = <Identifier> "+=" <Expression>
-type AddAssign struct {
-	Target     Identifier
-	Expression Expression
-}
-
-type BlockStatement struct {
-	// starting position of block
-	Pos source.Pos
-
-	Statements []Statement
-}
 
 // <IfStatement> = <IfClause> [ <ElseClause> ]
 type IfStatement struct {
