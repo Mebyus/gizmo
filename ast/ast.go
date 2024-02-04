@@ -1,13 +1,5 @@
 package ast
 
-import (
-	"github.com/mebyus/gizmo/source"
-)
-
-type Node interface {
-	source.Pin
-}
-
 // <UnitBlock> = "unit" <UnitName> "{" { <Statement> } "}"
 type UnitBlock struct {
 	Name Identifier
@@ -15,7 +7,7 @@ type UnitBlock struct {
 	Block BlockStatement
 }
 
-// Smallest piece of processed source code inside a unit. In most
+// UnitAtom smallest piece of processed source code inside a unit. In most
 // cases this represents a file with source code. Exceptions may include
 // source code generated at compile time
 //

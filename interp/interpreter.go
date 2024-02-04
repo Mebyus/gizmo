@@ -16,7 +16,7 @@ func Interpret(unit ast.UnitBlock) (Result, error) {
 	var files []string
 	var testFiles []string
 
-	for _, statement := range unit.Statements {
+	for _, statement := range unit.Block.Statements {
 		switch s := statement.(type) {
 		case ast.AssignStatement:
 			switch s.Target.Lit {

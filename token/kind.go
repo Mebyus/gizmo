@@ -30,10 +30,11 @@ const (
 	RightShift    // >>
 	BitwiseAndNot // &^
 
-	Semicolon // ;
-	Period    // .
-	Colon     // :
-	Comma     // ,
+	Semicolon   // ;
+	Period      // .
+	Colon       // :
+	Comma       // ,
+	DoubleColon // ::
 
 	Equal          // ==
 	NotEqual       // !=
@@ -89,6 +90,7 @@ const (
 	Defer
 	Fn
 	Import
+	Declare
 
 	Bag
 	Bind

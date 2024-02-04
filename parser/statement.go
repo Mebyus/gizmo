@@ -9,8 +9,7 @@ import (
 
 func (p *Parser) parseStatement() (statement ast.Statement, err error) {
 	if p.tok.Kind == token.LeftCurly {
-		statement, err = p.block()
-		return
+		return p.block()
 	}
 	// if p.tok.Kind == token.Var {
 	// 	statement, err = p.parseVariableStatement()
@@ -20,34 +19,40 @@ func (p *Parser) parseStatement() (statement ast.Statement, err error) {
 	// 	statement, err = p.parseIfStatement()
 	// 	return
 	// }
-	// if p.tok.Kind == token.Return {
-	// 	statement, err = p.retrn()
-	// 	return
-	// }
+	if p.tok.Kind == token.Return {
+		return p.returnStatement()
+	}
 	// if p.tok.Kind == token.For {
 	// 	statement, err = p.loop()
 	// 	return
 	// }
-	statement, err = p.parseExpressionStartStatement()
-	return
+	return p.parseExpressionStartStatement()
 }
 
-// func (p *Parser) retrn() (statement ast.ReturnStatement, err error) {
-// 	p.advance() // consume "return"
-// 	expression, err := p.expr()
-// 	if err != nil {
-// 		return
-// 	}
-// 	err = p.expect(token.Semicolon)
-// 	if err != nil {
-// 		return
-// 	}
-// 	p.advance() // consume ";"
-// 	statement = ast.ReturnStatement{
-// 		Expression: expression,
-// 	}
-// 	return
-// }
+func (p *Parser) returnStatement() (statement ast.ReturnStatement, err error) {
+	pos := p.tok.Pos
+	p.advance() // consume "return"
+
+	if p.tok.Kind == token.Semicolon {
+		p.advance() // consume ";"
+		return ast.ReturnStatement{Pos: pos}, nil
+	}
+
+	expression, err := p.expr()
+	if err != nil {
+		return
+	}
+	err = p.expect(token.Semicolon)
+	if err != nil {
+		return
+	}
+	p.advance() // consume ";"
+	statement = ast.ReturnStatement{
+		Pos:        pos,
+		Expression: expression,
+	}
+	return
+}
 
 // func (p *Parser) loop() (ast.Statement, error) {
 // 	if p.next.Kind == token.LeftCurly {
@@ -159,7 +164,7 @@ func (p *Parser) tryParseConstStatement() (statement ast.Statement, err error) {
 	// }
 
 	if p.tok.IsIdent() && p.next.Kind == token.Assign {
-		target := p.ident()
+		target := p.idn()
 		p.advance() // skip identifier
 		p.advance() // skip "="
 		var expr ast.Expression

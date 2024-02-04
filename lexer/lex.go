@@ -501,6 +501,9 @@ func (lx *Lexer) lexOther() token.Token {
 		if lx.next == '=' {
 			return lx.lexTwoBytes(token.ShortAssign)
 		}
+		if lx.next == ':' {
+			return lx.lexTwoBytes(token.DoubleColon)
+		}
 		return lx.lexByte(token.Colon)
 	case ';':
 		return lx.lexByte(token.Semicolon)

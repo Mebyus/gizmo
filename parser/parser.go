@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/mebyus/gizmo/ast"
@@ -58,42 +57,58 @@ func FromSource(src *source.File) (p *Parser, err error) {
 	return p, nil
 }
 
-func ParseBytes(b []byte) (ast.UnitBlock, error) {
+func ParseBytes(b []byte) (ast.UnitAtom, error) {
 	p := FromBytes(b)
 	return p.parse()
 }
 
-func ParseFile(filename string) (ast.UnitBlock, error) {
+func ParseFile(filename string) (ast.UnitAtom, error) {
 	p, err := FromFile(filename)
 	if err != nil {
-		return ast.UnitBlock{}, err
+		return ast.UnitAtom{}, err
 	}
 	return p.parse()
 }
 
-func ParseSource(src *source.File) (ast.UnitBlock, error) {
+func ParseSource(src *source.File) (ast.UnitAtom, error) {
 	p, err := FromSource(src)
 	if err != nil {
-		return ast.UnitBlock{}, err
+		return ast.UnitAtom{}, err
 	}
 	return p.parse()
 }
 
-func Parse(r io.Reader) (ast.UnitBlock, error) {
+func Parse(r io.Reader) (ast.UnitAtom, error) {
 	p, err := FromReader(r)
 	if err != nil {
-		return ast.UnitBlock{}, err
+		return ast.UnitAtom{}, err
 	}
 	return p.parse()
 }
 
-func (p *Parser) parse() (ast.UnitBlock, error) {
-	unit, err := p.parseUnitBlock()
-	if err != nil {
-		return ast.UnitBlock{}, err
+func (p *Parser) parse() (ast.UnitAtom, error) {
+	var unit *ast.UnitBlock
+	var err error
+	if p.tok.Kind == token.Unit {
+		unit, err = p.unitBlock()
+		if err != nil {
+			return ast.UnitAtom{}, err
+		}
 	}
-	if unit.Name.Kind.IsEmpty() {
-		return ast.UnitBlock{}, fmt.Errorf("expected unit block")
+
+	var blocks []ast.NamespaceBlock
+	for {
+		if p.isEOF() {
+			return ast.UnitAtom{
+				Unit:   unit,
+				Blocks: blocks,
+			}, nil
+		}
+
+		block, err := p.namespaceBlock()
+		if err != nil {
+			return ast.UnitAtom{}, err
+		}
+		blocks = append(blocks, block)
 	}
-	return unit, nil
 }

@@ -12,6 +12,7 @@ const (
 	Block
 	Assign
 	AddAssign
+	Return
 )
 
 var text = [...]string{
@@ -20,6 +21,7 @@ var text = [...]string{
 	Block:     "block",
 	Assign:    "assign",
 	AddAssign: "add_assign",
+	Return:    "return",
 }
 
 func (k Kind) String() string {

@@ -13,7 +13,7 @@ const (
 	Fn
 
 	// Function declaration
-	Decl
+	Declare
 
 	// Method definition
 	Method
@@ -34,7 +34,7 @@ var text = [...]string{
 	empty: "<nil>",
 
 	Fn:       "fn",
-	Decl:     "decl",
+	Declare:  "declare",
 	Method:   "method",
 	Type:     "type",
 	Const:    "const",

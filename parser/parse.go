@@ -5,8 +5,12 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-func (p *Parser) ident() ast.Identifier {
-	return ast.Identifier(p.tok)
+// create identifier from current token
+func (p *Parser) idn() ast.Identifier {
+	return ast.Identifier{
+		Pos: p.tok.Pos,
+		Lit: p.tok.Lit,
+	}
 }
 
 func (p *Parser) basic() ast.BasicLiteral {
@@ -20,27 +24,103 @@ func (p *Parser) expect(k token.Kind) error {
 	return p.unexpected(p.tok)
 }
 
-func (p *Parser) parseUnitBlock() (unit ast.UnitBlock, err error) {
-	if p.tok.Kind != token.Unit {
-		return
-	}
+func (p *Parser) unitBlock() (*ast.UnitBlock, error) {
 	p.advance() // skip "unit"
 	if p.tok.Kind != token.Identifier {
-		err = p.unexpected(p.tok)
-		return
+		return nil, p.unexpected(p.tok)
 	}
-	name := p.ident()
+	name := p.idn()
 	p.advance() // skip unit name identifier
 
 	block, err := p.block()
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	return ast.UnitBlock{
-		Name:       name,
-		Statements: block.Statements,
+	return &ast.UnitBlock{
+		Name:  name,
+		Block: block,
 	}, nil
+}
+
+func (p *Parser) namespaceBlock() (ast.NamespaceBlock, error) {
+	p.advance() // skip "namespace"
+	name, err := p.scopedIdentifier()
+	if err != nil {
+		return ast.NamespaceBlock{}, err
+	}
+
+	if p.tok.Kind != token.LeftCurly {
+		return ast.NamespaceBlock{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip "{"
+
+	var nodes []ast.TopLevel
+	for {
+		if p.tok.Kind == token.RightCurly {
+			p.advance() // skip "}"
+			return ast.NamespaceBlock{
+				Name:  name,
+				Nodes: nodes,
+			}, nil
+		}
+
+		node, err := p.topLevel()
+		if err != nil {
+			return ast.NamespaceBlock{}, err
+		}
+		nodes = append(nodes, node)
+	}
+}
+
+func (p *Parser) scopedIdentifier() (ast.ScopedIdentifier, error) {
+	if p.tok.Kind != token.Identifier {
+		return ast.ScopedIdentifier{}, p.unexpected(p.tok)
+	}
+	name := p.idn()
+	p.advance() // skip identifier
+
+	var scopes []ast.Identifier
+	for {
+		if p.tok.Kind != token.DoubleColon {
+			return ast.ScopedIdentifier{
+				Scopes: scopes,
+				Name:   name,
+			}, nil
+		}
+		p.advance() // skip "::"
+
+		if p.tok.Kind != token.Identifier {
+			return ast.ScopedIdentifier{}, p.unexpected(p.tok)
+		}
+
+		scopes = append(scopes, name)
+		name = p.idn()
+		p.advance() // skip identifier
+	}
+}
+
+func (p *Parser) topLevel() (ast.TopLevel, error) {
+	switch p.tok.Kind {
+	// case token.Type:
+	// 	return p.parseTopLevelType(false)
+	// case token.Var:
+	// 	return p.topLevelVar(false)
+	// case token.Identifier:
+	// 	return p.topLevelConst(false)
+	// case token.Import:
+	// 	return p.topLevelImport(false)
+	case token.Declare:
+		return p.topLevelDeclare()
+	case token.Fn:
+		return p.topLevelFunction()
+	// case token.Pub:
+	// 	return p.parseTopLevelPublic()
+	// case token.Atr:
+	// 	return p.topLevelAtr()
+	default:
+		return nil, p.unexpected(p.tok)
+	}
 }
 
 // func (p *Parser) parseInUnitMode() (err error) {

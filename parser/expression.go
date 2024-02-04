@@ -359,7 +359,7 @@ func (p *Parser) tryOperand() (ast.Operand, error) {
 // SelectorExpression, IndexExpression or CallExpression
 func (p *Parser) identStartOperand() (ast.Operand, error) {
 	var tip ast.Operand
-	tip = p.ident()
+	tip = p.idn()
 	p.advance() // skip identifier
 
 	for {
@@ -379,7 +379,7 @@ func (p *Parser) identStartOperand() (ast.Operand, error) {
 			if err != nil {
 				return nil, err
 			}
-			selected := p.ident()
+			selected := p.idn()
 			p.advance() // skip identifier
 			tip = ast.SelectorExpression{
 				Target:   tip,

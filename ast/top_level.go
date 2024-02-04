@@ -26,7 +26,7 @@ type TopLevel interface {
 // Dummy provides quick, easy to use implementation of discriminator TopLevel() method
 //
 // Used for embedding into other (non-dummy) type specifier nodes
-type nodeTopLevel struct{}
+type nodeTopLevel struct{ uidHolder }
 
 func (nodeTopLevel) TopLevel() {}
 
@@ -42,7 +42,7 @@ type TopFunctionDeclaration struct {
 var _ TopLevel = TopFunctionDeclaration{}
 
 func (t TopFunctionDeclaration) Kind() toplvl.Kind {
-	return toplvl.Decl
+	return toplvl.Declare
 }
 
 func (t TopFunctionDeclaration) Pin() source.Pos {

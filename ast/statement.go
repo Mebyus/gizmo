@@ -21,7 +21,7 @@ type Statement interface {
 // Dummy provides quick, easy to use implementation of discriminator Statement() method
 //
 // Used for embedding into other (non-dummy) statement nodes
-type nodeStatement struct{}
+type nodeStatement struct{ uidHolder }
 
 func (nodeStatement) Statement() {}
 
@@ -81,4 +81,24 @@ func (AddAssignStatement) Kind() stm.Kind {
 
 func (s AddAssignStatement) Pin() source.Pos {
 	return s.Target.Pos
+}
+
+// <ReturnStatement> = "return" [ <Expression> ] ";"
+type ReturnStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	// Equals nil if return does not have expression
+	Expression Expression
+}
+
+var _ Statement = ReturnStatement{}
+
+func (ReturnStatement) Kind() stm.Kind {
+	return stm.Return
+}
+
+func (s ReturnStatement) Pin() source.Pos {
+	return s.Pos
 }

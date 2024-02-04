@@ -34,6 +34,7 @@ var Literal = [...]string{
 	BitwiseAndNot:    "&^",
 	Assign:           "=",
 	Colon:            ":",
+	DoubleColon:      "::",
 	Semicolon:        ";",
 	Asterisk:         "*",
 	Quest:            "?",
@@ -84,6 +85,7 @@ var Literal = [...]string{
 	Pub:      "pub",
 	Unit:     "unit",
 	Atr:      "atr",
+	Declare:  "declare",
 
 	// Special literals
 

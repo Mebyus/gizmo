@@ -9,6 +9,7 @@ import (
 	"github.com/mebyus/gizmo/cmd/gizmo/lex"
 	"github.com/mebyus/gizmo/cmd/gizmo/parse"
 	"github.com/mebyus/gizmo/cmd/gizmo/run"
+	"github.com/mebyus/gizmo/cmd/gizmo/tree"
 )
 
 func main() {
@@ -57,6 +58,12 @@ func main() {
 		}
 		filename := args[0]
 		err = run.Run(filename)
+	case "tree":
+		if len(args) == 0 {
+			fatal("filename must be specified to invoke tree command")
+		}
+		filename := args[0]
+		err = tree.Tree(filename)
 	case "help":
 		fmt.Print(usage)
 	default:

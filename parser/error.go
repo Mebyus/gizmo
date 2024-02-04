@@ -13,7 +13,7 @@ type UnexpectedTokenError struct {
 }
 
 func (u *UnexpectedTokenError) Error() string {
-	return fmt.Sprintf("unexpected token (%s)", u.Token.String())
+	return fmt.Sprintf("unexpected token (%s)", u.Token.Short())
 }
 
 func (p *Parser) unexpected(tok token.Token) error {

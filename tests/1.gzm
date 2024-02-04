@@ -1,0 +1,11 @@
+namespace coven {}
+
+namespace coven::os {
+
+declare fn do_something()
+
+fn do_something() {
+    return;
+}
+
+}

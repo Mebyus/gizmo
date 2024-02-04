@@ -35,8 +35,7 @@ func dflt(l string) ast.BasicLiteral {
 
 func idn(lit string) ast.Identifier {
 	return ast.Identifier{
-		Kind: token.Identifier,
-		Lit:  lit,
+		Lit: lit,
 	}
 }
 

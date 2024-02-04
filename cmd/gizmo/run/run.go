@@ -12,7 +12,10 @@ func Run(filename string) error {
 	if err != nil {
 		return err
 	}
-	result, err := interp.Interpret(unit)
+	if unit.Unit == nil {
+		return fmt.Errorf("file does not contain unit block")
+	}
+	result, err := interp.Interpret(*unit.Unit)
 	if err != nil {
 		return err
 	}
