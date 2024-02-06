@@ -24,6 +24,23 @@ type nodeTypeSpecifier struct{ uidHolder }
 
 func (nodeTypeSpecifier) TypeSpecifier() {}
 
+type TypeName struct {
+	nodeTypeSpecifier
+
+	Name ScopedIdentifier
+}
+
+// interface implementation check
+var _ TypeSpecifier = TypeName{}
+
+func (t TypeName) Kind() tps.Kind {
+	return tps.Name
+}
+
+func (t TypeName) Pin() source.Pos {
+	return t.Name.Pos()
+}
+
 // <StructTypeLiteral> = "struct" "{" { <FieldDefinition> "," } "}"
 type StructType struct {
 	nodeTypeSpecifier

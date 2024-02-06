@@ -16,3 +16,10 @@ type ScopedIdentifier struct {
 	// Last name in chain
 	Name Identifier
 }
+
+func (s ScopedIdentifier) Pos() source.Pos {
+	if len(s.Scopes) == 0 {
+		return s.Name.Pos
+	}
+	return s.Scopes[0].Pos
+}

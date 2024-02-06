@@ -24,7 +24,7 @@ func ConvertUnitAtom(atom ast.UnitAtom) Node {
 	}
 
 	return Node{
-		Name:  "atom",
+		Text:  "atom",
 		Nodes: nodes,
 	}
 }
@@ -32,12 +32,16 @@ func ConvertUnitAtom(atom ast.UnitAtom) Node {
 func ConvertUnitBlock(block *ast.UnitBlock) Node {
 	// uid := block.Block.UID()
 	return Node{
-		Name:  "unit",
+		Text:  "unit",
 		Nodes: nil,
 	}
 }
 
 func ConvertNamespaceBlock(block ast.NamespaceBlock) Node {
+	nodesTitle := "nodes"
+	if len(block.Nodes) == 0 {
+		nodesTitle += ": <empty>"
+	}
 	nodes := make([]Node, 0, len(block.Nodes))
 	for _, top := range block.Nodes {
 		node := ConvertTopLevel(top)
@@ -45,7 +49,15 @@ func ConvertNamespaceBlock(block ast.NamespaceBlock) Node {
 	}
 
 	return Node{
-		Name:  "namespace " + formatScopedIdentifier(block.Name),
-		Nodes: nodes,
+		Text: "namespace",
+		Nodes: []Node{
+			{
+				Text: "name: " + formatScopedIdentifier(block.Name),
+			},
+			{
+				Text:  nodesTitle,
+				Nodes: nodes,
+			},
+		},
 	}
 }

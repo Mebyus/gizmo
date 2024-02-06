@@ -31,6 +31,7 @@ var words = map[string]Kind{
 	"false":    False,
 	"atr":      Atr,
 	"declare":  Declare,
+	"const":    Const,
 }
 
 const (

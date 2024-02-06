@@ -102,3 +102,26 @@ func (ReturnStatement) Kind() stm.Kind {
 func (s ReturnStatement) Pin() source.Pos {
 	return s.Pos
 }
+
+type ConstStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	Name Identifier
+
+	Type TypeSpecifier
+
+	// Always not nil
+	Expression Expression
+}
+
+var _ Statement = ConstStatement{}
+
+func (ConstStatement) Kind() stm.Kind {
+	return stm.Const
+}
+
+func (s ConstStatement) Pin() source.Pos {
+	return s.Pos
+}

@@ -1,42 +1,103 @@
 package ast
 
 import (
+	"github.com/mebyus/gizmo/ast/exn"
 	"github.com/mebyus/gizmo/ast/oper"
-	"github.com/mebyus/gizmo/token"
+	"github.com/mebyus/gizmo/source"
 )
 
 // <Expression> = <PrimaryOperand> | <BinaryExpression>
-type Expression any
+type Expression interface {
+	Node
+
+	// dummy discriminator method
+	Expression()
+
+	Kind() exn.Kind
+}
+
+type nodeExpression struct{ uidHolder }
+
+func (nodeExpression) Expression() {}
 
 // <PrimaryOperand> = <Operand> | <UnaryExpression>
 type PrimaryOperand any
 
-// <Operand> = <Literal> | <Identifier> | <ParenthesizedExpression> | <SelectorExpression> |
+// <Operand> = <Literal> | <SubsExpression> | <ParenthesizedExpression> | <SelectorExpression> |
 // <IndexExpression> | <CallExpression>
 type Operand any
 
-// token.Kind is DecimalInteger, DecimalFloat, Character, String, Nil, True, False
-type BasicLiteral token.Token
+// <SubsExpression> = <ScopedIdentifier>
+type SubsExpression struct {
+	nodeExpression
+
+	Identifier ScopedIdentifier
+}
+
+var _ Expression = SubsExpression{}
+
+func (SubsExpression) Kind() exn.Kind {
+	return exn.Subs
+}
+
+func (e SubsExpression) Pin() source.Pos {
+	return e.Identifier.Pos()
+}
 
 // <ParenthesizedExpression> = "(" <Expression> ")"
 type ParenthesizedExpression struct {
+	nodeExpression
+
+	Pos source.Pos
+
 	Inner Expression
 }
 
-// <UnaryExpression> = <UnaryOperator> <UnaryOperand>
-type UnaryExpression struct {
-	Operator     oper.Unary
-	UnaryOperand UnaryOperand
+var _ Expression = ParenthesizedExpression{}
+
+func (ParenthesizedExpression) Kind() exn.Kind {
+	return exn.Paren
 }
 
+func (e ParenthesizedExpression) Pin() source.Pos {
+	return e.Pos
+}
+
+// <UnaryExpression> = <UnaryOperator> <UnaryOperand>
+//
 // <UnaryOperand> = <Operand> | <UnaryExpression>
-type UnaryOperand any
+type UnaryExpression struct {
+	nodeExpression
+
+	Operator oper.Unary
+	Operand  Expression
+}
+
+func (UnaryExpression) Kind() exn.Kind {
+	return exn.Unary
+}
+
+func (e UnaryExpression) Pin() source.Pos {
+	return e.Operator.Pos
+}
 
 // <BinaryExpression> = <Expression> <BinaryOperator> <Expression>
 type BinaryExpression struct {
-	Operator  oper.Binary
-	LeftSide  Expression
-	RightSide Expression
+	nodeExpression
+
+	Operator oper.Binary
+	Left     Expression
+	Right    Expression
+}
+
+var _ Expression = BinaryExpression{}
+
+func (BinaryExpression) Kind() exn.Kind {
+	return exn.Binary
+}
+
+func (e BinaryExpression) Pin() source.Pos {
+	return e.Left.Pin()
 }
 
 // <CompoundOperand> = <Identifier> | <CallExpression> | <SelectorExpression> | <IndexExpression>

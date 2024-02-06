@@ -45,16 +45,16 @@ func par(x ast.Expression) ast.ParenthesizedExpression {
 
 func uex(kind token.Kind, o ast.UnaryOperand) *ast.UnaryExpression {
 	return &ast.UnaryExpression{
-		Operator:     oper.NewUnary(tok(kind)),
-		UnaryOperand: o,
+		Operator: oper.NewUnary(tok(kind)),
+		Operand:  o,
 	}
 }
 
 func bin(kind token.Kind, left ast.Expression, right ast.Expression) ast.BinaryExpression {
 	return ast.BinaryExpression{
-		Operator:  oper.NewBinary(tok(kind)),
-		LeftSide:  left,
-		RightSide: right,
+		Operator: oper.NewBinary(tok(kind)),
+		Left:     left,
+		Right:    right,
 	}
 }
 

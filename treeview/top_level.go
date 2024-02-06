@@ -2,9 +2,11 @@ package treeview
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/toplvl"
+	"github.com/mebyus/gizmo/ast/tps"
 )
 
 func ConvertTopLevel(top ast.TopLevel) Node {
@@ -14,23 +16,23 @@ func ConvertTopLevel(top ast.TopLevel) Node {
 	case toplvl.Fn:
 		return ConvertTopFunctionDefinition(top.(ast.TopFunctionDefinition))
 	default:
-		return Node{Name: fmt.Sprintf("<top level %s not implemented>", top.Kind().String())}
+		return Node{Text: fmt.Sprintf("<top level %s not implemented>", top.Kind().String())}
 	}
 }
 
 func ConvertTopFunctionDeclaration(top ast.TopFunctionDeclaration) Node {
 	return Node{
-		Name:  "declare fn",
+		Text:  "declare fn",
 		Nodes: ConvertFunctionDeclaration(top.Declaration),
 	}
 }
 
 func ConvertTopFunctionDefinition(top ast.TopFunctionDefinition) Node {
 	return Node{
-		Name: "fn",
+		Text: "fn",
 		Nodes: []Node{
 			{
-				Name:  "head",
+				Text:  "head",
 				Nodes: ConvertFunctionDeclaration(top.Definition.Head),
 			},
 			ConvertFunctionBody(top.Definition.Body),
@@ -44,26 +46,9 @@ func ConvertFunctionBody(body ast.BlockStatement) Node {
 		name += ": <empty>"
 	}
 	return Node{
-		Name:  name,
+		Text:  name,
 		Nodes: ConvertStatements(body.Statements),
 	}
-}
-
-func ConvertStatements(statements []ast.Statement) []Node {
-	if len(statements) == 0 {
-		return nil
-	}
-
-	nodes := make([]Node, 0, len(statements))
-	for _, s := range statements {
-		nodes = append(nodes, ConvertStatement(s))
-	}
-
-	return nodes
-}
-
-func ConvertStatement(statement ast.Statement) Node {
-	return Node{Name: fmt.Sprintf("<%s statement not implemented>", statement.Kind().String())}
 }
 
 func ConvertFunctionDeclaration(declaration ast.FunctionDeclaration) []Node {
@@ -74,7 +59,7 @@ func ConvertFunctionDeclaration(declaration ast.FunctionDeclaration) []Node {
 		name += ": <nil>"
 	}
 	nodes = append(nodes, Node{
-		Name: "name: " + declaration.Name.Lit,
+		Text: "name: " + declaration.Name.Lit,
 	})
 	nodes = append(nodes, ConvertFunctionSignature(declaration.Signature)...)
 	return nodes
@@ -86,19 +71,68 @@ func ConvertFunctionSignature(signature ast.FunctionSignature) []Node {
 		argsTitle += ": <void>"
 	}
 
+	var resultNodes []Node
 	resultTitle := "rest"
 	if signature.Never {
 		resultTitle += ": <never>"
 	} else if signature.Result == nil {
 		resultTitle += ": <void>"
+	} else {
+		resultNodes = []Node{ConvertTypeSpecifier(signature.Result)}
 	}
 
 	return []Node{
 		{
-			Name: argsTitle,
+			Text:  argsTitle,
+			Nodes: ConvertFunctionParams(signature.Params),
 		},
 		{
-			Name: resultTitle,
+			Text:  resultTitle,
+			Nodes: resultNodes,
 		},
+	}
+}
+
+func ConvertFunctionParams(params []ast.FieldDefinition) []Node {
+	if len(params) == 0 {
+		return nil
+	}
+
+	nodes := make([]Node, 0, len(params))
+	for i, p := range params {
+		nodes = append(nodes, Node{
+			Text:  strconv.FormatInt(int64(i), 10),
+			Nodes: ConvertFieldDefinition(p),
+		})
+	}
+	return nodes
+}
+
+func ConvertFieldDefinition(field ast.FieldDefinition) []Node {
+	nameTitle := "name: "
+	if len(field.Name.Lit) == 0 {
+		nameTitle += "<nil>"
+	} else {
+		nameTitle += field.Name.Lit
+	}
+
+	return []Node{
+		{
+			Text: nameTitle,
+		},
+		ConvertTypeSpecifier(field.Type),
+	}
+}
+
+func ConvertTypeSpecifier(spec ast.TypeSpecifier) Node {
+	typeTitle := "type: "
+	if spec.Kind() == tps.Name {
+		typeTitle += formatScopedIdentifier(spec.(ast.TypeName).Name)
+	} else {
+		typeTitle += fmt.Sprintf("<%s not implemented>", spec.Kind().String())
+	}
+
+	return Node{
+		Text: typeTitle,
 	}
 }

@@ -77,6 +77,7 @@ var Literal = [...]string{
 	Bind:     "bind",
 	In:       "in",
 	Var:      "var",
+	Const:    "const",
 	Type:     "type",
 	Switch:   "switch",
 	Enum:     "enum",

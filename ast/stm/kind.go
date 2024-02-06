@@ -13,6 +13,7 @@ const (
 	Assign
 	AddAssign
 	Return
+	Const
 )
 
 var text = [...]string{
@@ -22,6 +23,7 @@ var text = [...]string{
 	Assign:    "assign",
 	AddAssign: "add_assign",
 	Return:    "return",
+	Const:     "const",
 }
 
 func (k Kind) String() string {

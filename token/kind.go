@@ -105,6 +105,7 @@ const (
 	Switch
 	Type
 	Var
+	Const
 
 	Pub
 	Atr

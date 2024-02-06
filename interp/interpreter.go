@@ -57,10 +57,10 @@ func getStringsFromExpression(expr ast.Expression) ([]string, error) {
 		if !ok {
 			return nil, fmt.Errorf("unexpected list element: %v (%T)", elem, elem)
 		}
-		if lit.Kind != token.String {
+		if lit.Token.Kind != token.String {
 			return nil, fmt.Errorf("unexpected literal inside list: %v (%T)", lit, lit)
 		}
-		ss = append(ss, lit.Lit)
+		ss = append(ss, lit.Token.Lit)
 	}
 	return ss, nil
 }

@@ -11,6 +11,9 @@ func (p *Parser) parseStatement() (statement ast.Statement, err error) {
 	if p.tok.Kind == token.LeftCurly {
 		return p.block()
 	}
+	if p.tok.Kind == token.Const {
+		return p.constStatement()
+	}
 	// if p.tok.Kind == token.Var {
 	// 	statement, err = p.parseVariableStatement()
 	// 	return
@@ -408,6 +411,49 @@ func (p *Parser) parseExpressionStartStatement() (statement ast.Statement, err e
 // 	}
 // 	return
 // }
+
+func (p *Parser) constStatement() (statement ast.ConstStatement, err error) {
+	pos := p.tok.Pos
+
+	p.advance() // skip "const"
+	err = p.expect(token.Identifier)
+	if err != nil {
+		return
+	}
+	name := p.idn()
+	p.advance() // skip const name identifier
+
+	err = p.expect(token.Colon)
+	if err != nil {
+		return
+	}
+	p.advance() // skip ":"
+	specifier, err := p.typeSpecifier()
+	if err != nil {
+		return
+	}
+	err = p.expect(token.Assign)
+	if err != nil {
+		return
+	}
+	p.advance() // skip "="
+	expression, err := p.expr()
+	if err != nil {
+		return
+	}
+	err = p.expect(token.Semicolon)
+	if err != nil {
+		return
+	}
+	p.advance() // consume ";"
+
+	return ast.ConstStatement{
+		Pos:        pos,
+		Name:       name,
+		Type:       specifier,
+		Expression: expression,
+	}, nil
+}
 
 func (p *Parser) block() (block ast.BlockStatement, err error) {
 	block.Pos = p.tok.Pos

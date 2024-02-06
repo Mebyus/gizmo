@@ -7,7 +7,8 @@ import (
 type Node struct {
 	Nodes []Node
 
-	Name string
+	// will be displayed as node title
+	Text string
 }
 
 func render(w io.Writer, node Node, indent, prefix string) {
@@ -18,10 +19,10 @@ func render(w io.Writer, node Node, indent, prefix string) {
 		title += "+ " // decorate node with at least one child node
 	}
 
-	if node.Name == "" {
+	if node.Text == "" {
 		title += "<nil>"
 	} else {
-		title += node.Name
+		title += node.Text
 	}
 	line := string([]rune(indent)[:len([]rune(indent))-len([]rune(prefix))]) + prefix + title + "\n"
 	io.WriteString(w, line)

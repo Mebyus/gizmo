@@ -14,7 +14,7 @@ func (p *Parser) idn() ast.Identifier {
 }
 
 func (p *Parser) basic() ast.BasicLiteral {
-	return ast.BasicLiteral(p.tok)
+	return ast.BasicLiteral{Token: p.tok}
 }
 
 func (p *Parser) expect(k token.Kind) error {

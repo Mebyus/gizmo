@@ -24,7 +24,7 @@ func (p *Parser) expr() (ast.Expression, error) {
 		return operand, nil
 	}
 
-	operands := []ast.PrimaryOperand{operand}
+	operands := []ast.Expression{operand}
 	var operators []oper.Binary
 	for p.tok.Kind.IsBinaryOperator() {
 		opr := oper.NewBinary(p.tok)
@@ -90,7 +90,7 @@ func sortOperators(ops []oper.Binary) positionedOperators {
 // Входные слайсы из операторов и операндов должны удовлетворять условию len(ops) + 1 = len(operands)
 //
 // Слайс операндов будет использован для in-place мутаций и получения итогового выражения
-func composeBinaryExpression(ops []oper.Binary, nds []ast.PrimaryOperand) ast.BinaryExpression {
+func composeBinaryExpression(ops []oper.Binary, nds []ast.Expression) ast.BinaryExpression {
 	p := sortOperators(ops)
 
 	// iterate over each operator in order of execution
@@ -101,9 +101,9 @@ func composeBinaryExpression(ops []oper.Binary, nds []ast.PrimaryOperand) ast.Bi
 		lopr := nds[o.pos]
 		ropr := nds[o.pos+1]
 		b := ast.BinaryExpression{
-			Operator:  o.op,
-			LeftSide:  lopr,
-			RightSide: ropr,
+			Operator: o.op,
+			Left:     lopr,
+			Right:    ropr,
 		}
 		nds[o.pos] = b
 
@@ -126,17 +126,17 @@ func composeBinaryExpression(ops []oper.Binary, nds []ast.PrimaryOperand) ast.Bi
 
 func bexpr(op oper.Binary, left, right ast.Expression) ast.BinaryExpression {
 	return ast.BinaryExpression{
-		Operator:  op,
-		LeftSide:  left,
-		RightSide: right,
+		Operator: op,
+		Left:     left,
+		Right:    right,
 	}
 }
 
-func composeBinaryExpressionWithOneOperator(ops []oper.Binary, nds []ast.PrimaryOperand) ast.BinaryExpression {
+func composeBinaryExpressionWithOneOperator(ops []oper.Binary, nds []ast.Expression) ast.BinaryExpression {
 	return bexpr(ops[0], nds[0], nds[1])
 }
 
-func composeBinaryExpressionWithTwoOperators(ops []oper.Binary, nds []ast.PrimaryOperand) ast.BinaryExpression {
+func composeBinaryExpressionWithTwoOperators(ops []oper.Binary, nds []ast.Expression) ast.BinaryExpression {
 	if ops[0].Precedence() <= ops[1].Precedence() {
 		// a + b + c = ((a + b) + c)
 		return bexpr(ops[1], bexpr(ops[0], nds[0], nds[1]), nds[2])
@@ -146,38 +146,38 @@ func composeBinaryExpressionWithTwoOperators(ops []oper.Binary, nds []ast.Primar
 	return bexpr(ops[0], nds[0], bexpr(ops[1], nds[1], nds[2]))
 }
 
-func composeBinaryExpressionWithThreeOperators(ops []oper.Binary, operands []ast.PrimaryOperand) ast.BinaryExpression {
+func composeBinaryExpressionWithThreeOperators(ops []oper.Binary, operands []ast.Expression) ast.BinaryExpression {
 	switch {
 
 	case ops[0].Precedence() <= ops[1].Precedence() && ops[1].Precedence() <= ops[2].Precedence():
 		// a + b + c + d = (((a + b) + c) + d)
 		return ast.BinaryExpression{
 			Operator: ops[2],
-			LeftSide: ast.BinaryExpression{
+			Left: ast.BinaryExpression{
 				Operator: ops[1],
-				LeftSide: ast.BinaryExpression{
-					Operator:  ops[0],
-					LeftSide:  operands[0],
-					RightSide: operands[1],
+				Left: ast.BinaryExpression{
+					Operator: ops[0],
+					Left:     operands[0],
+					Right:    operands[1],
 				},
-				RightSide: operands[2],
+				Right: operands[2],
 			},
-			RightSide: operands[3],
+			Right: operands[3],
 		}
 
 	case ops[0].Precedence() <= ops[2].Precedence() && ops[2].Precedence() < ops[1].Precedence():
 		// a * b + c * d = ((a * b) + (c * d))
 		return ast.BinaryExpression{
 			Operator: ops[1],
-			LeftSide: ast.BinaryExpression{
-				Operator:  ops[0],
-				LeftSide:  operands[0],
-				RightSide: operands[1],
+			Left: ast.BinaryExpression{
+				Operator: ops[0],
+				Left:     operands[0],
+				Right:    operands[1],
 			},
-			RightSide: ast.BinaryExpression{
-				Operator:  ops[2],
-				LeftSide:  operands[2],
-				RightSide: operands[3],
+			Right: ast.BinaryExpression{
+				Operator: ops[2],
+				Left:     operands[2],
+				Right:    operands[3],
 			},
 		}
 
@@ -185,31 +185,31 @@ func composeBinaryExpressionWithThreeOperators(ops []oper.Binary, operands []ast
 		// a + b * c + d =  ((a + (b * c)) + d)
 		return ast.BinaryExpression{
 			Operator: ops[2],
-			LeftSide: ast.BinaryExpression{
+			Left: ast.BinaryExpression{
 				Operator: ops[0],
-				LeftSide: operands[0],
-				RightSide: ast.BinaryExpression{
-					Operator:  ops[1],
-					LeftSide:  operands[1],
-					RightSide: operands[2],
+				Left:     operands[0],
+				Right: ast.BinaryExpression{
+					Operator: ops[1],
+					Left:     operands[1],
+					Right:    operands[2],
 				},
 			},
-			RightSide: operands[3],
+			Right: operands[3],
 		}
 
 	case ops[1].Precedence() <= ops[2].Precedence() && ops[2].Precedence() < ops[0].Precedence():
 		// a + b * c * d = (a + ((b * c) * d))
 		return ast.BinaryExpression{
 			Operator: ops[1],
-			LeftSide: operands[0],
-			RightSide: ast.BinaryExpression{
+			Left:     operands[0],
+			Right: ast.BinaryExpression{
 				Operator: ops[2],
-				LeftSide: ast.BinaryExpression{
-					Operator:  ops[1],
-					LeftSide:  operands[1],
-					RightSide: operands[2],
+				Left: ast.BinaryExpression{
+					Operator: ops[1],
+					Left:     operands[1],
+					Right:    operands[2],
 				},
-				RightSide: operands[3],
+				Right: operands[3],
 			},
 		}
 
@@ -217,15 +217,15 @@ func composeBinaryExpressionWithThreeOperators(ops []oper.Binary, operands []ast
 		// a + b + c * d = ((a + b) + (c * d))
 		return ast.BinaryExpression{
 			Operator: ops[1],
-			LeftSide: ast.BinaryExpression{
-				Operator:  ops[0],
-				LeftSide:  operands[0],
-				RightSide: operands[1],
+			Left: ast.BinaryExpression{
+				Operator: ops[0],
+				Left:     operands[0],
+				Right:    operands[1],
 			},
-			RightSide: ast.BinaryExpression{
-				Operator:  ops[2],
-				LeftSide:  operands[2],
-				RightSide: operands[3],
+			Right: ast.BinaryExpression{
+				Operator: ops[2],
+				Left:     operands[2],
+				Right:    operands[3],
 			},
 		}
 
@@ -233,14 +233,14 @@ func composeBinaryExpressionWithThreeOperators(ops []oper.Binary, operands []ast
 		// a < b + c * d = (a < (b + (c * d)))
 		return ast.BinaryExpression{
 			Operator: ops[0],
-			LeftSide: operands[0],
-			RightSide: ast.BinaryExpression{
+			Left:     operands[0],
+			Right: ast.BinaryExpression{
 				Operator: ops[1],
-				LeftSide: operands[1],
-				RightSide: ast.BinaryExpression{
-					Operator:  ops[2],
-					LeftSide:  operands[2],
-					RightSide: operands[3],
+				Left:     operands[1],
+				Right: ast.BinaryExpression{
+					Operator: ops[2],
+					Left:     operands[2],
+					Right:    operands[3],
 				},
 			},
 		}
@@ -250,7 +250,7 @@ func composeBinaryExpressionWithThreeOperators(ops []oper.Binary, operands []ast
 	}
 }
 
-func (p *Parser) primary() (ast.PrimaryOperand, error) {
+func (p *Parser) primary() (ast.Expression, error) {
 	if p.tok.Kind.IsUnaryOperator() {
 		unary, err := p.unary()
 		if err != nil {
@@ -280,18 +280,18 @@ func (p *Parser) unary() (*ast.UnaryExpression, error) {
 			Operator: oper.NewUnary(p.tok),
 		}
 		p.advance()
-		tipExp.UnaryOperand = nextExp
+		tipExp.Operand = nextExp
 		tipExp = nextExp
 	}
 	operand, err := p.operand()
 	if err != nil {
 		return nil, err
 	}
-	tipExp.UnaryOperand = operand
+	tipExp.Operand = operand
 	return topExp, nil
 }
 
-func (p *Parser) operand() (ast.Operand, error) {
+func (p *Parser) operand() (ast.Expression, error) {
 	operand, err := p.tryOperand()
 	if err != nil {
 		return nil, err
@@ -302,7 +302,7 @@ func (p *Parser) operand() (ast.Operand, error) {
 	return operand, nil
 }
 
-func (p *Parser) tryOperand() (ast.Operand, error) {
+func (p *Parser) tryOperand() (ast.Expression, error) {
 	if p.tok.IsLit() {
 		lit := p.basic()
 		p.advance()
@@ -310,7 +310,7 @@ func (p *Parser) tryOperand() (ast.Operand, error) {
 	}
 
 	if p.tok.IsIdent() {
-		return p.identStartOperand()
+		return p.identifierStartOperand()
 	}
 
 	if p.tok.IsLeftPar() {
@@ -357,8 +357,8 @@ func (p *Parser) tryOperand() (ast.Operand, error) {
 }
 
 // SelectorExpression, IndexExpression or CallExpression
-func (p *Parser) identStartOperand() (ast.Operand, error) {
-	var tip ast.Operand
+func (p *Parser) identifierStartOperand() (ast.Expression, error) {
+	var tip ast.Expression
 	tip = p.idn()
 	p.advance() // skip identifier
 
