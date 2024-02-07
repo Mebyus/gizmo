@@ -29,6 +29,7 @@ const (
 	Select
 	Index
 	Call
+	Start
 )
 
 var text = [...]string{
@@ -43,6 +44,7 @@ var text = [...]string{
 	Select: "select",
 	Index:  "index",
 	Call:   "call",
+	Start:  "start",
 }
 
 func (k Kind) String() string {
