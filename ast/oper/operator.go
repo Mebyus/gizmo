@@ -41,6 +41,10 @@ func NewBinary(tok token.Token) Binary {
 	return Binary(tok)
 }
 
+func (b Binary) String() string {
+	return b.Kind.String()
+}
+
 func getBinaryPrecedence(k token.Kind) uint8 {
 	switch k {
 	case token.Asterisk, token.Slash, token.Percent:

@@ -6,6 +6,7 @@ func formatScopedIdentifier(identifier ast.ScopedIdentifier) string {
 	if len(identifier.Scopes) == 0 && len(identifier.Name.Lit) == 0 {
 		return "<nil>"
 	}
+
 	var s string
 	for _, name := range identifier.Scopes {
 		s += name.Lit + "::"

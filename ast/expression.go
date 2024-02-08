@@ -132,7 +132,7 @@ type ChainStart struct {
 	Identifier ScopedIdentifier
 }
 
-var _ Operand = SubsExpression{}
+var _ ChainOperand = ChainStart{}
 
 func (ChainStart) Kind() exn.Kind {
 	return exn.Start
@@ -142,22 +142,58 @@ func (s ChainStart) Pin() source.Pos {
 	return s.Identifier.Pos()
 }
 
-// <CallExpression> = <CallableExpression> <TupleLiteral>
+// <CallExpression> = <CallableExpression> "(" { <Expression> "," } ")"
 type CallExpression struct {
+	nodeChainOperand
+
 	Callee    ChainOperand
 	Arguments []Expression
 }
 
+var _ ChainOperand = CallExpression{}
+
+func (CallExpression) Kind() exn.Kind {
+	return exn.Call
+}
+
+func (e CallExpression) Pin() source.Pos {
+	return e.Callee.Pin()
+}
+
 // <SelectorExpression> = <SelectableExpression> "." <Identifier>
 type SelectorExpression struct {
+	nodeChainOperand
+
 	Target   ChainOperand
 	Selected Identifier
 }
 
+var _ ChainOperand = SelectorExpression{}
+
+func (SelectorExpression) Kind() exn.Kind {
+	return exn.Select
+}
+
+func (e SelectorExpression) Pin() source.Pos {
+	return e.Target.Pin()
+}
+
 // <IndexExpression> = <IndexableExpression> "[" <Expression> "]"
 type IndexExpression struct {
+	nodeChainOperand
+
 	Target ChainOperand
 	Index  Expression
+}
+
+var _ ChainOperand = IndexExpression{}
+
+func (IndexExpression) Kind() exn.Kind {
+	return exn.Index
+}
+
+func (e IndexExpression) Pin() source.Pos {
+	return e.Target.Pin()
 }
 
 // <SliceExpression> = <Target> "[" [ <Start> ] ":" [ <End> ] "]"

@@ -17,15 +17,19 @@ func tok(k token.Kind) token.Token {
 
 func lit(kind token.Kind, lit string) ast.BasicLiteral {
 	return ast.BasicLiteral{
-		Kind: kind,
-		Lit:  lit,
+		Token: token.Token{
+			Kind: kind,
+			Lit:  lit,
+		},
 	}
 }
 
 func dint(v uint64) ast.BasicLiteral {
 	return ast.BasicLiteral{
-		Kind: token.DecimalInteger,
-		Val:  v,
+		Token: token.Token{
+			Kind: token.DecimalInteger,
+			Val:  v,
+		},
 	}
 }
 
@@ -34,19 +38,32 @@ func dflt(l string) ast.BasicLiteral {
 }
 
 func idn(lit string) ast.Identifier {
-	return ast.Identifier{
-		Lit: lit,
+	return ast.Identifier{Lit: lit}
+}
+
+func sidn(lits ...string) ast.ScopedIdentifier {
+	scopes := make([]ast.Identifier, 0, len(lits)-1)
+	for _, lit := range lits {
+		scopes = append(scopes, idn(lit))
 	}
+	return ast.ScopedIdentifier{
+		Scopes: scopes,
+		Name:   idn(lits[len(lits)-1]),
+	}
+}
+
+func subs(names ...string) ast.SubsExpression {
+	return ast.SubsExpression{Identifier: sidn(names...)}
 }
 
 func par(x ast.Expression) ast.ParenthesizedExpression {
 	return ast.ParenthesizedExpression{Inner: x}
 }
 
-func uex(kind token.Kind, o ast.UnaryOperand) *ast.UnaryExpression {
+func uex(kind token.Kind, inner ast.Expression) *ast.UnaryExpression {
 	return &ast.UnaryExpression{
 		Operator: oper.NewUnary(tok(kind)),
-		Operand:  o,
+		Inner:    inner,
 	}
 }
 
@@ -58,14 +75,14 @@ func bin(kind token.Kind, left ast.Expression, right ast.Expression) ast.BinaryE
 	}
 }
 
-func sel(target ast.SelectableExpression, selected string) ast.SelectorExpression {
+func sel(target ast.ChainOperand, selected string) ast.SelectorExpression {
 	return ast.SelectorExpression{
 		Target:   target,
 		Selected: idn(selected),
 	}
 }
 
-func idx(target ast.IndexableExpression, index ast.Expression) ast.IndexExpression {
+func idx(target ast.ChainOperand, index ast.Expression) ast.IndexExpression {
 	return ast.IndexExpression{
 		Target: target,
 		Index:  index,
@@ -97,7 +114,7 @@ func TestParseExpression(t *testing.T) {
 		{
 			name: "4 identifier",
 			str:  "abc",
-			want: idn("abc"),
+			want: subs("abc"),
 		},
 		{
 			name: "6 integer in parentheses",

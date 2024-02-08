@@ -86,6 +86,7 @@ Available commands:
 
 	lex
 	parse
+	tree
 	help
 
 `
