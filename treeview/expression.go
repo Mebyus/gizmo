@@ -2,6 +2,7 @@ package treeview
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/exn"
@@ -19,15 +20,61 @@ func ConvertInnerExpression(expr ast.Expression) Node {
 	case exn.Binary:
 		return ConvertBinaryExpression(expr.(ast.BinaryExpression))
 	case exn.Subs:
-		return CovnertSubsExpression(expr.(ast.SubsExpression))
+		return ConvertSubsExpression(expr.(ast.SubsExpression))
+	case exn.Basic:
+		return ConvertBasicLiteral(expr.(ast.BasicLiteral))
+	case exn.Call:
+		return ConvertCallExpression(expr.(ast.CallExpression))
 	default:
 		return Node{Text: fmt.Sprintf("<%s expression not implemented>", expr.Kind().String())}
 	}
 }
 
-func CovnertSubsExpression(expr ast.SubsExpression) Node {
+func ConvertCallExpression(expr ast.CallExpression) Node {
+	return Node{
+		Text: "call",
+		Nodes: []Node{
+			ConvertCallTarget(expr.Callee),
+			ConvertCallArguments(expr.Arguments),
+		},
+	}
+}
+
+func ConvertCallTarget(target ast.ChainOperand) Node {
+	return Node{
+		Text: "target",
+	}
+}
+
+func ConvertCallArguments(args []ast.Expression) Node {
+	argsTitle := "args"
+	if len(args) == 0 {
+		argsTitle += ": <void>"
+	}
+
+	nodes := make([]Node, 0, len(args))
+	for i, arg := range args {
+		nodes = append(nodes, Node{
+			Text:  strconv.FormatInt(int64(i), 10),
+			Nodes: []Node{ConvertExpression(arg)},
+		})
+	}
+
+	return Node{
+		Text:  argsTitle,
+		Nodes: nodes,
+	}
+}
+
+func ConvertSubsExpression(expr ast.SubsExpression) Node {
 	return Node{
 		Text: "subs: " + formatScopedIdentifier(expr.Identifier),
+	}
+}
+
+func ConvertBasicLiteral(lit ast.BasicLiteral) Node {
+	return Node{
+		Text: "lit: " + lit.Token.Literal(),
 	}
 }
 

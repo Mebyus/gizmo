@@ -41,7 +41,7 @@ type TopFunctionDeclaration struct {
 
 var _ TopLevel = TopFunctionDeclaration{}
 
-func (t TopFunctionDeclaration) Kind() toplvl.Kind {
+func (TopFunctionDeclaration) Kind() toplvl.Kind {
 	return toplvl.Declare
 }
 
@@ -60,10 +60,29 @@ type TopFunctionDefinition struct {
 
 var _ TopLevel = TopFunctionDefinition{}
 
-func (t TopFunctionDefinition) Kind() toplvl.Kind {
+func (TopFunctionDefinition) Kind() toplvl.Kind {
 	return toplvl.Fn
 }
 
 func (t TopFunctionDefinition) Pin() source.Pos {
 	return t.Definition.Head.Name.Pos
+}
+
+// <TopConstInit> = [ "pub" ] <ConstInit>
+type TopConstInit struct {
+	nodeTopLevel
+
+	ConstInit
+
+	Public bool
+}
+
+var _ TopLevel = TopConstInit{}
+
+func (TopConstInit) Kind() toplvl.Kind {
+	return toplvl.Const
+}
+
+func (t TopConstInit) Pin() source.Pos {
+	return t.Pos
 }

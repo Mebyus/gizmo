@@ -8,32 +8,25 @@ import (
 )
 
 func (p *Parser) parseStatement() (statement ast.Statement, err error) {
-	if p.tok.Kind == token.LeftCurly {
+	switch p.tok.Kind {
+	case token.LeftCurly:
 		return p.block()
-	}
-	if p.tok.Kind == token.Const {
+	case token.Const:
 		return p.constStatement()
-	}
-	// if p.tok.Kind == token.Var {
-	// 	statement, err = p.parseVariableStatement()
-	// 	return
-	// }
-	// if p.tok.Kind == token.If {
-	// 	statement, err = p.parseIfStatement()
-	// 	return
-	// }
-	if p.tok.Kind == token.Return {
+	case token.Var:
+		return p.varStatement()
+	case token.If:
+		return p.ifStatement()
+	case token.Return:
 		return p.returnStatement()
+	default:
+		return p.parseExpressionStartStatement()
 	}
-	// if p.tok.Kind == token.For {
-	// 	statement, err = p.loop()
-	// 	return
-	// }
-	return p.parseExpressionStartStatement()
 }
 
 func (p *Parser) returnStatement() (statement ast.ReturnStatement, err error) {
-	pos := p.tok.Pos
+	pos := p.pos()
+
 	p.advance() // consume "return"
 
 	if p.tok.Kind == token.Semicolon {
@@ -94,55 +87,74 @@ func (p *Parser) returnStatement() (statement ast.ReturnStatement, err error) {
 // 	return
 // }
 
-// func (p *Parser) parseIfStatement() (statement ast.IfStatement, err error) {
-// 	ifClause, err := p.parseIfClause()
-// 	if err != nil {
-// 		return
-// 	}
+func (p *Parser) ifStatement() (statement ast.IfStatement, err error) {
+	ifClause, err := p.ifClause()
+	if err != nil {
+		return
+	}
 
-// 	var elseClause *ast.ElseClause
-// 	if p.tok.Kind == token.Else {
-// 		p.advance() // skip "else"
-// 		err = p.expect(token.LeftCurly)
-// 		if err != nil {
-// 			return
-// 		}
-// 		var body ast.BlockStatement
-// 		body, err = p.block()
-// 		if err != nil {
-// 			return
-// 		}
-// 		elseClause = &ast.ElseClause{
-// 			Body: body,
-// 		}
-// 	}
-// 	statement = ast.IfStatement{
-// 		If:   ifClause,
-// 		Else: elseClause,
-// 	}
-// 	return
-// }
+	var elseIf []ast.ElseIfClause
+	for {
+		if p.tok.Kind == token.Else && p.next.Kind == token.If {
+			p.advance() // skip "else"
+		} else {
+			break
+		}
 
-// func (p *Parser) parseIfClause() (clause ast.IfClause, err error) {
-// 	p.advance() // skip "if"
-// 	expression, err := p.expr()
-// 	if err != nil {
-// 		return
-// 	}
-// 	err = p.expect(token.LeftCurly)
-// 	if err != nil {
-// 		return
-// 	}
-// 	body, err := p.block()
-// 	if err != nil {
-// 		return
-// 	}
-// 	clause = ast.IfClause{
-// 		Condition: expression,
-// 		Body:      body,
-// 	}
-// 	return
-// }
+		clause, err := p.ifClause()
+		if err != nil {
+			return ast.IfStatement{}, err
+		}
+		elseIf = append(elseIf, ast.ElseIfClause(clause))
+	}
+
+	var elseClause *ast.ElseClause
+	if p.tok.Kind == token.Else {
+		p.advance() // skip "else"
+		err = p.expect(token.LeftCurly)
+		if err != nil {
+			return
+		}
+		var body ast.BlockStatement
+		body, err = p.block()
+		if err != nil {
+			return
+		}
+		elseClause = &ast.ElseClause{
+			Body: body,
+		}
+	}
+
+	return ast.IfStatement{
+		If:     ifClause,
+		ElseIf: elseIf,
+		Else:   elseClause,
+	}, nil
+}
+
+func (p *Parser) ifClause() (clause ast.IfClause, err error) {
+	pos := p.tok.Pos
+
+	p.advance() // skip "if"
+	expression, err := p.expr()
+	if err != nil {
+		return
+	}
+	err = p.expect(token.LeftCurly)
+	if err != nil {
+		return
+	}
+	body, err := p.block()
+	if err != nil {
+		return
+	}
+
+	return ast.IfClause{
+		Pos:       pos,
+		Condition: expression,
+		Body:      body,
+	}, nil
+}
 
 func (p *Parser) tryParseConstStatement() (statement ast.Statement, err error) {
 	// if p.tok.IsIdent() && p.next.Kind == token.ShortAssign {
@@ -263,12 +275,8 @@ func (p *Parser) parseExpressionStartStatement() (statement ast.Statement, err e
 	// 	}
 	// 	return
 	// }
-	// if p.tok.Kind == token.Comma {
-	// 	statement, err = p.continueParseMultipleAssignStatement(expression)
-	// 	return
-	// }
 
-	return nil, fmt.Errorf("other statement types not implemented")
+	return nil, fmt.Errorf("other statement types not implemented: %s", p.tok.Short())
 }
 
 // func (p *Parser) continueParseMultipleAssignStatement(
@@ -329,88 +337,67 @@ func (p *Parser) parseExpressionStartStatement() (statement ast.Statement, err e
 // 	return
 // }
 
-// func (p *Parser) parseVariableStatement() (statement ast.VarStatement, err error) {
-// 	p.advance() // skip "var"
-// 	err = p.expect(token.Identifier)
-// 	if err != nil {
-// 		return
-// 	}
-// 	name := p.ident()
-// 	p.advance() // skip identifier
+func (p *Parser) varStatement() (statement ast.VarStatement, err error) {
+	pos := p.tok.Pos
 
-// 	if p.tok.Kind == token.ShortAssign {
-// 		p.advance() // skip ":="
-// 		var expr ast.Expression
-// 		expr, err = p.expr()
-// 		if err != nil {
-// 			return
-// 		}
-// 		err = p.expect(token.Semicolon)
-// 		if err != nil {
-// 			return
-// 		}
-// 		p.advance() // consume ";"
-// 		statement = ast.VarShortAssign{
-// 			Name:       name,
-// 			Expression: expr,
-// 		}
-// 		return
-// 	}
+	p.advance() // skip "var"
+	err = p.expect(token.Identifier)
+	if err != nil {
+		return
+	}
+	name := p.idn()
+	p.advance() // skip identifier
 
-// 	err = p.expect(token.Colon)
-// 	if err != nil {
-// 		return
-// 	}
-// 	p.advance() // skip ":"
-// 	specifier, err := p.parseTypeSpecifier()
-// 	if err != nil {
-// 		return
-// 	}
-// 	if p.tok.Kind == token.Semicolon {
-// 		p.advance() // skip ";"
-// 		statement = ast.VarDeclaration{
-// 			Name: name,
-// 			Type: specifier,
-// 		}
-// 		return
-// 	}
-// 	err = p.expect(token.Assign)
-// 	if err != nil {
-// 		return
-// 	}
-// 	p.advance() // skip "="
-// 	if p.tok.Kind == token.Dirty {
-// 		p.advance() // skip "dirty"
+	err = p.expect(token.Colon)
+	if err != nil {
+		return
+	}
+	p.advance() // skip ":"
+	specifier, err := p.typeSpecifier()
+	if err != nil {
+		return
+	}
+	err = p.expect(token.Assign)
+	if err != nil {
+		return
+	}
+	p.advance() // skip "="
+	if p.tok.Kind == token.Dirty {
+		p.advance() // skip "dirty"
 
-// 		err = p.expect(token.Semicolon)
-// 		if err != nil {
-// 			return
-// 		}
-// 		p.advance() // consume ";"
-// 		statement = ast.VarDirty{
-// 			Name: name,
-// 			Type: specifier,
-// 		}
-// 		return
-// 	}
-// 	expression, err := p.expr()
-// 	if err != nil {
-// 		return
-// 	}
-// 	err = p.expect(token.Semicolon)
-// 	if err != nil {
-// 		return
-// 	}
-// 	p.advance() // consume ";"
-// 	statement = ast.VarDefinition{
-// 		Declaration: ast.VarDeclaration{
-// 			Name: name,
-// 			Type: specifier,
-// 		},
-// 		Expression: expression,
-// 	}
-// 	return
-// }
+		err = p.expect(token.Semicolon)
+		if err != nil {
+			return
+		}
+		p.advance() // consume ";"
+
+		return ast.VarStatement{
+			VarInit: ast.VarInit{
+				Pos:  pos,
+				Name: name,
+				Type: specifier,
+			},
+		}, nil
+	}
+	expr, err := p.expr()
+	if err != nil {
+		return
+	}
+	err = p.expect(token.Semicolon)
+	if err != nil {
+		return
+	}
+	p.advance() // consume ";"
+
+	return ast.VarStatement{
+		VarInit: ast.VarInit{
+			Pos:        pos,
+			Name:       name,
+			Type:       specifier,
+			Expression: expr,
+		},
+	}, nil
+}
 
 func (p *Parser) constStatement() (statement ast.ConstStatement, err error) {
 	pos := p.tok.Pos
@@ -448,10 +435,12 @@ func (p *Parser) constStatement() (statement ast.ConstStatement, err error) {
 	p.advance() // consume ";"
 
 	return ast.ConstStatement{
-		Pos:        pos,
-		Name:       name,
-		Type:       specifier,
-		Expression: expression,
+		ConstInit: ast.ConstInit{
+			Pos:        pos,
+			Name:       name,
+			Type:       specifier,
+			Expression: expression,
+		},
 	}, nil
 }
 

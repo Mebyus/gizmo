@@ -20,24 +20,3 @@ type UnitAtom struct {
 	Blocks []NamespaceBlock
 }
 
-// <ReturnStatement> = "return" <Expression> ";"
-// type ReturnStatement struct {
-// 	Expression Expression
-// }
-
-// <IfStatement> = <IfClause> [ <ElseClause> ]
-type IfStatement struct {
-	If   IfClause
-	Else *ElseClause
-}
-
-// <IfClause> = "if" <Expression> <BlockStatement>
-type IfClause struct {
-	Condition Expression
-	Body      BlockStatement
-}
-
-// <ElseClause> = "else" <BlockStatement>
-type ElseClause struct {
-	Body BlockStatement
-}

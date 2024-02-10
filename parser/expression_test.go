@@ -41,11 +41,19 @@ func idn(lit string) ast.Identifier {
 	return ast.Identifier{Lit: lit}
 }
 
+func cst(lit ...string) ast.ChainStart {
+	return ast.ChainStart{Identifier: sidn(lit...)}
+}
+
 func sidn(lits ...string) ast.ScopedIdentifier {
-	scopes := make([]ast.Identifier, 0, len(lits)-1)
-	for _, lit := range lits {
-		scopes = append(scopes, idn(lit))
+	var scopes []ast.Identifier
+	if len(lits) > 1 {
+		scopes = make([]ast.Identifier, 0, len(lits)-1)
+		for _, lit := range lits[:len(lits)-1] {
+			scopes = append(scopes, idn(lit))
+		}
 	}
+
 	return ast.ScopedIdentifier{
 		Scopes: scopes,
 		Name:   idn(lits[len(lits)-1]),
@@ -129,7 +137,7 @@ func TestParseExpression(t *testing.T) {
 		{
 			name: "8 unary expression on identifier",
 			str:  "!is_good",
-			want: uex(token.Not, idn("is_good")),
+			want: uex(token.Not, subs("is_good")),
 		},
 		{
 			name: "9 binary expression on integers",
@@ -169,32 +177,32 @@ func TestParseExpression(t *testing.T) {
 			name: "14 comparison and logic",
 			str:  "a == 3.13 && b != 5.4",
 			want: bin(token.LogicalAnd,
-				bin(token.Equal, idn("a"), dflt("3.13")),
-				bin(token.NotEqual, idn("b"), dflt("5.4")),
+				bin(token.Equal, subs("a"), dflt("3.13")),
+				bin(token.NotEqual, subs("b"), dflt("5.4")),
 			),
 		},
 		{
 			name: "15 comparison and logic",
 			str:  "a > 3.13 && b <= c",
 			want: bin(token.LogicalAnd,
-				bin(token.Greater, idn("a"), dflt("3.13")),
-				bin(token.LessOrEqual, idn("b"), idn("c")),
+				bin(token.Greater, subs("a"), dflt("3.13")),
+				bin(token.LessOrEqual, subs("b"), subs("c")),
 			),
 		},
 		{
 			name: "16 selector",
 			str:  "a.b",
-			want: sel(idn("a"), "b"),
+			want: sel(cst("a"), "b"),
 		},
 		{
 			name: "17 index",
 			str:  "a[3]",
-			want: idx(idn("a"), dint(3)),
+			want: idx(cst("a"), dint(3)),
 		},
 		{
 			name: "18 index on selector",
 			str:  "a.b[3]",
-			want: idx(sel(idn("a"), "b"), dint(3)),
+			want: idx(sel(cst("a"), "b"), dint(3)),
 		},
 	}
 	for _, tt := range tests {

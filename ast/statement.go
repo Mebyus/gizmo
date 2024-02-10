@@ -103,9 +103,7 @@ func (s ReturnStatement) Pin() source.Pos {
 	return s.Pos
 }
 
-type ConstStatement struct {
-	nodeStatement
-
+type ConstInit struct {
 	Pos source.Pos
 
 	Name Identifier
@@ -116,6 +114,12 @@ type ConstStatement struct {
 	Expression Expression
 }
 
+type ConstStatement struct {
+	nodeStatement
+
+	ConstInit
+}
+
 var _ Statement = ConstStatement{}
 
 func (ConstStatement) Kind() stm.Kind {
@@ -124,4 +128,79 @@ func (ConstStatement) Kind() stm.Kind {
 
 func (s ConstStatement) Pin() source.Pos {
 	return s.Pos
+}
+
+type VarInit struct {
+	Pos source.Pos
+
+	Name Identifier
+
+	Type TypeSpecifier
+
+	// Equals nil if init expression is dirty
+	Expression Expression
+}
+
+type VarStatement struct {
+	nodeStatement
+
+	VarInit
+}
+
+var _ Statement = VarStatement{}
+
+func (VarStatement) Kind() stm.Kind {
+	return stm.Var
+}
+
+func (s VarStatement) Pin() source.Pos {
+	return s.Pos
+}
+
+// <IfStatement> = <IfClause> { <ElseIfClause> } [ <ElseClause> ]
+type IfStatement struct {
+	nodeStatement
+
+	If     IfClause
+
+	// Equals nil if there are no "else if" clauses in statement
+	ElseIf []ElseIfClause
+
+	// Equals nil if there is "else" clause in statement
+	Else   *ElseClause
+}
+
+// <IfClause> = "if" <Expression> <BlockStatement>
+type IfClause struct {
+	Pos source.Pos
+
+	// Always not nil
+	Condition Expression
+	Body      BlockStatement
+}
+
+// <IfClause> = "else" "if" <Expression> <BlockStatement>
+type ElseIfClause struct {
+	Pos source.Pos
+
+	// Always not nil
+	Condition Expression
+	Body      BlockStatement
+}
+
+// <ElseClause> = "else" <BlockStatement>
+type ElseClause struct {
+	Pos source.Pos
+
+	Body BlockStatement
+}
+
+var _ Statement = IfStatement{}
+
+func (IfStatement) Kind() stm.Kind {
+	return stm.If
+}
+
+func (s IfStatement) Pin() source.Pos {
+	return s.If.Pos
 }

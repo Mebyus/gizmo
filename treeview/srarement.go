@@ -26,8 +26,90 @@ func ConvertStatement(statement ast.Statement) Node {
 		return ConvertReturnStatement(statement.(ast.ReturnStatement))
 	case stm.Const:
 		return ConvertConstStatement(statement.(ast.ConstStatement))
+	case stm.If:
+		return ConvertIfStatement(statement.(ast.IfStatement))
+	case stm.Assign:
+		return ConvertAssignStatement(statement.(ast.AssignStatement))
 	default:
 		return Node{Text: fmt.Sprintf("<%s statement not implemented>", statement.Kind().String())}
+	}
+}
+
+func ConvertAssignStatement(statement ast.AssignStatement) Node {
+	return Node{
+		Text: "assign",
+		Nodes: []Node{
+			{
+				Text:  "target",
+				Nodes: []Node{{Text: "idn: " + formatIdentifier(statement.Target)}},
+			},
+			ConvertExpression(statement.Expression),
+		},
+	}
+}
+
+func ConvertIfStatement(statement ast.IfStatement) Node {
+	var clauseNodes []Node
+	clauseNodes = append(clauseNodes, ConvertIfClause(statement.If))
+
+	for _, clause := range statement.ElseIf {
+		clauseNodes = append(clauseNodes, ConvertElseIfClause(clause))
+	}
+
+	if statement.Else != nil {
+		clauseNodes = append(clauseNodes, ConvertElseClause(*statement.Else))
+	}
+
+	return Node{
+		Text:  "if",
+		Nodes: clauseNodes,
+	}
+}
+
+func ConvertIfClause(clause ast.IfClause) Node {
+	return Node{
+		Text: "main",
+		Nodes: []Node{
+			ConvertIfClauseCondition(clause.Condition),
+			ConvertIfClauseBody(clause.Body),
+		},
+	}
+}
+
+func ConvertIfClauseCondition(expr ast.Expression) Node {
+	return Node{
+		Text:  "cond",
+		Nodes: []Node{ConvertExpression(expr)},
+	}
+}
+
+func ConvertIfClauseBody(body ast.BlockStatement) Node {
+	name := "body"
+	if len(body.Statements) == 0 {
+		name += ": <empty>"
+	}
+	return Node{
+		Text:  name,
+		Nodes: ConvertStatements(body.Statements),
+	}
+}
+
+func ConvertElseIfClause(clause ast.ElseIfClause) Node {
+	return Node{
+		Text: "elif",
+		Nodes: []Node{
+			ConvertIfClauseCondition(clause.Condition),
+			ConvertIfClauseBody(clause.Body),
+		},
+	}
+}
+
+func ConvertElseClause(clause ast.ElseClause) Node {
+	return Node{
+		Text: "else",
+		Nodes: []Node{
+			ConvertIfClauseBody(clause.Body),
+		},
 	}
 }
 

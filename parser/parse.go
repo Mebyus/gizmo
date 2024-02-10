@@ -2,6 +2,7 @@ package parser
 
 import (
 	"github.com/mebyus/gizmo/ast"
+	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/token"
 )
 
@@ -11,6 +12,11 @@ func (p *Parser) idn() ast.Identifier {
 		Pos: p.tok.Pos,
 		Lit: p.tok.Lit,
 	}
+}
+
+// gives a copy of current parser position
+func (p *Parser) pos() source.Pos {
+	return p.tok.Pos
 }
 
 func (p *Parser) basic() ast.BasicLiteral {
@@ -114,6 +120,8 @@ func (p *Parser) topLevel() (ast.TopLevel, error) {
 		return p.topLevelDeclare()
 	case token.Fn:
 		return p.topLevelFunction()
+	case token.Const:
+		return p.topLevelConst()
 	// case token.Pub:
 	// 	return p.parseTopLevelPublic()
 	// case token.Atr:
@@ -184,20 +192,15 @@ func (p *Parser) topLevel() (ast.TopLevel, error) {
 // 	return nil
 // }
 
-// func (p *Parser) topLevelConst(public bool) error {
-// 	stmt, err := p.tryParseConstStatement()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if stmt == nil {
-// 		return p.unexpected(p.tok)
-// 	}
-// 	p.sc.Constants = append(p.sc.Constants, ast.TopLevelConst{
-// 		Public: public,
-// 		Const:  stmt,
-// 	})
-// 	return nil
-// }
+func (p *Parser) topLevelConst() (ast.TopConstInit, error) {
+	statement, err := p.constStatement()
+	if err != nil {
+		return ast.TopConstInit{}, err
+	}
+	return ast.TopConstInit{
+		ConstInit: statement.ConstInit,
+	}, nil
+}
 
 // func (p *Parser) topLevelAtr() error {
 // 	if p.saved.ok {

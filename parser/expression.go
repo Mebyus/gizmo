@@ -377,15 +377,15 @@ func (p *Parser) chainOperand(start ast.ChainStart) (ast.ChainOperand, error) {
 
 	for {
 		switch p.tok.Kind {
-		// case token.LeftParentheses:
-		// 	tuple, err := p.tupleLiteral()
-		// 	if err != nil {
-		// 		return nil, err
-		// 	}
-		// 	tip = ast.CallExpression{
-		// 		Callee:    tip,
-		// 		Arguments: tuple,
-		// 	}
+		case token.LeftParentheses:
+			args, err := p.callArguments()
+			if err != nil {
+				return nil, err
+			}
+			tip = ast.CallExpression{
+				Callee:    tip,
+				Arguments: args,
+			}
 		case token.Period:
 			p.advance() // skip "."
 			err := p.expect(token.Identifier)
@@ -452,6 +452,32 @@ func (p *Parser) chainOperand(start ast.ChainStart) (ast.ChainOperand, error) {
 			// }
 		default:
 			return tip, nil
+		}
+	}
+}
+
+func (p *Parser) callArguments() ([]ast.Expression, error) {
+	p.advance() // skip "("
+
+	var args []ast.Expression
+	for {
+		if p.tok.Kind == token.RightParentheses {
+			p.advance() // skip ")"
+			return args, nil
+		}
+
+		expr, err := p.expr()
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, expr)
+
+		if p.tok.Kind == token.Comma {
+			p.advance() // skip ","
+		} else if p.tok.Kind == token.RightParentheses {
+			// will be skipped at next iteration
+		} else {
+			return nil, p.unexpected(p.tok)
 		}
 	}
 }

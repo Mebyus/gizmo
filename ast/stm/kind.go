@@ -14,6 +14,8 @@ const (
 	AddAssign
 	Return
 	Const
+	Var
+	If
 )
 
 var text = [...]string{
@@ -24,6 +26,8 @@ var text = [...]string{
 	AddAssign: "add_assign",
 	Return:    "return",
 	Const:     "const",
+	Var:       "var",
+	If:        "if",
 }
 
 func (k Kind) String() string {

@@ -2,6 +2,7 @@ package token
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/mebyus/gizmo/source"
 )
@@ -53,6 +54,25 @@ func (t Token) IsIdent() bool {
 
 func (t Token) IsLeftPar() bool {
 	return t.Kind.IsLeftPar()
+}
+
+func (t Token) Literal() string {
+	switch t.Kind {
+	case BinaryInteger:
+		return "0b" + strconv.FormatUint(t.Val, 2)
+	case OctalInteger:
+		return "0o" + strconv.FormatUint(t.Val, 8)
+	case DecimalInteger:
+		return strconv.FormatUint(t.Val, 10)
+	case HexadecimalInteger:
+		return "0x" + strconv.FormatUint(t.Val, 16)
+	case Character:
+		return fmt.Sprintf("'%c'", t.Val)
+	case String:
+		return "\"" + t.Lit + "\""
+	default:
+		panic("must not be invoked with static literal tokens")
+	}
 }
 
 func (t Token) Short() string {

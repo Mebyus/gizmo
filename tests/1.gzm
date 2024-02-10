@@ -13,4 +13,23 @@ fn add(a: u32, b: u32) => u32 {
     return c;
 }
 
+const max_u32: u32 = 0xffffffff;
+
+fn sub(a: i32, b: i32) => i32 {
+    var c: i32 = dirty;
+    c = a - b;
+    return c;
+}
+
+// Calculate n-th fibonacci number
+fn fib(n: u64) => u64 {
+    if n == 0 {
+        return 0;
+    } else if n == 1 {
+        return 1;
+    } else {
+        return fib(n-1) + fib(n-2);
+    }
+}
+
 }
