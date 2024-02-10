@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/mebyus/gizmo/cmd/gizmo/gen"
 	"github.com/mebyus/gizmo/cmd/gizmo/highlight"
 	"github.com/mebyus/gizmo/cmd/gizmo/lex"
 	"github.com/mebyus/gizmo/cmd/gizmo/parse"
@@ -64,6 +65,12 @@ func main() {
 		}
 		filename := args[0]
 		err = tree.Tree(filename)
+	case "gen":
+		if len(args) == 0 {
+			fatal("filename must be specified to invoke gen command")
+		}
+		filename := args[0]
+		err = gen.Gen(filename)
 	case "help":
 		fmt.Print(usage)
 	default:
@@ -87,6 +94,7 @@ Available commands:
 	lex
 	parse
 	tree
+	gen
 	help
 
 `
