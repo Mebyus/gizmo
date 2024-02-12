@@ -44,4 +44,12 @@ fn call_another_function() {
     fib(5);
 }
 
+fn change_array_pointer(a: [*]u8) {
+    a.[0] = 'h';
+    a.[1] = 'e';
+    a.[2] = 'l';
+    a.[3] = 'l';
+    a.[4] = 'o';
+}
+
 }

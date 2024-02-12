@@ -13,17 +13,31 @@ func (g *Builder) FunctionDeclaration(declaration ast.FunctionDeclaration) {
 	g.space()
 
 	g.Identifier(declaration.Name)
+	g.functionParams(declaration.Signature.Params)
+	g.write(" noexcept ")
+}
+
+func (g *Builder) functionParams(params []ast.FieldDefinition) {
+	if len(params) == 0 {
+		g.write("()")
+		return
+	}
+
 	g.wb('(')
 
-	for _, param := range declaration.Signature.Params {
-		g.TypeSpecifier(param.Type)
-		g.space()
-		g.Identifier(param.Name)
+	g.functionParam(params[0])
+	for _, param := range params[1:] {
 		g.write(", ")
+		g.functionParam(param)
 	}
 
 	g.wb(')')
-	g.write(" noexcept ")
+}
+
+func (g *Builder) functionParam(param ast.FieldDefinition) {
+	g.TypeSpecifier(param.Type)
+	g.space()
+	g.Identifier(param.Name)
 }
 
 func (g *Builder) functionReturnType(spec ast.TypeSpecifier) {

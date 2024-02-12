@@ -53,7 +53,7 @@ var Literal = [...]string{
 	LeftParentheses:  "(",
 	RightParentheses: ")",
 	Compound:         ".{",
-	List:             ".[",
+	IndirectIndex:    ".[",
 	Insist:           ".!",
 	Chain:            ".?",
 	Slice:            "[]",

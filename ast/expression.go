@@ -213,6 +213,28 @@ func (e IndirectExpression) Pin() source.Pos {
 	return e.Target.Pin()
 }
 
+// <IndirectIndexExpression> = <Target> ".[" <Index> "]"
+//
+// <Target> = <ChainOperand>
+//
+// <Index> = <Expression>
+type IndirectIndexExpression struct {
+	nodeChainOperand
+
+	Target ChainOperand
+	Index  Expression
+}
+
+var _ ChainOperand = IndirectIndexExpression{}
+
+func (IndirectIndexExpression) Kind() exn.Kind {
+	return exn.Indirx
+}
+
+func (e IndirectIndexExpression) Pin() source.Pos {
+	return e.Target.Pin()
+}
+
 // <SliceExpression> = <Target> "[" [ <Start> ] ":" [ <End> ] "]"
 type SliceExpression struct {
 	Target IndexableExpression

@@ -31,6 +31,9 @@ const (
 	Call
 	Start
 	Indirect
+
+	// Indirect index expression
+	Indirx
 )
 
 var text = [...]string{
@@ -47,6 +50,7 @@ var text = [...]string{
 	Call:     "call",
 	Start:    "start",
 	Indirect: "indirect",
+	Indirx:   "indirect_index",
 }
 
 func (k Kind) String() string {

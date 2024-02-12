@@ -13,8 +13,9 @@ const (
 
 	Underscore // _
 
-	Address  // .&
-	Indirect // .@
+	Address       // .&
+	Indirect      // .@
+	IndirectIndex // .[
 
 	Plus      // +
 	Minus     // -
@@ -67,7 +68,6 @@ const (
 	RightParentheses // )
 
 	Compound     // .{
-	List         // .[
 	Insist       // .!
 	Chain        // .?
 	Slice        // []

@@ -67,7 +67,7 @@ func (t Token) Literal() string {
 	case HexadecimalInteger:
 		return "0x" + strconv.FormatUint(t.Val, 16)
 	case Character:
-		return fmt.Sprintf("'%c'", t.Val)
+		return "'" + t.Lit + "'"
 	case String:
 		return "\"" + t.Lit + "\""
 	case Nil:

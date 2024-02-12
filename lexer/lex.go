@@ -369,9 +369,10 @@ func (lx *Lexer) lexCharacterLiteral() (tok token.Token) {
 	}
 
 	lx.advance()            // skip "'"
-	lit := lx.buf[1:lx.len] // this will contain only bytes between two ticks
+	lit := lx.view()[1:] // this will contain only bytes between two ticks
 	tok.Kind = token.Character
-	_ = lit // TODO: parse code point
+	tok.Lit = string(lit)
+	lx.drop()
 	return
 }
 
@@ -534,7 +535,7 @@ func (lx *Lexer) lexOther() token.Token {
 		case '{':
 			return lx.lexTwoBytes(token.Compound)
 		case '[':
-			return lx.lexTwoBytes(token.List)
+			return lx.lexTwoBytes(token.IndirectIndex)
 		case '!':
 			return lx.lexTwoBytes(token.Insist)
 		case '?':

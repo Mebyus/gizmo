@@ -95,6 +95,28 @@ func (t PointerType) Pin() source.Pos {
 	return t.Pos
 }
 
+// <ArrayPointerType> = "[*]" <ElemType>
+//
+// <ElemType> = <TypeSpecifier>
+type ArrayPointerType struct {
+	nodeTypeSpecifier
+
+	Pos source.Pos
+
+	ElemType TypeSpecifier
+}
+
+// Explicit interface implementation check
+var _ TypeSpecifier = ArrayPointerType{}
+
+func (ArrayPointerType) Kind() tps.Kind {
+	return tps.ArrayPointer
+}
+
+func (t ArrayPointerType) Pin() source.Pos {
+	return t.Pos
+}
+
 // <TypeLiteral> = <ArrayTypeLiteral> | <PointerTypeLiteral> | <ChunkTypeLiteral> |
 // <ArrayPointerTypeLiteral> | <StructTypeLiteral>
 type TypeLiteral any

@@ -331,8 +331,8 @@ func (p *Parser) tryOperand() (ast.Expression, error) {
 		return ast.ParenthesizedExpression{Inner: expr}, nil
 	}
 
-	if p.tok.Kind == token.List {
-		p.advance() // skip ".["
+	if p.tok.Kind == token.LeftSquare {
+		p.advance() // skip "["
 		var list ast.ListLiteral
 
 		for {
@@ -368,7 +368,7 @@ func (p *Parser) identifierStartOperand() (ast.Operand, error) {
 	}
 
 	switch p.tok.Kind {
-	case token.Period, token.LeftParentheses, token.LeftSquare:
+	case token.Period, token.LeftParentheses, token.LeftSquare, token.Indirect:
 		return p.chainOperand(ast.ChainStart{Identifier: scoped})
 	default:
 		return ast.SubsExpression{Identifier: scoped}, nil
@@ -405,6 +405,20 @@ func (p *Parser) chainOperand(start ast.ChainStart) (ast.ChainOperand, error) {
 		case token.Indirect:
 			p.advance() // skip ".@"
 			tip = ast.IndirectExpression{Target: tip}
+		case token.IndirectIndex:
+			p.advance() // skip ".["
+			index, err := p.expr()
+			if err != nil {
+				return nil, err
+			}
+			if p.tok.Kind != token.RightSquare {
+				return nil, p.unexpected(p.tok)
+			}
+			p.advance() // skip "]"
+			tip = ast.IndirectIndexExpression{
+				Target: tip,
+				Index:  index,
+			}
 		case token.LeftSquare:
 			p.advance() // skip "["
 			// if p.tok.Kind == token.Colon {

@@ -13,6 +13,8 @@ func (g *Builder) TypeSpecifier(spec ast.TypeSpecifier) {
 		g.ScopedIdentifier(spec.(ast.TypeName).Name)
 	case tps.Pointer:
 		g.PointerType(spec.(ast.PointerType))
+	case tps.ArrayPointer:
+		g.ArrayPointerType(spec.(ast.ArrayPointerType))
 	default:
 		g.write(fmt.Sprintf("<%s type specifier not implemented>", spec.Kind().String()))
 	}
@@ -20,5 +22,10 @@ func (g *Builder) TypeSpecifier(spec ast.TypeSpecifier) {
 
 func (g *Builder) PointerType(spec ast.PointerType) {
 	g.TypeSpecifier(spec.RefType)
+	g.wb('*')
+}
+
+func (g *Builder) ArrayPointerType(spec ast.ArrayPointerType) {
+	g.TypeSpecifier(spec.ElemType)
 	g.wb('*')
 }
