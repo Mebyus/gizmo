@@ -460,6 +460,24 @@ func (lx *Lexer) lexOther() token.Token {
 				Kind: token.AutoLen,
 			}
 		}
+		if lx.next == '*' {
+			pos := lx.pos
+			lx.advance() // skip "["
+			if lx.next != ']' {
+				lx.advance() // skip "*"
+				return token.Token{
+					Pos:  pos,
+					Kind: token.Illegal,
+					Lit:  "[*",
+				}
+			}
+			lx.advance() // skip "*"
+			lx.advance() // skip "]"
+			return token.Token{
+				Pos:  pos,
+				Kind: token.ArrayPointer,
+			}
+		}
 		return lx.lexByte(token.LeftSquare)
 	case ']':
 		return lx.lexByte(token.RightSquare)

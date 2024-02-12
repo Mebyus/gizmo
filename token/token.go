@@ -70,8 +70,10 @@ func (t Token) Literal() string {
 		return fmt.Sprintf("'%c'", t.Val)
 	case String:
 		return "\"" + t.Lit + "\""
+	case Nil:
+		return "nil"
 	default:
-		panic("must not be invoked with static literal tokens")
+		panic("must not be invoked with static literal tokens: " + t.Kind.String())
 	}
 }
 

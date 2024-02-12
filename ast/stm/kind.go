@@ -16,6 +16,7 @@ const (
 	Const
 	Var
 	If
+	Expr
 )
 
 var text = [...]string{
@@ -28,6 +29,7 @@ var text = [...]string{
 	Const:     "const",
 	Var:       "var",
 	If:        "if",
+	Expr:      "expr",
 }
 
 func (k Kind) String() string {

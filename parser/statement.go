@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/ast"
+	"github.com/mebyus/gizmo/ast/exn"
 	"github.com/mebyus/gizmo/token"
 )
 
@@ -20,7 +21,7 @@ func (p *Parser) parseStatement() (statement ast.Statement, err error) {
 	case token.Return:
 		return p.returnStatement()
 	default:
-		return p.parseExpressionStartStatement()
+		return p.identifierStartStatement()
 	}
 }
 
@@ -178,26 +179,26 @@ func (p *Parser) tryParseConstStatement() (statement ast.Statement, err error) {
 	// 	return
 	// }
 
-	if p.tok.IsIdent() && p.next.Kind == token.Assign {
-		target := p.idn()
-		p.advance() // skip identifier
-		p.advance() // skip "="
-		var expr ast.Expression
-		expr, err = p.expr()
-		if err != nil {
-			return
-		}
-		err = p.expect(token.Semicolon)
-		if err != nil {
-			return
-		}
-		p.advance() // skip ";"
-		statement = ast.AssignStatement{
-			Target:     target,
-			Expression: expr,
-		}
-		return
-	}
+	// if p.tok.IsIdent() && p.next.Kind == token.Assign {
+	// 	target := p.idn()
+	// 	p.advance() // skip identifier
+	// 	p.advance() // skip "="
+	// 	var expr ast.Expression
+	// 	expr, err = p.expr()
+	// 	if err != nil {
+	// 		return
+	// 	}
+	// 	err = p.expect(token.Semicolon)
+	// 	if err != nil {
+	// 		return
+	// 	}
+	// 	p.advance() // skip ";"
+	// 	statement = ast.AssignStatement{
+	// 		Target:     target,
+	// 		Expression: expr,
+	// 	}
+	// 	return
+	// }
 
 	// if p.tok.IsIdent() && p.next.Kind == token.AddAssign {
 	// 	target := p.ident()
@@ -255,28 +256,84 @@ func (p *Parser) tryParseConstStatement() (statement ast.Statement, err error) {
 	return
 }
 
-func (p *Parser) parseExpressionStartStatement() (statement ast.Statement, err error) {
-	statement, err = p.tryParseConstStatement()
+func (p *Parser) tryAssignStatement() (ast.Statement, error) {
+	if p.tok.Kind != token.Identifier {
+		return nil, nil
+	}
+
+	identifier, err := p.scopedIdentifier()
 	if err != nil {
 		return nil, err
 	}
-	if statement != nil {
-		return statement, nil
+
+	target, err := p.chainOperand(ast.ChainStart{Identifier: identifier})
+	if err != nil {
+		return nil, err
 	}
 
-	// expression, err := p.expr()
-	// if err != nil {
-	// 	return
-	// }
-	// if p.tok.Kind == token.Semicolon {
-	// 	p.advance() // consume ";"
-	// 	statement = ast.ExpressionStatement{
-	// 		Expression: expression,
-	// 	}
-	// 	return
-	// }
+	switch p.tok.Kind {
+	case token.Assign, token.AddAssign:
+		// continue parse assign statement
+	default:
+		return p.continueExpressionStatement(target)
+	}
 
-	return nil, fmt.Errorf("other statement types not implemented: %s", p.tok.Short())
+	kind := target.Kind()
+	if kind == exn.Call {
+		return nil, fmt.Errorf("cannot assign to call (%s) result value", target.Pin().String())
+	}
+
+	assignTokenKind := p.tok.Kind
+	p.advance() // skip assign token
+
+	expr, err := p.expr()
+	if err != nil {
+		return nil, err
+	}
+
+	if p.tok.Kind != token.Semicolon {
+		return nil, p.unexpected(p.tok)
+	}
+	p.advance() // skip ";"
+
+	switch assignTokenKind {
+	case token.Assign:
+		return ast.AssignStatement{
+			Target:     target,
+			Expression: expr,
+		}, nil
+	case token.AddAssign:
+		return ast.AddAssignStatement{
+			Target:     target,
+			Expression: expr,
+		}, nil
+	default:
+		panic("unexpected assign token: " + assignTokenKind.String())
+	}
+}
+
+func (p *Parser) continueExpressionStatement(operand ast.Operand) (ast.ExpressionStatement, error) {
+	expr, err := p.continueExpressionFromOperand(operand)
+	if err != nil {
+		return ast.ExpressionStatement{}, err
+	}
+
+	kind := expr.Kind()
+	if kind != exn.Call {
+		return ast.ExpressionStatement{},
+			fmt.Errorf("standalone expression (%s) in statement must be call expression: %s", expr.Pin(), kind.String())
+	}
+
+	if p.tok.Kind != token.Semicolon {
+		return ast.ExpressionStatement{}, p.unexpected(p.tok)
+	}
+
+	p.advance() // consume ";"
+	return ast.ExpressionStatement{Expression: expr}, nil
+}
+
+func (p *Parser) identifierStartStatement() (ast.Statement, error) {
+	return p.tryAssignStatement()
 }
 
 // func (p *Parser) continueParseMultipleAssignStatement(

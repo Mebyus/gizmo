@@ -20,6 +20,10 @@ func (p *Parser) expr() (ast.Expression, error) {
 	if err != nil {
 		return nil, err
 	}
+	return p.continueExpressionFromOperand(operand)
+}
+
+func (p *Parser) continueExpressionFromOperand(operand ast.Expression) (ast.Expression, error) {
 	if !p.tok.Kind.IsBinaryOperator() {
 		return operand, nil
 	}
@@ -28,14 +32,14 @@ func (p *Parser) expr() (ast.Expression, error) {
 	var operators []oper.Binary
 	for p.tok.Kind.IsBinaryOperator() {
 		opr := oper.NewBinary(p.tok)
-		p.advance()
+		p.advance() // skip binary operator
 
-		operand, err = p.primary()
+		expr, err := p.primary()
 		if err != nil {
 			return nil, err
 		}
 
-		operands = append(operands, operand)
+		operands = append(operands, expr)
 		operators = append(operators, opr)
 	}
 
@@ -398,6 +402,9 @@ func (p *Parser) chainOperand(start ast.ChainStart) (ast.ChainOperand, error) {
 				Target:   tip,
 				Selected: selected,
 			}
+		case token.Indirect:
+			p.advance() // skip ".@"
+			tip = ast.IndirectExpression{Target: tip}
 		case token.LeftSquare:
 			p.advance() // skip "["
 			// if p.tok.Kind == token.Colon {

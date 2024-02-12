@@ -114,7 +114,7 @@ func (e BinaryExpression) Pin() source.Pos {
 	return e.Left.Pin()
 }
 
-// <ChainOperand> = <ChainStart> | <CallExpression> | <SelectorExpression> | <IndexExpression>
+// <ChainOperand> = <ChainStart> | <CallExpression> | <SelectorExpression> | <IndexExpression> | <IndirectExpression>
 type ChainOperand interface {
 	Operand
 
@@ -193,6 +193,23 @@ func (IndexExpression) Kind() exn.Kind {
 }
 
 func (e IndexExpression) Pin() source.Pos {
+	return e.Target.Pin()
+}
+
+// <IndirectExpression> = <ChainOperand> ".@"
+type IndirectExpression struct {
+	nodeChainOperand
+
+	Target ChainOperand
+}
+
+var _ ChainOperand = IndirectExpression{}
+
+func (IndirectExpression) Kind() exn.Kind {
+	return exn.Indirect
+}
+
+func (e IndirectExpression) Pin() source.Pos {
 	return e.Target.Pin()
 }
 

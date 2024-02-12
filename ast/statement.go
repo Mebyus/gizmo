@@ -45,11 +45,15 @@ func (s BlockStatement) Pin() source.Pos {
 	return s.Pos
 }
 
-// <AssignStatement> = <Identifier> "=" <Expression> ";"
+// <AssignStatement> = <Target> "=" <Expression> ";"
+//
+// <Target> = <ChainOperand>
 type AssignStatement struct {
 	nodeStatement
 
-	Target     Identifier
+	// cannot be call expression
+	Target ChainOperand
+
 	Expression Expression
 }
 
@@ -61,14 +65,18 @@ func (AssignStatement) Kind() stm.Kind {
 }
 
 func (s AssignStatement) Pin() source.Pos {
-	return s.Target.Pos
+	return s.Target.Pin()
 }
 
-// <AddAssignStatement> = <Identifier> "+=" <Expression> ";"
+// <AddAssignStatement> = <Target> "+=" <Expression> ";"
+//
+// <Target> = <ChainOperand>
 type AddAssignStatement struct {
 	nodeStatement
 
-	Target     Identifier
+	// cannot be call expression
+	Target ChainOperand
+
 	Expression Expression
 }
 
@@ -80,7 +88,7 @@ func (AddAssignStatement) Kind() stm.Kind {
 }
 
 func (s AddAssignStatement) Pin() source.Pos {
-	return s.Target.Pos
+	return s.Target.Pin()
 }
 
 // <ReturnStatement> = "return" [ <Expression> ] ";"
@@ -161,13 +169,13 @@ func (s VarStatement) Pin() source.Pos {
 type IfStatement struct {
 	nodeStatement
 
-	If     IfClause
+	If IfClause
 
 	// Equals nil if there are no "else if" clauses in statement
 	ElseIf []ElseIfClause
 
 	// Equals nil if there is "else" clause in statement
-	Else   *ElseClause
+	Else *ElseClause
 }
 
 // <IfClause> = "if" <Expression> <BlockStatement>
@@ -203,4 +211,22 @@ func (IfStatement) Kind() stm.Kind {
 
 func (s IfStatement) Pin() source.Pos {
 	return s.If.Pos
+}
+
+// <ExpressionStatement> = <Expression> ";"
+type ExpressionStatement struct {
+	nodeStatement
+
+	// must be call expression
+	Expression Expression
+}
+
+var _ Statement = ExpressionStatement{}
+
+func (ExpressionStatement) Kind() stm.Kind {
+	return stm.Expr
+}
+
+func (s ExpressionStatement) Pin() source.Pos {
+	return s.Expression.Pin()
 }

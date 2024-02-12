@@ -66,12 +66,13 @@ const (
 	LeftParentheses  // (
 	RightParentheses // )
 
-	Compound // .{
-	List     // .[
-	Insist   // .!
-	Chain    // .?
-	Slice    // []
-	AutoLen  // [_]
+	Compound     // .{
+	List         // .[
+	Insist       // .!
+	Chain        // .?
+	Slice        // []
+	AutoLen      // [_]
+	ArrayPointer // [*]
 
 	Nillable      // ?|
 	NillableChunk // [?]

@@ -41,7 +41,7 @@ func ConvertAssignStatement(statement ast.AssignStatement) Node {
 		Nodes: []Node{
 			{
 				Text:  "target",
-				Nodes: []Node{{Text: "idn: " + formatIdentifier(statement.Target)}},
+				Nodes: []Node{ConvertChainOperand(statement.Target)},
 			},
 			ConvertExpression(statement.Expression),
 		},

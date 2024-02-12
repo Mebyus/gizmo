@@ -19,7 +19,8 @@ func Interpret(unit ast.UnitBlock) (Result, error) {
 	for _, statement := range unit.Block.Statements {
 		switch s := statement.(type) {
 		case ast.AssignStatement:
-			switch s.Target.Lit {
+			target := s.Target.(ast.ChainStart).Identifier.Name
+			switch target.Lit {
 			case "files":
 				list, err := getStringsFromExpression(s.Expression)
 				if err != nil {
@@ -33,7 +34,7 @@ func Interpret(unit ast.UnitBlock) (Result, error) {
 				}
 				testFiles = list
 			default:
-				return Result{}, fmt.Errorf("reference to udefined symbol: %s (at %s)", s.Target.Lit, s.Target.Pos.String())
+				return Result{}, fmt.Errorf("reference to udefined symbol: %s (at %s)", target.Lit, target.Pos.String())
 			}
 		default:
 			return Result{}, fmt.Errorf("unexpected statement: %v (%T)", s, s)

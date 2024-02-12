@@ -90,3 +90,19 @@ func ConvertBinaryExpression(expr ast.BinaryExpression) Node {
 		},
 	}
 }
+
+func ConvertChainOperand(operand ast.ChainOperand) Node {
+	switch operand.Kind() {
+	case exn.Start:
+		return ConvertChainStart(operand.(ast.ChainStart))
+	case exn.Call:
+		return ConvertCallExpression(operand.(ast.CallExpression))
+	default:
+		return Node{Text: fmt.Sprintf("<%s operand not implemented>", operand.Kind().String())}
+	}
+}
+
+func ConvertChainStart(start ast.ChainStart) Node {
+	return Node{Text: "idn: " + formatScopedIdentifier(start.Identifier)}
+}
+

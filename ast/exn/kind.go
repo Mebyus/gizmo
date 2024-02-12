@@ -30,21 +30,23 @@ const (
 	Index
 	Call
 	Start
+	Indirect
 )
 
 var text = [...]string{
 	empty: "<nil>",
 
-	Basic:  "basic",
-	List:   "list",
-	Subs:   "subs",
-	Unary:  "unary",
-	Binary: "binary",
-	Paren:  "paren",
-	Select: "select",
-	Index:  "index",
-	Call:   "call",
-	Start:  "start",
+	Basic:    "basic",
+	List:     "list",
+	Subs:     "subs",
+	Unary:    "unary",
+	Binary:   "binary",
+	Paren:    "paren",
+	Select:   "select",
+	Index:    "index",
+	Call:     "call",
+	Start:    "start",
+	Indirect: "indirect",
 }
 
 func (k Kind) String() string {

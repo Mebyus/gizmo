@@ -33,7 +33,7 @@ type TypeName struct {
 // interface implementation check
 var _ TypeSpecifier = TypeName{}
 
-func (t TypeName) Kind() tps.Kind {
+func (TypeName) Kind() tps.Kind {
 	return tps.Name
 }
 
@@ -50,10 +50,10 @@ type StructType struct {
 	Fields []FieldDefinition
 }
 
-// interface implementation check
+// Explicit interface implementation check
 var _ TypeSpecifier = StructType{}
 
-func (t StructType) Kind() tps.Kind {
+func (StructType) Kind() tps.Kind {
 	return tps.Struct
 }
 
@@ -71,6 +71,28 @@ type TemplateInstanceType struct {
 	Params []TypeSpecifier
 
 	Name ScopedIdentifier
+}
+
+// <PointerType> = "*" <ReferencedType>
+//
+// <ReferencedType> = <TypeSpecifier>
+type PointerType struct {
+	nodeTypeSpecifier
+
+	Pos source.Pos
+
+	RefType TypeSpecifier
+}
+
+// Explicit interface implementation check
+var _ TypeSpecifier = PointerType{}
+
+func (PointerType) Kind() tps.Kind {
+	return tps.Pointer
+}
+
+func (t PointerType) Pin() source.Pos {
+	return t.Pos
 }
 
 // <TypeLiteral> = <ArrayTypeLiteral> | <PointerTypeLiteral> | <ChunkTypeLiteral> |

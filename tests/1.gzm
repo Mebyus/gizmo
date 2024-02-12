@@ -32,4 +32,16 @@ fn fib(n: u64) => u64 {
     }
 }
 
+fn change_by_pointer(x: *i32) {
+    if x == nil {
+        return;
+    }
+
+    x.@ = -0xf4;
+}
+
+fn call_another_function() {
+    fib(5);
+}
+
 }
