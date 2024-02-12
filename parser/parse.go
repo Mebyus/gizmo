@@ -108,8 +108,8 @@ func (p *Parser) scopedIdentifier() (ast.ScopedIdentifier, error) {
 
 func (p *Parser) topLevel() (ast.TopLevel, error) {
 	switch p.tok.Kind {
-	// case token.Type:
-	// 	return p.parseTopLevelType(false)
+	case token.Type:
+		return p.topLevelType()
 	// case token.Var:
 	// 	return p.topLevelVar(false)
 	// case token.Identifier:
@@ -217,43 +217,4 @@ func (p *Parser) topLevelConst() (ast.TopConstInit, error) {
 // 	p.saved.AtrBlock = blk
 // 	p.saved.ok = true
 // 	return nil
-// }
-
-// func (p *Parser) parseTopLevel() error {
-// 	switch p.tok.Kind {
-// 	case token.Type:
-// 		return p.parseTopLevelType(false)
-// 	case token.Var:
-// 		return p.topLevelVar(false)
-// 	case token.Identifier:
-// 		return p.topLevelConst(false)
-// 	case token.Import:
-// 		return p.topLevelImport(false)
-// 	case token.Fn:
-// 		return p.parseTopLevelFunction(false)
-// 	case token.Pub:
-// 		return p.parseTopLevelPublic()
-// 	case token.Atr:
-// 		return p.topLevelAtr()
-// 	default:
-// 		return p.unexpected(p.tok)
-// 	}
-// }
-
-// func (p *Parser) parseTopLevelPublic() error {
-// 	p.advance() // skip "pub"
-// 	switch p.tok.Kind {
-// 	case token.Import:
-// 		return p.topLevelImport(true)
-// 	case token.Type:
-// 		return p.parseTopLevelType(true)
-// 	case token.Var:
-// 		return p.topLevelVar(true)
-// 	case token.Identifier:
-// 		return p.topLevelConst(true)
-// 	case token.Fn:
-// 		return p.parseTopLevelFunction(true)
-// 	default:
-// 		return p.unexpected(p.tok)
-// 	}
 // }

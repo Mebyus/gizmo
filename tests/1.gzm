@@ -52,4 +52,11 @@ fn change_array_pointer(a: [*]u8) {
     a.[4] = 'o';
 }
 
+type Pos struct {
+    file: *SourceFile,
+
+    line: u32,
+    col:  u32,
+}
+
 }

@@ -21,6 +21,9 @@ const (
 	// Type definition
 	Type
 
+	// Type definition of evaluated type
+	TypeEval
+
 	// Constant definition (name + type + value)
 	Const
 
@@ -37,6 +40,7 @@ var text = [...]string{
 	Declare:  "declare",
 	Method:   "method",
 	Type:     "type",
+	TypeEval: "type_eval",
 	Const:    "const",
 	Var:      "var",
 	Template: "template",

@@ -86,3 +86,24 @@ func (TopConstInit) Kind() toplvl.Kind {
 func (t TopConstInit) Pin() source.Pos {
 	return t.Pos
 }
+
+// <TopType> = [ "pub" ] "type" <Name> <TypeSpecifier>
+//
+// <Name> = <Identifier>
+type TopType struct {
+	nodeTopLevel
+
+	Name Identifier
+
+	Spec TypeSpecifier
+}
+
+var _ TopLevel = TopType{}
+
+func (TopType) Kind() toplvl.Kind {
+	return toplvl.Type
+}
+
+func (t TopType) Pin() source.Pos {
+	return t.Name.Pos
+}

@@ -29,3 +29,30 @@ func (g *Builder) ArrayPointerType(spec ast.ArrayPointerType) {
 	g.TypeSpecifier(spec.ElemType)
 	g.wb('*')
 }
+
+func (g *Builder) structFields(fields []ast.FieldDefinition) {
+	if len(fields) == 0 {
+		g.write("<empty struct not implemented>")
+		return
+	}
+
+	g.write("{")
+	g.nl()
+	g.inc()
+
+	for _, field := range fields {
+		g.indent()
+		g.structField(field)
+		g.semi()
+		g.nl()
+	}
+
+	g.dec()
+	g.write("};")
+}
+
+func (g *Builder) structField(field ast.FieldDefinition) {
+	g.TypeSpecifier(field.Type)
+	g.space()
+	g.Identifier(field.Name)
+}
