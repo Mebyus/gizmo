@@ -2,6 +2,7 @@ package gencpp
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/exn"
@@ -26,6 +27,8 @@ func (g *Builder) Expression(expr ast.Expression) {
 		g.UnaryExpression(expr.(*ast.UnaryExpression))
 	case exn.Indirx:
 		g.IndirectIndexExpression(expr.(ast.IndirectIndexExpression))
+	case exn.Paren:
+		g.ParenthesizedExpression(expr.(ast.ParenthesizedExpression))
 	default:
 		g.write(fmt.Sprintf("<%s expr>", expr.Kind().String()))
 	}
@@ -34,6 +37,19 @@ func (g *Builder) Expression(expr ast.Expression) {
 func (g *Builder) BasicLiteral(lit ast.BasicLiteral) {
 	if lit.Token.Kind == token.Nil {
 		g.write("0")
+		return
+	}
+	if lit.Token.Kind == token.String {
+		if len(lit.Token.Lit) == 0 {
+			g.write("str.empty")
+			return
+		}
+
+		g.write("make_static_string(")
+		g.write(lit.Token.Literal())
+		g.write(", ")
+		g.write(strconv.FormatInt(int64(len(lit.Token.Lit)), 10))
+		g.write(")")
 		return
 	}
 
@@ -48,11 +64,11 @@ func (g *Builder) IndirectExpression(expr ast.IndirectExpression) {
 
 func (g *Builder) BinaryExpression(expr ast.BinaryExpression) {
 	g.Expression(expr.Left)
-	
+
 	g.space()
 	g.write(expr.Operator.String())
 	g.space()
-	
+
 	g.Expression(expr.Right)
 }
 
@@ -88,4 +104,10 @@ func (g *Builder) IndirectIndexExpression(expr ast.IndirectIndexExpression) {
 	g.write("[")
 	g.Expression(expr.Index)
 	g.write("]")
+}
+
+func (g *Builder) ParenthesizedExpression(expr ast.ParenthesizedExpression) {
+	g.write("(")
+	g.Expression(expr.Inner)
+	g.write(")")
 }

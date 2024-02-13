@@ -4,6 +4,7 @@ import "github.com/mebyus/gizmo/ast"
 
 func (g *Builder) FunctionDefinition(definition ast.FunctionDefinition) {
 	g.FunctionDeclaration(definition.Head)
+	g.space()
 	g.Block(definition.Body)
 	g.nl()
 }
@@ -14,7 +15,7 @@ func (g *Builder) FunctionDeclaration(declaration ast.FunctionDeclaration) {
 
 	g.Identifier(declaration.Name)
 	g.functionParams(declaration.Signature.Params)
-	g.write(" noexcept ")
+	g.write(" noexcept")
 }
 
 func (g *Builder) functionParams(params []ast.FieldDefinition) {

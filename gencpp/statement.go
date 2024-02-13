@@ -87,36 +87,41 @@ func (g *Builder) ReturnStatement(statement ast.ReturnStatement) {
 
 func (g *Builder) ConstStatement(statement ast.ConstStatement) {
 	g.indent()
-	g.write("const")
-
-	g.space()
-	g.TypeSpecifier(statement.Type)
-
-	g.space()
-	g.Identifier(statement.Name)
-
-	g.write(" = ")
-	g.Expression(statement.Expression)
-
+	g.ConstInit(statement.ConstInit)
 	g.semi()
 	g.nl()
 }
 
-func (g *Builder) VarStatement(statement ast.VarStatement) {
-	g.indent()
-
-	g.TypeSpecifier(statement.Type)
+func (g *Builder) ConstInit(c ast.ConstInit) {
+	g.write("const")
 
 	g.space()
-	g.Identifier(statement.Name)
+	g.TypeSpecifier(c.Type)
 
-	if statement.Expression != nil {
-		g.write(" = ")
-		g.Expression(statement.Expression)
-	}
+	g.space()
+	g.Identifier(c.Name)
 
+	g.write(" = ")
+	g.Expression(c.Expression)
+}
+
+func (g *Builder) VarStatement(statement ast.VarStatement) {
+	g.indent()
+	g.VarInit(statement.VarInit)
 	g.semi()
 	g.nl()
+}
+
+func (g *Builder) VarInit(v ast.VarInit) {
+	g.TypeSpecifier(v.Type)
+
+	g.space()
+	g.Identifier(v.Name)
+
+	if v.Expression != nil {
+		g.write(" = ")
+		g.Expression(v.Expression)
+	}
 }
 
 func (g *Builder) IfStatement(statement ast.IfStatement) {

@@ -59,4 +59,14 @@ type Pos struct {
     col:  u32,
 }
 
+const empty_string_test: str = "";
+var hello: str = "Hello, world!";
+
+var two: u32 = (1 + 1) - 0 * 2 * (0 + 1 - 0x0 * 7 - 8 + 0o11);
+
+fn print_hello() {
+    os::stdout.print(hello);
+    os::stdout.flush();
+}
+
 }

@@ -68,8 +68,8 @@ func (t TopFunctionDefinition) Pin() source.Pos {
 	return t.Definition.Head.Name.Pos
 }
 
-// <TopConstInit> = [ "pub" ] <ConstInit>
-type TopConstInit struct {
+// <TopConst> = [ "pub" ] <ConstInit>
+type TopConst struct {
 	nodeTopLevel
 
 	ConstInit
@@ -77,13 +77,13 @@ type TopConstInit struct {
 	Public bool
 }
 
-var _ TopLevel = TopConstInit{}
+var _ TopLevel = TopConst{}
 
-func (TopConstInit) Kind() toplvl.Kind {
+func (TopConst) Kind() toplvl.Kind {
 	return toplvl.Const
 }
 
-func (t TopConstInit) Pin() source.Pos {
+func (t TopConst) Pin() source.Pos {
 	return t.Pos
 }
 
@@ -106,4 +106,23 @@ func (TopType) Kind() toplvl.Kind {
 
 func (t TopType) Pin() source.Pos {
 	return t.Name.Pos
+}
+
+// <TopVar> = [ "pub" ] <VarInit>
+type TopVar struct {
+	nodeTopLevel
+
+	VarInit
+
+	Public bool
+}
+
+var _ TopLevel = TopVar{}
+
+func (TopVar) Kind() toplvl.Kind {
+	return toplvl.Var
+}
+
+func (t TopVar) Pin() source.Pos {
+	return t.Pos
 }

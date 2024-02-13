@@ -110,8 +110,8 @@ func (p *Parser) topLevel() (ast.TopLevel, error) {
 	switch p.tok.Kind {
 	case token.Type:
 		return p.topLevelType()
-	// case token.Var:
-	// 	return p.topLevelVar(false)
+	case token.Var:
+		return p.topLevelVar()
 	// case token.Identifier:
 	// 	return p.topLevelConst(false)
 	// case token.Import:
@@ -180,24 +180,23 @@ func (p *Parser) topLevel() (ast.TopLevel, error) {
 // 	return
 // }
 
-// func (p *Parser) topLevelVar(public bool) error {
-// 	stmt, err := p.parseVariableStatement()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	p.sc.Variables = append(p.sc.Variables, ast.TopLevelVar{
-// 		Public: public,
-// 		Var:    stmt,
-// 	})
-// 	return nil
-// }
+func (p *Parser) topLevelVar() (ast.TopVar, error) {
+	statement, err := p.varStatement()
+	if err != nil {
+		return ast.TopVar{}, err
+	}
 
-func (p *Parser) topLevelConst() (ast.TopConstInit, error) {
+	return ast.TopVar{
+		VarInit: statement.VarInit,
+	}, nil
+}
+
+func (p *Parser) topLevelConst() (ast.TopConst, error) {
 	statement, err := p.constStatement()
 	if err != nil {
-		return ast.TopConstInit{}, err
+		return ast.TopConst{}, err
 	}
-	return ast.TopConstInit{
+	return ast.TopConst{
 		ConstInit: statement.ConstInit,
 	}, nil
 }
