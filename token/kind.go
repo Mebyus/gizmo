@@ -172,7 +172,7 @@ func (k Kind) IsLit() bool {
 
 func (k Kind) IsUnaryOperator() bool {
 	switch k {
-	case Plus, Minus, Not:
+	case Plus, Minus, Not, Caret:
 		return true
 	default:
 		return false

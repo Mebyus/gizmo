@@ -1,9 +1,12 @@
 package ast
 
 import (
+	"github.com/mebyus/gizmo/ast/bop"
 	"github.com/mebyus/gizmo/ast/exn"
 	"github.com/mebyus/gizmo/ast/oper"
+	"github.com/mebyus/gizmo/ast/uop"
 	"github.com/mebyus/gizmo/source"
+	"github.com/mebyus/gizmo/token"
 )
 
 // <Expression> = <PrimaryOperand> | <BinaryExpression>
@@ -248,3 +251,27 @@ type SliceExpression struct {
 
 // <IndexableExpression> = <Identifier> | <SelectorExpression> | <IndexExpression>
 type IndexableExpression any
+
+type UnaryOperator struct {
+	Pos  source.Pos
+	Kind uop.Kind
+}
+
+func UnaryOperatorFromToken(tok token.Token) UnaryOperator {
+	return UnaryOperator{
+		Pos:  tok.Pos,
+		Kind: uop.FromToken(tok.Kind),
+	}
+}
+
+type BinaryOperator struct {
+	Pos  source.Pos
+	Kind bop.Kind
+}
+
+func BinaryOperatorFromToken(tok token.Token) BinaryOperator {
+	return BinaryOperator{
+		Pos:  tok.Pos,
+		Kind: bop.FromToken(tok.Kind),
+	}
+}
