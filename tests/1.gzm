@@ -52,7 +52,13 @@ fn change_array_pointer(a: [*]u8) {
     a.[4] = 'o';
 }
 
-type SourceFile struct {}
+type SourceFile struct {
+    data: []u8,
+}
+
+method (SourceFile) size() => uarch {
+    return data.len;
+}
 
 type Pos struct {
     file: *SourceFile,

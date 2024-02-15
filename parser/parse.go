@@ -112,8 +112,6 @@ func (p *Parser) topLevel() (ast.TopLevel, error) {
 		return p.topLevelType()
 	case token.Var:
 		return p.topLevelVar()
-	// case token.Identifier:
-	// 	return p.topLevelConst(false)
 	// case token.Import:
 	// 	return p.topLevelImport(false)
 	case token.Declare:
@@ -122,6 +120,8 @@ func (p *Parser) topLevel() (ast.TopLevel, error) {
 		return p.topLevelFunction()
 	case token.Const:
 		return p.topLevelConst()
+	case token.Method:
+		return p.topLevelMethod()
 	// case token.Pub:
 	// 	return p.parseTopLevelPublic()
 	// case token.Atr:
@@ -199,6 +199,10 @@ func (p *Parser) topLevelConst() (ast.TopConst, error) {
 	return ast.TopConst{
 		ConstInit: statement.ConstInit,
 	}, nil
+}
+
+func (p *Parser) topLevelMethod() (ast.Method, error) {
+	return p.method()
 }
 
 // func (p *Parser) topLevelAtr() error {

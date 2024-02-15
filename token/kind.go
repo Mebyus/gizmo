@@ -90,6 +90,7 @@ const (
 
 	Defer
 	Fn
+	Method
 	Import
 	Declare
 

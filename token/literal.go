@@ -88,6 +88,7 @@ var Literal = [...]string{
 	Unit:     "unit",
 	Atr:      "atr",
 	Declare:  "declare",
+	Method:   "method",
 
 	// Special literals
 
