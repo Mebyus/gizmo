@@ -56,6 +56,10 @@ func (g *Builder) BasicLiteral(lit ast.BasicLiteral) {
 		g.write(")")
 		return
 	}
+	if lit.Token.Kind == token.OctalInteger {
+		g.write("0" + strconv.FormatUint(lit.Token.Val, 8))
+		return
+	}
 
 	g.write(lit.Token.Literal())
 }

@@ -70,7 +70,7 @@ const (
 	Compound     // .{
 	Insist       // .!
 	Chain        // .?
-	Slice        // []
+	Chunk        // []
 	AutoLen      // [_]
 	ArrayPointer // [*]
 

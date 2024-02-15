@@ -388,11 +388,6 @@ func (s *Lexer) scanGreaterStart() (tok token.Token) {
 	return
 }
 
-func (s *Lexer) scanPipeStart() (tok token.Token) {
-
-	return
-}
-
 func (lx *Lexer) lexByte(k token.Kind) token.Token {
 	tok := lx.create(k)
 	lx.advance()
@@ -441,7 +436,7 @@ func (lx *Lexer) lexOther() token.Token {
 		return lx.lexByte(token.RightCurly)
 	case '[':
 		if lx.next == ']' {
-			return lx.lexTwoBytes(token.Slice)
+			return lx.lexTwoBytes(token.Chunk)
 		}
 		if lx.next == '_' {
 			pos := lx.pos

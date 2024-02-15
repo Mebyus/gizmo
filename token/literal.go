@@ -56,7 +56,7 @@ var Literal = [...]string{
 	IndirectIndex:    ".[",
 	Insist:           ".!",
 	Chain:            ".?",
-	Slice:            "[]",
+	Chunk:            "[]",
 	AutoLen:          "[_]",
 	ArrayPointer:     "[*]",
 	Nillable:         "?|",

@@ -45,6 +45,9 @@ func (p *Parser) typeSpecifier() (ast.TypeSpecifier, error) {
 	if p.tok.Kind == token.Struct {
 		return p.structType()
 	}
+	if p.tok.Kind == token.Chunk {
+		return p.chunkType()
+	}
 	return nil, fmt.Errorf("other type specifiers not implemented %s", p.tok.Short())
 }
 
@@ -123,4 +126,20 @@ func (p *Parser) structFields() ([]ast.FieldDefinition, error) {
 			return nil, p.unexpected(p.tok)
 		}
 	}
+}
+
+func (p *Parser) chunkType() (ast.ChunkType, error) {
+	pos := p.pos()
+
+	p.advance() // skip "[]"
+
+	elem, err := p.typeSpecifier()
+	if err != nil {
+		return ast.ChunkType{}, err
+	}
+
+	return ast.ChunkType{
+		Pos:      pos,
+		ElemType: elem,
+	}, nil
 }

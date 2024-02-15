@@ -75,4 +75,8 @@ fn stdout_write(c: []u8) {
     os::stdout.write(c);
 }
 
+fn return_the_same_chunk(c: []Pos) => []Pos {
+    return c;
+}
+
 }

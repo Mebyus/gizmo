@@ -15,6 +15,8 @@ func (g *Builder) TypeSpecifier(spec ast.TypeSpecifier) {
 		g.PointerType(spec.(ast.PointerType))
 	case tps.ArrayPointer:
 		g.ArrayPointerType(spec.(ast.ArrayPointerType))
+	case tps.Chunk:
+		g.ChunkType(spec.(ast.ChunkType))
 	default:
 		g.write(fmt.Sprintf("<%s type specifier not implemented>", spec.Kind().String()))
 	}
@@ -55,4 +57,19 @@ func (g *Builder) structField(field ast.FieldDefinition) {
 	g.TypeSpecifier(field.Type)
 	g.space()
 	g.Identifier(field.Name)
+}
+
+func isByteType(spec ast.TypeSpecifier) bool {
+	return spec.Kind() == tps.Name && spec.(ast.TypeName).Name.Name.Lit == "u8"
+}
+
+func (g *Builder) ChunkType(spec ast.ChunkType) {
+	if isByteType(spec.ElemType) {
+		g.write("mc")
+		return
+	}
+
+	g.write("chunk<")
+	g.TypeSpecifier(spec.ElemType)
+	g.write(">")
 }

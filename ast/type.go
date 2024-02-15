@@ -117,6 +117,25 @@ func (t ArrayPointerType) Pin() source.Pos {
 	return t.Pos
 }
 
+type ChunkType struct {
+	nodeTypeSpecifier
+
+	Pos source.Pos
+
+	ElemType TypeSpecifier
+}
+
+// Explicit interface implementation check
+var _ TypeSpecifier = ChunkType{}
+
+func (ChunkType) Kind() tps.Kind {
+	return tps.Chunk
+}
+
+func (t ChunkType) Pin() source.Pos {
+	return t.Pos
+}
+
 // <TypeLiteral> = <ArrayTypeLiteral> | <PointerTypeLiteral> | <ChunkTypeLiteral> |
 // <ArrayPointerTypeLiteral> | <StructTypeLiteral>
 type TypeLiteral any
