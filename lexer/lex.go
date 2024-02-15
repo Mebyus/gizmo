@@ -341,6 +341,8 @@ func (lx *Lexer) skipWhitespaceAndComments() {
 		lx.skipWhitespace()
 		if lx.c == '/' && lx.next == '/' {
 			lx.skipLineComment()
+		} else if lx.c == '/' && lx.next == '*' {
+			lx.skipMultilineComment()
 		} else {
 			return
 		}
@@ -351,6 +353,22 @@ func (lx *Lexer) skipLineComment() {
 	lx.advance() // skip '/'
 	lx.advance() // skip '/'
 	lx.skipLine()
+}
+
+func (lx *Lexer) skipMultilineComment() {
+	lx.advance() // skip '/'
+	lx.advance() // skip '*'
+
+	for !lx.isEOF() && !(lx.c == '*' && lx.next == '/') {
+		lx.advance()
+	}
+
+	if lx.isEOF() {
+		return
+	}
+
+	lx.advance() // skip '*'
+	lx.advance() // skip '/'
 }
 
 func (lx *Lexer) lexCharacterLiteral() (tok token.Token) {

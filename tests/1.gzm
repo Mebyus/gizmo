@@ -71,6 +71,12 @@ fn print_hello() {
     os::stdout.flush();
 }
 
+/* 
+    Test multiline comment
+
+    This should be skipped by lexer
+*/
+
 fn stdout_write(c: []u8) {
     os::stdout.write(c);
 }
