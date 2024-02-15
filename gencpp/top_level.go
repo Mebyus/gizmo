@@ -38,7 +38,7 @@ func (g *Builder) TopStructType(name ast.Identifier, spec ast.StructType) {
 	g.write("struct ")
 	g.Identifier(name)
 	g.space()
-	g.structFields(spec.Fields)
+	g.structFieldsWithDirtyConstructor(spec.Fields, name.Lit)
 	g.semi()
 	g.nl()
 }

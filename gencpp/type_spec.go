@@ -33,6 +33,10 @@ func (g *Builder) ArrayPointerType(spec ast.ArrayPointerType) {
 }
 
 func (g *Builder) structFields(fields []ast.FieldDefinition) {
+	g.structFieldsWithDirtyConstructor(fields, "")
+}
+
+func (g *Builder) structFieldsWithDirtyConstructor(fields []ast.FieldDefinition, name string) {
 	if len(fields) == 0 {
 		g.write("{}")
 		return
@@ -46,6 +50,14 @@ func (g *Builder) structFields(fields []ast.FieldDefinition) {
 		g.indent()
 		g.structField(field)
 		g.semi()
+		g.nl()
+	}
+
+	if name != "" {
+		g.nl()
+		g.indent()
+		g.write(name)
+		g.write("() {}")
 		g.nl()
 	}
 
