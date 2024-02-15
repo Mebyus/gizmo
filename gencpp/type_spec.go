@@ -32,7 +32,7 @@ func (g *Builder) ArrayPointerType(spec ast.ArrayPointerType) {
 
 func (g *Builder) structFields(fields []ast.FieldDefinition) {
 	if len(fields) == 0 {
-		g.write("<empty struct not implemented>")
+		g.write("{}")
 		return
 	}
 
@@ -48,7 +48,7 @@ func (g *Builder) structFields(fields []ast.FieldDefinition) {
 	}
 
 	g.dec()
-	g.write("};")
+	g.write("}")
 }
 
 func (g *Builder) structField(field ast.FieldDefinition) {

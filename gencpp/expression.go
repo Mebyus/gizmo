@@ -31,6 +31,8 @@ func (g *Builder) Expression(expr ast.Expression) {
 		g.IndirectIndexExpression(expr.(ast.IndirectIndexExpression))
 	case exn.Paren:
 		g.ParenthesizedExpression(expr.(ast.ParenthesizedExpression))
+	case exn.Select:
+		g.SelectorExpression(expr.(ast.SelectorExpression))
 	default:
 		g.write(fmt.Sprintf("<%s expr>", expr.Kind().String()))
 	}
@@ -43,7 +45,7 @@ func (g *Builder) BasicLiteral(lit ast.BasicLiteral) {
 	}
 	if lit.Token.Kind == token.String {
 		if len(lit.Token.Lit) == 0 {
-			g.write("str.empty")
+			g.write("empty_string")
 			return
 		}
 
@@ -126,4 +128,10 @@ func (g *Builder) ParenthesizedExpression(expr ast.ParenthesizedExpression) {
 	g.write("(")
 	g.Expression(expr.Inner)
 	g.write(")")
+}
+
+func (g *Builder) SelectorExpression(expr ast.SelectorExpression) {
+	g.Expression(expr.Target)
+	g.write(".")
+	g.Identifier(expr.Selected)
 }

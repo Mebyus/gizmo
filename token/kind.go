@@ -183,7 +183,8 @@ func (k Kind) IsBinaryOperator() bool {
 	switch k {
 	case
 		Less, Greater, Equal, LessOrEqual, GreaterOrEqual, NotEqual, LogicalAnd,
-		LogicalOr, Plus, Minus, Asterisk, Slash, Percent:
+		LogicalOr, Plus, Minus, Asterisk, Slash, Percent, LeftShift, RightShift,
+		Pipe, Ampersand, BitwiseAndNot, Caret:
 
 		return true
 	default:

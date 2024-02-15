@@ -52,6 +52,8 @@ fn change_array_pointer(a: [*]u8) {
     a.[4] = 'o';
 }
 
+type SourceFile struct {}
+
 type Pos struct {
     file: *SourceFile,
 
@@ -67,6 +69,10 @@ var two: u32 = (1 + 1) - 0 * 2 * (0 + 1 - 0x0 * 7 - 8 + 0o11);
 fn print_hello() {
     os::stdout.print(hello);
     os::stdout.flush();
+}
+
+fn stdout_write(c: []u8) {
+    os::stdout.write(c);
 }
 
 }

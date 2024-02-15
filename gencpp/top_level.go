@@ -39,6 +39,7 @@ func (g *Builder) TopStructType(name ast.Identifier, spec ast.StructType) {
 	g.Identifier(name)
 	g.space()
 	g.structFields(spec.Fields)
+	g.semi()
 	g.nl()
 }
 
