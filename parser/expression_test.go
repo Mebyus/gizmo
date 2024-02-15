@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/mebyus/gizmo/ast"
-	"github.com/mebyus/gizmo/ast/oper"
+	"github.com/mebyus/gizmo/ast/bop"
+	"github.com/mebyus/gizmo/ast/uop"
 	"github.com/mebyus/gizmo/token"
 )
 
@@ -68,16 +69,16 @@ func par(x ast.Expression) ast.ParenthesizedExpression {
 	return ast.ParenthesizedExpression{Inner: x}
 }
 
-func uex(kind token.Kind, inner ast.Expression) *ast.UnaryExpression {
+func uex(kind uop.Kind, inner ast.Expression) *ast.UnaryExpression {
 	return &ast.UnaryExpression{
-		Operator: oper.NewUnary(tok(kind)),
+		Operator: ast.UnaryOperator{Kind: kind},
 		Inner:    inner,
 	}
 }
 
-func bin(kind token.Kind, left ast.Expression, right ast.Expression) ast.BinaryExpression {
+func bin(kind bop.Kind, left ast.Expression, right ast.Expression) ast.BinaryExpression {
 	return ast.BinaryExpression{
-		Operator: oper.NewBinary(tok(kind)),
+		Operator: ast.BinaryOperator{Kind: kind},
 		Left:     left,
 		Right:    right,
 	}
@@ -132,22 +133,22 @@ func TestParseExpression(t *testing.T) {
 		{
 			name: "7 unary expression on integer",
 			str:  "+49",
-			want: uex(token.Plus, dint(49)),
+			want: uex(uop.Plus, dint(49)),
 		},
 		{
 			name: "8 unary expression on identifier",
 			str:  "!is_good",
-			want: uex(token.Not, subs("is_good")),
+			want: uex(uop.Not, subs("is_good")),
 		},
 		{
 			name: "9 binary expression on integers",
 			str:  "49 - 90",
-			want: bin(token.Minus, dint(49), dint(90)),
+			want: bin(bop.Sub, dint(49), dint(90)),
 		},
 		{
 			name: "10 binary expression in double parentheses",
 			str:  "((49 - 90))",
-			want: par(par(bin(token.Minus, dint(49), dint(90)))),
+			want: par(par(bin(bop.Sub, dint(49), dint(90)))),
 		},
 		{
 			name: "11 nil literal",
@@ -157,36 +158,36 @@ func TestParseExpression(t *testing.T) {
 		{
 			name: "12 four binary plus operators",
 			str:  "0 + 1 + 2 + 3 + 4",
-			want: bin(token.Plus, bin(token.Plus, bin(token.Plus, bin(token.Plus, dint(0), dint(1)), dint(2)), dint(3)), dint(4)),
+			want: bin(bop.Add, bin(bop.Add, bin(bop.Add, bin(bop.Add, dint(0), dint(1)), dint(2)), dint(3)), dint(4)),
 		},
 		{
 			name: "13 four binary operators",
 			str:  "0 + 1 + 2 + 3 * 4",
-			want: bin(token.Plus,
-				bin(token.Plus,
-					bin(token.Plus,
+			want: bin(bop.Add,
+				bin(bop.Add,
+					bin(bop.Add,
 						dint(0),
 						dint(1),
 					),
 					dint(2),
 				),
-				bin(token.Asterisk, dint(3), dint(4)),
+				bin(bop.Mul, dint(3), dint(4)),
 			),
 		},
 		{
 			name: "14 comparison and logic",
 			str:  "a == 3.13 && b != 5.4",
-			want: bin(token.LogicalAnd,
-				bin(token.Equal, subs("a"), dflt("3.13")),
-				bin(token.NotEqual, subs("b"), dflt("5.4")),
+			want: bin(bop.And,
+				bin(bop.Equal, subs("a"), dflt("3.13")),
+				bin(bop.NotEqual, subs("b"), dflt("5.4")),
 			),
 		},
 		{
 			name: "15 comparison and logic",
 			str:  "a > 3.13 && b <= c",
-			want: bin(token.LogicalAnd,
-				bin(token.Greater, subs("a"), dflt("3.13")),
-				bin(token.LessOrEqual, subs("b"), subs("c")),
+			want: bin(bop.And,
+				bin(bop.Greater, subs("a"), dflt("3.13")),
+				bin(bop.LessOrEqual, subs("b"), subs("c")),
 			),
 		},
 		{
@@ -203,6 +204,18 @@ func TestParseExpression(t *testing.T) {
 			name: "18 index on selector",
 			str:  "a.b[3]",
 			want: idx(sel(cst("a"), "b"), dint(3)),
+		},
+		{
+			name: "19 binary expression with parentheses",
+			str: "(1 + 1) - 0 * 2 * (-1)",
+			want: bin(bop.Sub, 
+				par(bin(bop.Add, dint(1), dint(1))),
+				bin(
+					bop.Mul,
+					bin(bop.Mul, dint(0), dint(2)),
+					par(uex(uop.Minus, dint(1))),
+				),
+			),
 		},
 	}
 	for _, tt := range tests {

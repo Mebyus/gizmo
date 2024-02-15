@@ -368,7 +368,7 @@ func (lx *Lexer) lexCharacterLiteral() (tok token.Token) {
 		return
 	}
 
-	lx.advance()            // skip "'"
+	lx.advance()         // skip "'"
 	lit := lx.view()[1:] // this will contain only bytes between two ticks
 	tok.Kind = token.Character
 	tok.Lit = string(lit)

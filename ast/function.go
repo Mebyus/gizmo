@@ -42,4 +42,3 @@ type FieldDefinition struct {
 	Name Identifier
 	Type TypeSpecifier
 }
-

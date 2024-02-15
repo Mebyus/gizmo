@@ -4,7 +4,6 @@ import (
 	"sort"
 
 	"github.com/mebyus/gizmo/ast"
-	"github.com/mebyus/gizmo/ast/oper"
 	"github.com/mebyus/gizmo/lexer"
 	"github.com/mebyus/gizmo/token"
 )
@@ -29,9 +28,9 @@ func (p *Parser) continueExpressionFromOperand(operand ast.Expression) (ast.Expr
 	}
 
 	operands := []ast.Expression{operand}
-	var operators []oper.Binary
+	var operators []ast.BinaryOperator
 	for p.tok.Kind.IsBinaryOperator() {
-		opr := oper.NewBinary(p.tok)
+		opr := ast.BinaryOperatorFromToken(p.tok)
 		p.advance() // skip binary operator
 
 		expr, err := p.primary()
@@ -59,7 +58,7 @@ func (p *Parser) continueExpressionFromOperand(operand ast.Expression) (ast.Expr
 }
 
 type positionedOperator struct {
-	op  oper.Binary
+	op  ast.BinaryOperator
 	pos int
 }
 
@@ -80,7 +79,7 @@ func (p positionedOperators) Swap(i, j int) {
 
 // sortOperators returns slice of operators sorted in order of execution
 // along with original position information
-func sortOperators(ops []oper.Binary) positionedOperators {
+func sortOperators(ops []ast.BinaryOperator) positionedOperators {
 	p := make(positionedOperators, 0, len(ops))
 	for i, o := range ops {
 		p = append(p, positionedOperator{op: o, pos: i})
@@ -94,7 +93,7 @@ func sortOperators(ops []oper.Binary) positionedOperators {
 // Входные слайсы из операторов и операндов должны удовлетворять условию len(ops) + 1 = len(operands)
 //
 // Слайс операндов будет использован для in-place мутаций и получения итогового выражения
-func composeBinaryExpression(ops []oper.Binary, nds []ast.Expression) ast.BinaryExpression {
+func composeBinaryExpression(ops []ast.BinaryOperator, nds []ast.Expression) ast.BinaryExpression {
 	p := sortOperators(ops)
 
 	// iterate over each operator in order of execution
@@ -128,129 +127,57 @@ func composeBinaryExpression(ops []oper.Binary, nds []ast.Expression) ast.Binary
 	return nds[0].(ast.BinaryExpression)
 }
 
-func bexpr(op oper.Binary, left, right ast.Expression) ast.BinaryExpression {
+func bex(o ast.BinaryOperator, l, r ast.Expression) ast.BinaryExpression {
 	return ast.BinaryExpression{
-		Operator: op,
-		Left:     left,
-		Right:    right,
+		Operator: o,
+		Left:     l,
+		Right:    r,
 	}
 }
 
-func composeBinaryExpressionWithOneOperator(ops []oper.Binary, nds []ast.Expression) ast.BinaryExpression {
-	return bexpr(ops[0], nds[0], nds[1])
+func composeBinaryExpressionWithOneOperator(o []ast.BinaryOperator, n []ast.Expression) ast.BinaryExpression {
+	return bex(o[0], n[0], n[1])
 }
 
-func composeBinaryExpressionWithTwoOperators(ops []oper.Binary, nds []ast.Expression) ast.BinaryExpression {
-	if ops[0].Precedence() <= ops[1].Precedence() {
+func composeBinaryExpressionWithTwoOperators(o []ast.BinaryOperator, n []ast.Expression) ast.BinaryExpression {
+	if o[0].Precedence() <= o[1].Precedence() {
 		// a + b + c = ((a + b) + c)
-		return bexpr(ops[1], bexpr(ops[0], nds[0], nds[1]), nds[2])
+		return bex(o[1], bex(o[0], n[0], n[1]), n[2])
 	}
 
 	// a + b * c = (a + (b * c))
-	return bexpr(ops[0], nds[0], bexpr(ops[1], nds[1], nds[2]))
+	return bex(o[0], n[0], bex(o[1], n[1], n[2]))
 }
 
-func composeBinaryExpressionWithThreeOperators(ops []oper.Binary, operands []ast.Expression) ast.BinaryExpression {
+func composeBinaryExpressionWithThreeOperators(o []ast.BinaryOperator, n []ast.Expression) ast.BinaryExpression {
 	switch {
 
-	case ops[0].Precedence() <= ops[1].Precedence() && ops[1].Precedence() <= ops[2].Precedence():
+	case o[0].Precedence() <= o[1].Precedence() && o[1].Precedence() <= o[2].Precedence():
 		// a + b + c + d = (((a + b) + c) + d)
-		return ast.BinaryExpression{
-			Operator: ops[2],
-			Left: ast.BinaryExpression{
-				Operator: ops[1],
-				Left: ast.BinaryExpression{
-					Operator: ops[0],
-					Left:     operands[0],
-					Right:    operands[1],
-				},
-				Right: operands[2],
-			},
-			Right: operands[3],
-		}
+		return bex(o[2], bex(o[1], bex(o[0], n[0], n[1]), n[2]), n[3])
 
-	case ops[0].Precedence() <= ops[2].Precedence() && ops[2].Precedence() < ops[1].Precedence():
+	case o[0].Precedence() <= o[2].Precedence() && o[2].Precedence() < o[1].Precedence():
 		// a * b + c * d = ((a * b) + (c * d))
-		return ast.BinaryExpression{
-			Operator: ops[1],
-			Left: ast.BinaryExpression{
-				Operator: ops[0],
-				Left:     operands[0],
-				Right:    operands[1],
-			},
-			Right: ast.BinaryExpression{
-				Operator: ops[2],
-				Left:     operands[2],
-				Right:    operands[3],
-			},
-		}
+		return bex(o[1], bex(o[0], n[0], n[1]), bex(o[2], n[2], n[3]))
 
-	case ops[1].Precedence() < ops[0].Precedence() && ops[0].Precedence() <= ops[2].Precedence():
-		// a + b * c + d =  ((a + (b * c)) + d)
-		return ast.BinaryExpression{
-			Operator: ops[2],
-			Left: ast.BinaryExpression{
-				Operator: ops[0],
-				Left:     operands[0],
-				Right: ast.BinaryExpression{
-					Operator: ops[1],
-					Left:     operands[1],
-					Right:    operands[2],
-				},
-			},
-			Right: operands[3],
-		}
+	case o[1].Precedence() < o[0].Precedence() && o[0].Precedence() <= o[2].Precedence():
+		// a + b * c + d = ((a + (b * c)) + d)
+		return bex(o[2], bex(o[0], n[0], bex(o[1], n[1], n[2])), n[3])
 
-	case ops[1].Precedence() <= ops[2].Precedence() && ops[2].Precedence() < ops[0].Precedence():
+	case o[1].Precedence() <= o[2].Precedence() && o[2].Precedence() < o[0].Precedence():
 		// a + b * c * d = (a + ((b * c) * d))
-		return ast.BinaryExpression{
-			Operator: ops[1],
-			Left:     operands[0],
-			Right: ast.BinaryExpression{
-				Operator: ops[2],
-				Left: ast.BinaryExpression{
-					Operator: ops[1],
-					Left:     operands[1],
-					Right:    operands[2],
-				},
-				Right: operands[3],
-			},
-		}
+		return bex(o[0], n[0], bex(o[2], bex(o[1], n[1], n[2]), n[3]))
 
-	case ops[2].Precedence() < ops[0].Precedence() && ops[0].Precedence() <= ops[1].Precedence():
+	case o[2].Precedence() < o[0].Precedence() && o[0].Precedence() <= o[1].Precedence():
 		// a + b + c * d = ((a + b) + (c * d))
-		return ast.BinaryExpression{
-			Operator: ops[1],
-			Left: ast.BinaryExpression{
-				Operator: ops[0],
-				Left:     operands[0],
-				Right:    operands[1],
-			},
-			Right: ast.BinaryExpression{
-				Operator: ops[2],
-				Left:     operands[2],
-				Right:    operands[3],
-			},
-		}
+		return bex(o[1], bex(o[0], n[0], n[1]), bex(o[2], n[2], n[3]))
 
-	case ops[2].Precedence() < ops[1].Precedence() && ops[1].Precedence() < ops[0].Precedence():
+	case o[2].Precedence() < o[1].Precedence() && o[1].Precedence() < o[0].Precedence():
 		// a < b + c * d = (a < (b + (c * d)))
-		return ast.BinaryExpression{
-			Operator: ops[0],
-			Left:     operands[0],
-			Right: ast.BinaryExpression{
-				Operator: ops[1],
-				Left:     operands[1],
-				Right: ast.BinaryExpression{
-					Operator: ops[2],
-					Left:     operands[2],
-					Right:    operands[3],
-				},
-			},
-		}
+		return bex(o[0], n[0], bex(o[1], n[1], bex(o[2], n[2], n[3])))
 
 	default:
-		panic("must cover all cases")
+		panic("unreachable: switch must cover all cases")
 	}
 }
 
@@ -274,14 +201,14 @@ func (p *Parser) primary() (ast.Expression, error) {
 
 func (p *Parser) unary() (*ast.UnaryExpression, error) {
 	topExp := &ast.UnaryExpression{
-		Operator: oper.NewUnary(p.tok),
+		Operator: ast.UnaryOperatorFromToken(p.tok),
 	}
 	p.advance()
 
 	tipExp := topExp
 	for p.tok.Kind.IsUnaryOperator() {
 		nextExp := &ast.UnaryExpression{
-			Operator: oper.NewUnary(p.tok),
+			Operator: ast.UnaryOperatorFromToken(p.tok),
 		}
 		p.advance()
 		tipExp.Inner = nextExp

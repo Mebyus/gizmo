@@ -6,7 +6,6 @@ import (
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/toplvl"
-	"github.com/mebyus/gizmo/ast/tps"
 )
 
 func ConvertTopLevel(top ast.TopLevel) Node {
@@ -15,6 +14,8 @@ func ConvertTopLevel(top ast.TopLevel) Node {
 		return ConvertTopFunctionDeclaration(top.(ast.TopFunctionDeclaration))
 	case toplvl.Fn:
 		return ConvertTopFunctionDefinition(top.(ast.TopFunctionDefinition))
+	case toplvl.Var:
+		return ConvertTopVar(top.(ast.TopVar))
 	default:
 		return Node{Text: fmt.Sprintf("<top level %s not implemented>", top.Kind().String())}
 	}
@@ -108,31 +109,6 @@ func ConvertFunctionParams(params []ast.FieldDefinition) []Node {
 	return nodes
 }
 
-func ConvertFieldDefinition(field ast.FieldDefinition) []Node {
-	nameTitle := "name: "
-	if len(field.Name.Lit) == 0 {
-		nameTitle += "<nil>"
-	} else {
-		nameTitle += field.Name.Lit
-	}
-
-	return []Node{
-		{
-			Text: nameTitle,
-		},
-		ConvertTypeSpecifier(field.Type),
-	}
-}
-
-func ConvertTypeSpecifier(spec ast.TypeSpecifier) Node {
-	typeTitle := "type: "
-	if spec.Kind() == tps.Name {
-		typeTitle += formatScopedIdentifier(spec.(ast.TypeName).Name)
-	} else {
-		typeTitle += fmt.Sprintf("<%s not implemented>", spec.Kind().String())
-	}
-
-	return Node{
-		Text: typeTitle,
-	}
+func ConvertTopVar(top ast.TopVar) Node {
+	return ConvertVarInit(top.VarInit)
 }

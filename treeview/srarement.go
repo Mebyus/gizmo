@@ -148,3 +148,16 @@ func ConvertConstStatement(statement ast.ConstStatement) Node {
 		},
 	}
 }
+
+func ConvertVarInit(v ast.VarInit) Node {
+	return Node{
+		Text: "var",
+		Nodes: []Node{
+			{
+				Text: "name: " + formatIdentifier(v.Name),
+			},
+			ConvertTypeSpecifier(v.Type),
+			ConvertExpression(v.Expression),
+		},
+	}
+}

@@ -19,4 +19,3 @@ type UnitAtom struct {
 	// Saved in order they appear in source code
 	Blocks []NamespaceBlock
 }
-

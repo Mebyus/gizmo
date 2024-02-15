@@ -25,6 +25,8 @@ func ConvertInnerExpression(expr ast.Expression) Node {
 		return ConvertBasicLiteral(expr.(ast.BasicLiteral))
 	case exn.Call:
 		return ConvertCallExpression(expr.(ast.CallExpression))
+	case exn.Paren:
+		return ConvertParenthesizedExpression(expr.(ast.ParenthesizedExpression))
 	default:
 		return Node{Text: fmt.Sprintf("<%s expression not implemented>", expr.Kind().String())}
 	}
@@ -106,3 +108,9 @@ func ConvertChainStart(start ast.ChainStart) Node {
 	return Node{Text: "idn: " + formatScopedIdentifier(start.Identifier)}
 }
 
+func ConvertParenthesizedExpression(expr ast.ParenthesizedExpression) Node {
+	return Node{
+		Text: "paren",
+		Nodes: []Node{ConvertInnerExpression(expr.Inner)},
+	}
+}

@@ -3,7 +3,6 @@ package ast
 import (
 	"github.com/mebyus/gizmo/ast/bop"
 	"github.com/mebyus/gizmo/ast/exn"
-	"github.com/mebyus/gizmo/ast/oper"
 	"github.com/mebyus/gizmo/ast/uop"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/token"
@@ -84,7 +83,7 @@ func (e ParenthesizedExpression) Pin() source.Pos {
 type UnaryExpression struct {
 	nodeExpression
 
-	Operator oper.Unary
+	Operator UnaryOperator
 	Inner    Expression
 }
 
@@ -102,7 +101,7 @@ func (e UnaryExpression) Pin() source.Pos {
 type BinaryExpression struct {
 	nodeExpression
 
-	Operator oper.Binary
+	Operator BinaryOperator
 	Left     Expression
 	Right    Expression
 }
@@ -274,4 +273,8 @@ func BinaryOperatorFromToken(tok token.Token) BinaryOperator {
 		Pos:  tok.Pos,
 		Kind: bop.FromToken(tok.Kind),
 	}
+}
+
+func (o BinaryOperator) Precedence() int {
+	return o.Kind.Precedence()
 }

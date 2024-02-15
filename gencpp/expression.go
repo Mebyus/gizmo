@@ -5,7 +5,9 @@ import (
 	"strconv"
 
 	"github.com/mebyus/gizmo/ast"
+	"github.com/mebyus/gizmo/ast/bop"
 	"github.com/mebyus/gizmo/ast/exn"
+	"github.com/mebyus/gizmo/ast/uop"
 	"github.com/mebyus/gizmo/token"
 )
 
@@ -64,17 +66,31 @@ func (g *Builder) IndirectExpression(expr ast.IndirectExpression) {
 
 func (g *Builder) BinaryExpression(expr ast.BinaryExpression) {
 	g.Expression(expr.Left)
-
 	g.space()
-	g.write(expr.Operator.String())
+	g.BinaryOperator(expr.Operator)
 	g.space()
-
 	g.Expression(expr.Right)
 }
 
+func (g *Builder) BinaryOperator(op ast.BinaryOperator) {
+	if op.Kind == bop.BitwiseAndNot {
+		g.write("&~")
+		return
+	}
+	g.write(op.Kind.String())
+}
+
 func (g *Builder) UnaryExpression(expr *ast.UnaryExpression) {
-	g.write(expr.Operator.Kind.String())
+	g.UnaryOperator(expr.Operator)
 	g.Expression(expr.Inner)
+}
+
+func (g *Builder) UnaryOperator(op ast.UnaryOperator) {
+	if op.Kind == uop.BitwiseNot {
+		g.write("~")
+		return
+	}
+	g.write(op.Kind.String())
 }
 
 func (g *Builder) CallExpression(expr ast.CallExpression) {
