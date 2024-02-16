@@ -91,4 +91,45 @@ fn return_the_same_chunk(c: []Pos) => []Pos {
     return c;
 }
 
+fn for_loop_no_condition() {
+    var i: uarch = 0;
+    for {
+        i += 1;
+        if i > 27 {
+            return;
+        }
+    }
+}
+
+fn for_loop_with_condition() {
+    var i: uarch = 0;
+    for i <= 45 {
+        i += 1;
+        if i > 27 {
+            return;
+        }
+    }
+}
+
+fn if_with_always_true() => bool {
+    if true {
+        os::stdout.print("true branch");
+    } else {
+        // unreachable
+        os::stdout.print("false branch");
+    }
+
+    return false;
+}
+
+/*
+type Error enum u8 {
+    Ok,
+    EOF,
+
+    Unknown = 0x10,
+
+}
+*/
+
 }

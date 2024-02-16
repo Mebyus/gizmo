@@ -54,6 +54,7 @@ func (g *Builder) structFieldsWithDirtyConstructor(fields []ast.FieldDefinition,
 	}
 
 	if name != "" {
+		// adds nop constructor to struct definition
 		g.nl()
 		g.indent()
 		g.write(name)

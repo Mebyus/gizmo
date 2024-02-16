@@ -193,7 +193,8 @@ type ElseIfClause struct {
 
 	// Always not nil
 	Condition Expression
-	Body      BlockStatement
+
+	Body BlockStatement
 }
 
 // <ElseClause> = "else" <BlockStatement>
@@ -229,4 +230,45 @@ func (ExpressionStatement) Kind() stm.Kind {
 
 func (s ExpressionStatement) Pin() source.Pos {
 	return s.Expression.Pin()
+}
+
+type ForStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	// must contain at least one statement
+	Body BlockStatement
+}
+
+var _ Statement = ForStatement{}
+
+func (ForStatement) Kind() stm.Kind {
+	return stm.For
+}
+
+func (s ForStatement) Pin() source.Pos {
+	return s.Pos
+}
+
+type ForConditionStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	// Always not nil
+	Condition Expression
+
+	// must contain at least one statement
+	Body BlockStatement
+}
+
+var _ Statement = ForConditionStatement{}
+
+func (ForConditionStatement) Kind() stm.Kind {
+	return stm.ForCond
+}
+
+func (s ForConditionStatement) Pin() source.Pos {
+	return s.Pos
 }

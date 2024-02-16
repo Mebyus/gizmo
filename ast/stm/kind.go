@@ -17,6 +17,8 @@ const (
 	Var
 	If
 	Expr
+	For
+	ForCond
 )
 
 var text = [...]string{
@@ -30,6 +32,8 @@ var text = [...]string{
 	Var:       "var",
 	If:        "if",
 	Expr:      "expr",
+	For:       "for",
+	ForCond:   "for_cond",
 }
 
 func (k Kind) String() string {

@@ -45,11 +45,44 @@ func (g *Builder) Statement(statement ast.Statement) {
 		g.ExpressionStatement(statement.(ast.ExpressionStatement))
 	case stm.Assign:
 		g.AssignStatement(statement.(ast.AssignStatement))
+	case stm.AddAssign:
+		g.AddAssignStatement(statement.(ast.AddAssignStatement))
+	case stm.For:
+		g.ForStatement(statement.(ast.ForStatement))
+	case stm.ForCond:
+		g.ForConditionStatement(statement.(ast.ForConditionStatement))
 	default:
 		g.indent()
 		g.write(fmt.Sprintf("<%s statement not implemented>", statement.Kind().String()))
 		g.nl()
 	}
+}
+
+func (g *Builder) ForStatement(statement ast.ForStatement) {
+	g.indent()
+	g.write("while (true) ")
+	g.Block(statement.Body)
+	g.nl()
+}
+
+func (g *Builder) ForConditionStatement(statement ast.ForConditionStatement) {
+	g.indent()
+	g.write("while (")
+	g.Expression(statement.Condition)
+	g.write(") ")
+	g.Block(statement.Body)
+	g.nl()
+}
+
+func (g *Builder) AddAssignStatement(statement ast.AddAssignStatement) {
+	g.indent()
+
+	g.Expression(statement.Target)
+	g.write(" += ")
+	g.Expression(statement.Expression)
+
+	g.semi()
+	g.nl()
 }
 
 func (g *Builder) ExpressionStatement(statement ast.ExpressionStatement) {

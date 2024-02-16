@@ -20,9 +20,61 @@ func (p *Parser) parseStatement() (statement ast.Statement, err error) {
 		return p.ifStatement()
 	case token.Return:
 		return p.returnStatement()
+	case token.For:
+		return p.forStatement()
 	default:
 		return p.identifierStartStatement()
 	}
+}
+
+func (p *Parser) forStatement() (ast.Statement, error) {
+	if p.next.Kind == token.LeftCurly {
+		return p.forSimpleStatement()
+	}
+	return p.forWithConditionStatement()
+}
+
+func (p *Parser) forSimpleStatement() (ast.ForStatement, error) {
+	pos := p.pos()
+
+	p.advance() // skip "for"
+
+	body, err := p.block()
+	if err != nil {
+		return ast.ForStatement{}, err
+	}
+	if len(body.Statements) == 0 {
+		return ast.ForStatement{}, fmt.Errorf("%s for loop without condition cannot have empty body", pos.Short())
+	}
+
+	return ast.ForStatement{
+		Pos:  pos,
+		Body: body,
+	}, nil
+}
+
+func (p *Parser) forWithConditionStatement() (ast.ForConditionStatement, error) {
+	pos := p.pos()
+
+	p.advance() // skip "for"
+
+	condition, err := p.expr()
+	if err != nil {
+		return ast.ForConditionStatement{}, err
+	}
+	if p.tok.Kind != token.LeftCurly {
+		return ast.ForConditionStatement{}, p.unexpected(p.tok)
+	}
+	body, err := p.block()
+	if err != nil {
+		return ast.ForConditionStatement{}, err
+	}
+
+	return ast.ForConditionStatement{
+		Pos:       pos,
+		Condition: condition,
+		Body:      body,
+	}, nil
 }
 
 func (p *Parser) returnStatement() (statement ast.ReturnStatement, err error) {

@@ -13,10 +13,11 @@ func (p *Parser) method() (ast.Method, error) {
 	}
 	p.advance() // skip "("
 
-	receiver, err := p.typeSpecifier()
-	if err != nil {
-		return ast.Method{}, err
+	if p.tok.Kind != token.Identifier {
+		return ast.Method{}, p.unexpected(p.tok)
 	}
+	receiver := p.idn()
+	p.advance() // skip receiver name
 
 	if p.tok.Kind != token.RightParentheses {
 		return ast.Method{}, p.unexpected(p.tok)

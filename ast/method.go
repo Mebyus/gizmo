@@ -7,14 +7,14 @@ import (
 
 // <Method> = "method" "(" <Receiver> ")" <Name> <Signature> <Body>
 //
-// <Receiver> = <TypeSpecifier>
+// <Receiver> = <Identifier>
 // <Name> = <Identifier>
 // <Signature> = <FunctionSignature>
 // <Body> = <BlockStatement>
 type Method struct {
 	nodeTopLevel
 
-	Receiver TypeSpecifier
+	Receiver Identifier
 
 	Name Identifier
 

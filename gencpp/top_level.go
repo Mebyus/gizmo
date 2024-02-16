@@ -20,6 +20,8 @@ func (g *Builder) TopLevel(node ast.TopLevel) {
 		g.TopDeclare(node.(ast.TopFunctionDeclaration))
 	case toplvl.Var:
 		g.TopVar(node.(ast.TopVar))
+	case toplvl.Method:
+		g.Method(node.(ast.Method))
 	default:
 		g.write(fmt.Sprintf("<%s node not implemented>", node.Kind().String()))
 	}
@@ -38,7 +40,7 @@ func (g *Builder) TopStructType(name ast.Identifier, spec ast.StructType) {
 	g.write("struct ")
 	g.Identifier(name)
 	g.space()
-	g.structFieldsWithDirtyConstructor(spec.Fields, name.Lit)
+	g.structFields(spec.Fields)
 	g.semi()
 	g.nl()
 }
@@ -58,5 +60,17 @@ func (g *Builder) TopDeclare(top ast.TopFunctionDeclaration) {
 func (g *Builder) TopVar(top ast.TopVar) {
 	g.VarInit(top.VarInit)
 	g.semi()
+	g.nl()
+}
+
+func (g *Builder) Method(top ast.Method) {
+	g.TypeSpecifier(top.Signature.Result)
+	g.space()
+	g.Identifier(top.Receiver)
+	g.write("::")
+	g.Identifier(top.Name)
+	g.functionParams(top.Signature.Params)
+	g.write(" noexcept ")
+	g.Block(top.Body)
 	g.nl()
 }
