@@ -232,6 +232,7 @@ func (s ExpressionStatement) Pin() source.Pos {
 	return s.Expression.Pin()
 }
 
+// <ForStatement> = "for" <BlockStatement>
 type ForStatement struct {
 	nodeStatement
 
@@ -251,6 +252,7 @@ func (s ForStatement) Pin() source.Pos {
 	return s.Pos
 }
 
+// <ForConditionStatement> = "for" <BlockStatement>
 type ForConditionStatement struct {
 	nodeStatement
 
@@ -270,5 +272,39 @@ func (ForConditionStatement) Kind() stm.Kind {
 }
 
 func (s ForConditionStatement) Pin() source.Pos {
+	return s.Pos
+}
+
+type MatchStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	// Expression at the top of match statement that is being matched
+	Expression Expression
+
+	// Match cases in order they appear
+	Cases []MatchCase
+
+	// Always present, but can have zero statements in block
+	//
+	// Else case is always the last in match statement
+	Else BlockStatement
+}
+
+type MatchCase struct {
+	// Always not nil
+	Expression Expression
+
+	Body BlockStatement
+}
+
+var _ Statement = MatchStatement{}
+
+func (MatchStatement) Kind() stm.Kind {
+	return stm.Match
+}
+
+func (s MatchStatement) Pin() source.Pos {
 	return s.Pos
 }

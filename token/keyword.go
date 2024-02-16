@@ -19,7 +19,7 @@ var words = map[string]Kind{
 	"in":       In,
 	"var":      Var,
 	"type":     Type,
-	"switch":   Switch,
+	"match":    Match,
 	"enum":     Enum,
 	"struct":   Struct,
 	"union":    Union,

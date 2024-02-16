@@ -122,6 +122,29 @@ fn if_with_always_true() => bool {
     return false;
 }
 
+fn take_array(a: [16]u64) {
+
+}
+
+fn match_example(x: u64) => u8 {
+    match x {
+        case 0 => { return 1; }
+        
+        case 2 => {
+            const r: u64 = x + 25;
+            return r;
+        }
+
+        case 3 => {}
+
+        else => {
+            return ^x;
+        }
+    }
+
+    return 0;
+}
+
 /*
 type Error enum u8 {
     Ok,

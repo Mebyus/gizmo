@@ -41,8 +41,8 @@ const (
 	NotEqual       // !=
 	LessOrEqual    // <=
 	GreaterOrEqual // >=
-	Less           // <
-	Greater        // >
+	LeftAngle      // <
+	RightAngle     // >
 	Not            // !
 
 	Assign          // =
@@ -104,7 +104,7 @@ const (
 	Struct
 	Union
 
-	Switch
+	Match
 	Type
 	Var
 	Const
@@ -183,7 +183,7 @@ func (k Kind) IsUnaryOperator() bool {
 func (k Kind) IsBinaryOperator() bool {
 	switch k {
 	case
-		Less, Greater, Equal, LessOrEqual, GreaterOrEqual, NotEqual, LogicalAnd,
+		LeftAngle, RightAngle, Equal, LessOrEqual, GreaterOrEqual, NotEqual, LogicalAnd,
 		LogicalOr, Plus, Minus, Asterisk, Slash, Percent, LeftShift, RightShift,
 		Pipe, Ampersand, BitwiseAndNot, Caret:
 

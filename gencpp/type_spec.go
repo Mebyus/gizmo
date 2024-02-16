@@ -17,6 +17,8 @@ func (g *Builder) TypeSpecifier(spec ast.TypeSpecifier) {
 		g.ArrayPointerType(spec.(ast.ArrayPointerType))
 	case tps.Chunk:
 		g.ChunkType(spec.(ast.ChunkType))
+	case tps.Array:
+		g.ArrayType(spec.(ast.ArrayType))
 	default:
 		g.write(fmt.Sprintf("<%s type specifier not implemented>", spec.Kind().String()))
 	}
@@ -84,5 +86,13 @@ func (g *Builder) ChunkType(spec ast.ChunkType) {
 
 	g.write("chunk<")
 	g.TypeSpecifier(spec.ElemType)
+	g.write(">")
+}
+
+func (g *Builder) ArrayType(spec ast.ArrayType) {
+	g.write("array<")
+	g.TypeSpecifier(spec.ElemType)
+	g.write(", ")
+	g.Expression(spec.Size)
 	g.write(">")
 }

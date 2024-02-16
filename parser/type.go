@@ -48,6 +48,9 @@ func (p *Parser) typeSpecifier() (ast.TypeSpecifier, error) {
 	if p.tok.Kind == token.Chunk {
 		return p.chunkType()
 	}
+	if p.tok.Kind == token.LeftSquare {
+		return p.arrayType()
+	}
 	return nil, fmt.Errorf("other type specifiers not implemented %s", p.tok.Short())
 }
 
@@ -64,6 +67,33 @@ func (p *Parser) pointerType() (ast.PointerType, error) {
 	return ast.PointerType{
 		Pos:     pos,
 		RefType: ref,
+	}, nil
+}
+
+func (p *Parser) arrayType() (ast.ArrayType, error) {
+	pos := p.pos()
+
+	p.advance() // skip "["
+
+	size, err := p.expr()
+	if err != nil {
+		return ast.ArrayType{}, err
+	}
+
+	if p.tok.Kind != token.RightSquare {
+		return ast.ArrayType{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip "]"
+
+	elem, err := p.typeSpecifier()
+	if err != nil {
+		return ast.ArrayType{}, err
+	}
+
+	return ast.ArrayType{
+		Pos:      pos,
+		ElemType: elem,
+		Size:     size,
 	}, nil
 }
 

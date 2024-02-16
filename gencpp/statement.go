@@ -10,6 +10,11 @@ import (
 // Same as BlockStatement method, but indentation formatting is different
 // to start block on the same line
 func (g *Builder) Block(block ast.BlockStatement) {
+	if len(block.Statements) == 0 {
+		g.write("{}")
+		return
+	}
+
 	g.wb('{')
 	g.nl()
 	g.inc()
@@ -51,11 +56,47 @@ func (g *Builder) Statement(statement ast.Statement) {
 		g.ForStatement(statement.(ast.ForStatement))
 	case stm.ForCond:
 		g.ForConditionStatement(statement.(ast.ForConditionStatement))
+	case stm.Match:
+		g.MatchStatement(statement.(ast.MatchStatement))
 	default:
 		g.indent()
 		g.write(fmt.Sprintf("<%s statement not implemented>", statement.Kind().String()))
 		g.nl()
 	}
+}
+
+func (g *Builder) MatchStatement(statement ast.MatchStatement) {
+	g.indent()
+
+	g.write("switch (")
+	g.Expression(statement.Expression)
+	g.write(") {")
+	g.nl()
+	g.nl()
+
+	g.inc()
+	for _, c := range statement.Cases {
+		g.indent()
+		g.write("case ")
+		g.Expression(c.Expression)
+		g.write(": ")
+		g.Block(c.Body)
+		g.write(" break;")
+		g.nl()
+		g.nl()
+	}
+
+	g.indent()
+	g.write("default: ")
+	g.Block(statement.Else)
+	g.write(" break;")
+	g.dec()
+	g.nl()
+	g.nl()
+
+	g.indent()
+	g.write("}")
+	g.nl()
 }
 
 func (g *Builder) ForStatement(statement ast.ForStatement) {

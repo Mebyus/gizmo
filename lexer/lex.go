@@ -400,7 +400,7 @@ func (s *Lexer) scanGreaterStart() (tok token.Token) {
 		s.advance()
 		s.advance()
 	} else {
-		tok = s.create(token.Greater)
+		tok = s.create(token.RightAngle)
 		s.advance()
 	}
 	return
@@ -504,7 +504,7 @@ func (lx *Lexer) lexOther() token.Token {
 		case '-':
 			return lx.lexTwoBytes(token.LeftArrow)
 		default:
-			return lx.lexByte(token.Less)
+			return lx.lexByte(token.LeftAngle)
 		}
 	case '>':
 		return lx.scanGreaterStart()

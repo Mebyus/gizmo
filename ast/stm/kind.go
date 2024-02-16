@@ -19,6 +19,7 @@ const (
 	Expr
 	For
 	ForCond
+	Match
 )
 
 var text = [...]string{
@@ -34,6 +35,7 @@ var text = [...]string{
 	Expr:      "expr",
 	For:       "for",
 	ForCond:   "for_cond",
+	Match:     "match",
 }
 
 func (k Kind) String() string {

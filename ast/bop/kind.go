@@ -118,9 +118,9 @@ func FromToken(k token.Kind) Kind {
 		return Equal
 	case token.NotEqual:
 		return NotEqual
-	case token.Less:
+	case token.LeftAngle:
 		return Less
-	case token.Greater:
+	case token.RightAngle:
 		return Greater
 	case token.LessOrEqual:
 		return LessOrEqual

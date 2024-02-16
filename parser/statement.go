@@ -22,9 +22,99 @@ func (p *Parser) parseStatement() (statement ast.Statement, err error) {
 		return p.returnStatement()
 	case token.For:
 		return p.forStatement()
+	case token.Match:
+		return p.matchStatement()
 	default:
 		return p.identifierStartStatement()
 	}
+}
+
+func (p *Parser) matchStatement() (ast.MatchStatement, error) {
+	pos := p.pos()
+
+	p.advance() // skip "match"
+
+	expr, err := p.expr()
+	if err != nil {
+		return ast.MatchStatement{}, err
+	}
+
+	if p.tok.Kind != token.LeftCurly {
+		return ast.MatchStatement{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip "{"
+
+	var cases []ast.MatchCase
+	for {
+		switch p.tok.Kind {
+		case token.Case:
+			c, err := p.matchCase()
+			if err != nil {
+				return ast.MatchStatement{}, err
+			}
+			cases = append(cases, c)
+		case token.Else:
+			block, err := p.matchElse()
+			if err != nil {
+				return ast.MatchStatement{}, err
+			}
+
+			// closing curly of match statement
+			if p.tok.Kind != token.RightCurly {
+				return ast.MatchStatement{}, p.unexpected(p.tok)
+			}
+			p.advance() // skip "}"
+
+			return ast.MatchStatement{
+				Pos:        pos,
+				Expression: expr,
+				Cases:      cases,
+				Else:       block,
+			}, nil
+		default:
+			return ast.MatchStatement{}, p.unexpected(p.tok)
+		}
+	}
+}
+
+func (p *Parser) matchCase() (ast.MatchCase, error) {
+	p.advance() // skip "case"
+
+	expr, err := p.expr()
+	if err != nil {
+		return ast.MatchCase{}, err
+	}
+
+	if p.tok.Kind != token.RightArrow {
+		return ast.MatchCase{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip "=>"
+
+	block, err := p.block()
+	if err != nil {
+		return ast.MatchCase{}, err
+	}
+
+	return ast.MatchCase{
+		Expression: expr,
+		Body:       block,
+	}, nil
+}
+
+func (p *Parser) matchElse() (ast.BlockStatement, error) {
+	p.advance() // skip "else"
+
+	if p.tok.Kind != token.RightArrow {
+		return ast.BlockStatement{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip "=>"
+
+	block, err := p.block()
+	if err != nil {
+		return ast.BlockStatement{}, err
+	}
+
+	return block, nil
 }
 
 func (p *Parser) forStatement() (ast.Statement, error) {
