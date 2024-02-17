@@ -145,7 +145,6 @@ fn match_example(x: u64) => u8 {
     return 0;
 }
 
-/*
 type Error enum u8 {
     Ok,
     EOF,
@@ -153,6 +152,5 @@ type Error enum u8 {
     Unknown = 0x10,
 
 }
-*/
 
 }

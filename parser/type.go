@@ -30,11 +30,7 @@ func (p *Parser) topLevelType() (ast.TopType, error) {
 
 func (p *Parser) typeSpecifier() (ast.TypeSpecifier, error) {
 	if p.tok.Kind == token.Identifier {
-		name, err := p.scopedIdentifier()
-		if err != nil {
-			return nil, err
-		}
-		return ast.TypeName{Name: name}, nil
+		return p.typeName()
 	}
 	if p.tok.Kind == token.Asterisk {
 		return p.pointerType()
@@ -51,7 +47,86 @@ func (p *Parser) typeSpecifier() (ast.TypeSpecifier, error) {
 	if p.tok.Kind == token.LeftSquare {
 		return p.arrayType()
 	}
+	if p.tok.Kind == token.Enum {
+		return p.enumType()
+	}
 	return nil, fmt.Errorf("other type specifiers not implemented %s", p.tok.Short())
+}
+
+func (p *Parser) typeName() (ast.TypeName, error) {
+	name, err := p.scopedIdentifier()
+	if err != nil {
+		return ast.TypeName{}, err
+	}
+	return ast.TypeName{Name: name}, nil
+}
+
+func (p *Parser) enumType() (ast.EnumType, error) {
+	pos := p.pos()
+
+	p.advance() // skip "enum"
+
+	base, err := p.typeName()
+	if err != nil {
+		return ast.EnumType{}, err
+	}
+
+	if p.tok.Kind != token.LeftCurly {
+		return ast.EnumType{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip "{"
+
+	var entries []ast.EnumEntry
+	for {
+		if p.tok.Kind == token.RightCurly {
+			p.advance() // skip "}"
+
+			return ast.EnumType{
+				Pos:     pos,
+				Base:    base,
+				Entries: entries,
+			}, nil
+		}
+
+		entry, err := p.enumEntry()
+		if err != nil {
+			return ast.EnumType{}, err
+		}
+		entries = append(entries, entry)
+
+		if p.tok.Kind == token.Comma {
+			p.advance() // skip ","
+		} else if p.tok.Kind == token.RightCurly {
+			// will be skipped at next iteration
+		} else {
+			return ast.EnumType{}, p.unexpected(p.tok)
+		}
+	}
+}
+
+func (p *Parser) enumEntry() (ast.EnumEntry, error) {
+	if p.tok.Kind != token.Identifier {
+		return ast.EnumEntry{}, p.unexpected(p.tok)
+	}
+	name := p.idn()
+	p.advance() // skip entry name identifier
+
+	if p.tok.Kind != token.Assign {
+		// entry without explicit assigned value
+		return ast.EnumEntry{Name: name}, nil
+	}
+
+	p.advance() // skip "="
+
+	expr, err := p.expr()
+	if err != nil {
+		return ast.EnumEntry{}, err
+	}
+
+	return ast.EnumEntry{
+		Name:       name,
+		Expression: expr,
+	}, nil
 }
 
 func (p *Parser) pointerType() (ast.PointerType, error) {

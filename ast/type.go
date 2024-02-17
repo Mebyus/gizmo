@@ -157,6 +157,35 @@ func (t ArrayType) Pin() source.Pos {
 	return t.Pos
 }
 
+type EnumType struct {
+	nodeTypeSpecifier
+
+	Pos source.Pos
+
+	// Base integer type
+	Base TypeName
+
+	Entries []EnumEntry
+}
+
+type EnumEntry struct {
+	Name Identifier
+
+	// Can be nil if entry does not have explicit assigned value
+	Expression Expression
+}
+
+// Explicit interface implementation check
+var _ TypeSpecifier = EnumType{}
+
+func (EnumType) Kind() tps.Kind {
+	return tps.Enum
+}
+
+func (t EnumType) Pin() source.Pos {
+	return t.Pos
+}
+
 // <TypeLiteral> = <ArrayTypeLiteral> | <PointerTypeLiteral> | <ChunkTypeLiteral> |
 // <ArrayPointerTypeLiteral> | <StructTypeLiteral>
 type TypeLiteral any

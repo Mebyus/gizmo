@@ -28,12 +28,14 @@ func (g *Builder) TopLevel(node ast.TopLevel) {
 }
 
 func (g *Builder) TopType(top ast.TopType) {
-	if top.Spec.Kind() == tps.Struct {
+	switch top.Spec.Kind() {
+	case tps.Struct:
 		g.TopStructType(top.Name, top.Spec.(ast.StructType))
-		return
+	case tps.Enum:
+		g.TopEnumType(top.Name, top.Spec.(ast.EnumType))
+	default:
+		g.write(fmt.Sprintf("<top %s type not implemented>", top.Spec.Kind()))
 	}
-
-	g.write(fmt.Sprintf("<top %s type not implemented>", top.Spec.Kind()))
 }
 
 func (g *Builder) TopStructType(name ast.Identifier, spec ast.StructType) {
@@ -72,5 +74,39 @@ func (g *Builder) Method(top ast.Method) {
 	g.functionParams(top.Signature.Params)
 	g.write(" noexcept ")
 	g.Block(top.Body)
+	g.nl()
+}
+
+func (g *Builder) TopEnumType(name ast.Identifier, spec ast.EnumType) {
+	g.write("enum struct ")
+	g.Identifier(name)
+	g.space()
+
+	if len(spec.Entries) == 0 {
+		g.write("{};")
+		g.nl()
+		return
+	}
+
+	g.write("{")
+	g.nl()
+	
+	g.inc()
+	for _, entry := range spec.Entries {
+		g.indent()
+
+		g.Identifier(entry.Name)
+		
+		if entry.Expression != nil {
+			g.write(" = ")
+			g.Expression(entry.Expression)
+		}
+
+		g.write(",")
+		g.nl()
+	}
+	g.dec()
+	
+	g.write("};")
 	g.nl()
 }
