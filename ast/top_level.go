@@ -11,6 +11,12 @@ type NamespaceBlock struct {
 
 	// Saved in order they appear inside namespace block
 	Nodes []TopLevel
+
+	// True for default namespace block. Default namespace is assumed
+	// implicitly for any top level construct which is not inside
+	// any explicit namespace block. Default namespace is assigned
+	// for each unit separately
+	Default bool
 }
 
 // <TopLevel> = <Function> | <Method> | <Type> | <Var> | <Const> | <Template>

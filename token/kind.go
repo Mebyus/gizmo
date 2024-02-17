@@ -81,13 +81,14 @@ const (
 
 	Break
 	Case
-	Continue
+	Jump
 
 	If
 	Else
 	In
 	For
 
+	Namespace
 	Defer
 	Fn
 	Method

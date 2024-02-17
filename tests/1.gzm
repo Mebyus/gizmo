@@ -1,5 +1,11 @@
 namespace coven {}
 
+fn default_namespace_function() {
+
+}
+
+const default_namespace_const: str = " default_const ";
+
 namespace coven::os {
 
 declare fn do_something()
@@ -152,5 +158,22 @@ type Error enum u8 {
     Unknown = 0x10,
 
 }
+
+/*
+fn loop_jumps() {
+    var i: uarch = 0;
+    for {
+        i += 1;
+
+        if i < 10 {
+            jump @.next;
+        }
+
+        if i == 0 {
+            jump @.end;
+        }
+    }
+}
+*/
 
 }

@@ -9,6 +9,8 @@ import (
 )
 
 func (g *Builder) TopLevel(node ast.TopLevel) {
+	g.comment("gizmo.source = " + node.Pin().String())
+
 	switch node.Kind() {
 	case toplvl.Fn:
 		g.FunctionDefinition(node.(ast.TopFunctionDefinition).Definition)

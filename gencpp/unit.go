@@ -15,7 +15,11 @@ func (g *Builder) NamespaceBlock(block ast.NamespaceBlock) {
 	}
 
 	g.write("namespace ")
-	g.ScopedIdentifier(block.Name)
+	if block.Default {
+		g.write("<default>")
+	} else {
+		g.ScopedIdentifier(block.Name)
+	}
 	g.write(" {")
 	g.nl()
 	g.nl()

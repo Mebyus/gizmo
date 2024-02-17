@@ -97,18 +97,35 @@ func (p *Parser) parse() (ast.UnitAtom, error) {
 	}
 
 	var blocks []ast.NamespaceBlock
+	def := ast.NamespaceBlock{Default: true}
 	for {
 		if p.isEOF() {
+			if len(def.Nodes) != 0 {
+				blocks = append(blocks, def)
+			}
+
 			return ast.UnitAtom{
 				Unit:   unit,
 				Blocks: blocks,
 			}, nil
 		}
 
-		block, err := p.namespaceBlock()
-		if err != nil {
-			return ast.UnitAtom{}, err
+		if p.tok.Kind == token.Namespace {
+			block, err := p.namespaceBlock()
+			if err != nil {
+				return ast.UnitAtom{}, err
+			}
+			if len(def.Nodes) != 0 {
+				blocks = append(blocks, def)
+				def = ast.NamespaceBlock{Default: true}
+			}
+			blocks = append(blocks, block)
+		} else {
+			top, err := p.topLevel()
+			if err != nil {
+				return ast.UnitAtom{}, err
+			}
+			def.Nodes = append(def.Nodes, top)
 		}
-		blocks = append(blocks, block)
 	}
 }
