@@ -102,7 +102,7 @@ var Literal = [...]string{
 	// Non static literals
 
 	Illegal:            "ILLEGAL",
-	Identifier:         "IDENT",
+	Identifier:         "IDN",
 	String:             "STR",
 	Character:          "CHAR",
 	BinaryInteger:      "INT.BIN",

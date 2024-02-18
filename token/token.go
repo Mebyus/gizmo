@@ -83,7 +83,7 @@ func (t Token) Literal() string {
 
 func (t Token) Short() string {
 	if t.Kind.hasStaticLiteral() {
-		return fmt.Sprintf("%-12s%s", t.Pos.Short(), t.Kind.String())
+		return fmt.Sprintf("%-12s%-12s%s", t.Pos.Short(), ".", t.Kind.String())
 	}
 
 	switch t.Kind {
