@@ -32,6 +32,14 @@ type Param struct {
 }
 
 func (p *Param) Bind(val string) error {
+	switch p.Kind {
+	case empty:
+		panic("unspecified kind")
+	case String:
+		p.val = val
+	default:
+		panic(fmt.Sprintf("unxpected param kind: {%d}", p.Kind))
+	}
 	return nil
 }
 
@@ -69,6 +77,22 @@ func Parse(params Params, args []string) ([]string, error) {
 		}
 	}
 
+	unbound, err := bindArgsToParams(m, args)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range m {
+		err := params.Apply(p)
+		if err != nil {
+			return nil, fmt.Errorf("apply param {%s} value {%v}: %w", p.Name, p.val, err)
+		}
+	}
+
+	return unbound, nil
+}
+
+func bindArgsToParams(m map[string]*Param, args []string) ([]string, error) {
 	if len(args) == 0 {
 		return nil, nil
 	}
@@ -109,13 +133,6 @@ func Parse(params Params, args []string) ([]string, error) {
 		}
 
 		i += 1
-	}
-
-	for _, p := range m {
-		err := params.Apply(p)
-		if err != nil {
-			return nil, fmt.Errorf("apply param {%s} value {%v}: %w", p.Name, p.val, err)
-		}
 	}
 
 	return nil, nil

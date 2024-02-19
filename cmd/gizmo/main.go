@@ -88,7 +88,7 @@ var root = &butler.Lackey{
 	Sub: []*butler.Lackey{
 		lex.Lackey,
 		tree.Lackey,
-		gen.Lackey,
+		gen.Gen,
 	},
 }
 
