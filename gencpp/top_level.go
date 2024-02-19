@@ -72,7 +72,7 @@ func (g *Builder) TopVar(top ast.TopVar) {
 }
 
 func (g *Builder) Method(top ast.Method) {
-	g.TypeSpecifier(top.Signature.Result)
+	g.functionReturnType(top.Signature.Result)
 	g.space()
 	g.Identifier(top.Receiver)
 	g.write("::")

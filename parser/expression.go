@@ -1,9 +1,11 @@
 package parser
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/mebyus/gizmo/ast"
+	"github.com/mebyus/gizmo/ast/exn"
 	"github.com/mebyus/gizmo/lexer"
 	"github.com/mebyus/gizmo/token"
 )
@@ -295,7 +297,7 @@ func (p *Parser) identifierStartOperand() (ast.Operand, error) {
 	}
 
 	switch p.tok.Kind {
-	case token.Period, token.LeftParentheses, token.LeftSquare, token.Indirect:
+	case token.Period, token.LeftParentheses, token.LeftSquare, token.Indirect, token.Address:
 		return p.chainOperand(ast.ChainStart{Identifier: scoped})
 	default:
 		return ast.SubsExpression{Identifier: scoped}, nil
@@ -332,6 +334,12 @@ func (p *Parser) chainOperand(start ast.ChainStart) (ast.ChainOperand, error) {
 		case token.Indirect:
 			p.advance() // skip ".@"
 			tip = ast.IndirectExpression{Target: tip}
+		case token.Address:
+			p.advance() // skip ".&"
+			if tip.Kind() == exn.Call {
+				return nil, fmt.Errorf("cannot take address of a call result %s", tip.Pin().String())
+			}
+			tip = ast.AddressExpression{Target: tip}
 		case token.IndirectIndex:
 			p.advance() // skip ".["
 			index, err := p.expr()

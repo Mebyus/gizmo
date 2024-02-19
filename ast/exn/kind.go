@@ -31,6 +31,7 @@ const (
 	Call
 	Start
 	Indirect
+	Address
 
 	// Indirect index expression
 	Indirx
@@ -49,6 +50,7 @@ var text = [...]string{
 	Index:    "index",
 	Call:     "call",
 	Start:    "start",
+	Address:  "address",
 	Indirect: "indirect",
 	Indirx:   "indirect_index",
 }

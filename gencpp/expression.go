@@ -33,9 +33,16 @@ func (g *Builder) Expression(expr ast.Expression) {
 		g.ParenthesizedExpression(expr.(ast.ParenthesizedExpression))
 	case exn.Select:
 		g.SelectorExpression(expr.(ast.SelectorExpression))
+	case exn.Address:
+		g.AddressExpression(expr.(ast.AddressExpression))
 	default:
 		g.write(fmt.Sprintf("<%s expr>", expr.Kind().String()))
 	}
+}
+
+func (g *Builder) AddressExpression(expr ast.AddressExpression) {
+	g.write("&")
+	g.Expression(expr.Target)
 }
 
 func (g *Builder) BasicLiteral(lit ast.BasicLiteral) {

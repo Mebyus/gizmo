@@ -225,7 +225,7 @@ type AddressExpression struct {
 var _ ChainOperand = AddressExpression{}
 
 func (AddressExpression) Kind() exn.Kind {
-	return exn.Indirect
+	return exn.Address
 }
 
 func (e AddressExpression) Pin() source.Pos {
