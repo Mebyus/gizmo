@@ -1,9 +1,14 @@
 package gencpp
 
-import "github.com/mebyus/gizmo/ast"
+import (
+	"github.com/mebyus/gizmo/ast"
+	"github.com/mebyus/gizmo/ir"
+)
 
 func (g *Builder) UnitAtom(atom ast.UnitAtom) {
 	for _, block := range atom.Blocks {
+		g.currentScopes = ir.NamespaceScopes(block)
+
 		g.NamespaceBlock(block)
 		g.nl()
 	}

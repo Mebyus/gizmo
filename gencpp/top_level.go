@@ -2,6 +2,7 @@ package gencpp
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/toplvl"
@@ -44,7 +45,10 @@ func (g *Builder) TopStructType(name ast.Identifier, spec ast.StructType) {
 	g.write("struct ")
 	g.Identifier(name)
 	g.space()
-	g.structFields(spec.Fields)
+
+	methodsKey := strings.Join(append(g.currentScopes, name.Lit), "::")
+	g.structFields(spec.Fields, g.sm.Methods[methodsKey])
+	
 	g.semi()
 	g.nl()
 }

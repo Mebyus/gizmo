@@ -215,6 +215,23 @@ func (e IndirectExpression) Pin() source.Pos {
 	return e.Target.Pin()
 }
 
+// <AddressExpression> = <ChainOperand> ".&"
+type AddressExpression struct {
+	nodeChainOperand
+
+	Target ChainOperand
+}
+
+var _ ChainOperand = AddressExpression{}
+
+func (AddressExpression) Kind() exn.Kind {
+	return exn.Indirect
+}
+
+func (e AddressExpression) Pin() source.Pos {
+	return e.Target.Pin()
+}
+
 // <IndirectIndexExpression> = <Target> ".[" <Index> "]"
 //
 // <Target> = <ChainOperand>

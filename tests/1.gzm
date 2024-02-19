@@ -66,6 +66,12 @@ method (SourceFile) size() => uarch {
     return data.len;
 }
 
+method (SourceFile) dummy() {}
+
+method (SourceFile) ptr() => *[]u8 {
+    return data.&;
+}
+
 type Pos struct {
     file: *SourceFile,
 

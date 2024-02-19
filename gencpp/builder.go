@@ -1,6 +1,10 @@
 package gencpp
 
-import "io"
+import (
+	"io"
+
+	"github.com/mebyus/gizmo/ir"
+)
 
 // Builder is used to generate formatted output (C++ code)
 //
@@ -17,6 +21,11 @@ type Builder struct {
 
 	// Output reader position
 	pos int
+
+	sm ir.StructsMap
+
+	// list of scopes in current namespace, equals nil inside default namespace
+	currentScopes []string
 }
 
 // Explicit interface implementation check

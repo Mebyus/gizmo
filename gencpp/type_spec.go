@@ -34,11 +34,13 @@ func (g *Builder) ArrayPointerType(spec ast.ArrayPointerType) {
 	g.wb('*')
 }
 
-func (g *Builder) structFields(fields []ast.FieldDefinition) {
-	g.structFieldsWithDirtyConstructor(fields, "")
+func (g *Builder) structFields(fields []ast.FieldDefinition, methods []ast.FunctionDeclaration) {
+	g.structFieldsWithDirtyConstructor(fields, "", methods)
 }
 
-func (g *Builder) structFieldsWithDirtyConstructor(fields []ast.FieldDefinition, name string) {
+func (g *Builder) structFieldsWithDirtyConstructor(fields []ast.FieldDefinition, name string,
+	methods []ast.FunctionDeclaration) {
+
 	if len(fields) == 0 {
 		g.write("{}")
 		return
@@ -62,6 +64,16 @@ func (g *Builder) structFieldsWithDirtyConstructor(fields []ast.FieldDefinition,
 		g.write(name)
 		g.write("() {}")
 		g.nl()
+	}
+
+	if len(methods) != 0 {
+		g.nl()
+		for _, method := range methods {
+			g.indent()
+			g.FunctionDeclaration(method)
+			g.semi()
+			g.nl()
+		}
 	}
 
 	g.dec()
