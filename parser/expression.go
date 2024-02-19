@@ -235,7 +235,45 @@ func (p *Parser) operand() (ast.Expression, error) {
 	return operand, nil
 }
 
-func (p *Parser) tryOperand() (ast.Expression, error) {
+func (p *Parser) castExpression() (ast.CastExpression, error) {
+	p.advance() // skip "cast"
+
+	if p.tok.Kind != token.LeftSquare {
+		return ast.CastExpression{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip "["
+
+	target, err := p.expr()
+	if err != nil {
+		return ast.CastExpression{}, err
+	}
+
+	if p.tok.Kind != token.Colon {
+		return ast.CastExpression{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip ":"
+
+	spec, err := p.typeSpecifier()
+	if err != nil {
+		return ast.CastExpression{}, p.unexpected(p.tok)
+	}
+
+	if p.tok.Kind != token.RightSquare {
+		return ast.CastExpression{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip "]"
+
+	return ast.CastExpression{
+		Target: target,
+		Type:   spec,
+	}, nil
+}
+
+func (p *Parser) tryOperand() (ast.Operand, error) {
+	if p.tok.Kind == token.Cast {
+		return p.castExpression()
+	}
+
 	if p.tok.IsLit() {
 		lit := p.basic()
 		p.advance()

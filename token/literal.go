@@ -68,7 +68,7 @@ var Literal = [...]string{
 	Fn:        "fn",
 	Jump:      "jump",
 	Return:    "return",
-	Break:     "break",
+	Cast:      "cast",
 	Case:      "case",
 	For:       "for",
 	Else:      "else",

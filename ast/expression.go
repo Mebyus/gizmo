@@ -26,7 +26,7 @@ func (nodeExpression) Expression() {}
 type PrimaryOperand any
 
 // <Operand> = <Literal> | <SubsExpression> | <ParenthesizedExpression> | <SelectorExpression> |
-// <IndexExpression> | <CallExpression>
+// <IndexExpression> | <CallExpression> | <AddressExpression> | <CastExpression>
 type Operand interface {
 	Expression
 
@@ -263,6 +263,24 @@ type SliceExpression struct {
 
 	// Part after ":". Can be nil if expression is omitted
 	End Expression
+}
+
+// <CastExpression> = "cast" "[" <Expression> ":" <TypeSpecifier> "]"
+type CastExpression struct {
+	nodeOperand
+
+	Target Expression
+	Type   TypeSpecifier
+}
+
+var _ Expression = CastExpression{}
+
+func (CastExpression) Kind() exn.Kind {
+	return exn.Cast
+}
+
+func (e CastExpression) Pin() source.Pos {
+	return e.Target.Pin()
 }
 
 // <IndexableExpression> = <Identifier> | <SelectorExpression> | <IndexExpression>

@@ -20,6 +20,7 @@ const (
 
 	Unary
 	Binary
+	Cast
 
 	// parenthesized expression
 	Paren
@@ -45,6 +46,7 @@ var text = [...]string{
 	Subs:     "subs",
 	Unary:    "unary",
 	Binary:   "binary",
+	Cast:     "cast",
 	Paren:    "paren",
 	Select:   "select",
 	Index:    "index",

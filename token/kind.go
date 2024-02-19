@@ -79,7 +79,7 @@ const (
 
 	// Keywords
 
-	Break
+	Cast
 	Case
 	Jump
 

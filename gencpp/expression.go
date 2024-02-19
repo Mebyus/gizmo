@@ -35,9 +35,19 @@ func (g *Builder) Expression(expr ast.Expression) {
 		g.SelectorExpression(expr.(ast.SelectorExpression))
 	case exn.Address:
 		g.AddressExpression(expr.(ast.AddressExpression))
+	case exn.Cast:
+		g.CastExpression(expr.(ast.CastExpression))
 	default:
 		g.write(fmt.Sprintf("<%s expr>", expr.Kind().String()))
 	}
+}
+
+func (g *Builder) CastExpression(expr ast.CastExpression) {
+	g.write("(")
+	g.TypeSpecifier(expr.Type)
+	g.write(")(")
+	g.Expression(expr.Target)
+	g.write(")")
 }
 
 func (g *Builder) AddressExpression(expr ast.AddressExpression) {

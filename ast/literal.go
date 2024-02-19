@@ -12,7 +12,7 @@ import (
 //
 // token.Kind is DecimalInteger, DecimalFloat, Character, String, Nil, True, False
 type BasicLiteral struct {
-	nodeExpression
+	nodeOperand
 
 	Token token.Token
 }
@@ -29,7 +29,7 @@ func (l BasicLiteral) Pin() source.Pos {
 
 // <ListLiteral> = ".[" { <Expression> "," } "]"
 type ListLiteral struct {
-	nodeExpression
+	nodeOperand
 
 	Pos source.Pos
 

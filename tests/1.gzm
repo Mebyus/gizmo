@@ -138,6 +138,12 @@ fn take_array(a: [16]u64) {
 
 }
 
+fn use_type_cast() {
+    var a: u64 = 28;
+
+    const i: i32 = cast[ state.window.height: i32 ];
+}
+
 fn match_example(x: u64) => u8 {
     match x {
         case 0 => { return 1; }

@@ -7,7 +7,7 @@ var words = map[string]Kind{
 	"fn":        Fn,
 	"jump":      Jump,
 	"return":    Return,
-	"break":     Break,
+	"cast":      Cast,
 	"case":      Case,
 	"for":       For,
 	"else":      Else,
