@@ -50,7 +50,8 @@ func (p *Parser) typeSpecifier() (ast.TypeSpecifier, error) {
 	if p.tok.Kind == token.Enum {
 		return p.enumType()
 	}
-	return nil, fmt.Errorf("other type specifiers not implemented %s", p.tok.Short())
+	return nil, fmt.Errorf("other type specifiers not implemented (start from %s at %s)",
+		p.tok.Kind.String(), p.tok.Pos.String())
 }
 
 func (p *Parser) typeName() (ast.TypeName, error) {

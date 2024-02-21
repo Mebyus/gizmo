@@ -37,9 +37,24 @@ func (g *Builder) Expression(expr ast.Expression) {
 		g.AddressExpression(expr.(ast.AddressExpression))
 	case exn.Cast:
 		g.CastExpression(expr.(ast.CastExpression))
+	case exn.Instance:
+		g.InstanceExpression(expr.(ast.InstanceExpression))
 	default:
 		g.write(fmt.Sprintf("<%s expr>", expr.Kind().String()))
 	}
+}
+
+func (g *Builder) InstanceExpression(expr ast.InstanceExpression) {
+	g.ScopedIdentifier(expr.Target)
+	g.write("<")
+	
+	g.TypeSpecifier(expr.Args[0])
+	for _, arg := range expr.Args[1:] {
+		g.write(", ")
+		g.TypeSpecifier(arg)
+	}
+
+	g.write(">")
 }
 
 func (g *Builder) CastExpression(expr ast.CastExpression) {

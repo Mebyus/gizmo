@@ -189,3 +189,7 @@ fn loop_jumps() {
 */
 
 }
+
+fn use_template(x: u32, y: u32) {
+    return add_numbers[[u32]](x, y);
+}

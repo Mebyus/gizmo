@@ -334,6 +334,17 @@ func (p *Parser) identifierStartOperand() (ast.Operand, error) {
 		return nil, err
 	}
 
+	if p.tok.Kind == token.LeftDoubleSquare {
+		instance, err := p.instanceExpression(scoped)
+		if err != nil {
+			return nil, err
+		}
+		if p.tok.Kind != token.LeftParentheses {
+			return nil, p.unexpected(p.tok)
+		}
+		return p.chainOperand(instance)
+	}
+
 	switch p.tok.Kind {
 	case token.Period, token.LeftParentheses, token.LeftSquare, token.Indirect, token.Address:
 		return p.chainOperand(ast.ChainStart{Identifier: scoped})
@@ -342,7 +353,41 @@ func (p *Parser) identifierStartOperand() (ast.Operand, error) {
 	}
 }
 
-func (p *Parser) chainOperand(start ast.ChainStart) (ast.ChainOperand, error) {
+func (p *Parser) instanceExpression(identifier ast.ScopedIdentifier) (ast.InstanceExpression, error) {
+	p.advance() // skip "[["
+
+	var args []ast.TypeSpecifier
+	for {
+		if p.tok.Kind == token.RightDoubleSquare {
+			if len(args) == 0 {
+				return ast.InstanceExpression{}, fmt.Errorf("no args in instance expression %s", p.pos().String())
+			}
+
+			p.advance() // skip "]]"
+			return ast.InstanceExpression{
+				Target: identifier,
+				Args:   args,
+			}, nil
+		}
+
+		arg, err := p.typeSpecifier()
+		if err != nil {
+			return ast.InstanceExpression{}, err
+		}
+		args = append(args, arg)
+
+		if p.tok.Kind == token.Comma {
+			p.advance() // skip ","
+		} else if p.tok.Kind == token.RightDoubleSquare {
+			// will be skipped at next iteration
+		} else {
+			return ast.InstanceExpression{}, p.unexpected(p.tok)
+		}
+	}
+
+}
+
+func (p *Parser) chainOperand(start ast.ChainOperand) (ast.ChainOperand, error) {
 	// note conversion to interface type
 	var tip ast.ChainOperand = start
 

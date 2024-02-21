@@ -207,8 +207,8 @@ func TestParseExpression(t *testing.T) {
 		},
 		{
 			name: "19 binary expression with parentheses",
-			str: "(1 + 1) - 0 * 2 * (-1)",
-			want: bin(bop.Sub, 
+			str:  "(1 + 1) - 0 * 2 * (-1)",
+			want: bin(bop.Sub,
 				par(bin(bop.Add, dint(1), dint(1))),
 				bin(
 					bop.Mul,

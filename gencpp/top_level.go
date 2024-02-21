@@ -48,7 +48,7 @@ func (g *Builder) TopStructType(name ast.Identifier, spec ast.StructType) {
 
 	methodsKey := strings.Join(append(g.currentScopes, name.Lit), "::")
 	g.structFields(spec.Fields, g.sm.Methods[methodsKey])
-	
+
 	g.semi()
 	g.nl()
 }
@@ -96,13 +96,13 @@ func (g *Builder) TopEnumType(name ast.Identifier, spec ast.EnumType) {
 
 	g.write("{")
 	g.nl()
-	
+
 	g.inc()
 	for _, entry := range spec.Entries {
 		g.indent()
 
 		g.Identifier(entry.Name)
-		
+
 		if entry.Expression != nil {
 			g.write(" = ")
 			g.Expression(entry.Expression)
@@ -112,7 +112,7 @@ func (g *Builder) TopEnumType(name ast.Identifier, spec ast.EnumType) {
 		g.nl()
 	}
 	g.dec()
-	
+
 	g.write("};")
 	g.nl()
 }

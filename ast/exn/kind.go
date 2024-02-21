@@ -36,6 +36,9 @@ const (
 
 	// Indirect index expression
 	Indirx
+
+	// Template instance
+	Instance
 )
 
 var text = [...]string{
@@ -55,6 +58,7 @@ var text = [...]string{
 	Address:  "address",
 	Indirect: "indirect",
 	Indirx:   "indirect_index",
+	Instance: "instance",
 }
 
 func (k Kind) String() string {

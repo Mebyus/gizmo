@@ -60,12 +60,14 @@ const (
 
 	// Brackets
 
-	LeftCurly        // {
-	RightCurly       // }
-	LeftSquare       // [
-	RightSquare      // ]
-	LeftParentheses  // (
-	RightParentheses // )
+	LeftCurly         // {
+	RightCurly        // }
+	LeftSquare        // [
+	RightSquare       // ]
+	LeftParentheses   // (
+	RightParentheses  // )
+	LeftDoubleSquare  // [[
+	RightDoubleSquare // ]]
 
 	Compound     // .{
 	Insist       // .!

@@ -110,7 +110,7 @@ func ConvertChainStart(start ast.ChainStart) Node {
 
 func ConvertParenthesizedExpression(expr ast.ParenthesizedExpression) Node {
 	return Node{
-		Text: "paren",
+		Text:  "paren",
 		Nodes: []Node{ConvertInnerExpression(expr.Inner)},
 	}
 }

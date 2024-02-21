@@ -283,6 +283,26 @@ func (e CastExpression) Pin() source.Pos {
 	return e.Target.Pin()
 }
 
+// <InstanceExpression> = <ScopedIdentifier> "[[" <Args> "]]"
+type InstanceExpression struct {
+	nodeChainOperand
+
+	Target ScopedIdentifier
+
+	// Always has at least one element
+	Args   []TypeSpecifier
+}
+
+var _ Expression = InstanceExpression{}
+
+func (InstanceExpression) Kind() exn.Kind {
+	return exn.Instance
+}
+
+func (e InstanceExpression) Pin() source.Pos {
+	return e.Target.Name.Pos
+}
+
 // <IndexableExpression> = <Identifier> | <SelectorExpression> | <IndexExpression>
 type IndexableExpression any
 
