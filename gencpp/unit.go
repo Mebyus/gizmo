@@ -34,6 +34,10 @@ func (g *Builder) NamespaceBlock(block ast.NamespaceBlock) {
 		g.nl()
 	}
 
-	g.wb('}')
-	g.nl()
+	g.write("} ")
+	if block.Default {
+		g.comment("namespace <default>")
+	} else {
+		g.comment("namespace " + block.Name.String())
+	}
 }

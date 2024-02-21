@@ -52,7 +52,7 @@ func ConvertNamespaceBlock(block ast.NamespaceBlock) Node {
 		Text: "namespace",
 		Nodes: []Node{
 			{
-				Text: "name: " + formatScopedIdentifier(block.Name),
+				Text: "name: " + block.Name.String(),
 			},
 			{
 				Text:  nodesTitle,

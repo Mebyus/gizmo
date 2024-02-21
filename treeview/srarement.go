@@ -154,7 +154,7 @@ func ConvertVarInit(v ast.VarInit) Node {
 		Text: "var",
 		Nodes: []Node{
 			{
-				Text: "name: " + formatIdentifier(v.Name),
+				Text: "name: " + v.Name.String(),
 			},
 			ConvertTypeSpecifier(v.Type),
 			ConvertExpression(v.Expression),

@@ -70,7 +70,7 @@ func ConvertCallArguments(args []ast.Expression) Node {
 
 func ConvertSubsExpression(expr ast.SubsExpression) Node {
 	return Node{
-		Text: "subs: " + formatScopedIdentifier(expr.Identifier),
+		Text: "subs: " + expr.Identifier.String(),
 	}
 }
 
@@ -105,7 +105,7 @@ func ConvertChainOperand(operand ast.ChainOperand) Node {
 }
 
 func ConvertChainStart(start ast.ChainStart) Node {
-	return Node{Text: "idn: " + formatScopedIdentifier(start.Identifier)}
+	return Node{Text: "idn: " + start.Identifier.String()}
 }
 
 func ConvertParenthesizedExpression(expr ast.ParenthesizedExpression) Node {

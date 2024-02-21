@@ -26,7 +26,7 @@ func ConvertFieldDefinition(field ast.FieldDefinition) []Node {
 func ConvertTypeSpecifier(spec ast.TypeSpecifier) Node {
 	typeTitle := "type: "
 	if spec.Kind() == tps.Name {
-		typeTitle += formatScopedIdentifier(spec.(ast.TypeName).Name)
+		typeTitle += spec.(ast.TypeName).Name.String()
 	} else {
 		typeTitle += fmt.Sprintf("<%s not implemented>", spec.Kind().String())
 	}
