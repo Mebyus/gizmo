@@ -1,14 +1,19 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/token"
 )
 
-func (p *Parser) topLevelFunction() (ast.TopFunctionDefinition, error) {
+func (p *Parser) topLevelFn() (ast.TopLevel, error) {
 	p.advance() // consume "fn"
 	if p.tok.Kind != token.Identifier {
-		return ast.TopFunctionDefinition{}, p.unexpected(p.tok)
+		return nil, p.unexpected(p.tok)
+	}
+	if p.next.Kind == token.LeftDoubleSquare {
+		return p.topLevelFunctionTemplate()
 	}
 
 	declaration := ast.FunctionDeclaration{
@@ -18,16 +23,16 @@ func (p *Parser) topLevelFunction() (ast.TopFunctionDefinition, error) {
 
 	signature, err := p.functionSignature()
 	if err != nil {
-		return ast.TopFunctionDefinition{}, err
+		return nil, err
 	}
 	declaration.Signature = signature
 
 	if p.tok.Kind != token.LeftCurly {
-		return ast.TopFunctionDefinition{}, p.unexpected(p.tok)
+		return nil, p.unexpected(p.tok)
 	}
 	body, err := p.block()
 	if err != nil {
-		return ast.TopFunctionDefinition{}, err
+		return nil, err
 	}
 	definition := ast.FunctionDefinition{
 		Head: declaration,
@@ -36,6 +41,63 @@ func (p *Parser) topLevelFunction() (ast.TopFunctionDefinition, error) {
 	return ast.TopFunctionDefinition{
 		Definition: definition,
 	}, nil
+}
+
+func (p *Parser) topLevelFunctionTemplate() (ast.TopFunctionTemplate, error) {
+	name := p.idn()
+	p.advance() // consume function name identifier
+
+	params, err := p.templateParams()
+	if err != nil {
+		return ast.TopFunctionTemplate{}, err
+	}
+
+	signature, err := p.functionSignature()
+	if err != nil {
+		return ast.TopFunctionTemplate{}, err
+	}
+
+	body, err := p.block()
+	if err != nil {
+		return ast.TopFunctionTemplate{}, err
+	}
+
+	return ast.TopFunctionTemplate{
+		Name:       name,
+		TypeParams: params,
+		Signature:  signature,
+		Body:       body,
+	}, nil
+}
+
+func (p *Parser) templateParams() ([]ast.Identifier, error) {
+	p.advance() // skip "[["
+
+	var params []ast.Identifier
+	for {
+		if p.tok.Kind == token.RightDoubleSquare {
+			if len(params) == 0 {
+				return nil, fmt.Errorf("no params in template %s", p.pos().String())
+			}
+
+			p.advance() // skip "]]"
+			return params, nil
+		}
+
+		param, err := p.identifier()
+		if err != nil {
+			return nil, err
+		}
+		params = append(params, param)
+
+		if p.tok.Kind == token.Comma {
+			p.advance() // skip ","
+		} else if p.tok.Kind == token.RightDoubleSquare {
+			// will be skipped at next iteration
+		} else {
+			return nil, p.unexpected(p.tok)
+		}
+	}
 }
 
 func (p *Parser) functionSignature() (ast.FunctionSignature, error) {

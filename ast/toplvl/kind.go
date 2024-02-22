@@ -30,20 +30,21 @@ const (
 	// Variable definition (name + type + initial value)
 	Var
 
-	Template
+	// Function template
+	FnTemplate
 )
 
 var text = [...]string{
 	empty: "<nil>",
 
-	Fn:       "fn",
-	Declare:  "declare",
-	Method:   "method",
-	Type:     "type",
-	TypeEval: "type_eval",
-	Const:    "const",
-	Var:      "var",
-	Template: "template",
+	Fn:         "fn",
+	Declare:    "declare",
+	Method:     "method",
+	Type:       "type",
+	TypeEval:   "type_eval",
+	Const:      "const",
+	Var:        "var",
+	FnTemplate: "fn_template",
 }
 
 func (k Kind) String() string {

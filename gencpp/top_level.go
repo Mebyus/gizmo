@@ -25,8 +25,11 @@ func (g *Builder) TopLevel(node ast.TopLevel) {
 		g.TopVar(node.(ast.TopVar))
 	case toplvl.Method:
 		g.Method(node.(ast.Method))
+	case toplvl.FnTemplate:
+		g.TopFunctionTemplate(node.(ast.TopFunctionTemplate))
 	default:
 		g.write(fmt.Sprintf("<%s node not implemented>", node.Kind().String()))
+		g.nl()
 	}
 }
 
@@ -115,4 +118,25 @@ func (g *Builder) TopEnumType(name ast.Identifier, spec ast.EnumType) {
 
 	g.write("};")
 	g.nl()
+}
+
+func (g *Builder) TopFunctionTemplate(top ast.TopFunctionTemplate) {
+	g.write("template<")
+
+	g.Identifier(top.TypeParams[0])
+	for _, param := range top.TypeParams[1:] {
+		g.write(", ")
+		g.Identifier(param)
+	}
+
+	g.write(">")
+	g.nl()
+
+	g.FunctionDefinition(ast.FunctionDefinition{
+		Head: ast.FunctionDeclaration{
+			Signature: top.Signature,
+			Name:      top.Name,
+		},
+		Body: top.Body,
+	})
 }

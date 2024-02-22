@@ -14,6 +14,15 @@ func (p *Parser) idn() ast.Identifier {
 	}
 }
 
+func (p *Parser) identifier() (ast.Identifier, error) {
+	if p.tok.Kind != token.Identifier {
+		return ast.Identifier{}, p.unexpected(p.tok)
+	}
+	identifier := p.idn()
+	p.advance()
+	return identifier, nil
+}
+
 // gives a copy of current parser position
 func (p *Parser) pos() source.Pos {
 	return p.tok.Pos
@@ -117,7 +126,7 @@ func (p *Parser) topLevel() (ast.TopLevel, error) {
 	case token.Declare:
 		return p.topLevelDeclare()
 	case token.Fn:
-		return p.topLevelFunction()
+		return p.topLevelFn()
 	case token.Const:
 		return p.topLevelConst()
 	case token.Method:

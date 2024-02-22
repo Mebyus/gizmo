@@ -132,3 +132,28 @@ func (TopVar) Kind() toplvl.Kind {
 func (t TopVar) Pin() source.Pos {
 	return t.Pos
 }
+
+// <TopFunctionTemplate> = [ "pub" ] <FunctionDefinition>
+type TopFunctionTemplate struct {
+	nodeTopLevel
+
+	Name Identifier
+
+	TypeParams []Identifier
+
+	Signature FunctionSignature
+
+	Body BlockStatement
+
+	Public bool
+}
+
+var _ TopLevel = TopFunctionTemplate{}
+
+func (TopFunctionTemplate) Kind() toplvl.Kind {
+	return toplvl.FnTemplate
+}
+
+func (t TopFunctionTemplate) Pin() source.Pos {
+	return t.Name.Pos
+}

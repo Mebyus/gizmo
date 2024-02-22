@@ -384,7 +384,6 @@ func (p *Parser) instanceExpression(identifier ast.ScopedIdentifier) (ast.Instan
 			return ast.InstanceExpression{}, p.unexpected(p.tok)
 		}
 	}
-
 }
 
 func (p *Parser) chainOperand(start ast.ChainOperand) (ast.ChainOperand, error) {
