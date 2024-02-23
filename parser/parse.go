@@ -116,6 +116,11 @@ func (p *Parser) scopedIdentifier() (ast.ScopedIdentifier, error) {
 }
 
 func (p *Parser) topLevel() (ast.TopLevel, error) {
+	err := p.gatherProps()
+	if err != nil {
+		return nil, err
+	}
+
 	switch p.tok.Kind {
 	case token.Type:
 		return p.topLevelType()
@@ -133,8 +138,6 @@ func (p *Parser) topLevel() (ast.TopLevel, error) {
 		return p.topLevelMethod()
 	// case token.Pub:
 	// 	return p.parseTopLevelPublic()
-	// case token.Atr:
-	// 	return p.topLevelAtr()
 	default:
 		return nil, p.unexpected(p.tok)
 	}
@@ -213,20 +216,3 @@ func (p *Parser) topLevelConst() (ast.TopConst, error) {
 func (p *Parser) topLevelMethod() (ast.Method, error) {
 	return p.method()
 }
-
-// func (p *Parser) topLevelAtr() error {
-// 	if p.saved.ok {
-// 		return &cer.Error{
-// 			Kind: cer.OrphanedAtrBlock,
-// 			Span: p.saved.Pos,
-// 		}
-// 	}
-
-// 	blk, err := p.atrBlock()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	p.saved.AtrBlock = blk
-// 	p.saved.ok = true
-// 	return nil
-// }

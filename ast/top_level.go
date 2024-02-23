@@ -36,11 +36,13 @@ type nodeTopLevel struct{ uidHolder }
 
 func (nodeTopLevel) TopLevel() {}
 
-// <TopFunctionDeclaration> = [ "pub" ] <FunctionDeclaration>
+// <TopFunctionDeclaration> = [ "pub" ] "declare" <FunctionDeclaration>
 type TopFunctionDeclaration struct {
 	nodeTopLevel
 
 	Declaration FunctionDeclaration
+
+	Props []Prop
 
 	Public bool
 }

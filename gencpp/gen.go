@@ -8,10 +8,10 @@ import (
 )
 
 func Gen(w io.Writer, atom ast.UnitAtom) error {
-	sm := ir.IndexMethods(atom)
+	meta := ir.Index(atom)
 
 	builder := NewBuilder(0)
-	builder.sm = sm
+	builder.meta = meta
 	builder.UnitAtom(atom)
 
 	_, err := io.Copy(w, builder)

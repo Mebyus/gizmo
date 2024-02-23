@@ -26,28 +26,44 @@ func NamespaceScopes(block ast.NamespaceBlock) []string {
 	return s
 }
 
-func IndexMethods(atom ast.UnitAtom) StructsMap {
-	m := make(map[string][]ast.FunctionDeclaration)
+func Index(atom ast.UnitAtom) Meta {
+	sm := make(map[string][]ast.FunctionDeclaration)
+	sp := make(map[string]PropsRef)
 
 	for _, block := range atom.Blocks {
 		scopes := NamespaceScopes(block)
 
 		for _, node := range block.Nodes {
-			if node.Kind() != toplvl.Method {
-				continue
+			if node.Kind() == toplvl.Method {
+				method := node.(ast.Method)
+				key := strings.Join(append(scopes, method.Receiver.Lit), "::")
+				sm[key] = append(sm[key], ast.FunctionDeclaration{
+					Signature: method.Signature,
+					Name:      method.Name,
+				})
 			}
 
-			method := node.(ast.Method)
-			key := strings.Join(append(scopes, method.Receiver.Lit), "::")
-			m[key] = append(m[key], ast.FunctionDeclaration{
-				Signature: method.Signature,
-				Name:      method.Name,
-			})
+			if node.Kind() == toplvl.Declare {
+				decl := node.(ast.TopFunctionDeclaration)
+				if len(decl.Props) == 0 {
+					continue
+				}
+
+				ref := NewPropsRef(decl.Props)
+				key := strings.Join(append(scopes, decl.Declaration.Name.Lit), "::")
+				sp[key] = ref
+			}
 		}
 	}
 
-	if len(m) == 0 {
-		m = nil
+	if len(sm) == 0 {
+		sm = nil
 	}
-	return StructsMap{Methods: m}
+	if len(sp) == 0 {
+		sp = nil
+	}
+	return Meta{
+		Structs: StructsMap{Methods: sm},
+		Symbols: SymbolsMap{Props: sp},
+	}
 }

@@ -2,7 +2,6 @@ package gencpp
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/toplvl"
@@ -14,7 +13,7 @@ func (g *Builder) TopLevel(node ast.TopLevel) {
 
 	switch node.Kind() {
 	case toplvl.Fn:
-		g.FunctionDefinition(node.(ast.TopFunctionDefinition).Definition)
+		g.TopFn(node.(ast.TopFunctionDefinition))
 	case toplvl.Type:
 		g.TopType(node.(ast.TopType))
 	case toplvl.Const:
@@ -49,11 +48,22 @@ func (g *Builder) TopStructType(name ast.Identifier, spec ast.StructType) {
 	g.Identifier(name)
 	g.space()
 
-	methodsKey := strings.Join(append(g.currentScopes, name.Lit), "::")
-	g.structFields(spec.Fields, g.sm.Methods[methodsKey])
+	methodsKey := g.symName(name)
+	g.structFields(spec.Fields, g.meta.Structs.Methods[methodsKey])
 
 	g.semi()
 	g.nl()
+}
+
+func (g *Builder) TopFn(top ast.TopFunctionDefinition) {
+	symName := g.symName(top.Definition.Head.Name)
+	props := g.meta.Symbols.Props[symName]
+
+	if !props.Export() {
+		g.write("static ")
+	}
+
+	g.FunctionDefinition(top.Definition)
 }
 
 func (g *Builder) TopConst(top ast.TopConst) {
@@ -63,6 +73,13 @@ func (g *Builder) TopConst(top ast.TopConst) {
 }
 
 func (g *Builder) TopDeclare(top ast.TopFunctionDeclaration) {
+	symName := g.symName(top.Declaration.Name)
+	props := g.meta.Symbols.Props[symName]
+
+	if !props.Export() {
+		g.write("static ")
+	}
+
 	g.FunctionDeclaration(top.Declaration)
 	g.semi()
 	g.nl()
@@ -120,17 +137,29 @@ func (g *Builder) TopEnumType(name ast.Identifier, spec ast.EnumType) {
 	g.nl()
 }
 
+func (g *Builder) typeParam(param ast.Identifier) {
+	g.write("typename ")
+	g.Identifier(param)
+}
+
 func (g *Builder) TopFunctionTemplate(top ast.TopFunctionTemplate) {
 	g.write("template<")
 
-	g.Identifier(top.TypeParams[0])
+	g.typeParam(top.TypeParams[0])
 	for _, param := range top.TypeParams[1:] {
 		g.write(", ")
-		g.Identifier(param)
+		g.typeParam(param)
 	}
 
 	g.write(">")
 	g.nl()
+
+	symName := g.symName(top.Name)
+	props := g.meta.Symbols.Props[symName]
+
+	if !props.Export() {
+		g.write("static ")
+	}
 
 	g.FunctionDefinition(ast.FunctionDefinition{
 		Head: ast.FunctionDeclaration{

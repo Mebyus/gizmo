@@ -6,7 +6,7 @@ type Kind uint32
 const (
 	// Zero value of Kind. Should not be used explicitly
 	//
-	// Mostly a trick to detect places where Kind is left inspecified
+	// Mostly a trick to detect places where Kind is left unspecified
 	empty Kind = iota
 
 	// basic literal operand

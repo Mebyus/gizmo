@@ -70,7 +70,7 @@ func (g *Builder) structFieldsWithDirtyConstructor(fields []ast.FieldDefinition,
 		g.nl()
 		for _, method := range methods {
 			g.indent()
-			g.FunctionDeclaration(method)
+			g.methodDeclaration(method)
 			g.semi()
 			g.nl()
 		}
@@ -78,6 +78,15 @@ func (g *Builder) structFieldsWithDirtyConstructor(fields []ast.FieldDefinition,
 
 	g.dec()
 	g.write("}")
+}
+
+func (g *Builder) methodDeclaration(method ast.FunctionDeclaration) {
+	g.functionReturnType(method.Signature.Result)
+	g.space()
+
+	g.Identifier(method.Name)
+	g.functionParams(method.Signature.Params)
+	g.write(" noexcept")
 }
 
 func (g *Builder) structField(field ast.FieldDefinition) {

@@ -69,6 +69,8 @@ const (
 	LeftDoubleSquare  // [[
 	RightDoubleSquare // ]]
 
+	PropStart // #[
+
 	Compound     // .{
 	Insist       // .!
 	Chain        // .?

@@ -11,7 +11,7 @@ func (g *Builder) FunctionDefinition(definition ast.FunctionDefinition) {
 
 func (g *Builder) FunctionDeclaration(declaration ast.FunctionDeclaration) {
 	g.functionReturnType(declaration.Signature.Result)
-	g.space()
+	g.nl()
 
 	g.Identifier(declaration.Name)
 	g.functionParams(declaration.Signature.Params)

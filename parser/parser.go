@@ -10,6 +10,9 @@ import (
 )
 
 type Parser struct {
+	// saved properties, will be attached to next object/symbol/field
+	props []ast.Prop
+
 	lx lexer.Stream
 
 	// previous token

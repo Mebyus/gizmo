@@ -54,6 +54,7 @@ var Literal = [...]string{
 	RightParentheses:  ")",
 	LeftDoubleSquare:  "[[",
 	RightDoubleSquare: "]]",
+	PropStart:         "#[",
 	Compound:          ".{",
 	IndirectIndex:     ".[",
 	Insist:            ".!",

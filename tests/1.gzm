@@ -197,3 +197,10 @@ fn add_numbers[[T]](x: T, y: T) => T {
 fn use_template(x: u32, y: u32) {
     return add_numbers[[u32]](x, y);
 }
+
+#[ linkage = "external" ]
+#[ link.name = "another_link_name" ]
+#[ export = true ]
+#[ deprecated = true ]
+#[ abi = "c4" ]
+declare fn with_external_linkage(x: *u32, y: *uarch) => i32

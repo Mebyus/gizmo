@@ -22,7 +22,7 @@ type Builder struct {
 	// Output reader position
 	pos int
 
-	sm ir.StructsMap
+	meta ir.Meta
 
 	// list of scopes in current namespace, equals nil inside default namespace
 	currentScopes []string

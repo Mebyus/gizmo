@@ -212,5 +212,6 @@ func (p *Parser) topLevelDeclare() (ast.TopFunctionDeclaration, error) {
 
 	return ast.TopFunctionDeclaration{
 		Declaration: declaration,
+		Props:       p.takeProps(),
 	}, nil
 }

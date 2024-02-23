@@ -587,6 +587,11 @@ func (lx *Lexer) lexOther() token.Token {
 			return lx.lexTwoBytes(token.LogicalOr)
 		}
 		return lx.lexByte(token.Pipe)
+	case '#':
+		if lx.next == '[' {
+			return lx.lexTwoBytes(token.PropStart)
+		}
+		return lx.lexIllegalByte()
 	default:
 		return lx.lexIllegalByte()
 	}
