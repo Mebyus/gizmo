@@ -95,6 +95,8 @@ fn print_hello() {
     This should be skipped by lexer
 */
 
+#[ export = true ]
+#[ link.name = "coven_stdout_write" ]
 fn stdout_write(c: []u8) {
     os::stdout.write(c);
 }
@@ -200,7 +202,6 @@ fn use_template(x: u32, y: u32) {
 
 #[ linkage = "external" ]
 #[ link.name = "another_link_name" ]
-#[ export = true ]
 #[ deprecated = true ]
 #[ abi = "c4" ]
 declare fn with_external_linkage(x: *u32, y: *uarch) => i32

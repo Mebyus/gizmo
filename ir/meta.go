@@ -38,3 +38,25 @@ func (p PropsRef) Export() bool {
 	}
 	return v.(ast.PropValueBool).Val
 }
+
+func (p PropsRef) ExtLink() bool {
+	v := p["linkage"]
+	if v == nil {
+		return false
+	}
+	if v.Kind() != prv.String {
+		return false
+	}
+	return v.(ast.PropValueString).Val == "external"
+}
+
+func (p PropsRef) LinkName() string {
+	v := p["link.name"]
+	if v == nil {
+		return ""
+	}
+	if v.Kind() != prv.String {
+		return ""
+	}
+	return v.(ast.PropValueString).Val
+}

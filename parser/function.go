@@ -40,6 +40,7 @@ func (p *Parser) topLevelFn() (ast.TopLevel, error) {
 	}
 	return ast.TopFunctionDefinition{
 		Definition: definition,
+		Props:      p.takeProps(),
 	}, nil
 }
 

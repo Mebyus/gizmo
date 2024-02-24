@@ -59,10 +59,17 @@ func (g *Builder) TopFn(top ast.TopFunctionDefinition) {
 	symName := g.symName(top.Definition.Head.Name)
 	props := g.meta.Symbols.Props[symName]
 
+	linkName := props.LinkName()
+	if linkName != "" {
+		g.write(`extern "C" `)
+	}
 	if !props.Export() {
 		g.write("static ")
 	}
 
+	if linkName != "" {
+		top.Definition.Head.Name.Lit = linkName
+	}
 	g.FunctionDefinition(top.Definition)
 }
 
@@ -76,10 +83,18 @@ func (g *Builder) TopDeclare(top ast.TopFunctionDeclaration) {
 	symName := g.symName(top.Declaration.Name)
 	props := g.meta.Symbols.Props[symName]
 
-	if !props.Export() {
+	linkName := props.LinkName()
+	extLink := props.ExtLink()
+	if extLink || linkName != "" {
+		g.write(`extern "C" `)
+	}
+	if !extLink && !props.Export() {
 		g.write("static ")
 	}
 
+	if linkName != "" {
+		top.Declaration.Name.Lit = linkName
+	}
 	g.FunctionDeclaration(top.Declaration)
 	g.semi()
 	g.nl()

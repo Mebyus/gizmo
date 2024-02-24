@@ -63,6 +63,8 @@ type TopFunctionDefinition struct {
 
 	Definition FunctionDefinition
 
+	Props []Prop
+
 	Public bool
 }
 

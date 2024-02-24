@@ -53,6 +53,17 @@ func Index(atom ast.UnitAtom) Meta {
 				key := strings.Join(append(scopes, decl.Declaration.Name.Lit), "::")
 				sp[key] = ref
 			}
+
+			if node.Kind() == toplvl.Fn {
+				fn := node.(ast.TopFunctionDefinition)
+				if len(fn.Props) == 0 {
+					continue
+				}
+
+				ref := NewPropsRef(fn.Props)
+				key := strings.Join(append(scopes, fn.Definition.Head.Name.Lit), "::")
+				sp[key] = ref
+			}
 		}
 	}
 
