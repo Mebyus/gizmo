@@ -29,7 +29,7 @@ type ScopedIdentifier struct {
 	Name Identifier
 }
 
-func (s ScopedIdentifier) Pos() source.Pos {
+func (s ScopedIdentifier) Pin() source.Pos {
 	if len(s.Scopes) == 0 {
 		return s.Name.Pos
 	}
@@ -41,7 +41,7 @@ func (s ScopedIdentifier) String() string {
 		return "<nil>"
 	}
 
-	ss := make([]string, 0, len(s.Scopes) + 1)
+	ss := make([]string, 0, len(s.Scopes)+1)
 	for _, name := range s.Scopes {
 		ss = append(ss, name.String())
 	}

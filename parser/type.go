@@ -7,11 +7,14 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-func (p *Parser) topLevelType() (ast.TopType, error) {
+func (p *Parser) topLevelType() (ast.TopLevel, error) {
 	p.advance() // skip "type"
 
 	if p.tok.Kind != token.Identifier {
-		return ast.TopType{}, p.unexpected(p.tok)
+		return nil, p.unexpected(p.tok)
+	}
+	if p.next.Kind == token.LeftDoubleSquare {
+		return p.topTypeTemplate()
 	}
 
 	name := p.idn()
@@ -19,7 +22,7 @@ func (p *Parser) topLevelType() (ast.TopType, error) {
 
 	spec, err := p.typeSpecifier()
 	if err != nil {
-		return ast.TopType{}, err
+		return nil, err
 	}
 
 	return ast.TopType{
@@ -28,9 +31,37 @@ func (p *Parser) topLevelType() (ast.TopType, error) {
 	}, nil
 }
 
+func (p *Parser) topTypeTemplate() (ast.TopTypeTemplate, error) {
+	name := p.idn()
+	p.advance() // skip name identifier
+
+	if p.tok.Kind != token.LeftDoubleSquare {
+		panic("unexpected token")
+	}
+
+	params, err := p.templateParams()
+	if err != nil {
+		return ast.TopTypeTemplate{}, err
+	}
+
+	if p.tok.Kind != token.Struct {
+		return ast.TopTypeTemplate{}, fmt.Errorf("templates of %s are not allowed %s", p.tok.Kind.String(), p.tok.Pos.String())
+	}
+	spec, err := p.structType()
+	if err != nil {
+		return ast.TopTypeTemplate{}, err
+	}
+
+	return ast.TopTypeTemplate{
+		Name:       name,
+		Spec:       spec,
+		TypeParams: params,
+	}, nil
+}
+
 func (p *Parser) typeSpecifier() (ast.TypeSpecifier, error) {
 	if p.tok.Kind == token.Identifier {
-		return p.typeName()
+		return p.typeNameOrInstance()
 	}
 	if p.tok.Kind == token.Asterisk {
 		return p.pointerType()
@@ -60,6 +91,56 @@ func (p *Parser) typeName() (ast.TypeName, error) {
 		return ast.TypeName{}, err
 	}
 	return ast.TypeName{Name: name}, nil
+}
+
+func (p *Parser) typeNameOrInstance() (ast.TypeSpecifier, error) {
+	name, err := p.scopedIdentifier()
+	if err != nil {
+		return nil, err
+	}
+	if p.tok.Kind != token.LeftDoubleSquare {
+		return ast.TypeName{Name: name}, nil
+	}
+
+	// TODO: replace with template args call
+	args, err := p.templateArgs()
+	if err != nil {
+		return nil, err
+	}
+	return ast.TemplateInstanceType{
+		Params: args,
+		Name:   name,
+	}, nil
+}
+
+func (p *Parser) templateArgs() ([]ast.TypeSpecifier, error) {
+	p.advance() // skip "[["
+
+	var args []ast.TypeSpecifier
+	for {
+		if p.tok.Kind == token.RightDoubleSquare {
+			if len(args) == 0 {
+				return nil, fmt.Errorf("no args in template instance %s", p.pos().String())
+			}
+
+			p.advance() // skip "]]"
+			return args, nil
+		}
+
+		arg, err := p.typeSpecifier()
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, arg)
+
+		if p.tok.Kind == token.Comma {
+			p.advance() // skip ","
+		} else if p.tok.Kind == token.RightDoubleSquare {
+			// will be skipped at next iteration
+		} else {
+			return nil, p.unexpected(p.tok)
+		}
+	}
 }
 
 func (p *Parser) enumType() (ast.EnumType, error) {

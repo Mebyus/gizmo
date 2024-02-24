@@ -137,12 +137,13 @@ func (t TopVar) Pin() source.Pos {
 	return t.Pos
 }
 
-// <TopFunctionTemplate> = [ "pub" ] <FunctionDefinition>
+// <TopFunctionTemplate> = [ "pub" ] "fn" <Name> <TypeParams> <FunctionSignature> <Body>
 type TopFunctionTemplate struct {
 	nodeTopLevel
 
 	Name Identifier
 
+	// Contains at least one element
 	TypeParams []Identifier
 
 	Signature FunctionSignature
@@ -159,5 +160,30 @@ func (TopFunctionTemplate) Kind() toplvl.Kind {
 }
 
 func (t TopFunctionTemplate) Pin() source.Pos {
+	return t.Name.Pos
+}
+
+// <TopTypeTemplate> = [ "pub" ] "type" <Name> <TypeParams> <TypeSpecifier>
+type TopTypeTemplate struct {
+	nodeTopLevel
+
+	Name Identifier
+
+	// Contains at least one element
+	TypeParams []Identifier
+
+	// Must be struct type
+	Spec TypeSpecifier
+
+	Public bool
+}
+
+var _ TopLevel = TopTypeTemplate{}
+
+func (TopTypeTemplate) Kind() toplvl.Kind {
+	return toplvl.TypeTemplate
+}
+
+func (t TopTypeTemplate) Pin() source.Pos {
 	return t.Name.Pos
 }

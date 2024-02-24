@@ -205,3 +205,25 @@ fn use_template(x: u32, y: u32) {
 #[ deprecated = true ]
 #[ abi = "c4" ]
 declare fn with_external_linkage(x: *u32, y: *uarch) => i32
+
+type AwesomeTemplate[[T]] struct {
+    T: field,
+}
+
+/*
+method (AwesomeTemplate[[T]]) set(T t) {
+    field = t;
+}
+*/
+
+fn make_awesome_template(v: int) => AwesomeTemplate[[int]] {
+    var ret: AwesomeTemplate[[int]] = dirty;
+    ret.field = v;
+    return ret;
+}
+
+var global_template_instance: AwesomeTemplate[[int]] = make_awesome_template(12);
+
+fn change_global_value(v: int) {
+    global_template_instance.set(v);
+}

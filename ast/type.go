@@ -38,7 +38,7 @@ func (TypeName) Kind() tps.Kind {
 }
 
 func (t TypeName) Pin() source.Pos {
-	return t.Name.Pos()
+	return t.Name.Pin()
 }
 
 // <StructTypeLiteral> = "struct" "{" { <FieldDefinition> "," } "}"
@@ -61,7 +61,7 @@ func (t StructType) Pin() source.Pos {
 	return t.Pos
 }
 
-// <TemplateInstanceType> = <TemplateName> "<$" { <TypeSpecifier> "," } ">"
+// <TemplateInstanceType> = <TemplateName> "[[" { <TypeSpecifier> "," } "]]"
 //
 // <TemplateName> = <ScopedIdentifier>
 type TemplateInstanceType struct {
@@ -71,6 +71,17 @@ type TemplateInstanceType struct {
 	Params []TypeSpecifier
 
 	Name ScopedIdentifier
+}
+
+// Explicit interface implementation check
+var _ TypeSpecifier = TemplateInstanceType{}
+
+func (TemplateInstanceType) Kind() tps.Kind {
+	return tps.Instance
+}
+
+func (t TemplateInstanceType) Pin() source.Pos {
+	return t.Name.Pin()
 }
 
 // <PointerType> = "*" <ReferencedType>

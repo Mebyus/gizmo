@@ -55,7 +55,7 @@ func (SubsExpression) Kind() exn.Kind {
 }
 
 func (e SubsExpression) Pin() source.Pos {
-	return e.Identifier.Pos()
+	return e.Identifier.Pin()
 }
 
 // <ParenthesizedExpression> = "(" <Expression> ")"
@@ -141,7 +141,7 @@ func (ChainStart) Kind() exn.Kind {
 }
 
 func (s ChainStart) Pin() source.Pos {
-	return s.Identifier.Pos()
+	return s.Identifier.Pin()
 }
 
 // <CallExpression> = <CallableExpression> "(" { <Expression> "," } ")"
@@ -290,7 +290,7 @@ type InstanceExpression struct {
 	Target ScopedIdentifier
 
 	// Always has at least one element
-	Args   []TypeSpecifier
+	Args []TypeSpecifier
 }
 
 var _ Expression = InstanceExpression{}

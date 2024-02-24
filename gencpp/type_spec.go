@@ -19,9 +19,24 @@ func (g *Builder) TypeSpecifier(spec ast.TypeSpecifier) {
 		g.ChunkType(spec.(ast.ChunkType))
 	case tps.Array:
 		g.ArrayType(spec.(ast.ArrayType))
+	case tps.Instance:
+		g.TemplateInstanceType(spec.(ast.TemplateInstanceType))
 	default:
 		g.write(fmt.Sprintf("<%s type specifier not implemented>", spec.Kind().String()))
 	}
+}
+
+func (g *Builder) TemplateInstanceType(spec ast.TemplateInstanceType) {
+	g.ScopedIdentifier(spec.Name)
+	g.write("<")
+
+	g.TypeSpecifier(spec.Params[0])
+	for _, param := range spec.Params[1:] {
+		g.write(", ")
+		g.TypeSpecifier(param)
+	}
+
+	g.write(">")
 }
 
 func (g *Builder) PointerType(spec ast.PointerType) {
