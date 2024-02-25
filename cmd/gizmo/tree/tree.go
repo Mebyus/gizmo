@@ -9,7 +9,7 @@ import (
 	"github.com/mebyus/gizmo/treeview"
 )
 
-var Lackey = &butler.Lackey{
+var Tree = &butler.Lackey{
 	Name:  "tree",
 	Short: "display AST of a given unit or source file",
 	Usage: "gizmo tree [options] <files>",
@@ -21,10 +21,10 @@ func execute(r *butler.Lackey, files []string) error {
 	if len(files) == 0 {
 		return fmt.Errorf("at least one file must be specified")
 	}
-	return Tree(files[0])
+	return tree(files[0])
 }
 
-func Tree(filename string) error {
+func tree(filename string) error {
 	unit, err := parser.ParseFile(filename)
 	if err != nil {
 		return fmt.Errorf("parse %s: %w", filename, err)

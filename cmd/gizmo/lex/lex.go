@@ -8,7 +8,7 @@ import (
 	"github.com/mebyus/gizmo/lexer"
 )
 
-var Lackey = &butler.Lackey{
+var Lex = &butler.Lackey{
 	Name:  "lex",
 	Short: "list token stream produced by a given source file",
 	Usage: "gizmo lex [options] <file>",
@@ -20,10 +20,10 @@ func execute(r *butler.Lackey, files []string) error {
 	if len(files) == 0 {
 		return fmt.Errorf("at least one file must be specified")
 	}
-	return Lex(files[0])
+	return lex(files[0])
 }
 
-func Lex(filename string) error {
+func lex(filename string) error {
 	lx, err := lexer.FromFile(filename)
 	if err != nil {
 		return err

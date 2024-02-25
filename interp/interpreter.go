@@ -10,11 +10,13 @@ import (
 type Result struct {
 	Files     []string
 	TestFiles []string
+	Imports   []string
 }
 
-func Interpret(unit ast.UnitBlock) (Result, error) {
+func Interpret(unit *ast.UnitBlock) (*Result, error) {
 	var files []string
 	var testFiles []string
+	var imports []string
 
 	for _, statement := range unit.Block.Statements {
 		switch s := statement.(type) {
@@ -24,26 +26,33 @@ func Interpret(unit ast.UnitBlock) (Result, error) {
 			case "files":
 				list, err := getStringsFromExpression(s.Expression)
 				if err != nil {
-					return Result{}, err
+					return nil, err
 				}
 				files = list
 			case "test_files":
 				list, err := getStringsFromExpression(s.Expression)
 				if err != nil {
-					return Result{}, err
+					return nil, err
 				}
 				testFiles = list
+			case "imports":
+				list, err := getStringsFromExpression(s.Expression)
+				if err != nil {
+					return nil, err
+				}
+				imports = list
 			default:
-				return Result{}, fmt.Errorf("reference to udefined symbol: %s (at %s)", target.Lit, target.Pos.String())
+				return nil, fmt.Errorf("reference to undefined symbol: %s (at %s)", target.Lit, target.Pos.String())
 			}
 		default:
-			return Result{}, fmt.Errorf("unexpected statement: %v (%T)", s, s)
+			return nil, fmt.Errorf("unexpected statement: %v (%T)", s, s)
 		}
 	}
 
-	return Result{
+	return &Result{
 		Files:     files,
 		TestFiles: testFiles,
+		Imports:   imports,
 	}, nil
 }
 

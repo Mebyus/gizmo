@@ -324,6 +324,11 @@ func (p *Parser) tryOperand() (ast.Operand, error) {
 		}
 	}
 
+	if p.tok.Kind == token.Chunk && p.next.Kind != token.Identifier {
+		p.advance() // skip "[]"
+		return ast.ListLiteral{}, nil
+	}
+
 	return nil, nil
 }
 
