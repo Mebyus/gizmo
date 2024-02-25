@@ -26,10 +26,20 @@ func (g *Builder) TopLevel(node ast.TopLevel) {
 		g.Method(node.(ast.Method))
 	case toplvl.FnTemplate:
 		g.TopFunctionTemplate(node.(ast.TopFunctionTemplate))
+	case toplvl.TypeTemplate:
+		g.TopTypeTemplate(node.(ast.TopTypeTemplate))
 	default:
 		g.write(fmt.Sprintf("<%s node not implemented>", node.Kind().String()))
 		g.nl()
 	}
+}
+
+func (g *Builder) TopTypeTemplate(top ast.TopTypeTemplate) {
+	g.write("template")
+	g.templateParams(top.TypeParams)
+	g.nl()
+
+	g.TopStructType(top.Name, top.Spec.(ast.StructType))
 }
 
 func (g *Builder) TopType(top ast.TopType) {
@@ -157,16 +167,19 @@ func (g *Builder) typeParam(param ast.Identifier) {
 	g.Identifier(param)
 }
 
-func (g *Builder) TopFunctionTemplate(top ast.TopFunctionTemplate) {
-	g.write("template<")
-
-	g.typeParam(top.TypeParams[0])
-	for _, param := range top.TypeParams[1:] {
+func (g *Builder) templateParams(params []ast.Identifier) {
+	g.write("<")
+	g.typeParam(params[0])
+	for _, param := range params[1:] {
 		g.write(", ")
 		g.typeParam(param)
 	}
-
 	g.write(">")
+}
+
+func (g *Builder) TopFunctionTemplate(top ast.TopFunctionTemplate) {
+	g.write("template")
+	g.templateParams(top.TypeParams)
 	g.nl()
 
 	symName := g.symName(top.Name)

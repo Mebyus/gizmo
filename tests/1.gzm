@@ -207,7 +207,7 @@ fn use_template(x: u32, y: u32) {
 declare fn with_external_linkage(x: *u32, y: *uarch) => i32
 
 type AwesomeTemplate[[T]] struct {
-    T: field,
+    field: T,
 }
 
 /*

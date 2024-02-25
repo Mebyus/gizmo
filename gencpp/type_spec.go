@@ -10,7 +10,7 @@ import (
 func (g *Builder) TypeSpecifier(spec ast.TypeSpecifier) {
 	switch spec.Kind() {
 	case tps.Name:
-		g.ScopedIdentifier(spec.(ast.TypeName).Name)
+		g.TypeName(spec.(ast.TypeName))
 	case tps.Pointer:
 		g.PointerType(spec.(ast.PointerType))
 	case tps.ArrayPointer:
@@ -23,6 +23,23 @@ func (g *Builder) TypeSpecifier(spec ast.TypeSpecifier) {
 		g.TemplateInstanceType(spec.(ast.TemplateInstanceType))
 	default:
 		g.write(fmt.Sprintf("<%s type specifier not implemented>", spec.Kind().String()))
+	}
+}
+
+func (g *Builder) TypeName(spec ast.TypeName) {
+	if len(spec.Name.Scopes) != 0 {
+		g.ScopedIdentifier(spec.Name)
+		return
+	}
+
+	name := spec.Name.Name.Lit
+	switch name {
+	case "int":
+		g.write("iarch")
+	case "uint":
+		g.write("uarch")
+	default:
+		g.write(name)
 	}
 }
 
