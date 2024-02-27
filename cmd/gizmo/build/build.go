@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/mebyus/gizmo/builder"
 	"github.com/mebyus/gizmo/butler"
@@ -37,6 +38,7 @@ func (c *Config) Recipe() []butler.Param {
 		{
 			Name: "kind",
 			Kind: butler.String,
+			Def:  "debug",
 		},
 	}
 }
@@ -53,6 +55,8 @@ func build(config *Config, path string) error {
 	if err != nil {
 		return err
 	}
+
+	path = filepath.Clean(path)
 
 	return builder.New(&builder.Config{
 		BaseOutputDir: "build",

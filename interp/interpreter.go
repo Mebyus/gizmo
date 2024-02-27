@@ -11,6 +11,8 @@ type Result struct {
 	Files     []string
 	TestFiles []string
 	Imports   []string
+
+	Name string
 }
 
 func Interpret(unit *ast.UnitBlock) (*Result, error) {
@@ -53,6 +55,8 @@ func Interpret(unit *ast.UnitBlock) (*Result, error) {
 		Files:     files,
 		TestFiles: testFiles,
 		Imports:   imports,
+
+		Name: unit.Name.Lit,
 	}, nil
 }
 

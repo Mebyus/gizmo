@@ -9,7 +9,7 @@ import (
 // Path a combination of import string and origin is called "unit path".
 // It uniquely identifies a unit (local or foreign) within a project
 type Path struct {
-	// Always not empty if origin is not empty
+	// Always empty if origin is empty. Always not empty if origin is not empty
 	ImpStr string
 
 	Origin Origin
@@ -37,6 +37,26 @@ func Sort(p []Path) {
 func Less(a, b Path) bool {
 	return a.Origin < b.Origin || (a.Origin == b.Origin && a.ImpStr < b.ImpStr)
 }
+
+func Local(s string) Path {
+	return Path{
+		ImpStr: s,
+		Origin: Loc,
+	}
+}
+
+func Locals(ss []string) []Path {
+	if len(ss) == 0 {
+		return nil
+	}
+
+	paths := make([]Path, 0, len(ss))
+	for _, s := range ss {
+		paths = append(paths, Local(s))
+	}
+	return paths
+}
+
 
 func (p Path) Hash() uint64 {
 	var buf [2]byte

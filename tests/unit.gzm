@@ -6,6 +6,7 @@
 unit tests {
     imports = [
         "std: core",
+        "tests/math",
     ];
 
     // List of unit source files

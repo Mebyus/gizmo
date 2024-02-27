@@ -47,6 +47,10 @@ func (p *Parser) unitBlock() (*ast.UnitBlock, error) {
 	name := p.idn()
 	p.advance() // skip unit name identifier
 
+	if p.tok.Kind != token.LeftCurly {
+		return nil, p.unexpected(p.tok)
+	}
+
 	block, err := p.block()
 	if err != nil {
 		return nil, err

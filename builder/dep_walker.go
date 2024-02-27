@@ -70,9 +70,13 @@ func (w *DepWalker) NextPath() origin.Path {
 	return p
 }
 
-func (w *DepWalker) SaveEntry(e *DepEntry) {
-	w.entries = append(w.entries, e)
-	w.index[e.Path] = e
+func (w *DepWalker) AddEntry(entry *DepEntry) {
+	w.entries = append(w.entries, entry)
+	w.index[entry.Path] = entry
+
+	for _, p := range entry.Imports {
+		w.AddPath(p)
+	}
 }
 
 // DepEntry describes dependency relation between unit and
