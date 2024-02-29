@@ -60,5 +60,36 @@ func New(size int) *Graph {
 
 // Cycle contains information about node cycle inside graph
 type Cycle struct {
+	// Always has at least two nodes
 	Nodes []Node
+}
+
+// Sort shift nodes (by cycling them inside the list) in such a way
+// that node with the smallest index becomes first in the list of cycle's nodes
+func (c *Cycle) Sort() {
+	// find node with the smallest graph idnex
+	var j int // index of the smallest node inside cycle's nodes slice
+	m := c.Nodes[0].Index
+	for i, node := range c.Nodes {
+		if node.Index < m {
+			m = node.Index
+			j = i
+		}
+	}
+
+	c.Shift(-j)
+}
+
+// Shift nodes in cyclic manner by specified number of positions.
+// If argument is positive shift to the right, if it's negative
+// shift to the left, if it's zero of a multiple of number of nodes
+// do nothing
+func (c *Cycle) Shift(n int) {
+	if n % len(c.Nodes) == 0 {
+		return
+	}
+
+	if n < 0 {
+		
+	}
 }
