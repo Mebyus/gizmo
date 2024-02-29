@@ -2,9 +2,11 @@ package builder
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strconv"
 
+	"github.com/mebyus/gizmo/builder/impgraph"
 	"github.com/mebyus/gizmo/interp"
 	"github.com/mebyus/gizmo/ir/origin"
 	"github.com/mebyus/gizmo/parser"
@@ -23,26 +25,68 @@ func New(config *Config) *Builder {
 }
 
 func (g *Builder) Build(unit string) error {
-	return g.WalkFrom(unit)
+	deps, err := g.WalkFrom(unit)
+	if err != nil {
+		return err
+	}
+	return g.MakeImportGraph(deps)
 }
 
-func (g *Builder) WalkFrom(unit string) error {
+func (g *Builder) WalkFrom(unit string) ([]*DepEntry, error) {
 	walker := NewWalker()
 	walker.AddPath(origin.Local(unit))
 
 	for {
 		p := walker.NextPath()
 		if p.IsEmpty() {
-			return nil
+			return walker.Sorted(), nil
 		}
 
 		entry, err := g.FindUnitBuildInfo(p)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		walker.AddEntry(entry)
 	}
+}
+
+func (g *Builder) MakeImportGraph(deps []*DepEntry) error {
+	graph := impgraph.New(len(deps))
+	for _, d := range deps {
+		err := graph.Add(d)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := graph.Scan()
+	if err != nil {
+		return err
+	}
+
+	if debug {
+		if len(graph.Nodes) > 1 && len(graph.Roots) == 0 {
+			g.debug("warn: import graph does not have roots")
+		}
+		if len(graph.Nodes) > 1 && len(graph.Pinnacles) == 0 {
+			g.debug("warn: import graph does not have pinnacles")
+		}
+	}
+
+	if debug {
+		impgraph.Dump(os.Stdout, graph)
+	}
+
+	cycle := graph.Chart()
+	if cycle != nil {
+		for _, node := range cycle.Nodes {
+			fmt.Println(node.Bud.UID())
+		}
+		return fmt.Errorf("import cycle detected")
+	}
+
+	return nil
 }
 
 func (g *Builder) FindUnitBuildInfo(p origin.Path) (*DepEntry, error) {

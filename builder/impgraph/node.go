@@ -1,5 +1,10 @@
 package impgraph
 
+import (
+	"fmt"
+	"io"
+)
+
 type Node struct {
 	// List of ancestor nodes indices. For root nodes this list is always empty
 	//
@@ -38,10 +43,10 @@ type Graph struct {
 	// Cohort index in this slice directly corresponds to that rank
 	Cohorts [][]int
 
-	// List of root nodes indices
+	// List of root nodes indices. Root nodes do not have ancestors
 	Roots []int
 
-	// List of pinnacle nodes indices
+	// List of pinnacle nodes indices. Pinnacle nodes do not have descendats
 	Pinnacles []int
 
 	// Bud map. Maps bud uid to node index
@@ -55,6 +60,21 @@ func New(size int) *Graph {
 		Nodes: make([]Node, 0, size),
 
 		bm: make(map[string]int, size),
+	}
+}
+
+func Dump(w io.Writer, g *Graph) {
+	io.WriteString(w, "buds:\n")
+	for _, node := range g.Nodes {
+		io.WriteString(w, fmt.Sprintf("%-4d => %s\n", node.Index, node.Bud.UID()))
+	}
+
+	io.WriteString(w, fmt.Sprintf("pins=%v\n",g.Pinnacles))
+	io.WriteString(w, fmt.Sprintf("roots=%v\n",g.Roots))
+
+	io.WriteString(w, "cons:\n")
+	for _, node := range g.Nodes {
+		io.WriteString(w, fmt.Sprintf("%-4d => anc=%v des=%v\n", node.Index, node.Anc, node.Des))
 	}
 }
 
@@ -85,11 +105,21 @@ func (c *Cycle) Sort() {
 // shift to the left, if it's zero of a multiple of number of nodes
 // do nothing
 func (c *Cycle) Shift(n int) {
-	if n % len(c.Nodes) == 0 {
+	k := len(c.Nodes)
+	s := n % k
+	if s == 0 {
 		return
 	}
 
-	if n < 0 {
-		
+	if s < 0 {
+		s += k
 	}
+	if 0 < s && s < k {
+		panic("shift must be in range after normalization")
+	}
+
+	shifted := make([]Node, k)
+	copy(shifted[s:], c.Nodes[:k-s])
+	copy(shifted[:s], c.Nodes[k-s:])
+	c.Nodes = shifted
 }

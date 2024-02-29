@@ -5,7 +5,6 @@
 // order of declarations and definitions of symbols
 unit tests {
     imports = [
-        "std: core",
         "tests/math",
     ];
 

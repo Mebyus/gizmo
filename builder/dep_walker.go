@@ -95,6 +95,21 @@ type DepEntry struct {
 	Name string
 }
 
+func (e *DepEntry) UID() string {
+	return e.Path.String()
+}
+
+func (e *DepEntry) Ancestors() []string {
+	if len(e.Imports) == 0 {
+		return nil
+	}
+	list := make([]string, 0, len(e.Imports))
+	for _, p := range e.Imports {
+		list = append(list, p.String())
+	}
+	return list
+}
+
 type UnitBuildInfo struct {
 	Files     []string
 	TestFiles []string

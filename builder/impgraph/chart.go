@@ -280,7 +280,7 @@ func (s *Scout) traverse(node int) *Cycle {
 		case cycle:
 			return s.cycle(step.Val)
 		default:
-			panic(step.Kind)
+			panic(fmt.Sprintf("unexpected step kind: %d", step.Kind))
 		}
 	}
 
@@ -292,7 +292,7 @@ func (s *Scout) traverse(node int) *Cycle {
 // argument is a stack index of cycle start, it is assumed that
 // nodes up until after top of the stack form the cycle
 func (s *Scout) cycle(p int) *Cycle {
-	num := s.top() - p
+	num := s.plen() - p 
 	if num <= 1 {
 		panic("not enough nodes to form a cycle")
 	}
@@ -312,6 +312,12 @@ func (s *Scout) cycle(p int) *Cycle {
 }
 
 func (s *Scout) Traverse() *Cycle {
+	if len(s.g.Nodes) == 1 {
+		// since we excluded cases with self-references during scanning phase,
+		// it is safe to assume that graph with only one node cannot form a cycle
+		return nil
+	}
+
 	for _, root := range s.g.Roots {
 		c := s.traverse(root)
 		if c != nil {
@@ -324,11 +330,14 @@ func (s *Scout) Traverse() *Cycle {
 			// This can only happen if there are isolated cycles
 			// in graph. Such cycles are unreachable from roots
 			c := s.traverse(i)
-			if c == nil {
-				panic(fmt.Sprintf("isolated nodes must yield a cycle (node=%d)", i))
+			if c != nil {
+				return c
 			}
-			return c
 		}
+	}
+
+	if len(s.g.Roots) == 0 || len(s.g.Pinnacles) == 0 {
+		panic("graph without roots or pinnacles must have a cycle")
 	}
 
 	return nil
@@ -339,5 +348,5 @@ func (s *Scout) Traverse() *Cycle {
 // detected cycle. Returns nil if chart was complete and no cycles
 // were detected
 func (g *Graph) Chart() *Cycle {
-	return nil
+	return NewScout(g).Traverse()
 }
