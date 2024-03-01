@@ -2,7 +2,6 @@ package builder
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strconv"
 
@@ -29,7 +28,18 @@ func (g *Builder) Build(unit string) error {
 	if err != nil {
 		return err
 	}
-	return g.MakeImportGraph(deps)
+	graph, err := g.MakeImportGraph(deps)
+	if err != nil {
+		return err
+	}
+	return g.Scribe(graph)
+}
+
+// Scribe takes import graph, gathers unit files, parses them and combines
+// generated code into singular file build result
+func (g *Builder) Scribe(graph *impgraph.Graph) error {
+	
+	return nil
 }
 
 func (g *Builder) WalkFrom(unit string) ([]*DepEntry, error) {
@@ -51,21 +61,25 @@ func (g *Builder) WalkFrom(unit string) ([]*DepEntry, error) {
 	}
 }
 
-func (g *Builder) MakeImportGraph(deps []*DepEntry) error {
+func (g *Builder) MakeImportGraph(deps []*DepEntry) (*impgraph.Graph, error) {
 	graph := impgraph.New(len(deps))
 	for _, d := range deps {
 		err := graph.Add(d)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	err := graph.Scan()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if debug {
+		for _, node := range graph.Nodes {
+			g.debug("node %-3d => %s", node.Index, node.Bud.UID())
+		}
+
 		if len(graph.Nodes) > 1 && len(graph.Roots) == 0 {
 			g.debug("warn: import graph does not have roots")
 		}
@@ -74,19 +88,22 @@ func (g *Builder) MakeImportGraph(deps []*DepEntry) error {
 		}
 	}
 
-	if debug {
-		impgraph.Dump(os.Stdout, graph)
-	}
-
 	cycle := graph.Chart()
 	if cycle != nil {
 		for _, node := range cycle.Nodes {
 			fmt.Println(node.Bud.UID())
 		}
-		return fmt.Errorf("import cycle detected")
+		return nil, fmt.Errorf("import cycle detected")
 	}
 
-	return nil
+	graph.Rank()
+	if debug {
+		for rank, cohort := range graph.Cohorts {
+			g.debug("rank %-3d => %v", rank, cohort)
+		}
+	}
+
+	return graph, nil
 }
 
 func (g *Builder) FindUnitBuildInfo(p origin.Path) (*DepEntry, error) {

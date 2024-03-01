@@ -152,12 +152,12 @@ type Scout struct {
 
 // NewScout creates new scout with enough space to handle graph with
 // specified number of nodes
-func NewScout(graph *Graph) *Scout {
+func NewScout(g *Graph) *Scout {
 	return &Scout{
-		g: graph,
+		g: g,
 
 		sm:      make(map[int]int),
-		visited: make([]bool, len(graph.Nodes)),
+		visited: make([]bool, len(g.Nodes)),
 	}
 }
 
@@ -292,7 +292,7 @@ func (s *Scout) traverse(node int) *Cycle {
 // argument is a stack index of cycle start, it is assumed that
 // nodes up until after top of the stack form the cycle
 func (s *Scout) cycle(p int) *Cycle {
-	num := s.plen() - p 
+	num := s.plen() - p
 	if num <= 1 {
 		panic("not enough nodes to form a cycle")
 	}
@@ -349,4 +349,118 @@ func (s *Scout) Traverse() *Cycle {
 // were detected
 func (g *Graph) Chart() *Cycle {
 	return NewScout(g).Traverse()
+}
+
+// Ranker helper object for assigning rank to nodes and sorting
+// them between cohorts
+type Ranker struct {
+	// Indicates how many ancestors are still unranked for a node with
+	// particular graph index, directly corresponding to index in this slice.
+	// If node was already ranked corresponding left value will be 0
+	left []int
+
+	// maps node graph index to a list of other node graph indices
+	//
+	//	k => v
+	//
+	// if k is present in this map it means that list of nodes with
+	// graph indices present in v are waiting for node with graphindex k to be
+	// ranked to in turn advance their ranking further
+	queue map[int][]int
+
+	// list of node graph indices which will be ranked
+	// during current iteration
+	wave []int
+
+	// buffer for preparing next wave
+	next []int
+
+	g *Graph
+}
+
+func NewRanker(g *Graph) *Ranker {
+	r := &Ranker{
+		g: g,
+
+		left:  make([]int, len(g.Nodes)),
+		queue: make(map[int][]int, len(g.Nodes)),
+	}
+
+	// index nodes for ranking helper information
+	for i, node := range g.Nodes {
+		r.left[i] = len(node.Anc)
+		if len(node.Des) != 0 {
+			r.queue[i] = node.Des
+		}
+	}
+
+	// setup initial wave
+	g.Cohorts = make([][]int, 1)
+	g.Cohorts[0] = append(g.Cohorts[0], g.Roots...)
+	r.wave = g.Roots
+
+	return r
+}
+
+// swap wave slice with mext prepared buffer
+func (r *Ranker) swap() {
+	r.wave = r.next
+	r.next = nil
+}
+
+// add node with specified graph index to cohort of the specified rank
+func (r *Ranker) add(node int, rank int) {
+	for j := len(r.g.Cohorts); j <= rank; j++ {
+		// allocate place for storing slices of graph indices
+		// for cohorts with rank not initialized previously
+		r.g.Cohorts = append(r.g.Cohorts, nil)
+	}
+
+	r.g.Cohorts[rank] = append(r.g.Cohorts[rank], node)
+}
+
+func (r *Ranker) Rank() {
+	for len(r.wave) != 0 {
+		for _, i := range r.wave {
+			waiters, ok := r.queue[i]
+			if !ok {
+				continue
+			}
+
+			// rank that will be passed to waiters
+			rank := r.g.Nodes[i].Rank + 1
+
+			delete(r.queue, i)
+			for _, j := range waiters {
+				r.left[j] -= 1
+
+				if rank > r.g.Nodes[j].Rank {
+					// select highest rank from all nodes inside the wave
+					r.g.Nodes[j].Rank = rank
+				}
+
+				// check if waiter node has finished ranking
+				if r.left[j] == 0 {
+					r.add(j, r.g.Nodes[j].Rank)
+
+					// next wave is constructed from nodes that finished
+					// ranking during this wave
+					r.next = append(r.next, j)
+				}
+			}
+		}
+
+		r.swap()
+	}
+
+	for _, cohort := range r.g.Cohorts[1:] {
+		sort.Ints(cohort)
+	}
+}
+
+// Rank assigns rank to each node in graph and sorts nodes between
+// graph's cohorts
+func (g *Graph) Rank() {
+	r := NewRanker(g)
+	r.Rank()
 }
