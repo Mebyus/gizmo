@@ -48,7 +48,7 @@ func (p Pos) Long() string {
 	if p.File == nil {
 		return "<unknown>:" + p.Short()
 	}
-	return p.File.Name + ":" + p.Short()
+	return p.File.Path + ":" + p.Short()
 }
 
 func (p Pos) String() string {

@@ -31,7 +31,7 @@ func TestParse(t *testing.T) {
 		},
 		{
 			name: "4 identifier",
-			line: "1:1 IDENT abc",
+			line: "1:1 IDN abc",
 			want: Token{
 				Kind: Identifier,
 				Pos:  pos(1, 1),

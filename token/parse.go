@@ -22,6 +22,7 @@ var (
 )
 
 func ParsePos(spec string) (source.Pos, error) {
+	// TODO: fix this function, token listing format has changed
 	if len(spec) < 3 {
 		return source.Pos{}, ErrBadPosFormat
 	}

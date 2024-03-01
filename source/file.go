@@ -1,9 +1,11 @@
 package source
 
 import (
+	"fmt"
 	"hash/fnv"
 	"io"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -17,8 +19,20 @@ type File struct {
 	// Time of last modification, as reported by OS info call
 	ModTime time.Time
 
-	// name/path to a file
+	// Path to this file
+	Path string
+
+	// Base file name (without directories). Includes extension
 	Name string
+
+	// File extension, including dot character. Examples:
+	//
+	//	- ".gzm"
+	//	- ".cpp"
+	//	- ".asm"
+	//
+	// This field will be empty if file does not have extension in its name
+	Ext string
 
 	// In bytes, as reported by OS info call
 	//
@@ -32,21 +46,39 @@ type File struct {
 
 func Hash(b []byte) uint64 {
 	h := fnv.New64a()
+
+	// implementation always writes all given bytes
+	// and never returns error
 	h.Write(b)
+
 	return h.Sum64()
 }
 
-// Check returns basic information about a file, without reading it
+// Info returns basic information about a file, without reading it
 //
 // Bytes and Hash fields in the resulting File struct will be nil/zero
 // regardless of actual file contents
-func Check(name string) (*File, error) {
-	info, err := os.Stat(name)
+func Info(path string) (*File, error) {
+	if path == "." || path == "" {
+		panic("empty path")
+	}
+
+	info, err := os.Lstat(path)
 	if err != nil {
 		return nil, err
 	}
+	if info.IsDir() {
+		return nil, fmt.Errorf("path \"%s\" leads to a directory", path)
+	}
+	if !info.Mode().IsRegular() {
+		return nil, fmt.Errorf("path \"%s\" does not lead to a regular file", path)
+	}
+
+	name := filepath.Base(path)
 	return &File{
 		Name:    name,
+		Ext:     filepath.Ext(name),
+		Path:    path,
 		ModTime: info.ModTime(),
 		Size:    uint64(info.Size()),
 	}, nil
@@ -57,7 +89,7 @@ func Check(name string) (*File, error) {
 // If file size has changed this method updates it, making
 // len(f.Bytes) == f.Size true after the call
 func (f *File) Load() error {
-	r, err := os.Open(f.Name)
+	r, err := os.Open(f.Path)
 	if err != nil {
 		return err
 	}
@@ -87,8 +119,12 @@ func (f *File) Load() error {
 }
 
 // Load reads full information about a file including its hash and contents
-func Load(name string) (*File, error) {
-	f, err := os.Open(name)
+func Load(path string) (*File, error) {
+	if path == "." || path == "" {
+		panic("empty path")
+	}
+
+	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
@@ -114,8 +150,11 @@ func Load(name string) (*File, error) {
 		h.Write(buf[:n])
 		if err != nil {
 			if err == io.EOF {
+				name := filepath.Base(path)
 				return &File{
 					Name:    name,
+					Ext:     filepath.Ext(name),
+					Path:    path,
 					Bytes:   b,
 					ModTime: info.ModTime(),
 					Size:    uint64(len(b)),

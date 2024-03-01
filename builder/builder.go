@@ -17,13 +17,24 @@ type Builder struct {
 	cfg Config
 }
 
-func New(config *Config) *Builder {
+func New(config Config) *Builder {
 	return &Builder{
-		cfg: *config,
+		cfg: config,
 	}
 }
 
+func Build(config Config, unit string) error {
+	g := New(config)
+	return g.Build(unit)
+}
+
 func (g *Builder) Build(unit string) error {
+	cache, err := NewCache(&g.cfg)
+	if err != nil {
+		return err
+	}
+	cache.LookupBuild(unit)
+
 	deps, err := g.WalkFrom(unit)
 	if err != nil {
 		return err
@@ -38,7 +49,7 @@ func (g *Builder) Build(unit string) error {
 // Scribe takes import graph, gathers unit files, parses them and combines
 // generated code into singular file build result
 func (g *Builder) Scribe(graph *impgraph.Graph) error {
-	
+
 	return nil
 }
 

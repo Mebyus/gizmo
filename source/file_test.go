@@ -53,8 +53,8 @@ func TestLoad(t *testing.T) {
 			if got.Size != uint64(len(tt.data)) {
 				t.Errorf("Load() size = %d, want %d", got.Size, uint64(len(tt.data)))
 			}
-			if got.Name != path {
-				t.Errorf("Load() name = \"%s\", want \"%s\"", got.Name, path)
+			if got.Path != path {
+				t.Errorf("Load() name = \"%s\", want \"%s\"", got.Path, path)
 			}
 			wantHash := Hash(tt.data)
 			if got.Hash != wantHash {
@@ -70,7 +70,7 @@ func TestLoad(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			path := filepath.Join(dir, tt.name)
-			got, err := Check(path)
+			got, err := Info(path)
 			if err != nil {
 				t.Errorf("Check() error = %v", err)
 				return
@@ -83,8 +83,8 @@ func TestLoad(t *testing.T) {
 			if got.Size != uint64(len(tt.data)) {
 				t.Errorf("File.Load() size = %d, want %d", got.Size, uint64(len(tt.data)))
 			}
-			if got.Name != path {
-				t.Errorf("File.Load() name = \"%s\", want \"%s\"", got.Name, path)
+			if got.Path != path {
+				t.Errorf("File.Load() name = \"%s\", want \"%s\"", got.Path, path)
 			}
 			wantHash := Hash(tt.data)
 			if got.Hash != wantHash {

@@ -57,11 +57,12 @@ func build(config *Config, path string) error {
 	}
 
 	path = filepath.Clean(path)
-
-	return builder.New(&builder.Config{
+	cfg := builder.Config{
 		BaseOutputDir: "build",
 		BaseCacheDir:  "build",
 
 		BuildKind: kind,
-	}).Build(path)
+	}
+
+	return builder.Build(cfg, path)
 }
