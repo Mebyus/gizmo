@@ -12,17 +12,7 @@ unit tests {
     //
     // This is used by "build" and "test" commands
     files = [
-        "prelude.cpp",
-        "chunk.cpp",
-        "cmp.cpp",
-        "bits.cpp",
-        "mem.cpp",
-        "fmt.cpp",
-        "io.cpp",
-        "syscall_linux.cpp",
-        "os.cpp",
-        "os_linux.cpp",
-        "log.cpp",
+        "1.gzm",
     ];
 
     // List of unit test files

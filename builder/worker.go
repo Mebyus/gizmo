@@ -3,7 +3,11 @@ package builder
 import (
 	"bytes"
 	"fmt"
+	"path/filepath"
 	"sync"
+
+	"github.com/mebyus/gizmo/gencpp"
+	"github.com/mebyus/gizmo/parser"
 )
 
 type BuildTask struct {
@@ -207,7 +211,7 @@ func SpawnWorker(cache *Cache, ctl WorkerControls) {
 				return
 			}
 
-			result := ProcessTask(cache, task)
+			result := processTask(cache, task)
 
 			select {
 			case ctl.sink <- result:
@@ -220,9 +224,66 @@ func SpawnWorker(cache *Cache, ctl WorkerControls) {
 	}
 }
 
-func ProcessTask(cache *Cache, task *BuildTask) *BuildTaskResult {
-	return &BuildTaskResult{
-		task:   task,
-		genout: []byte(fmt.Sprintf("unit \"%s\" (%d)\n", task.dep.Path.String(), task.order)),
+func processTask(cache *Cache, task *BuildTask) *BuildTaskResult {
+	result, err := ProcessTask(cache, task)
+	if err != nil {
+		return &BuildTaskResult{
+			err:  err,
+			task: task,
+		}
 	}
+	if result == nil {
+		return &BuildTaskResult{task: task}
+	}
+	return result
+}
+
+func ProcessTask(cache *Cache, task *BuildTask) (*BuildTaskResult, error) {
+	if len(task.dep.BuildInfo.Files) == 0 {
+		return nil, nil
+	}
+
+	var buf bytes.Buffer
+	names := task.dep.BuildInfo.Files
+	for _, name := range names {
+		if name == "" || name == "." {
+			return nil, fmt.Errorf("empty file name")
+		}
+
+		dir := filepath.Dir(name)
+		if !(dir == "" || dir == ".") {
+			return nil, fmt.Errorf("file \"%s\" points to a separate directory", name)
+		}
+
+		ext := filepath.Ext(name)
+		switch ext {
+		case "":
+			return nil, fmt.Errorf("file \"%s\" has empty extension", name)
+		case ".gzm":
+			src, err := cache.LoadSourceFile(task.dep.Path, name)
+			if err != nil {
+				return nil, err
+			}
+			atom, err := parser.ParseSource(src)
+			if err != nil {
+				return nil, err
+			}
+			err = gencpp.Gen(&buf, atom)
+			if err != nil {
+				return nil, err
+			}
+		case ".cpp":
+			panic("not implemented")
+		case ".asm":
+			panic("not implemented")
+		default:
+			return nil, fmt.Errorf("file \"%s\" has extension unknown to builder", name)
+		}
+	}
+
+	result := &BuildTaskResult{
+		task:   task,
+		genout: buf.Bytes(),
+	}
+	return result, nil
 }

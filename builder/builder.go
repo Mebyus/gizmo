@@ -3,6 +3,7 @@ package builder
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/mebyus/gizmo/builder/impgraph"
 	"github.com/mebyus/gizmo/interp"
@@ -151,6 +152,15 @@ func (g *Builder) FindUnitBuildInfo(p origin.Path) (*DepEntry, error) {
 	result, err := interp.Interpret(unit.Unit)
 	if err != nil {
 		return nil, err
+	}
+	for _, s := range result.Imports {
+		cleaned := filepath.Clean(s)
+		if cleaned != s {
+			return nil, fmt.Errorf("import path \"%s\" is badly formatted", s)
+		}
+		if s == "" || s == "." {
+			return nil, fmt.Errorf("empty import path")
+		}
 	}
 	return &DepEntry{
 		BuildInfo: UnitBuildInfo{
