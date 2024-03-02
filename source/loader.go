@@ -5,6 +5,8 @@ import (
 	"sync"
 )
 
+const debug = true
+
 // Loader caches loaded source files in memory.
 // Safe for usage from multiple goroutines
 type Loader struct {
@@ -14,10 +16,10 @@ type Loader struct {
 	mu sync.Mutex
 }
 
-type State uint8
+type state uint8
 
 const (
-	empty State = iota
+	empty state = iota
 
 	// failed to load file
 	failed
@@ -29,6 +31,18 @@ const (
 	loaded
 )
 
+var stateText = [...]string{
+	empty: "<nil>",
+
+	failed: "failed",
+	basic:  "basic",
+	loaded: "loaded",
+}
+
+func (s state) String() string {
+	return stateText[s]
+}
+
 type Entry struct {
 	// not nil only for failed state
 	err error
@@ -36,7 +50,7 @@ type Entry struct {
 	// always nil for failed state
 	file *File
 
-	state State
+	state state
 }
 
 func (e *Entry) failed(err error) {
@@ -81,6 +95,12 @@ func newLoaded(file *File) *Entry {
 
 func NewLoader() *Loader {
 	return &Loader{entries: make(map[string]*Entry)}
+}
+
+func (l *Loader) debug(format string, args ...any) {
+	fmt.Print("[debug] loader  | ")
+	fmt.Printf(format, args...)
+	fmt.Println()
 }
 
 // Load source file specified by path. Argument should be
@@ -156,6 +176,11 @@ func (l *Loader) loadAndSave(path string) *Entry {
 }
 
 func (l *Loader) save(entry *Entry) {
+	if debug {
+		l.debug("save \"%s\" (state=%s hash=%016x size=%d)",
+			entry.file.Path, entry.state.String(), entry.file.Hash, entry.file.Size)
+	}
+
 	l.mu.Lock()
 	defer l.mu.Unlock()
 

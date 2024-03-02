@@ -2,8 +2,7 @@ package builder
 
 import (
 	"fmt"
-	"path/filepath"
-	"strconv"
+	"os"
 
 	"github.com/mebyus/gizmo/builder/impgraph"
 	"github.com/mebyus/gizmo/interp"
@@ -15,6 +14,8 @@ const debug = true
 
 type Builder struct {
 	cfg Config
+
+	cache *Cache
 }
 
 func New(config Config) *Builder {
@@ -33,6 +34,8 @@ func (g *Builder) Build(unit string) error {
 	if err != nil {
 		return err
 	}
+	g.cache = cache
+
 	cache.LookupBuild(unit)
 
 	deps, err := g.WalkFrom(unit)
@@ -49,8 +52,20 @@ func (g *Builder) Build(unit string) error {
 // Scribe takes import graph, gathers unit files, parses them and combines
 // generated code into singular file build result
 func (g *Builder) Scribe(graph *impgraph.Graph) error {
+	pool := NewPool(g.cache, len(graph.Nodes))
+	for _, cohort := range graph.Cohorts {
+		for _, node := range cohort {
+			pool.AddTask(&BuildTask{dep: graph.Nodes[node].Bud.(*DepEntry)})
+		}
+	}
 
-	return nil
+	pool.Start()
+	output := pool.WaitOutput()
+	if output.err != nil {
+		return output.err
+	}
+	err := os.WriteFile("test_output.txt", output.code, 0o664)
+	return err
 }
 
 func (g *Builder) WalkFrom(unit string) ([]*DepEntry, error) {
@@ -122,38 +137,32 @@ func (g *Builder) FindUnitBuildInfo(p origin.Path) (*DepEntry, error) {
 		g.debug(p.String())
 	}
 
-	switch p.Origin {
-	case origin.Std:
-		panic("not implemented for std")
-	case origin.Pkg:
-		panic("not implemented for pkg")
-	case origin.Loc:
-		filename := filepath.Join(g.cfg.BaseSourceDir, p.ImpStr, "unit.gzm")
-		unit, err := parser.ParseFile(filename)
-		if err != nil {
-			return nil, err
-		}
-		if unit.Unit == nil {
-			return nil, fmt.Errorf("file \"%s\" does not contain unit block", filename)
-		}
-		result, err := interp.Interpret(unit.Unit)
-		if err != nil {
-			return nil, err
-		}
-		return &DepEntry{
-			BuildInfo: UnitBuildInfo{
-				Files:     result.Files,
-				TestFiles: result.TestFiles,
-
-				DefaultNamespace: result.Name,
-			},
-			Imports: origin.Locals(result.Imports),
-			Name:    result.Name,
-			Path:    p,
-		}, nil
-	default:
-		panic("unexpected import origin: " + strconv.FormatInt(int64(p.Origin), 10))
+	src, err := g.cache.LoadSourceFile(p, "unit.gzm")
+	if err != nil {
+		return nil, fmt.Errorf("load unit build source: %w", err)
 	}
+	unit, err := parser.ParseSource(src)
+	if err != nil {
+		return nil, err
+	}
+	if unit.Unit == nil {
+		return nil, fmt.Errorf("file \"%s\" does not contain unit block", src.Path)
+	}
+	result, err := interp.Interpret(unit.Unit)
+	if err != nil {
+		return nil, err
+	}
+	return &DepEntry{
+		BuildInfo: UnitBuildInfo{
+			Files:     result.Files,
+			TestFiles: result.TestFiles,
+
+			DefaultNamespace: result.Name,
+		},
+		Imports: origin.Locals(result.Imports),
+		Name:    result.Name,
+		Path:    p,
+	}, nil
 }
 
 func (g *Builder) debug(format string, args ...any) {
