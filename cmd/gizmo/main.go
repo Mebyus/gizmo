@@ -6,6 +6,7 @@ import (
 
 	"github.com/mebyus/gizmo/butler"
 	"github.com/mebyus/gizmo/cmd/gizmo/build"
+	"github.com/mebyus/gizmo/cmd/gizmo/clean"
 	"github.com/mebyus/gizmo/cmd/gizmo/gen"
 	"github.com/mebyus/gizmo/cmd/gizmo/lex"
 	"github.com/mebyus/gizmo/cmd/gizmo/tree"
@@ -27,7 +28,7 @@ func main() {
 var root = &butler.Lackey{
 	Name: "gizmo",
 
-	Short: "gizmo is a command line tool for managing Gizmo source code",
+	Short: "Gizmo is a command line tool for managing Gizmo source code.",
 	Usage: "gizmo <command> [arguments]",
 
 	Sub: []*butler.Lackey{
@@ -36,6 +37,7 @@ var root = &butler.Lackey{
 		gen.Gen,
 		build.Build,
 		ubev.Ubev,
+		clean.Clean,
 	},
 }
 
