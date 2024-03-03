@@ -44,6 +44,8 @@ func (s state) String() string {
 }
 
 type Entry struct {
+	path string
+
 	// not nil only for failed state
 	err error
 
@@ -72,8 +74,9 @@ func (e *Entry) loadFromInfo() {
 	e.loaded()
 }
 
-func newFailed(err error) *Entry {
+func newFailed(path string, err error) *Entry {
 	return &Entry{
+		path:  path,
 		state: failed,
 		err:   err,
 	}
@@ -81,6 +84,7 @@ func newFailed(err error) *Entry {
 
 func newBasic(file *File) *Entry {
 	return &Entry{
+		path:  file.Path,
 		state: basic,
 		file:  file,
 	}
@@ -88,6 +92,7 @@ func newBasic(file *File) *Entry {
 
 func newLoaded(file *File) *Entry {
 	return &Entry{
+		path:  file.Path,
 		state: loaded,
 		file:  file,
 	}
@@ -152,7 +157,7 @@ func (l *Loader) infoAndSave(path string) *Entry {
 
 	file, err := Info(path)
 	if err != nil {
-		entry = newFailed(err)
+		entry = newFailed(path, err)
 	} else {
 		entry = newBasic(file)
 	}
@@ -166,7 +171,7 @@ func (l *Loader) loadAndSave(path string) *Entry {
 
 	file, err := Load(path)
 	if err != nil {
-		entry = newFailed(err)
+		entry = newFailed(path, err)
 	} else {
 		entry = newLoaded(file)
 	}
@@ -177,14 +182,22 @@ func (l *Loader) loadAndSave(path string) *Entry {
 
 func (l *Loader) save(entry *Entry) {
 	if debug {
-		l.debug("save \"%s\" (state=%s hash=%016x size=%d)",
-			entry.file.Path, entry.state.String(), entry.file.Hash, entry.file.Size)
+		if entry.state == failed {
+			l.debug("save \"%s\" (state=%s) %s",
+				entry.path, entry.state.String(), entry.err)
+		} else if entry.state == basic {
+			l.debug("save \"%s\" (state=%s size=%d)",
+				entry.path, entry.state.String(), entry.file.Size)
+		} else {
+			l.debug("save \"%s\" (state=%s hash=%016x size=%d)",
+				entry.path, entry.state.String(), entry.file.Hash, entry.file.Size)
+		}
 	}
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	path := entry.file.Path
+	path := entry.path
 	e := l.entries[path]
 	if e == nil {
 		l.entries[path] = entry

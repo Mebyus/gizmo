@@ -13,6 +13,7 @@ unit tests {
     // This is used by "build" and "test" commands
     files = [
         "1.gzm",
+        "2.gzm",
     ];
 
     // List of unit test files

@@ -211,7 +211,7 @@ type AwesomeTemplate[[T]] struct {
 }
 
 /*
-method (AwesomeTemplate[[T]]) set(T t) {
+method (AwesomeTemplate[[T]]) set(t: T) {
     field = t;
 }
 */

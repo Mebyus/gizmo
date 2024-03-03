@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/mebyus/gizmo/gencpp"
+	"github.com/mebyus/gizmo/ir/origin"
 	"github.com/mebyus/gizmo/parser"
 )
 
@@ -243,9 +245,12 @@ func ProcessTask(cache *Cache, task *BuildTask) (*BuildTaskResult, error) {
 		return nil, nil
 	}
 
-	var buf bytes.Buffer
 	names := task.dep.BuildInfo.Files
+	gizmoFiles := make([]string, 0, len(names))
+	var unitModTime time.Time
+
 	for _, name := range names {
+		name = filepath.Clean(name)
 		if name == "" || name == "." {
 			return nil, fmt.Errorf("empty file name")
 		}
@@ -260,18 +265,14 @@ func ProcessTask(cache *Cache, task *BuildTask) (*BuildTaskResult, error) {
 		case "":
 			return nil, fmt.Errorf("file \"%s\" has empty extension", name)
 		case ".gzm":
-			src, err := cache.LoadSourceFile(task.dep.Path, name)
+			src, err := cache.InfoSourceFile(task.dep.Path, name)
 			if err != nil {
 				return nil, err
 			}
-			atom, err := parser.ParseSource(src)
-			if err != nil {
-				return nil, err
+			if src.ModTime.After(unitModTime) {
+				unitModTime = src.ModTime
 			}
-			err = gencpp.Gen(&buf, atom)
-			if err != nil {
-				return nil, err
-			}
+			gizmoFiles = append(gizmoFiles, name)
 		case ".cpp":
 			panic("not implemented")
 		case ".asm":
@@ -281,9 +282,55 @@ func ProcessTask(cache *Cache, task *BuildTask) (*BuildTaskResult, error) {
 		}
 	}
 
+	genout, ok := cache.LoadUnitGenout(task.dep.Path, unitModTime)
+	if ok {
+		return &BuildTaskResult{
+			task:   task,
+			genout: genout,
+		}, nil
+	}
+
+	var buf bytes.Buffer
+
+	for _, name := range gizmoFiles {
+		err := gizmoGenout(&buf, cache, task.dep.Path, name)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	result := &BuildTaskResult{
 		task:   task,
 		genout: buf.Bytes(),
 	}
+	cache.SaveUnitGenout(task.dep.Path, result.genout)
 	return result, nil
+}
+
+func gizmoGenout(buf *bytes.Buffer, cache *Cache, p origin.Path, name string) error {
+	src, err := cache.LoadSourceFile(p, name)
+	if err != nil {
+		return err
+	}
+	genout, ok := cache.LoadFileGenout(p, src)
+	if ok {
+		// implementation always writes all bytes without error
+		buf.Write(genout)
+		return nil
+	}
+
+	atom, err := parser.ParseSource(src)
+	if err != nil {
+		return err
+	}
+
+	start := buf.Len()
+	err = gencpp.Gen(buf, atom)
+	if err != nil {
+		return err
+	}
+	genout = buf.Bytes()[start:]
+
+	cache.SaveFileGenout(p, src, genout)
+	return nil
 }
