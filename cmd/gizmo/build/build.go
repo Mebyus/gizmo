@@ -26,7 +26,7 @@ func (c *Config) Apply(p *butler.Param) error {
 	case "":
 		panic("param with empty name")
 	case "kind":
-		c.BuildKind = p.String()
+		c.BuildKind = p.Str()
 	default:
 		panic(fmt.Sprintf("unexpected param: {%s}", p.Name))
 	}

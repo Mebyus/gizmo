@@ -26,7 +26,7 @@ type Config struct {
 func (c *Config) Apply(p *butler.Param) error {
 	switch p.Name {
 	case "output-file":
-		c.OutputFile = p.String()
+		c.OutputFile = p.Str()
 	default:
 		panic(fmt.Sprintf("unexpected param: {%s}", p.Name))
 	}
@@ -38,6 +38,7 @@ func (c *Config) Recipe() []butler.Param {
 		{
 			Name: "output-file",
 			Kind: butler.String,
+			Desc: "path to file where output should be stored",
 		},
 	}
 }

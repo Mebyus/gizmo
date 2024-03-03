@@ -16,6 +16,19 @@ const (
 	CommaList
 )
 
+var kindText = [...]string{
+	empty: "<nil>",
+
+	Bool:      "bool",
+	String:    "string",
+	List:      "list",
+	CommaList: "comma list",
+}
+
+func (k ParamKind) String() string {
+	return kindText[k]
+}
+
 type Param struct {
 	Desc string
 
@@ -54,6 +67,9 @@ type Params interface {
 // Param values which were found in arguments are applied to params container
 func Parse(params Params, args []string) ([]string, error) {
 	pms := params.Recipe()
+	if len(pms) == 0 {
+		panic("params container must be nil or have at least one param in recipe")
+	}
 
 	// maps param name to its description
 	var m map[string]*Param
@@ -158,7 +174,7 @@ func (p *Param) List() []string {
 	return p.val.([]string)
 }
 
-func (p *Param) String() string {
+func (p *Param) Str() string {
 	if p.val == nil {
 		if p.Def == nil {
 			return ""
