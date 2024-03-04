@@ -2,6 +2,7 @@ package clean
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/mebyus/gizmo/butler"
 )
@@ -19,5 +20,12 @@ func execute(r *butler.Lackey, _ []string) error {
 }
 
 func clean() error {
-	return os.RemoveAll("build")
+	dirs := []string{filepath.Join("build", "target"),  filepath.Join("build", ".cache")}
+	for _, dir := range dirs {
+		err := os.RemoveAll(dir)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

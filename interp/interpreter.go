@@ -21,6 +21,8 @@ func Interpret(unit *ast.UnitBlock) (*Result, error) {
 	var files []string
 	var testFiles []string
 	var imports []string
+	var assignedDefaultNamespace bool
+	var defaultNamespace string
 
 	for _, statement := range unit.Block.Statements {
 		switch s := statement.(type) {
@@ -45,6 +47,13 @@ func Interpret(unit *ast.UnitBlock) (*Result, error) {
 					return nil, err
 				}
 				imports = list
+			case "default_namespace":
+				str, err := getStringFromExpression(s.Expression)
+				if err != nil {
+					return nil, err
+				}
+				assignedDefaultNamespace = true
+				defaultNamespace = str
 			default:
 				return nil, fmt.Errorf("reference to undefined symbol: %s (at %s)", target.Lit, target.Pos.String())
 			}
@@ -53,15 +62,31 @@ func Interpret(unit *ast.UnitBlock) (*Result, error) {
 		}
 	}
 
+	unitName := unit.Name.Lit
+	if !assignedDefaultNamespace {
+		defaultNamespace = unitName
+	}
+
 	return &Result{
 		Files:     files,
 		TestFiles: testFiles,
 		Imports:   imports,
 
-		Name: unit.Name.Lit,
+		Name: unitName,
 
-		DefaultNamespace: unit.Name.Lit,
+		DefaultNamespace: defaultNamespace,
 	}, nil
+}
+
+func getStringFromExpression(expr ast.Expression) (string, error) {
+	lit, ok := expr.(ast.BasicLiteral)
+	if !ok {
+		return "", fmt.Errorf("unexpected expression instead of literal: %v (%T)", expr, expr)
+	}
+	if lit.Token.Kind != token.String {
+		return "", fmt.Errorf("unexpected literal kind: %v (%T)", lit, lit)
+	}
+	return lit.Token.Lit, nil
 }
 
 func getStringsFromExpression(expr ast.Expression) ([]string, error) {

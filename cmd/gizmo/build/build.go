@@ -10,8 +10,8 @@ import (
 
 var Build = &butler.Lackey{
 	Name:  "build",
-	Short: "build gizmo unit and its dependencies",
-	Usage: "gizmo build [options] <unit>",
+	Short: "build specified targets and their dependencies",
+	Usage: "gizmo build [options] <targets>",
 
 	Exec:   execute,
 	Params: &Config{},
@@ -19,6 +19,12 @@ var Build = &butler.Lackey{
 
 type Config struct {
 	BuildKind string
+
+	// Project build configuration file
+	BuildFile string
+
+	// Local build configuration file
+	EnvFile string
 }
 
 func (c *Config) Apply(p *butler.Param) error {
@@ -27,6 +33,10 @@ func (c *Config) Apply(p *butler.Param) error {
 		panic("param with empty name")
 	case "kind":
 		c.BuildKind = p.Str()
+	case "file":
+		c.BuildFile = p.Str()
+	case "env":
+		c.EnvFile = p.Str()
 	default:
 		panic(fmt.Sprintf("unexpected param: {%s}", p.Name))
 	}
@@ -40,14 +50,24 @@ func (c *Config) Recipe() []butler.Param {
 			Kind: butler.String,
 			Def:  "debug",
 		},
+		{
+			Name: "file",
+			Kind: butler.String,
+			Def:  filepath.Join("build", "build.gzm"),
+		},
+		{
+			Name: "env",
+			Kind: butler.String,
+			Def:  filepath.Join("build", "env.gzm"),
+		},
 	}
 }
 
-func execute(r *butler.Lackey, units []string) error {
-	if len(units) == 0 {
+func execute(r *butler.Lackey, targets []string) error {
+	if len(targets) == 0 {
 		return fmt.Errorf("at least one unit must be specified")
 	}
-	return build(r.Params.(*Config), units[0])
+	return build(r.Params.(*Config), targets[0])
 }
 
 func build(config *Config, path string) error {
@@ -58,8 +78,9 @@ func build(config *Config, path string) error {
 
 	path = filepath.Clean(path)
 	cfg := builder.Config{
-		BaseOutputDir: "build",
-		BaseCacheDir:  "build",
+		BaseOutputDir: filepath.Join("build", "target"),
+		BaseCacheDir:  filepath.Join("build", ".cache"),
+		BaseSourceDir: "src",
 
 		BuildKind: kind,
 	}

@@ -20,4 +20,6 @@ unit tests {
     //
     // This is only used by "test" command
     test_files = [];
+
+    default_namespace = "coven::core";
 }
