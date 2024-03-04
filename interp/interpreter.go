@@ -13,6 +13,8 @@ type Result struct {
 	Imports   []string
 
 	Name string
+
+	DefaultNamespace string
 }
 
 func Interpret(unit *ast.UnitBlock) (*Result, error) {
@@ -57,6 +59,8 @@ func Interpret(unit *ast.UnitBlock) (*Result, error) {
 		Imports:   imports,
 
 		Name: unit.Name.Lit,
+
+		DefaultNamespace: unit.Name.Lit,
 	}, nil
 }
 

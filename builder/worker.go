@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/mebyus/gizmo/gencpp"
-	"github.com/mebyus/gizmo/ir/origin"
 	"github.com/mebyus/gizmo/parser"
 )
 
@@ -293,7 +292,7 @@ func ProcessTask(cache *Cache, task *BuildTask) (*BuildTaskResult, error) {
 	var buf bytes.Buffer
 
 	for _, name := range gizmoFiles {
-		err := gizmoGenout(&buf, cache, task.dep.Path, name)
+		err := gizmoGenout(&buf, cache, task.dep, name)
 		if err != nil {
 			return nil, err
 		}
@@ -307,7 +306,8 @@ func ProcessTask(cache *Cache, task *BuildTask) (*BuildTaskResult, error) {
 	return result, nil
 }
 
-func gizmoGenout(buf *bytes.Buffer, cache *Cache, p origin.Path, name string) error {
+func gizmoGenout(buf *bytes.Buffer, cache *Cache, dep *DepEntry, name string) error {
+	p := dep.Path
 	src, err := cache.LoadSourceFile(p, name)
 	if err != nil {
 		return err
@@ -324,8 +324,12 @@ func gizmoGenout(buf *bytes.Buffer, cache *Cache, p origin.Path, name string) er
 		return err
 	}
 
+	genConfig := gencpp.Config{
+		Size:             len(src.Bytes),
+		DefaultNamespace: dep.BuildInfo.DefaultNamespace,
+	}
 	start := buf.Len()
-	err = gencpp.Gen(buf, atom)
+	err = gencpp.Gen(buf, &genConfig, atom)
 	if err != nil {
 		return err
 	}

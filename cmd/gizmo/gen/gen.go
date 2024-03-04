@@ -12,7 +12,7 @@ import (
 
 var Gen = &butler.Lackey{
 	Name:  "gen",
-	Short: "generate C++ code from a given unit",
+	Short: "generate C++ code from a given gizmo source file",
 	Usage: "gizmo gen [options] <files>",
 
 	Exec:   execute,
@@ -66,5 +66,5 @@ func gen(config *Config, filename string) error {
 		defer f.Close()
 		out = f
 	}
-	return gencpp.Gen(out, unit)
+	return gencpp.Gen(out, nil, unit)
 }

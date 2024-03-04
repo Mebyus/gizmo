@@ -158,10 +158,29 @@ func (c *Cache) SaveFileGenout(p origin.Path, file *source.File, data []byte) {
 	}
 }
 
+func (c *Cache) SaveModGenout(mod string, code []byte) (string, error) {
+	name := filepath.Base(mod) + ".cpp"
+	dir := filepath.Join(c.dir, "mod", "gen", filepath.Dir(mod))
+	err := os.MkdirAll(dir, 0o775)
+	if err != nil {
+		return "", err
+	}
+
+	path := filepath.Join(dir, name)
+	err = os.WriteFile(path, code, 0o664)
+	if err != nil {
+		return "", err
+	}
+	return path, nil
+}
+
 // LoadUnitGenout load bytes stored in cache for combined generated unit output.
 // If it is saved in cache and no older than supplied mod time than it will be
 // returned with (<data>, true) otherwise (<nil>, false)
 func (c *Cache) LoadUnitGenout(p origin.Path, mod time.Time) ([]byte, bool) {
+	if c.init {
+		return nil, false
+	}
 	path := filepath.Join(c.dir, "unit", formatHash(p.Hash()), "stapled_unit.cpp")
 	m, ok := getFileModTime(path)
 	if !ok {
@@ -187,6 +206,9 @@ func (c *Cache) LoadUnitGenout(p origin.Path, mod time.Time) ([]byte, bool) {
 // unit denoted by origin path. If stored output is no older than supplied file than
 // this method returns with (<data>, true) otherwise (<nil>, false)
 func (c *Cache) LoadFileGenout(p origin.Path, file *source.File) ([]byte, bool) {
+	if c.init {
+		return nil, false
+	}
 	path := filepath.Join(c.dir, "unit", formatHash(p.Hash()), genPartName(file))
 	m, ok := getFileModTime(path)
 	if !ok {

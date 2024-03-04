@@ -26,6 +26,17 @@ type Builder struct {
 
 	// list of scopes in current namespace, equals nil inside default namespace
 	currentScopes []string
+
+	cfg *Config
+}
+
+type Config struct {
+	DefaultNamespace string
+
+	GlobalNamespacePrefix string
+
+	// Initial preallocated memory capacity for storing output
+	Size int
 }
 
 // Explicit interface implementation check
@@ -33,9 +44,10 @@ var _ io.Reader = &Builder{}
 
 // NewBuilder create a ready to use builder with specified initial
 // preallocated memory capacity
-func NewBuilder(size int) *Builder {
+func NewBuilder(cfg *Config) *Builder {
 	return &Builder{
-		out: make([]byte, 0, size),
+		out: make([]byte, 0, cfg.Size),
+		cfg: cfg,
 	}
 }
 

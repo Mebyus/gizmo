@@ -47,12 +47,32 @@ func (g *Builder) Build(unit string) error {
 	if err != nil {
 		return err
 	}
-	return g.Scribe(graph)
+	genout, err := g.Scribe(graph)
+	if err != nil {
+		return err
+	}
+	return g.SaveAndCompile(unit, genout)
+}
+
+func (g *Builder) SaveAndCompile(mod string, code []byte) error {
+	path, err := g.cache.SaveModGenout(mod, code)
+	if err != nil {
+		return err
+	}
+
+	name := filepath.Base(mod) + ".o"
+	dir := filepath.Join(g.cache.dir, "mod", "obj", filepath.Dir(mod))
+	err = os.MkdirAll(dir, 0o775)
+	if err != nil {
+		return err
+	}
+	out := filepath.Join(dir, name)
+	return g.Compile(path, out)
 }
 
 // Scribe takes import graph, gathers unit files, parses them and combines
 // generated code into singular file build result
-func (g *Builder) Scribe(graph *impgraph.Graph) error {
+func (g *Builder) Scribe(graph *impgraph.Graph) ([]byte, error) {
 	pool := NewPool(g.cache, len(graph.Nodes))
 	for _, cohort := range graph.Cohorts {
 		for _, node := range cohort {
@@ -63,10 +83,9 @@ func (g *Builder) Scribe(graph *impgraph.Graph) error {
 	pool.Start()
 	output := pool.WaitOutput()
 	if output.err != nil {
-		return output.err
+		return nil, output.err
 	}
-	err := os.WriteFile("test_output.txt", output.code, 0o664)
-	return err
+	return output.code, nil
 }
 
 func (g *Builder) WalkFrom(unit string) ([]*DepEntry, error) {
@@ -167,7 +186,7 @@ func (g *Builder) FindUnitBuildInfo(p origin.Path) (*DepEntry, error) {
 			Files:     result.Files,
 			TestFiles: result.TestFiles,
 
-			DefaultNamespace: result.Name,
+			DefaultNamespace: result.DefaultNamespace,
 		},
 		Imports: origin.Locals(result.Imports),
 		Name:    result.Name,

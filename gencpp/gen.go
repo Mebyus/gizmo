@@ -7,10 +7,13 @@ import (
 	"github.com/mebyus/gizmo/ir"
 )
 
-func Gen(w io.Writer, atom ast.UnitAtom) error {
+func Gen(w io.Writer, cfg *Config, atom ast.UnitAtom) error {
 	meta := ir.Index(atom)
 
-	builder := NewBuilder(0)
+	if cfg == nil {
+		cfg = &Config{DefaultNamespace: "<default>"}
+	}
+	builder := NewBuilder(cfg)
 	builder.meta = meta
 	builder.UnitAtom(atom)
 

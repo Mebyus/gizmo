@@ -21,7 +21,7 @@ func (g *Builder) NamespaceBlock(block ast.NamespaceBlock) {
 
 	g.write("namespace ")
 	if block.Default {
-		g.write("<default>")
+		g.write(g.cfg.DefaultNamespace)
 	} else {
 		g.ScopedIdentifier(block.Name)
 	}
@@ -36,7 +36,7 @@ func (g *Builder) NamespaceBlock(block ast.NamespaceBlock) {
 
 	g.write("} ")
 	if block.Default {
-		g.comment("namespace <default>")
+		g.comment("namespace " + g.cfg.DefaultNamespace)
 	} else {
 		g.comment("namespace " + block.Name.String())
 	}
