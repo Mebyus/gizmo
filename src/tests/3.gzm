@@ -6,9 +6,10 @@ fn change_int_by_pointer(v: *int) {
 }
 
 fn assign_by_index(c: []u8) {
-    c[3] = 1;
+    let i: uint = c.len;
+    c[i - 2] = c.rx(1);
 }
 
 fn slice_given_slice(numbers: []u64) => []u64 {
-    return numbers[2:10];
+    return numbers[2 : 10];
 }

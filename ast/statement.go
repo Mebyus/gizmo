@@ -350,3 +350,26 @@ func (ForEachStatement) Kind() stm.Kind {
 func (s ForEachStatement) Pin() source.Pos {
 	return s.Pos
 }
+
+type LetStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	Name Identifier
+
+	Type TypeSpecifier
+
+	// Always not nil
+	Expression Expression
+}
+
+var _ Statement = LetStatement{}
+
+func (LetStatement) Kind() stm.Kind {
+	return stm.Let
+}
+
+func (s LetStatement) Pin() source.Pos {
+	return s.Pos
+}

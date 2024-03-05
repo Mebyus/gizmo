@@ -63,6 +63,8 @@ func (g *Builder) Statement(statement ast.Statement) {
 		g.JumpStatement(statement.(ast.JumpStatement))
 	case stm.ForEach:
 		g.ForEachStatement(statement.(ast.ForEachStatement))
+	case stm.Let:
+		g.LetStatement(statement.(ast.LetStatement))
 	default:
 		g.indent()
 		g.write(fmt.Sprintf("<%s statement not implemented>", statement.Kind().String()))
@@ -245,6 +247,22 @@ func (g *Builder) ReturnStatement(statement ast.ReturnStatement) {
 	g.nl()
 }
 
+func (g *Builder) LetStatement(statement ast.LetStatement) {
+	g.indent()
+	g.write("const")
+
+	g.space()
+	g.TypeSpecifier(statement.Type)
+
+	g.space()
+	g.Identifier(statement.Name)
+
+	g.write(" = ")
+	g.Expression(statement.Expression)
+	g.semi()
+	g.nl()
+}
+
 func (g *Builder) ConstStatement(statement ast.ConstStatement) {
 	g.indent()
 	g.ConstInit(statement.ConstInit)
@@ -253,7 +271,7 @@ func (g *Builder) ConstStatement(statement ast.ConstStatement) {
 }
 
 func (g *Builder) ConstInit(c ast.ConstInit) {
-	g.write("const")
+	g.write("constexpr")
 
 	g.space()
 	g.TypeSpecifier(c.Type)

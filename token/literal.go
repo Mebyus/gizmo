@@ -89,7 +89,7 @@ var Literal = [...]string{
 	Union:     "union",
 	Pub:       "pub",
 	Unit:      "unit",
-	Atr:       "atr",
+	Let:       "let",
 	Declare:   "declare",
 	Method:    "method",
 	Namespace: "namespace",

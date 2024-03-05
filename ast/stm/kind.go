@@ -14,6 +14,7 @@ const (
 	AddAssign
 	Return
 	Const
+	Let
 	Var
 	If
 	Expr
@@ -32,6 +33,7 @@ var text = [...]string{
 	AddAssign: "add_assign",
 	Return:    "return",
 	Const:     "const",
+	Let:       "let",
 	Var:       "var",
 	If:        "if",
 	Expr:      "expr",

@@ -111,11 +111,11 @@ const (
 
 	Match
 	Type
-	Var
 	Const
+	Let
+	Var
 
 	Pub
-	Atr
 
 	// Special literals
 

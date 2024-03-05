@@ -29,7 +29,7 @@ var words = map[string]Kind{
 	"nil":       Nil,
 	"true":      True,
 	"false":     False,
-	"atr":       Atr,
+	"let":       Let,
 	"declare":   Declare,
 	"const":     Const,
 	"method":    Method,

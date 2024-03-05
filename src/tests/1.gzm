@@ -15,7 +15,7 @@ fn do_something() {
 }
 
 fn add(a: u32, b: u32) => u32 {
-    const c: u32 = a + b;
+    let c: u32 = a + b;
     return c;
 }
 
@@ -143,7 +143,7 @@ fn take_array(a: [16]u64) {
 fn use_type_cast() {
     var a: u64 = 28;
 
-    const i: i32 = cast[ state.window.height: i32 ];
+    let i: i32 = cast[ state.window.height: i32 ];
 }
 
 fn match_example(x: u64) => u8 {
@@ -151,7 +151,7 @@ fn match_example(x: u64) => u8 {
         case 0 => { return 1; }
         
         case 2 => {
-            const r: u64 = x + 25;
+            let r: u64 = x + 25;
             return r;
         }
 

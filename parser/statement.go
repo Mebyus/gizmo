@@ -15,6 +15,8 @@ func (p *Parser) parseStatement() (statement ast.Statement, err error) {
 		return p.block()
 	case token.Const:
 		return p.constStatement()
+	case token.Let:
+		return p.letStatement()
 	case token.Var:
 		return p.varStatement()
 	case token.If:
@@ -724,6 +726,49 @@ func (p *Parser) constStatement() (statement ast.ConstStatement, err error) {
 			Type:       specifier,
 			Expression: expression,
 		},
+	}, nil
+}
+
+func (p *Parser) letStatement() (statement ast.LetStatement, err error) {
+	pos := p.tok.Pos
+
+	p.advance() // skip "let"
+	err = p.expect(token.Identifier)
+	if err != nil {
+		return
+	}
+	name := p.idn()
+	p.advance() // skip let name identifier
+
+	err = p.expect(token.Colon)
+	if err != nil {
+		return
+	}
+	p.advance() // skip ":"
+	specifier, err := p.typeSpecifier()
+	if err != nil {
+		return
+	}
+	err = p.expect(token.Assign)
+	if err != nil {
+		return
+	}
+	p.advance() // skip "="
+	expression, err := p.expr()
+	if err != nil {
+		return
+	}
+	err = p.expect(token.Semicolon)
+	if err != nil {
+		return
+	}
+	p.advance() // consume ";"
+
+	return ast.LetStatement{
+		Pos:        pos,
+		Name:       name,
+		Type:       specifier,
+		Expression: expression,
 	}, nil
 }
 
