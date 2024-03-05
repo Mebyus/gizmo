@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/ast"
+	"github.com/mebyus/gizmo/ast/lbl"
 	"github.com/mebyus/gizmo/ast/stm"
 )
 
@@ -58,11 +59,29 @@ func (g *Builder) Statement(statement ast.Statement) {
 		g.ForConditionStatement(statement.(ast.ForConditionStatement))
 	case stm.Match:
 		g.MatchStatement(statement.(ast.MatchStatement))
+	case stm.Jump:
+		g.JumpStatement(statement.(ast.JumpStatement))
 	default:
 		g.indent()
 		g.write(fmt.Sprintf("<%s statement not implemented>", statement.Kind().String()))
 		g.nl()
 	}
+}
+
+func (g *Builder) JumpStatement(statement ast.JumpStatement) {
+	label := statement.Label
+
+	g.indent()
+	switch label.Kind() {
+	case lbl.Next:
+		g.write("continue")
+	case lbl.End:
+		g.write("break")
+	default:
+		g.write(fmt.Sprintf("jump <%s>", label.Kind().String()))
+	}
+	g.semi()
+	g.nl()
 }
 
 func (g *Builder) MatchStatement(statement ast.MatchStatement) {

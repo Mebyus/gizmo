@@ -102,6 +102,9 @@ var Literal = [...]string{
 	True:  "true",
 	False: "false",
 
+	LabelNext: "@.next",
+	LabelEnd:  "@.end",
+
 	// Non static literals
 
 	Illegal:            "ILLEGAL",

@@ -5,6 +5,7 @@ import (
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/exn"
+	"github.com/mebyus/gizmo/ast/lbl"
 	"github.com/mebyus/gizmo/token"
 )
 
@@ -24,8 +25,42 @@ func (p *Parser) parseStatement() (statement ast.Statement, err error) {
 		return p.forStatement()
 	case token.Match:
 		return p.matchStatement()
+	case token.Jump:
+		return p.jumpStatement()
 	default:
 		return p.identifierStartStatement()
+	}
+}
+
+func (p *Parser) jumpStatement() (ast.JumpStatement, error) {
+	p.advance() // slip "jump"
+
+	label, err := p.label()
+	if err != nil {
+		return ast.JumpStatement{}, err
+	}
+
+	err = p.expect(token.Semicolon)
+	if err != nil {
+		return ast.JumpStatement{}, err
+	}
+	p.advance() // consume ";"
+
+	return ast.JumpStatement{Label: label}, nil
+}
+
+func (p *Parser) label() (ast.Label, error) {
+	pos := p.pos()
+
+	switch p.tok.Kind {
+	case token.LabelNext:
+		p.advance()
+		return ast.ReservedLabel{Pos: pos, ResKind: lbl.Next}, nil
+	case token.LabelEnd:
+		p.advance()
+		return ast.ReservedLabel{Pos: pos, ResKind: lbl.End}, nil
+	default:
+		panic("not implemented for label " + p.tok.Kind.String())
 	}
 }
 

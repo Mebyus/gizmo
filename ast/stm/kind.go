@@ -20,6 +20,7 @@ const (
 	For
 	ForCond
 	Match
+	Jump
 )
 
 var text = [...]string{
@@ -36,6 +37,7 @@ var text = [...]string{
 	For:       "for",
 	ForCond:   "for_cond",
 	Match:     "match",
+	Jump:      "jump",
 }
 
 func (k Kind) String() string {

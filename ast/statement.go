@@ -308,3 +308,20 @@ func (MatchStatement) Kind() stm.Kind {
 func (s MatchStatement) Pin() source.Pos {
 	return s.Pos
 }
+
+type JumpStatement struct {
+	nodeStatement
+
+	Label Label
+}
+
+// Explicit interface implementation check
+var _ Statement = JumpStatement{}
+
+func (JumpStatement) Kind() stm.Kind {
+	return stm.Jump
+}
+
+func (s JumpStatement) Pin() source.Pos {
+	return s.Label.Pin()
+}

@@ -28,6 +28,10 @@ func (lx *Lexer) Lex() token.Token {
 		return lx.lexCharacterLiteral()
 	}
 
+	if lx.c == '@' && lx.next == '.' {
+		return lx.label()
+	}
+
 	return lx.lexOther()
 }
 
@@ -36,6 +40,33 @@ func (lx *Lexer) create(k token.Kind) token.Token {
 		Kind: k,
 		Pos:  lx.pos,
 	}
+}
+
+func (lx *Lexer) label() (tok token.Token) {
+	tok.Pos = lx.pos
+
+	lx.advance() // skip '@'
+	lx.advance() // skip '.'
+
+	overflow := lx.storeWord()
+	if overflow {
+		lx.drop()
+		lx.skipWord()
+		tok.Kind = token.Illegal
+		tok.Val = token.LabelOverflow
+		return
+	}
+	lit := lx.take()
+
+	switch lit {
+	case "next":
+		tok.Kind = token.LabelNext
+	case "end":
+		tok.Kind = token.LabelEnd
+	default:
+		panic("arbitrary labels not implemented: " + lit)
+	}
+	return
 }
 
 func (lx *Lexer) lexName() (tok token.Token) {

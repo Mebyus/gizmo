@@ -125,6 +125,9 @@ const (
 	True
 	False
 
+	LabelNext // @.next
+	LabelEnd  // @.end
+
 	noStaticLiteral
 
 	Illegal // any byte sequence unknown to lexer

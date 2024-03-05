@@ -173,7 +173,6 @@ type Error enum u8 {
 
 }
 
-/*
 fn loop_jumps() {
     var i: uarch = 0;
     for {
@@ -188,7 +187,6 @@ fn loop_jumps() {
         }
     }
 }
-*/
 
 }
 
