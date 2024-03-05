@@ -61,11 +61,78 @@ func (g *Builder) Statement(statement ast.Statement) {
 		g.MatchStatement(statement.(ast.MatchStatement))
 	case stm.Jump:
 		g.JumpStatement(statement.(ast.JumpStatement))
+	case stm.ForEach:
+		g.ForEachStatement(statement.(ast.ForEachStatement))
 	default:
 		g.indent()
 		g.write(fmt.Sprintf("<%s statement not implemented>", statement.Kind().String()))
 		g.nl()
 	}
+}
+
+func (g *Builder) ForEachStatement(statement ast.ForEachStatement) {
+	start, end, ok := analyzeRange(statement.Iterator)
+
+	g.indent()
+	g.write("for (")
+	g.write("iarch")
+	g.space()
+	g.Identifier(statement.Name)
+	g.write(" = ")
+
+	if ok {
+		if start == nil {
+			g.write("0")
+		} else {
+			g.Expression(start)
+		}
+	} else {
+		g.write("<nil>")
+	}
+
+	g.write("; ")
+	g.Identifier(statement.Name)
+	g.write(" < ")
+
+	if ok {
+		g.Expression(end)
+	} else {
+		g.write("<nil>")
+	}
+
+	g.write("; ")
+	g.Identifier(statement.Name)
+	g.write(" += 1")
+
+	g.write(") ")
+	g.Block(statement.Body)
+	g.nl()
+}
+
+func analyzeRange(expr ast.Expression) (start, end ast.Expression, ok bool) {
+	call, ok := expr.(ast.CallExpression)
+	if !ok {
+		return nil, nil, false
+	}
+	rangeFuncCall, ok := call.Callee.(ast.ChainStart)
+	if !ok {
+		return nil, nil, false
+	}
+	if len(rangeFuncCall.Identifier.Scopes) != 0 || rangeFuncCall.Identifier.Name.Lit != "range" {
+		return nil, nil, false
+	}
+
+	args := call.Arguments
+	if len(args) == 0 {
+		return nil, nil, false
+	}
+	if len(args) == 1 {
+		return nil, args[0], true
+	}
+	if len(args) == 2 {
+		return args[0], args[1], true
+	}
+	return nil, nil, false
 }
 
 func (g *Builder) JumpStatement(statement ast.JumpStatement) {

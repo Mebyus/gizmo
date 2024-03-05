@@ -10,19 +10,50 @@ import (
 )
 
 type Parser struct {
+	// tokens saved by advance backup
+	buf CycleTokenBuffer
+
 	// saved properties, will be attached to next object/symbol/field
 	props []ast.Prop
 
 	lx lexer.Stream
 
-	// previous token
-	prev token.Token
-
-	// token at current Parser position
+	// token at current parser position
 	tok token.Token
 
 	// next token
 	next token.Token
+
+	// how many tokens must be taken from backtrack buffer
+	back uint
+}
+
+type CycleTokenBuffer struct {
+	buf [16]token.Token
+
+	// push index
+	tip uint
+
+	// number of stored elements
+	len uint
+}
+
+func (b *CycleTokenBuffer) Push(tok token.Token) {
+	if b.len >= 16 {
+		panic("full")
+	}
+	b.buf[b.tip] = tok
+	b.tip = (b.tip + 1) & 0xF // (pos + 1) mod 16
+	b.len += 1
+}
+
+func (b *CycleTokenBuffer) Pop() token.Token {
+	if b.len == 0 {
+		panic("empty")
+	}
+	i := (b.tip - b.len) & 0xF // (pos - len) mod 16
+	b.len -= 1
+	return b.buf[i]
 }
 
 func New(lx lexer.Stream) *Parser {

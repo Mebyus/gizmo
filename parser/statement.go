@@ -156,6 +156,20 @@ func (p *Parser) forStatement() (ast.Statement, error) {
 	if p.next.Kind == token.LeftCurly {
 		return p.forSimpleStatement()
 	}
+	if p.next.Kind != token.Identifier {
+		return p.forWithConditionStatement()
+	}
+	return p.forWithConditionOrIteratorStatement()
+}
+
+func (p *Parser) forWithConditionOrIteratorStatement() (ast.Statement, error) {
+	p.advanceBackup() // backup "for"
+	next := p.next
+	p.backtrack(1)
+
+	if next.Kind == token.In {
+		return p.forEachStatement()
+	}
 	return p.forWithConditionStatement()
 }
 
@@ -175,6 +189,41 @@ func (p *Parser) forSimpleStatement() (ast.ForStatement, error) {
 	return ast.ForStatement{
 		Pos:  pos,
 		Body: body,
+	}, nil
+}
+
+func (p *Parser) forEachStatement() (ast.ForEachStatement, error) {
+	pos := p.pos()
+
+	p.advance() // skip "for"
+
+	name := p.idn()
+	p.advance() // skip name identifier
+
+	if p.tok.Kind != token.In {
+		// must be checked in advance
+		panic(p.unexpected(p.tok))
+	}
+	p.advance() // skip "in"
+
+	expr, err := p.expr()
+	if err != nil {
+		return ast.ForEachStatement{}, err
+	}
+
+	if p.tok.Kind != token.LeftCurly {
+		return ast.ForEachStatement{}, p.unexpected(p.tok)
+	}
+	body, err := p.block()
+	if err != nil {
+		return ast.ForEachStatement{}, err
+	}
+
+	return ast.ForEachStatement{
+		Pos:      pos,
+		Name:     name,
+		Iterator: expr,
+		Body:     body,
 	}, nil
 }
 

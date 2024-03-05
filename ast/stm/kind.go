@@ -19,6 +19,7 @@ const (
 	Expr
 	For
 	ForCond
+	ForEach
 	Match
 	Jump
 )
@@ -36,6 +37,7 @@ var text = [...]string{
 	Expr:      "expr",
 	For:       "for",
 	ForCond:   "for_cond",
+	ForEach:   "for_each",
 	Match:     "match",
 	Jump:      "jump",
 }

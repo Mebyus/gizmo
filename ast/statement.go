@@ -252,7 +252,7 @@ func (s ForStatement) Pin() source.Pos {
 	return s.Pos
 }
 
-// <ForConditionStatement> = "for" <BlockStatement>
+// <ForConditionStatement> = "for" <Expression> <BlockStatement>
 type ForConditionStatement struct {
 	nodeStatement
 
@@ -324,4 +324,29 @@ func (JumpStatement) Kind() stm.Kind {
 
 func (s JumpStatement) Pin() source.Pos {
 	return s.Label.Pin()
+}
+
+// <ForEachStatement> = "for" <Name> "in" <Expression> <BlockStatement>
+type ForEachStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	Name Identifier
+
+	// Always not nil
+	Iterator Expression
+
+	// must contain at least one statement
+	Body BlockStatement
+}
+
+var _ Statement = ForEachStatement{}
+
+func (ForEachStatement) Kind() stm.Kind {
+	return stm.ForEach
+}
+
+func (s ForEachStatement) Pin() source.Pos {
+	return s.Pos
 }
