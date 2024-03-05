@@ -74,7 +74,7 @@ func (g *Builder) AddressExpression(expr ast.AddressExpression) {
 
 func (g *Builder) BasicLiteral(lit ast.BasicLiteral) {
 	if lit.Token.Kind == token.Nil {
-		g.write("0")
+		g.write("nullptr")
 		return
 	}
 	if lit.Token.Kind == token.String {

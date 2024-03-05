@@ -43,6 +43,15 @@ func Index(atom ast.UnitAtom) Meta {
 				})
 			}
 
+			if node.Kind() == toplvl.MethodTemplate {
+				method := node.(ast.MethodTemplate)
+				key := strings.Join(append(scopes, method.Receiver.Lit), "::")
+				sm[key] = append(sm[key], ast.FunctionDeclaration{
+					Signature: method.Signature,
+					Name:      method.Name,
+				})
+			}
+
 			if node.Kind() == toplvl.Declare {
 				decl := node.(ast.TopFunctionDeclaration)
 				if len(decl.Props) == 0 {

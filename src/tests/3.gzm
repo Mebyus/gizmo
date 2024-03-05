@@ -1,0 +1,10 @@
+fn change_int_by_pointer(v: *int) {
+    if v == nil {
+        return;
+    }
+    v.@ = 4;
+}
+
+fn assign_by_index(c: []u8) {
+    c[3] = 1;
+}
