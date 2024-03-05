@@ -39,9 +39,47 @@ func (g *Builder) Expression(expr ast.Expression) {
 		g.CastExpression(expr.(ast.CastExpression))
 	case exn.Instance:
 		g.InstanceExpression(expr.(ast.InstanceExpression))
+	case exn.Index:
+		g.IndexExpression(expr.(ast.IndexExpression))
+	case exn.Slice:
+		g.SliceExpression(expr.(ast.SliceExpression))
 	default:
 		g.write(fmt.Sprintf("<%s expr>", expr.Kind().String()))
 	}
+}
+
+func (g *Builder) SliceExpression(expr ast.SliceExpression) {
+	g.Expression(expr.Target)
+	if expr.Start == nil && expr.End == nil {
+		g.write(".slice()")
+		return
+	}
+	if expr.Start != nil && expr.End == nil {
+		g.write(".tail(")
+		g.Expression(expr.Start)
+		g.write(")")
+		return
+	}
+	if expr.Start == nil && expr.End != nil {
+		g.write(".head(")
+		g.Expression(expr.End)
+		g.write(")")
+		return
+	}
+
+	// start != nil && end != nil
+	g.write(".slice(")
+	g.Expression(expr.Start)
+	g.write(", ")
+	g.Expression(expr.End)
+	g.write(")")
+}
+
+func (g *Builder) IndexExpression(expr ast.IndexExpression) {
+	g.Expression(expr.Target)
+	g.write("[")
+	g.Expression(expr.Index)
+	g.write("]")
 }
 
 func (g *Builder) InstanceExpression(expr ast.InstanceExpression) {

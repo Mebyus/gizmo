@@ -33,6 +33,7 @@ const (
 	Start
 	Indirect
 	Address
+	Slice
 
 	// Indirect index expression
 	Indirx
@@ -56,6 +57,7 @@ var text = [...]string{
 	Call:     "call",
 	Start:    "start",
 	Address:  "address",
+	Slice:    "slice",
 	Indirect: "indirect",
 	Indirx:   "indirect_index",
 	Instance: "instance",

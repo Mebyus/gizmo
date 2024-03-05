@@ -442,61 +442,80 @@ func (p *Parser) chainOperand(start ast.ChainOperand) (ast.ChainOperand, error) 
 				Index:  index,
 			}
 		case token.LeftSquare:
-			p.advance() // skip "["
-			// if p.tok.Kind == token.Colon {
-			// 	p.advance() // skip ":"
-			// 	if p.tok.Kind == token.RightSquare {
-			// 		p.advance() // skip "]"
-			// 		tip = ast.SliceExpression{
-			// 			Target: tip,
-			// 		}
-			// 	} else {
-			// 		expr, err := p.expr()
-			// 		if err != nil {
-			// 			return nil, err
-			// 		}
-			// 		err = p.expect(token.RightSquare)
-			// 		if err != nil {
-			// 			return nil, err
-			// 		}
-			// 		p.advance() // skip "]"
-			// 		tip = ast.SliceExpression{
-			// 			Target: tip,
-			// 			End:    expr,
-			// 		}
-			// 	}
-			// } else {
-			// 	expr, err := p.expr()
-			// 	if err != nil {
-			// 		return nil, err
-			// 	}
-			// 	if p.tok.Kind == token.Colon {
-			// 		p.advance() // skip ":"
-			// 		err = p.expect(token.RightSquare)
-			// 		if err != nil {
-			// 			return nil, err
-			// 		}
-			// 		p.advance() // skip "]"
-			// 		tip = ast.SliceExpression{
-			// 			Target: tip,
-			// 			Start:  expr,
-			// 		}
-			// 	} else {
-			// 		err = p.expect(token.RightSquare)
-			// 		if err != nil {
-			// 			return nil, err
-			// 		}
-			// 		p.advance() // skip "]"
-			// 		tip = ast.IndexExpression{
-			// 			Target: tip,
-			// 			Index:  expr,
-			// 		}
-			// 	}
-			// }
+			var err error
+			tip, err = p.chainLeftSquareStart(tip)
+			if err != nil {
+				return nil, err
+			}
 		default:
 			return tip, nil
 		}
 	}
+}
+
+func (p *Parser) chainLeftSquareStart(tip ast.ChainOperand) (ast.ChainOperand, error) {
+	p.advance() // skip "["
+	if p.tok.Kind == token.Colon {
+		p.advance() // skip ":"
+		if p.tok.Kind == token.RightSquare {
+			p.advance() // skip "]"
+			return ast.SliceExpression{Target: tip}, nil
+		}
+
+		expr, err := p.expr()
+		if err != nil {
+			return nil, err
+		}
+		err = p.expect(token.RightSquare)
+		if err != nil {
+			return nil, err
+		}
+		p.advance() // skip "]"
+		return ast.SliceExpression{
+			Target: tip,
+			End:    expr,
+		}, nil
+	}
+
+	expr, err := p.expr()
+	if err != nil {
+		return nil, err
+	}
+	if p.tok.Kind == token.Colon {
+		p.advance() // skip ":"
+		if p.tok.Kind == token.RightSquare {
+			p.advance() // skip "]"
+			return ast.SliceExpression{
+				Target: tip,
+				Start:  expr,
+			}, nil
+		}
+		end, err := p.expr()
+		if err != nil {
+			return nil, err
+		}
+
+		err = p.expect(token.RightSquare)
+		if err != nil {
+			return nil, err
+		}
+		p.advance() // skip "]"
+		return ast.SliceExpression{
+			Target: tip,
+			Start:  expr,
+			End:    end,
+		}, nil
+	}
+
+	err = p.expect(token.RightSquare)
+	if err != nil {
+		return nil, err
+	}
+	p.advance() // skip "]"
+	return ast.IndexExpression{
+		Target: tip,
+		Index:  expr,
+	}, nil
 }
 
 func (p *Parser) callArguments() ([]ast.Expression, error) {

@@ -256,13 +256,25 @@ func (e IndirectIndexExpression) Pin() source.Pos {
 
 // <SliceExpression> = <Target> "[" [ <Start> ] ":" [ <End> ] "]"
 type SliceExpression struct {
-	Target IndexableExpression
+	nodeChainOperand
+
+	Target ChainOperand
 
 	// Part before ":". Can be nil if expression is omitted
 	Start Expression
 
 	// Part after ":". Can be nil if expression is omitted
 	End Expression
+}
+
+var _ ChainOperand = SliceExpression{}
+
+func (SliceExpression) Kind() exn.Kind {
+	return exn.Slice
+}
+
+func (e SliceExpression) Pin() source.Pos {
+	return e.Target.Pin()
 }
 
 // <CastExpression> = "cast" "[" <Expression> ":" <TypeSpecifier> "]"
