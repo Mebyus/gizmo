@@ -9,7 +9,9 @@ import (
 )
 
 func (g *Builder) TopLevel(node ast.TopLevel) {
-	g.comment("gizmo.source = " + node.Pin().String())
+	if g.cfg.SourceLocationComments {
+		g.comment("gizmo.source = " + node.Pin().String())
+	}
 
 	switch node.Kind() {
 	case toplvl.Fn:
@@ -28,6 +30,8 @@ func (g *Builder) TopLevel(node ast.TopLevel) {
 		g.TopFunctionTemplate(node.(ast.TopFunctionTemplate))
 	case toplvl.TypeTemplate:
 		g.TopTypeTemplate(node.(ast.TopTypeTemplate))
+	case toplvl.MethodTemplate:
+		g.MethodTemplate(node.(ast.MethodTemplate))
 	default:
 		g.write(fmt.Sprintf("<%s node not implemented>", node.Kind().String()))
 		g.nl()
@@ -126,6 +130,32 @@ func (g *Builder) Method(top ast.Method) {
 	g.write(" noexcept ")
 	g.Block(top.Body)
 	g.nl()
+}
+
+func (g *Builder) MethodTemplate(top ast.MethodTemplate) {
+	g.write("template")
+	g.templateParams(top.TypeParams)
+	g.nl()
+	g.functionReturnType(top.Signature.Result)
+	g.nl()
+	g.Identifier(top.Receiver)
+	g.templateReceiverArgs(top.TypeParams)
+	g.write("::")
+	g.Identifier(top.Name)
+	g.functionParams(top.Signature.Params)
+	g.write(" noexcept ")
+	g.Block(top.Body)
+	g.nl()
+}
+
+func (g *Builder) templateReceiverArgs(args []ast.Identifier) {
+	g.write("<")
+	g.Identifier(args[0])
+	for _, param := range args[1:] {
+		g.write(", ")
+		g.Identifier(param)
+	}
+	g.write(">")
 }
 
 func (g *Builder) TopEnumType(name ast.Identifier, spec ast.EnumType) {

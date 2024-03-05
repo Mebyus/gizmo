@@ -34,20 +34,23 @@ const (
 	FnTemplate
 
 	TypeTemplate
+
+	MethodTemplate
 )
 
 var text = [...]string{
 	empty: "<nil>",
 
-	Fn:           "fn",
-	Declare:      "declare",
-	Method:       "method",
-	Type:         "type",
-	TypeEval:     "type_eval",
-	Const:        "const",
-	Var:          "var",
-	FnTemplate:   "fn_template",
-	TypeTemplate: "type_template",
+	Fn:             "fn",
+	Declare:        "declare",
+	Method:         "method",
+	Type:           "type",
+	TypeEval:       "type_eval",
+	Const:          "const",
+	Var:            "var",
+	FnTemplate:     "fn_template",
+	TypeTemplate:   "type_template",
+	MethodTemplate: "method_template",
 }
 
 func (k Kind) String() string {

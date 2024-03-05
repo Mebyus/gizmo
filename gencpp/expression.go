@@ -46,14 +46,16 @@ func (g *Builder) Expression(expr ast.Expression) {
 
 func (g *Builder) InstanceExpression(expr ast.InstanceExpression) {
 	g.ScopedIdentifier(expr.Target)
+	g.templateArgs(expr.Args)
+}
+
+func (g *Builder) templateArgs(args []ast.TypeSpecifier) {
 	g.write("<")
-	
-	g.TypeSpecifier(expr.Args[0])
-	for _, arg := range expr.Args[1:] {
+	g.TypeSpecifier(args[0])
+	for _, arg := range args[1:] {
 		g.write(", ")
 		g.TypeSpecifier(arg)
 	}
-
 	g.write(">")
 }
 

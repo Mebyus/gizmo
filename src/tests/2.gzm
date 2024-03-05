@@ -1,3 +1,10 @@
 fn another_add_function(a: f32, b: f32) => f32 {
     return a + b;
 }
+
+fn compare_empty_string(s: str) => bool {
+    if s == "" {
+        return true;
+    }
+    return s == "<nil>";
+}

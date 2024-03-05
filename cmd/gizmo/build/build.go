@@ -46,19 +46,23 @@ func (c *Config) Apply(p *butler.Param) error {
 func (c *Config) Recipe() []butler.Param {
 	return []butler.Param{
 		{
-			Name: "kind",
-			Kind: butler.String,
-			Def:  "debug",
+			Name:        "kind",
+			Kind:        butler.String,
+			Def:         "debug",
+			ValidValues: []string{"debug", "test", "safe", "fast"},
+			Desc:        "select build kind (optimizations, some defaults, etc.)",
 		},
 		{
 			Name: "file",
 			Kind: butler.String,
 			Def:  filepath.Join("build", "build.gzm"),
+			Desc: "specify a file to use as a build script",
 		},
 		{
 			Name: "env",
 			Kind: butler.String,
 			Def:  filepath.Join("build", "env.gzm"),
+			Desc: "specify a file to use for local build environment definitions",
 		},
 	}
 }

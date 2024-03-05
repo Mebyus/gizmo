@@ -217,6 +217,6 @@ func (p *Parser) topLevelConst() (ast.TopConst, error) {
 	}, nil
 }
 
-func (p *Parser) topLevelMethod() (ast.Method, error) {
+func (p *Parser) topLevelMethod() (ast.TopLevel, error) {
 	return p.method()
 }

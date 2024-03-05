@@ -210,11 +210,9 @@ type AwesomeTemplate[[T]] struct {
     field: T,
 }
 
-/*
 method (AwesomeTemplate[[T]]) set(t: T) {
     field = t;
 }
-*/
 
 fn make_awesome_template(v: int) => AwesomeTemplate[[int]] {
     var ret: AwesomeTemplate[[int]] = dirty;

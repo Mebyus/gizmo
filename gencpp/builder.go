@@ -37,6 +37,8 @@ type Config struct {
 
 	// Initial preallocated memory capacity for storing output
 	Size int
+
+	SourceLocationComments bool
 }
 
 // Explicit interface implementation check
