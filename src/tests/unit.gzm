@@ -12,6 +12,7 @@ unit tests {
     //
     // This is used by "build" and "test" commands
     files = [
+        "prelude.cpp",
         "1.gzm",
         "2.gzm",
     ];

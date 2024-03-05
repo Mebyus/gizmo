@@ -9,6 +9,7 @@ import (
 
 	"github.com/mebyus/gizmo/gencpp"
 	"github.com/mebyus/gizmo/parser"
+	"github.com/mebyus/gizmo/source"
 )
 
 type BuildTask struct {
@@ -245,7 +246,7 @@ func ProcessTask(cache *Cache, task *BuildTask) (*BuildTaskResult, error) {
 	}
 
 	names := task.dep.BuildInfo.Files
-	gizmoFiles := make([]string, 0, len(names))
+	files := make([]*source.File, 0, len(names))
 	var unitModTime time.Time
 
 	for _, name := range names {
@@ -259,26 +260,21 @@ func ProcessTask(cache *Cache, task *BuildTask) (*BuildTaskResult, error) {
 			return nil, fmt.Errorf("file \"%s\" points to a separate directory", name)
 		}
 
-		ext := filepath.Ext(name)
-		switch ext {
-		case "":
-			return nil, fmt.Errorf("file \"%s\" has empty extension", name)
-		case ".gzm":
-			src, err := cache.InfoSourceFile(task.dep.Path, name)
-			if err != nil {
-				return nil, err
-			}
-			if src.ModTime.After(unitModTime) {
-				unitModTime = src.ModTime
-			}
-			gizmoFiles = append(gizmoFiles, name)
-		case ".cpp":
-			panic("not implemented")
-		case ".asm":
-			panic("not implemented")
-		default:
+		src, err := cache.InfoSourceFile(task.dep.Path, name)
+		if err != nil {
+			return nil, err
+		}
+		if src.Kind == source.NoExt {
+			return nil, fmt.Errorf("file \"%s\" has no extension", name)
+		}
+		if src.Kind == source.Unknown {
 			return nil, fmt.Errorf("file \"%s\" has extension unknown to builder", name)
 		}
+
+		if src.ModTime.After(unitModTime) {
+			unitModTime = src.ModTime
+		}
+		files = append(files, src)
 	}
 
 	genout, ok := cache.LoadUnitGenout(task.dep.Path, unitModTime)
@@ -291,8 +287,18 @@ func ProcessTask(cache *Cache, task *BuildTask) (*BuildTaskResult, error) {
 
 	var buf bytes.Buffer
 
-	for _, name := range gizmoFiles {
-		err := gizmoGenout(&buf, cache, task.dep, name)
+	for _, file := range files {
+		var err error
+
+		switch file.Kind {
+		case source.GZM:
+			err = gizmoGenout(&buf, cache, task.dep, file.Name)
+		case source.CPP:
+			err = cppGenout(&buf, cache, task.dep, file.Name)
+		case source.ASM:
+			panic("not implemented")
+		}
+		
 		if err != nil {
 			return nil, err
 		}
@@ -304,6 +310,16 @@ func ProcessTask(cache *Cache, task *BuildTask) (*BuildTaskResult, error) {
 	}
 	cache.SaveUnitGenout(task.dep.Path, result.genout)
 	return result, nil
+}
+
+func cppGenout(buf *bytes.Buffer, cache *Cache, dep *DepEntry, name string) error {
+	p := dep.Path
+	src, err := cache.LoadSourceFile(p, name)
+	if err != nil {
+		return err
+	}
+	buf.Write(src.Bytes)
+	return nil
 }
 
 func gizmoGenout(buf *bytes.Buffer, cache *Cache, dep *DepEntry, name string) error {

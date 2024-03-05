@@ -9,6 +9,32 @@ import (
 	"time"
 )
 
+type Kind uint8
+
+const (
+	NoExt Kind = iota
+	Unknown
+
+	GZM
+	CPP
+	ASM
+)
+
+func ParseKindFromExtension(ext string) Kind {
+	switch ext {
+	case "":
+		return NoExt
+	case ".gzm":
+		return GZM
+	case ".cpp":
+		return CPP
+	case ".asm":
+		return ASM
+	default:
+		return Unknown
+	}
+}
+
 type File struct {
 	// Raw binary data from file
 	//
@@ -42,6 +68,8 @@ type File struct {
 
 	// For quick equality comparison
 	Hash uint64
+
+	Kind Kind
 }
 
 func Hash(b []byte) uint64 {
@@ -75,9 +103,11 @@ func Info(path string) (*File, error) {
 	}
 
 	name := filepath.Base(path)
+	ext := filepath.Ext(name)
 	return &File{
 		Name:    name,
-		Ext:     filepath.Ext(name),
+		Ext:     ext,
+		Kind:    ParseKindFromExtension(ext),
 		Path:    path,
 		ModTime: info.ModTime(),
 		Size:    uint64(info.Size()),
@@ -151,9 +181,11 @@ func Load(path string) (*File, error) {
 		if err != nil {
 			if err == io.EOF {
 				name := filepath.Base(path)
+				ext := filepath.Ext(name)
 				return &File{
 					Name:    name,
-					Ext:     filepath.Ext(name),
+					Ext:     ext,
+					Kind:    ParseKindFromExtension(ext),
 					Path:    path,
 					Bytes:   b,
 					ModTime: info.ModTime(),

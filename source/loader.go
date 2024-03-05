@@ -133,6 +133,26 @@ func (l *Loader) Load(path string) (*File, error) {
 	}
 }
 
+func (l *Loader) LoadFile(file *File) (*File, error) {
+	entry := l.lookup(file.Path)
+	if entry == nil {
+		entry = l.loadAndSave(file.Path)
+		return entry.file, entry.err
+	}
+
+	switch entry.state {
+	case empty:
+		panic("empty state")
+	case failed, loaded:
+		return entry.file, entry.err
+	case basic:
+		entry.loadFromInfo()
+		return entry.file, entry.err
+	default:
+		panic(fmt.Sprintf("unexpected state: %d", entry.state))
+	}
+}
+
 // Info works by the same logic as Load but does not load file contents,
 // only basic information about file
 func (l *Loader) Info(path string) (*File, error) {
