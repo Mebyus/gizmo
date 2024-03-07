@@ -100,7 +100,7 @@ const (
 	Declare
 
 	Bag
-	Bind
+	BitCast
 
 	Unit
 	Return

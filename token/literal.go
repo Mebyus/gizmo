@@ -78,7 +78,7 @@ var Literal = [...]string{
 	If:        "if",
 	Defer:     "defer",
 	Bag:       "bag",
-	Bind:      "bind",
+	BitCast:   "bitcast",
 	In:        "in",
 	Var:       "var",
 	Const:     "const",

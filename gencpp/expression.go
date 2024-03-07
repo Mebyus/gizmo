@@ -43,6 +43,8 @@ func (g *Builder) Expression(expr ast.Expression) {
 		g.IndexExpression(expr.(ast.IndexExpression))
 	case exn.Slice:
 		g.SliceExpression(expr.(ast.SliceExpression))
+	case exn.BitCast:
+		g.BitCastExpression(expr.(ast.BitCastExpression))
 	default:
 		g.write(fmt.Sprintf("<%s expr>", expr.Kind().String()))
 	}
@@ -101,6 +103,14 @@ func (g *Builder) CastExpression(expr ast.CastExpression) {
 	g.write("(")
 	g.TypeSpecifier(expr.Type)
 	g.write(")(")
+	g.Expression(expr.Target)
+	g.write(")")
+}
+
+func (g *Builder) BitCastExpression(expr ast.BitCastExpression) {
+	g.write("bit_cast(")
+	g.TypeSpecifier(expr.Type)
+	g.write(", ")
 	g.Expression(expr.Target)
 	g.write(")")
 }

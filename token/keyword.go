@@ -14,7 +14,7 @@ var words = map[string]Kind{
 	"if":        If,
 	"defer":     Defer,
 	"bag":       Bag,
-	"bind":      Bind,
+	"bitcast":   BitCast,
 	"unit":      Unit,
 	"in":        In,
 	"var":       Var,

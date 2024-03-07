@@ -77,6 +77,9 @@ func (g *Builder) TopFn(top ast.TopFunctionDefinition) {
 	if linkName != "" {
 		g.write(`extern "C" `)
 	}
+	if top.Definition.Head.Signature.Never {
+		g.write("[[noreturn]] ")
+	}
 	if !props.Export() {
 		g.write("static ")
 	}

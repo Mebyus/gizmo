@@ -269,9 +269,46 @@ func (p *Parser) castExpression() (ast.CastExpression, error) {
 	}, nil
 }
 
+func (p *Parser) bitCastExpression() (ast.BitCastExpression, error) {
+	p.advance() // skip "bitcast"
+
+	if p.tok.Kind != token.LeftSquare {
+		return ast.BitCastExpression{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip "["
+
+	target, err := p.expr()
+	if err != nil {
+		return ast.BitCastExpression{}, err
+	}
+
+	if p.tok.Kind != token.Colon {
+		return ast.BitCastExpression{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip ":"
+
+	spec, err := p.typeSpecifier()
+	if err != nil {
+		return ast.BitCastExpression{}, p.unexpected(p.tok)
+	}
+
+	if p.tok.Kind != token.RightSquare {
+		return ast.BitCastExpression{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip "]"
+
+	return ast.BitCastExpression{
+		Target: target,
+		Type:   spec,
+	}, nil
+}
+
 func (p *Parser) tryOperand() (ast.Operand, error) {
 	if p.tok.Kind == token.Cast {
 		return p.castExpression()
+	}
+	if p.tok.Kind == token.BitCast {
+		return p.bitCastExpression()
 	}
 
 	if p.tok.IsLit() {

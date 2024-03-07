@@ -295,6 +295,24 @@ func (e CastExpression) Pin() source.Pos {
 	return e.Target.Pin()
 }
 
+// <BitCastExpression> = "bitcast" "[" <Expression> ":" <TypeSpecifier> "]"
+type BitCastExpression struct {
+	nodeOperand
+
+	Target Expression
+	Type   TypeSpecifier
+}
+
+var _ Expression = BitCastExpression{}
+
+func (BitCastExpression) Kind() exn.Kind {
+	return exn.BitCast
+}
+
+func (e BitCastExpression) Pin() source.Pos {
+	return e.Target.Pin()
+}
+
 // <InstanceExpression> = <ScopedIdentifier> "[[" <Args> "]]"
 type InstanceExpression struct {
 	nodeChainOperand
