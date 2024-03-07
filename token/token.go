@@ -23,7 +23,8 @@ type Token struct {
 	// Meaning of this value is dependant on token Kind
 	//
 	//	Integer:	parsed integer value (if it fits into 64 bits)
-	//	Character:	integer value of code point
+	//	Rune:		integer value of code point
+	//	String:		string raw byte size (as represented in memory, not in source code)
 	//	EOF:		error code (can be 0)
 	//	Illegal:	error code (always not 0)
 	Val uint64

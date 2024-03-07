@@ -117,3 +117,23 @@ var Literal = [...]string{
 	HexadecimalInteger: "INT.HEX",
 	DecimalFloat:       "FLT.DEC",
 }
+
+// ScanStringByteSize determines how many bytes are needed to represent a given
+// string literal (as written in source code) in memory. Handles utf-8 encoding
+// and escape sequences. It also returns ok flag, if ok == false then string contains
+// bad escape sequence
+func ScanStringByteSize(s string) (uint64, bool) {
+	var size uint64
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\\' {
+			i += 1
+			switch s[i] {
+			case '\\', 'n', 't', 'r', '"':
+			default:
+				return 0, false
+			}
+		}
+		size += 1
+	}
+	return size, true
+}

@@ -124,7 +124,7 @@ func (g *Builder) BasicLiteral(lit ast.BasicLiteral) {
 		g.write("make_static_string(")
 		g.write(lit.Token.Literal())
 		g.write(", ")
-		g.write(strconv.FormatInt(int64(len(lit.Token.Lit)), 10))
+		g.write(strconv.FormatUint(lit.Token.Val, 10))
 		g.write(")")
 		return
 	}

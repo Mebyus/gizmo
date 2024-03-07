@@ -355,8 +355,16 @@ func (lx *Lexer) lexStringLiteral() (tok token.Token) {
 	}
 
 	lx.advance() // skip quote
+
+	size, ok := token.ScanStringByteSize(lit)
+	if !ok {
+		tok.SetIllegalError(token.BadEscapeInString)
+		return
+	}
+
 	tok.Lit = lit
 	tok.Kind = token.String
+	tok.Val = size
 	return
 }
 
@@ -466,6 +474,7 @@ func (lx *Lexer) runeLiteral() (tok token.Token) {
 		tok.Lit = lit
 		return
 	}
+	lx.advance() // skip "'"
 
 	tok.Kind = token.Rune
 	tok.Lit = lit // TODO: parse rune val

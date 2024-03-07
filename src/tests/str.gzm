@@ -2,8 +2,9 @@ fn print(s: str) {
     // some code to output string to stdout
 }
 
-const r: rune = 'k';
+const r1: rune = 'k';
 const r2: rune = '\n';
+const r3: rune = 'н';
 
 fn print_some_strings() {
     print("Hello, world!");
