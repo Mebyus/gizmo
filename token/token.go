@@ -12,15 +12,20 @@ type Token struct {
 
 	// Not empty only for tokens which do not have static literal
 	//
-	// Examples: identifiers, illegal tokens
+	// Examples: identifiers, strings, illegal tokens
+	//
+	// For tokens obtained from regular string literals (as in "some string")
+	// this field contains original byte sequence from source file (without surrounding quotes).
+	// That means escape sequences are not decoded and bytes from inside quotes in source file
+	// are placed in this field "as is"
 	Lit string
 
 	// Meaning of this value is dependant on token Kind
 	//
-	//	Integer:	parsed integer value
+	//	Integer:	parsed integer value (if it fits into 64 bits)
 	//	Character:	integer value of code point
-	//	EOF:		error code
-	//	Illegal:	error code
+	//	EOF:		error code (can be 0)
+	//	Illegal:	error code (always not 0)
 	Val uint64
 
 	Kind Kind
@@ -58,6 +63,13 @@ func (t Token) IsLeftPar() bool {
 
 func (t Token) Literal() string {
 	switch t.Kind {
+	case Identifier:
+		return t.Lit
+	case Illegal:
+		if t.Val == LengthOverflow {
+			return "<overflow>"
+		}
+		return "=[ " + t.Lit + " ]="
 	case BinaryInteger:
 		return "0b" + strconv.FormatUint(t.Val, 2)
 	case OctalInteger:
@@ -66,8 +78,25 @@ func (t Token) Literal() string {
 		return strconv.FormatUint(t.Val, 10)
 	case HexadecimalInteger:
 		return "0x" + strconv.FormatUint(t.Val, 16)
-	case Character:
-		return "'" + t.Lit + "'"
+	case DecimalFloat:
+		return t.Lit
+	case Rune:
+		if t.Lit != "" {
+			return "'" + t.Lit + "'"
+		}
+		switch t.Val {
+		case '\\':
+			return `'\\'`
+		case '\'':
+			return `'\''`
+		case '\n':
+			return `'\n'`
+		case '\t':
+			return `'\t'`
+		case '\r':
+			return `'\r'`
+		}
+		return "'" + string(rune(t.Val)) +  "'"
 	case String:
 		return "\"" + t.Lit + "\""
 	case Nil:
@@ -86,22 +115,7 @@ func (t Token) Short() string {
 		return fmt.Sprintf("%-12s%-12s%s", t.Pos.Short(), ".", t.Kind.String())
 	}
 
-	switch t.Kind {
-	case BinaryInteger:
-		return fmt.Sprintf("%-12s%-12s0b%b", t.Pos.Short(), t.Kind.String(), t.Val)
-	case OctalInteger:
-		return fmt.Sprintf("%-12s%-12s0o%o", t.Pos.Short(), t.Kind.String(), t.Val)
-	case DecimalInteger:
-		return fmt.Sprintf("%-12s%-12s%d", t.Pos.Short(), t.Kind.String(), t.Val)
-	case HexadecimalInteger:
-		return fmt.Sprintf("%-12s%-12s0x%X", t.Pos.Short(), t.Kind.String(), t.Val)
-	case Character:
-		return fmt.Sprintf("%-12s%-12s'%c'", t.Pos.Short(), t.Kind.String(), t.Val)
-	case String:
-		return fmt.Sprintf("%-12s%-12s\"%s\"", t.Pos.Short(), t.Kind.String(), t.Lit)
-	}
-
-	return fmt.Sprintf("%-12s%-12s%s", t.Pos.Short(), t.Kind.String(), t.Lit)
+	return fmt.Sprintf("%-12s%-12s%s", t.Pos.Short(), t.Kind.String(), t.Literal())
 }
 
 func (t Token) String() string {
@@ -109,20 +123,5 @@ func (t Token) String() string {
 		return fmt.Sprintf("%s%12s", t.Pos.String(), t.Kind.String())
 	}
 
-	switch t.Kind {
-	case BinaryInteger:
-		return fmt.Sprintf("%s%-12s0b%b", t.Pos.String(), t.Kind.String(), t.Val)
-	case OctalInteger:
-		return fmt.Sprintf("%s%-12s0o%o", t.Pos.String(), t.Kind.String(), t.Val)
-	case DecimalInteger:
-		return fmt.Sprintf("%s%-12s%d", t.Pos.String(), t.Kind.String(), t.Val)
-	case HexadecimalInteger:
-		return fmt.Sprintf("%s%-12s0x%X", t.Pos.String(), t.Kind.String(), t.Val)
-	case Character:
-		return fmt.Sprintf("%s%-12s'%c'", t.Pos.String(), t.Kind.String(), t.Val)
-	case String:
-		return fmt.Sprintf("%s%-12s\"%s\"", t.Pos.String(), t.Kind.String(), t.Lit)
-	}
-
-	return fmt.Sprintf("%s%-12s%s", t.Pos.String(), t.Kind.String(), t.Lit)
+	return fmt.Sprintf("%s%-12s%s", t.Pos.String(), t.Kind.String(), t.Literal())
 }

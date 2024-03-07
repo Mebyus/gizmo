@@ -1,0 +1,13 @@
+fn print(s: str) {
+    // some code to output string to stdout
+}
+
+const r: rune = 'k';
+const r2: rune = '\n';
+
+fn print_some_strings() {
+    print("Hello, world!");
+    print("Строка на русском. Тестируем utf-8");
+    print("\tTest\n simple\\ escapes \"");
+}
+

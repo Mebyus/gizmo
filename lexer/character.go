@@ -1,26 +1,26 @@
 package lexer
 
-func isLetterOrUnderscore(c int) bool {
+func isLetterOrUnderscore(c byte) bool {
 	return isLetter(c) || c == '_'
 }
 
-func isAlphanum(c int) bool {
+func isAlphanum(c byte) bool {
 	return isLetterOrUnderscore(c) || isDecimalDigit(c)
 }
 
-func isLetter(c int) bool {
+func isLetter(c byte) bool {
 	return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')
 }
 
-func isDecimalDigit(c int) bool {
+func isDecimalDigit(c byte) bool {
 	return '0' <= c && c <= '9'
 }
 
-func isDecimalDigitOrPeriod(c int) bool {
+func isDecimalDigitOrPeriod(c byte) bool {
 	return isDecimalDigit(c) || c == '.'
 }
 
-func isWhitespace(c int) bool {
+func isWhitespace(c byte) bool {
 	return c == ' ' || c == '\n' || c == '\t' || c == '\r'
 }
 
@@ -28,15 +28,15 @@ func toString(b byte) string {
 	return string([]byte{byte(b)})
 }
 
-func isHexadecimalDigit(c int) bool {
+func isHexadecimalDigit(c byte) bool {
 	return isDecimalDigit(c) || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')
 }
 
-func isOctalDigit(c int) bool {
+func isOctalDigit(c byte) bool {
 	return '0' <= c && c <= '7'
 }
 
-func isBinaryDigit(c int) bool {
+func isBinaryDigit(c byte) bool {
 	return c == '0' || c == '1'
 }
 

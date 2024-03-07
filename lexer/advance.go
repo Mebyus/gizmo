@@ -1,14 +1,15 @@
 package lexer
 
 const (
-	eof      = -1
 	nonASCII = 1 << 7
 
-	maxLiteralLength = 1 << 8
+	maxTokenByteLength = 1 << 10
 )
 
+// advance forward lexer scan position (with respect of input read caching)
+// if there is available input ahead, do nothing otherwise
 func (lx *Lexer) advance() {
-	if lx.c == eof {
+	if lx.eof {
 		return
 	}
 
@@ -21,41 +22,55 @@ func (lx *Lexer) advance() {
 
 	lx.prev = lx.c
 	lx.c = lx.next
+	lx.s += 1
 	lx.pos.Ofs += 1
-	if int(lx.i) < len(lx.src) {
-		lx.next = int(lx.src[lx.i])
-		lx.i += 1
-	} else {
-		lx.next = eof
+
+	if lx.i >= len(lx.src) {
+		lx.next = 0
+		lx.eof = lx.s >= len(lx.src)
+		return
 	}
+
+	lx.next = lx.src[lx.i]
+	lx.i += 1
 }
 
-func (lx *Lexer) isEOF() bool {
-	return lx.c == eof
+func (lx *Lexer) init() {
+	// prefill next and current bytes
+	lx.advance()
+	lx.advance()
+
+	// adjust internal state to place scan position at input start
+	lx.s = 0
+	lx.pos.Reset()
+	lx.eof = len(lx.src) == 0
 }
 
-func (lx *Lexer) take() string {
-	str := string(lx.buf[:lx.len])
-	lx.drop()
-	return str
+// start recording new token literal
+func (lx *Lexer) start() {
+	lx.mark = lx.s
+}
+
+// returns recorded token literal string (if ok == true) and ok flag, if ok == false that
+// means token overflowed max token length
+func (lx *Lexer) take() (string, bool) {
+	if lx.isLengthOverflow() {
+		return "", false
+	}
+	return string(lx.view()), true
 }
 
 func (lx *Lexer) view() []byte {
-	return lx.buf[:lx.len]
+	return lx.src[lx.mark:lx.s]
 }
 
-func (lx *Lexer) drop() {
-	lx.len = 0
+func (lx *Lexer) isLengthOverflow() bool {
+	return lx.len() > maxTokenByteLength
 }
 
-func (lx *Lexer) store() {
-	lx.add(byte(lx.c))
-	lx.advance()
-}
-
-func (lx *Lexer) add(b byte) {
-	lx.buf[lx.len] = b
-	lx.len++
+// returns length of recorded token literal
+func (lx *Lexer) len() int {
+	return lx.s - lx.mark
 }
 
 func (lx *Lexer) skipWhitespace() {
@@ -65,40 +80,12 @@ func (lx *Lexer) skipWhitespace() {
 }
 
 func (lx *Lexer) skipLine() {
-	for !lx.isEOF() && lx.c != '\n' {
+	for !lx.eof && lx.c != '\n' {
 		lx.advance()
 	}
 	if lx.c == '\n' {
 		lx.advance()
 	}
-}
-
-func (lx *Lexer) storeWord() (overflow bool) {
-	for lx.len < maxLiteralLength && isAlphanum(lx.c) {
-		lx.store()
-	}
-	return isAlphanum(lx.c)
-}
-
-func (lx *Lexer) storeBinaryDigits() (overflow bool) {
-	for lx.len < maxLiteralLength && isBinaryDigit(lx.c) {
-		lx.store()
-	}
-	return isBinaryDigit(lx.c)
-}
-
-func (lx *Lexer) storeOctalDigits() (overflow bool) {
-	for lx.len < maxLiteralLength && isOctalDigit(lx.c) {
-		lx.store()
-	}
-	return isOctalDigit(lx.c)
-}
-
-func (lx *Lexer) storeHexadecimalDigits() (overflow bool) {
-	for lx.len < maxLiteralLength && isHexadecimalDigit(lx.c) {
-		lx.store()
-	}
-	return isHexadecimalDigit(lx.c)
 }
 
 func (lx *Lexer) skipWord() {

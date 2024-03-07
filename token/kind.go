@@ -139,7 +139,7 @@ const (
 	DecimalInteger     // 5367, 43432, 1000097
 	HexadecimalInteger // 0x43da1
 	DecimalFloat       // 123.45
-	Character          // 'a', '\t', 'p'
+	Rune               // 'a', '\t', 'p'
 	String             // "abc", "", "\t\n  42Hello\n"
 )
 
@@ -170,7 +170,7 @@ func (k Kind) IsLeftPar() bool {
 func (k Kind) IsLit() bool {
 	switch k {
 	case
-		String, Character, DecimalInteger, DecimalFloat, BinaryInteger,
+		String, Rune, DecimalInteger, DecimalFloat, BinaryInteger,
 		OctalInteger, HexadecimalInteger, True, False, Nil:
 
 		return true

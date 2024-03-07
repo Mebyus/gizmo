@@ -7,39 +7,45 @@ import (
 )
 
 type Lexer struct {
-	// buffer for next literal
-	buf [maxLiteralLength]byte
-
-	// source text which is scanned by Lexer
+	// source text which is scanned by lexer
 	src []byte
 
-	// Lexer position inside source text
+	// Lexer position inside source text. Directly used to
+	// create tokens
 	pos source.Pos
 
-	// literal length in buffer
-	len int
+	// Mark index
+	//
+	// Mark is used to slice input text for token literals
+	mark int
 
-	// scanning index of source text
+	// next byte read index
 	i int
 
-	// previous character code
-	prev int
+	// scanning index of source text (c = src[s])
+	s int
 
-	// character code at current Lexer position
-	c int
+	// Byte that was previously at scan position
+	prev byte
 
-	// next character code
-	next int
+	// Byte at current scan position
+	//
+	// This is a cached value. Look into advance() method
+	// for details about how this caching algorithm works
+	c byte
+
+	// Next byte that will be placed at scan position
+	//
+	// This is a cached value from previous read
+	next byte
+
+	// True if lexer reached end of input (by scan index)
+	eof bool
 }
 
 func FromBytes(b []byte) *Lexer {
 	lx := &Lexer{src: b}
-
-	// init lexer buffer
-	lx.advance()
-	lx.advance()
-
-	lx.pos.Reset()
+	lx.init()
 	return lx
 }
 
@@ -49,9 +55,6 @@ func FromString(s string) *Lexer {
 
 func FromFile(filename string) (*Lexer, error) {
 	src, err := source.Load(filename)
-	if err != nil {
-		return nil, err
-	}
 	if err != nil {
 		return nil, err
 	}
