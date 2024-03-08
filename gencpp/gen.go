@@ -2,6 +2,7 @@ package gencpp
 
 import (
 	"io"
+	"strings"
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ir"
@@ -16,6 +17,10 @@ func Gen(w io.Writer, cfg *Config, atom ast.UnitAtom) error {
 			SourceLocationComments: true,
 		}
 	}
+	if cfg.GlobalNamespacePrefix != "" && !strings.HasSuffix(cfg.GlobalNamespacePrefix, "::") {
+		cfg.GlobalNamespacePrefix = cfg.GlobalNamespacePrefix + "::"
+	}
+
 	builder := NewBuilder(cfg)
 	builder.meta = meta
 	builder.UnitAtom(atom)

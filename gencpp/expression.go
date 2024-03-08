@@ -120,6 +120,8 @@ func (g *Builder) AddressExpression(expr ast.AddressExpression) {
 	g.Expression(expr.Target)
 }
 
+const maxInt64 = 0x7fff_ffff_ffff_ffff
+
 func (g *Builder) BasicLiteral(lit ast.BasicLiteral) {
 	if lit.Token.Kind == token.Nil {
 		g.write("nullptr")
@@ -140,6 +142,11 @@ func (g *Builder) BasicLiteral(lit ast.BasicLiteral) {
 	}
 	if lit.Token.Kind == token.OctalInteger {
 		g.write("0" + strconv.FormatUint(lit.Token.Val, 8))
+		return
+	}
+	if lit.Token.Kind == token.DecimalInteger && lit.Token.Val > maxInt64 {
+		g.write(strconv.FormatUint(lit.Token.Val, 10))
+		g.write("ul")
 		return
 	}
 

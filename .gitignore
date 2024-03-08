@@ -2,7 +2,14 @@
 
 /gizmo
 
-/build/
+/build/target/
+/build/.cache/
 
 /*.cpp
 *.o
+*.log
+*.tar
+*.gz
+*.lock
+*.tmp
+*.temp

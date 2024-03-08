@@ -1,0 +1,7 @@
+unit main {
+    files = [
+        "main.gzm",
+    ];
+
+    default_namespace = "coven";
+}

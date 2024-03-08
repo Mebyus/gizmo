@@ -114,5 +114,8 @@ type UnitBuildInfo struct {
 	Files     []string
 	TestFiles []string
 
+	// May be not empty only for pinnacle unit
+	EntryPoint       string
+
 	DefaultNamespace string
 }

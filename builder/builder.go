@@ -54,6 +54,13 @@ func (g *Builder) Build(unit string) error {
 	return g.SaveAndCompile(unit, genout)
 }
 
+func (g *Builder) FindEntryPoints(graph *impgraph.Graph) {
+	for _, pinnacle := range graph.Pinnacles {
+		entry := graph.Nodes[pinnacle].Bud.(*DepEntry)
+		_ = entry
+	}
+}
+
 func (g *Builder) SaveAndCompile(mod string, code []byte) error {
 	path, err := g.cache.SaveModGenout(mod, code)
 	if err != nil {

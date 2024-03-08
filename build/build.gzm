@@ -1,0 +1,3 @@
+fn build(g: *Builder) {
+    g.cfg.global_namespace_prefix = "coven";
+}
