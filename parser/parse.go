@@ -1,7 +1,10 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/mebyus/gizmo/ast"
+	"github.com/mebyus/gizmo/ast/toplvl"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/token"
 )
@@ -140,61 +143,12 @@ func (p *Parser) topLevel() (ast.TopLevel, error) {
 		return p.topLevelConst()
 	case token.Method:
 		return p.topLevelMethod()
-	// case token.Pub:
-	// 	return p.parseTopLevelPublic()
+	case token.Pub:
+		return p.topLevelPub()
 	default:
 		return nil, p.unexpected(p.tok)
 	}
 }
-
-// func (p *Parser) parseInUnitMode() (err error) {
-// 	for {
-// 		if p.isEOF() {
-// 			break
-// 		}
-// 		err = p.parseTopLevel()
-// 		if err != nil {
-// 			return
-// 		}
-// 	}
-// 	return
-// }
-
-// func (p *Parser) parseInNoUnitMode() (err error) {
-// 	for {
-// 		if p.isEOF() {
-// 			break
-// 		}
-// 		err = p.parseScriptTopLevel()
-// 		if err != nil {
-// 			return
-// 		}
-// 	}
-// 	return
-// }
-
-// func (p *Parser) parseScriptTopLevel() (err error) {
-// 	switch p.tok.Kind {
-// 	case token.Type:
-// 		return p.parseTopLevelType(false)
-// 	case token.Var:
-// 	case token.Import:
-// 		return p.topLevelImport(false)
-// 	case token.Fn:
-// 		return p.parseTopLevelFunction(false)
-// 	default:
-// 		var stmt ast.Statement
-// 		stmt, err = p.parseStatement()
-// 		if err != nil {
-// 			return
-// 		}
-// 		_ = stmt
-// 		// p.stmts = append(p.stmts, stmt)
-// 		return
-// 	}
-// 	p.advance()
-// 	return
-// }
 
 func (p *Parser) topLevelVar() (ast.TopVar, error) {
 	statement, err := p.varStatement()
@@ -219,4 +173,35 @@ func (p *Parser) topLevelConst() (ast.TopConst, error) {
 
 func (p *Parser) topLevelMethod() (ast.TopLevel, error) {
 	return p.method()
+}
+
+func (p *Parser) topLevelPub() (ast.TopLevel, error) {
+	p.advance() // skip "pub"
+
+	switch p.tok.Kind {
+	case token.Fn:
+		return p.topLevelPubFn()
+	default:
+		return nil, p.unexpected(p.tok)
+	}
+}
+
+func (p *Parser) topLevelPubFn() (ast.TopLevel, error) {
+	fn, err := p.topLevelFn()
+	if err != nil {
+		return nil, err
+	}
+
+	switch fn.Kind() {
+	case toplvl.Fn:
+		fn := fn.(ast.TopFunctionDefinition)
+		fn.Public = true
+		return fn, nil
+	case toplvl.FnTemplate:
+		fn := fn.(ast.TopFunctionTemplate)
+		fn.Public = true
+		return fn, nil
+	default:
+		panic(fmt.Sprintf("unexpected top level %s", fn.Kind().String()))
+	}
 }

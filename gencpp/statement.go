@@ -16,7 +16,7 @@ func (g *Builder) Block(block ast.BlockStatement) {
 		return
 	}
 
-	g.wb('{')
+	g.write("{")
 	g.nl()
 	g.inc()
 
@@ -26,7 +26,7 @@ func (g *Builder) Block(block ast.BlockStatement) {
 
 	g.dec()
 	g.indent()
-	g.wb('}')
+	g.write("}")
 }
 
 func (g *Builder) BlockStatement(block ast.BlockStatement) {

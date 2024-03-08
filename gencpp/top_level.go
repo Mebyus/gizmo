@@ -6,6 +6,7 @@ import (
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/toplvl"
 	"github.com/mebyus/gizmo/ast/tps"
+	"github.com/mebyus/gizmo/ir"
 )
 
 func (g *Builder) TopLevel(node ast.TopLevel) {
@@ -69,14 +70,16 @@ func (g *Builder) TopStructType(name ast.Identifier, spec ast.StructType) {
 	g.nl()
 }
 
-func (g *Builder) TopFn(top ast.TopFunctionDefinition) {
-	symName := g.symName(top.Definition.Head.Name)
-	props := g.meta.Symbols.Props[symName]
-
-	linkName := props.LinkName()
-	if linkName != "" {
-		g.write(`extern "C" `)
-	}
+// Output a function definition of the form (example):
+//
+//	extern "C" i32 custom_link_name(s: str, k: int) noexcept {
+//		return original_source_name(s, k);
+//	}
+//
+// This function with fixed linkname just calls the original function
+// with the same arguments
+func (g *Builder) topFnLinkNameBind(top ast.TopFunctionDefinition, linkName string, props ir.PropsRef) {
+	g.write(`extern "C" `)
 	if top.Definition.Head.Signature.Never {
 		g.write("[[noreturn]] ")
 	}
@@ -84,9 +87,66 @@ func (g *Builder) TopFn(top ast.TopFunctionDefinition) {
 		g.write("static ")
 	}
 
-	if linkName != "" {
-		top.Definition.Head.Name.Lit = linkName
+	g.functionReturnType(top.Definition.Head.Signature.Result)
+	g.nl()
+
+	g.write(linkName)
+	g.functionParams(top.Definition.Head.Signature.Params)
+	g.write(" noexcept {")
+	g.nl()
+
+	g.inc()
+	g.indent()
+	if top.Definition.Head.Signature.Result != nil {
+		g.write("return ")
 	}
+	g.Identifier(top.Definition.Head.Name)
+
+	params := top.Definition.Head.Signature.Params
+	g.write("(")
+	if len(params) != 0 {
+		g.Identifier(params[0].Name)
+		for _, param := range params[1:] {
+			g.write(", ")
+			g.Identifier(param.Name)
+		}
+	}
+	g.write(");")
+	g.nl()
+	g.dec()
+
+	g.write("}")
+	g.nl()
+}
+
+func (g *Builder) topFnExport(top ast.TopFunctionDefinition, linkName string, props ir.PropsRef) {
+	if top.Definition.Head.Signature.Never {
+		g.write("[[noreturn]] ")
+	}
+	g.write("static ")
+	g.FunctionDefinition(top.Definition)
+	g.nl()
+
+	g.comment("gizmo.export.bind = " + top.Definition.Head.Name.Lit)
+	g.topFnLinkNameBind(top, linkName, props)
+}
+
+func (g *Builder) TopFn(top ast.TopFunctionDefinition) {
+	symName := g.symName(top.Definition.Head.Name)
+	props := g.meta.Symbols.Props[symName]
+
+	linkName := props.LinkName()
+	export := props.Export()
+	if export && linkName != "" {
+		g.topFnExport(top, linkName, props)
+		return
+	}
+
+	if top.Definition.Head.Signature.Never {
+		g.write("[[noreturn]] ")
+	}
+	g.write("static ")
+
 	g.FunctionDefinition(top.Definition)
 }
 
@@ -96,22 +156,87 @@ func (g *Builder) TopConst(top ast.TopConst) {
 	g.nl()
 }
 
+func (g *Builder) topDeclareExtLink(top ast.TopFunctionDeclaration, linkName string) {
+	g.comment("gizmo.link.bind = " + top.Declaration.Name.Lit)
+	g.write(`extern "C" `)
+	if top.Declaration.Signature.Never {
+		g.write("[[noreturn]] ")
+	}
+	g.functionReturnType(top.Declaration.Signature.Result)
+	g.nl()
+
+	g.write(linkName)
+	g.functionParams(top.Declaration.Signature.Params)
+	g.write(" noexcept;")
+	g.nl()
+	g.nl()
+
+	g.topDeclareExtLinkBind(top, linkName)
+}
+
+// Output a function definition of the form (example):
+//
+//	i32 original_source_name(s: str, k: int) noexcept {
+//		return custom_link_name(s, k);
+//	}
+//
+// This function with original name just calls another function
+// with fixed linkname giving it the same arguments
+func (g *Builder) topDeclareExtLinkBind(top ast.TopFunctionDeclaration, linkName string) {
+	if top.Declaration.Signature.Never {
+		g.write("[[noreturn]] ")
+	}
+	g.write("static ")
+
+	g.functionReturnType(top.Declaration.Signature.Result)
+	g.nl()
+
+	g.Identifier(top.Declaration.Name)
+	g.functionParams(top.Declaration.Signature.Params)
+	g.write(" noexcept {")
+	g.nl()
+
+	g.inc()
+	g.indent()
+	if top.Declaration.Signature.Result != nil {
+		g.write("return ")
+	}
+	g.write(linkName)
+
+	params := top.Declaration.Signature.Params
+	g.write("(")
+	if len(params) != 0 {
+		g.Identifier(params[0].Name)
+		for _, param := range params[1:] {
+			g.write(", ")
+			g.Identifier(param.Name)
+		}
+	}
+	g.write(");")
+	g.nl()
+	g.dec()
+
+	g.write("}")
+	g.nl()
+}
+
 func (g *Builder) TopDeclare(top ast.TopFunctionDeclaration) {
 	symName := g.symName(top.Declaration.Name)
 	props := g.meta.Symbols.Props[symName]
 
 	linkName := props.LinkName()
 	extLink := props.ExtLink()
-	if extLink || linkName != "" {
-		g.write(`extern "C" `)
+	if extLink && linkName != "" {
+		g.topDeclareExtLink(top, linkName)
+		return
 	}
-	if !extLink && !props.Export() {
+	if top.Declaration.Signature.Never {
+		g.write("[[noreturn]] ")
+	}
+	if !props.Export() {
 		g.write("static ")
 	}
 
-	if linkName != "" {
-		top.Declaration.Name.Lit = linkName
-	}
 	g.FunctionDeclaration(top.Declaration)
 	g.semi()
 	g.nl()

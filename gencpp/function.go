@@ -24,7 +24,7 @@ func (g *Builder) functionParams(params []ast.FieldDefinition) {
 		return
 	}
 
-	g.wb('(')
+	g.write("(")
 
 	g.functionParam(params[0])
 	for _, param := range params[1:] {
@@ -32,7 +32,7 @@ func (g *Builder) functionParams(params []ast.FieldDefinition) {
 		g.functionParam(param)
 	}
 
-	g.wb(')')
+	g.write(")")
 }
 
 func (g *Builder) functionParam(param ast.FieldDefinition) {
