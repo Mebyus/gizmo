@@ -7,7 +7,7 @@ import (
 
 	"github.com/mebyus/gizmo/builder/impgraph"
 	"github.com/mebyus/gizmo/interp"
-	"github.com/mebyus/gizmo/ir/origin"
+	"github.com/mebyus/gizmo/source/origin"
 	"github.com/mebyus/gizmo/parser"
 )
 

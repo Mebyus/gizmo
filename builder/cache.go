@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mebyus/gizmo/ir/origin"
+	"github.com/mebyus/gizmo/source/origin"
 	"github.com/mebyus/gizmo/source"
 )
 

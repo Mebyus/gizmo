@@ -3,7 +3,7 @@ package builder
 import (
 	"sort"
 
-	"github.com/mebyus/gizmo/ir/origin"
+	"github.com/mebyus/gizmo/source/origin"
 )
 
 // DepWalker finds reachable (by imports) units, checks existence of
