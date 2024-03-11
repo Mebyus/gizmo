@@ -1,4 +1,4 @@
-#[ export = true ]
+#[ export ]
 #[ link.name = "coven_stdout_write" ]
 fn stdout_write(c: []u8, n: int) {
     for i in range(n) {
@@ -6,8 +6,8 @@ fn stdout_write(c: []u8, n: int) {
     }
 }
 
-#[ linkage = "external" ]
-#[ link.name = "another_link_name" ]
-#[ deprecated = true ]
+#[ external ]
+#[ deprecated ]
 #[ abi = "c4" ]
+#[ link.name = "another_link_name" ]
 declare fn with_external_linkage(x: *u32, y: *uarch) => i32

@@ -9,6 +9,8 @@ const (
 	// Mostly a trick to detect places where Kind is left unspecified
 	empty Kind = iota
 
+	Tag
+
 	Integer
 	String
 	Bool
@@ -17,6 +19,7 @@ const (
 var text = [...]string{
 	empty: "<nil>",
 
+	Tag:     "tag",
 	Integer: "integer",
 	String:  "string",
 	Bool:    "bool",

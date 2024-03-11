@@ -1,7 +1,10 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/mebyus/gizmo/ast"
+	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/token"
 )
 
@@ -22,6 +25,14 @@ func (p *Parser) gatherProps() error {
 func (p *Parser) prop() (ast.Prop, error) {
 	pos := p.pos()
 	p.advance() // skip "#["
+
+	if p.tok.Kind == token.RightSquare {
+		return ast.Prop{}, fmt.Errorf("empty prop at %s", pos.String())
+	}
+
+	if p.tok.Kind == token.Identifier && (p.next.Kind == token.RightSquare || p.next.Kind == token.Comma) {
+		return p.tagsProp(pos)
+	}
 
 	key, err := p.propKey()
 	if err != nil {
@@ -48,6 +59,45 @@ func (p *Parser) prop() (ast.Prop, error) {
 		Key:   key,
 		Value: value,
 	}, nil
+}
+
+func (p *Parser) tagsProp(pos source.Pos) (ast.Prop, error) {
+	list, err := p.tagsList()
+	if err != nil {
+		return ast.Prop{}, err
+	}
+	p.advance() // skip "]"
+
+	return ast.Prop{
+		Pos:   pos,
+		Value: ast.PropValueTags{Tags: list},
+	}, nil
+}
+
+func (p *Parser) tagsList() ([]ast.Identifier, error) {
+	var tags []ast.Identifier
+	for {
+		if p.tok.Kind == token.RightSquare {
+			if len(tags) == 0 {
+				panic("no tags in list")
+			}
+			return tags, nil
+		}
+
+		tag, err := p.identifier()
+		if err != nil {
+			return nil, err
+		}
+		tags = append(tags, tag)
+
+		if p.tok.Kind == token.Comma {
+			p.advance() // skip ","
+		} else if p.tok.Kind == token.RightSquare {
+			// will be skipped at next iteration
+		} else {
+			return nil, p.unexpected(p.tok)
+		}
+	}
 }
 
 func (p *Parser) propKey() (string, error) {

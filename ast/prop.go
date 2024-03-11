@@ -5,15 +5,22 @@ import (
 	"github.com/mebyus/gizmo/source"
 )
 
-// <Prop> = "#[" <Key> = <Value> "]"
+// <Prop> = <KeyValueProp> | <TagsProp>
+//
+// <KeyValueProp> = "#[" <Key> = <Value> "]"
 //
 // <Key> = <Identifier> { "." <Identifier> }
 // <Value> = <String> | <Integer> | <True> | <False>
+//
+// <TagsProp> = "#[" <Tag> { "," <Tag> } [ "," ] "]"
+// <Tag> = <Identifier>
 type Prop struct {
 	Pos source.Pos
 
 	Value PropValue
-	Key   string
+
+	// Always empty for TagsProp
+	Key string
 }
 
 type PropValue interface {
@@ -83,5 +90,24 @@ func (PropValueBool) Kind() prv.Kind {
 }
 
 func (v PropValueBool) Pin() source.Pos {
+	return v.Pos
+}
+
+type PropValueTags struct {
+	nodePropValue
+
+	Pos source.Pos
+
+	// Contains at least one element
+	Tags []Identifier
+}
+
+var _ PropValue = PropValueTags{}
+
+func (PropValueTags) Kind() prv.Kind {
+	return prv.Tag
+}
+
+func (v PropValueTags) Pin() source.Pos {
 	return v.Pos
 }
