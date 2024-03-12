@@ -2,4 +2,12 @@ unit math {
     imports = [
         "tests/fmt",
     ];
+
+    files = [
+        "add.asm",
+
+        "add.gzm",
+    ];
+
+    default_namespace = "coven::math";
 }

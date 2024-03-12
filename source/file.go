@@ -20,6 +20,19 @@ const (
 	ASM
 )
 
+var kindText = [...]string{
+	NoExt:   "<nil>",
+	Unknown: "<unknown>",
+
+	GZM: "gizmo",
+	CPP: "c++",
+	ASM: "asm",
+}
+
+func (k Kind) String() string {
+	return kindText[k]
+}
+
 func ParseKindFromExtension(ext string) Kind {
 	switch ext {
 	case "":

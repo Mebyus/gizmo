@@ -1,16 +1,18 @@
 package builder
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
 
-	"github.com/mebyus/gizmo/source/origin"
 	"github.com/mebyus/gizmo/source"
+	"github.com/mebyus/gizmo/source/origin"
 )
 
 func (cfg *Config) Hash() uint64 {
@@ -134,9 +136,14 @@ func (c *Cache) SaveUnitGenout(p origin.Path, data []byte) {
 	}
 }
 
-func (c *Cache) SaveFileGenout(p origin.Path, file *source.File, data []byte) {
+func (c *Cache) InitUnitDir(p origin.Path) (string, error) {
 	dir := filepath.Join(c.dir, "unit", formatHash(p.Hash()))
 	err := os.MkdirAll(dir, 0o775)
+	return dir, err
+}
+
+func (c *Cache) SaveFileGenout(p origin.Path, file *source.File, data []byte) {
+	dir, err := c.InitUnitDir(p)
 	if err != nil {
 		if debug {
 			c.debug("warn: failed to create dir \"%s\": %s", dir, err)
@@ -231,7 +238,62 @@ func (c *Cache) LoadFileGenout(p origin.Path, file *source.File) ([]byte, bool) 
 }
 
 func genPartName(file *source.File) string {
-	return "part_" + formatHash(file.Hash) + "_" + strconv.FormatUint(file.Size, 10) + ".cpp"
+	return "part_" + formatHash(file.Hash) + "_" + strconv.FormatUint(file.Size, 10) + ".gen.cpp"
+}
+
+// Generates hashed file name of the form:
+//
+//	"part_obj_<hash1>_<hash2>.o"
+//	<hash1> = hash produced from file paths
+//	<hash2> = hash produced from file content hashes
+//
+// slice argument must always contain at least one element
+func genPartObjName(files []*source.File) string {
+	hash1 := formatHash(filePathsHash(files))
+	hash2 := formatHash(fileHashesHash(files))
+	return "part_obj_" + hash1 + "_" + hash2 + ".o"
+}
+
+func filePathsHash(files []*source.File) uint64 {
+	// calculate buffer size for this set of files
+	var size int
+	size += len(files[0].Path)
+	for _, file := range files[1:] {
+		size += 1 // for separator between paths
+		size += len(file.Path)
+	}
+
+	buf := make([]byte, size)
+	var i int // buf write index
+
+	i += copy(buf[i:], files[0].Path)
+	for _, file := range files[1:] {
+		// write zero separator between paths
+		buf[i] = 0
+		i += 1
+
+		i += copy(buf[i:], file.Path)
+	}
+
+	h := fnv.New64a()
+	h.Write(buf)
+	return h.Sum64()
+}
+
+func fileHashesHash(files []*source.File) uint64 {
+	size := 8 * len(files) // 8 bytes for each File.Hash uint64 number
+
+	buf := make([]byte, size)
+	var i int // buf write index
+
+	for _, file := range files {
+		binary.LittleEndian.PutUint64(buf[i:], file.Hash)
+		i += 8
+	}
+
+	h := fnv.New64a()
+	h.Write(buf)
+	return h.Sum64()
 }
 
 func getFileModTime(path string) (time.Time, bool) {
@@ -254,9 +316,9 @@ func (c *Cache) debug(format string, args ...any) {
 	fmt.Println()
 }
 
-func formatHash(seed uint64) string {
+func formatHash(h uint64) string {
 	// formats integer in hex with exactly displayed 8 bytes (16 characters)
-	return fmt.Sprintf("%016x", seed)
+	return fmt.Sprintf("%016x", h)
 }
 
 func formatCacheSeed(seed uint64) string {

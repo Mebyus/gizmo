@@ -1,0 +1,8 @@
+#[ asm ]
+#[ link.name = "coven_add_asm" ]
+declare fn add_asm(a: i32, b: i32) => i32
+
+fn add(a: i32, b: i32) => i32 {
+    return add_asm(a, b);
+}
+
