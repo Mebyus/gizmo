@@ -18,6 +18,7 @@ const (
 	Union
 	Enum
 	Instance
+	Function
 )
 
 var text = [...]string{
@@ -32,6 +33,7 @@ var text = [...]string{
 	Union:        "union",
 	Enum:         "enum",
 	Instance:     "instance",
+	Function:     "function",
 }
 
 func (k Kind) String() string {

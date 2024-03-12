@@ -197,6 +197,21 @@ func (t EnumType) Pin() source.Pos {
 	return t.Pos
 }
 
-// <TypeLiteral> = <ArrayTypeLiteral> | <PointerTypeLiteral> | <ChunkTypeLiteral> |
-// <ArrayPointerTypeLiteral> | <StructTypeLiteral>
-type TypeLiteral any
+type FunctionType struct {
+	nodeTypeSpecifier
+
+	Pos source.Pos
+
+	Signature FunctionSignature
+}
+
+// Explicit interface implementation check
+var _ TypeSpecifier = FunctionType{}
+
+func (FunctionType) Kind() tps.Kind {
+	return tps.Function
+}
+
+func (t FunctionType) Pin() source.Pos {
+	return t.Pos
+}

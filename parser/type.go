@@ -60,29 +60,42 @@ func (p *Parser) topTypeTemplate() (ast.TopTypeTemplate, error) {
 }
 
 func (p *Parser) typeSpecifier() (ast.TypeSpecifier, error) {
-	if p.tok.Kind == token.Identifier {
+	switch p.tok.Kind {
+	case token.Identifier:
 		return p.typeNameOrInstance()
-	}
-	if p.tok.Kind == token.Asterisk {
+	case token.Asterisk:
 		return p.pointerType()
-	}
-	if p.tok.Kind == token.ArrayPointer {
+	case token.ArrayPointer:
 		return p.arrayPointerType()
-	}
-	if p.tok.Kind == token.Struct {
+	case token.Struct:
 		return p.structType()
-	}
-	if p.tok.Kind == token.Chunk {
+	case token.Chunk:
 		return p.chunkType()
-	}
-	if p.tok.Kind == token.LeftSquare {
+	case token.LeftSquare:
 		return p.arrayType()
-	}
-	if p.tok.Kind == token.Enum {
+	case token.Enum:
 		return p.enumType()
+	case token.Fn:
+		return p.fnType()
+	default:
+		return nil, fmt.Errorf("other type specifiers not implemented (start from %s at %s)",
+			p.tok.Kind.String(), p.tok.Pos.String())
 	}
-	return nil, fmt.Errorf("other type specifiers not implemented (start from %s at %s)",
-		p.tok.Kind.String(), p.tok.Pos.String())
+}
+
+func (p *Parser) fnType() (ast.FunctionType, error) {
+	pos := p.pos()
+	p.advance() // skip "fn"
+
+	signature, err := p.functionSignature()
+	if err != nil {
+		return ast.FunctionType{}, nil
+	}
+
+	return ast.FunctionType{
+		Pos:       pos,
+		Signature: signature,
+	}, nil
 }
 
 func (p *Parser) typeName() (ast.TypeName, error) {
@@ -102,7 +115,6 @@ func (p *Parser) typeNameOrInstance() (ast.TypeSpecifier, error) {
 		return ast.TypeName{Name: name}, nil
 	}
 
-	// TODO: replace with template args call
 	args, err := p.templateArgs()
 	if err != nil {
 		return nil, err

@@ -181,6 +181,8 @@ func (p *Parser) topLevelPub() (ast.TopLevel, error) {
 	switch p.tok.Kind {
 	case token.Fn:
 		return p.topLevelPubFn()
+	case token.Type:
+		return p.topLevelPubType()
 	default:
 		return nil, p.unexpected(p.tok)
 	}
@@ -194,14 +196,34 @@ func (p *Parser) topLevelPubFn() (ast.TopLevel, error) {
 
 	switch fn.Kind() {
 	case toplvl.Fn:
-		fn := fn.(ast.TopFunctionDefinition)
-		fn.Public = true
-		return fn, nil
+		f := fn.(ast.TopFunctionDefinition)
+		f.Public = true
+		return f, nil
 	case toplvl.FnTemplate:
-		fn := fn.(ast.TopFunctionTemplate)
-		fn.Public = true
-		return fn, nil
+		f := fn.(ast.TopFunctionTemplate)
+		f.Public = true
+		return f, nil
 	default:
 		panic(fmt.Sprintf("unexpected top level %s", fn.Kind().String()))
+	}
+}
+
+func (p *Parser) topLevelPubType() (ast.TopLevel, error) {
+	typ, err := p.topLevelType()
+	if err != nil {
+		return nil, err
+	}
+
+	switch typ.Kind() {
+	case toplvl.Type:
+		t := typ.(ast.TopType)
+		t.Public = true
+		return t, nil
+	case toplvl.TypeTemplate:
+		t := typ.(ast.TopTypeTemplate)
+		t.Public = true
+		return t, nil
+	default:
+		panic(fmt.Sprintf("unexpected top level %s", typ.Kind().String()))
 	}
 }

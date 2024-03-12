@@ -107,23 +107,23 @@ func (p *Parser) functionSignature() (ast.FunctionSignature, error) {
 		return ast.FunctionSignature{}, err
 	}
 
-	var result ast.TypeSpecifier
-	if p.tok.Kind == token.RightArrow {
-		p.advance() // skip "=>"
+	if p.tok.Kind != token.RightArrow {
+		return ast.FunctionSignature{Params: params}, nil
+	}
 
-		if p.tok.Kind == token.Never {
-			p.advance() // skip "never"
-			return ast.FunctionSignature{
-				Params: params,
-				Result: result,
-				Never:  true,
-			}, nil
-		}
+	p.advance() // skip "=>"
 
-		result, err = p.typeSpecifier()
-		if err != nil {
-			return ast.FunctionSignature{}, err
-		}
+	if p.tok.Kind == token.Never {
+		p.advance() // skip "never"
+		return ast.FunctionSignature{
+			Params: params,
+			Never:  true,
+		}, nil
+	}
+
+	result, err := p.typeSpecifier()
+	if err != nil {
+		return ast.FunctionSignature{}, err
 	}
 
 	return ast.FunctionSignature{
@@ -132,38 +132,32 @@ func (p *Parser) functionSignature() (ast.FunctionSignature, error) {
 	}, nil
 }
 
-func (p *Parser) functionParams() (params []ast.FieldDefinition, err error) {
-	err = p.expect(token.LeftParentheses)
+func (p *Parser) functionParams() ([]ast.FieldDefinition, error) {
+	err := p.expect(token.LeftParentheses)
 	if err != nil {
-		return
+		return nil, err
 	}
 	p.advance() // skip "("
 
-	first := true
-	comma := false
+	var params []ast.FieldDefinition
 	for {
 		if p.tok.Kind == token.RightParentheses {
 			p.advance() // skip ")"
 			return params, nil
 		}
 
-		if first {
-			first = false
-		} else if comma {
-			comma = false
-		} else {
-			return nil, p.unexpected(p.tok)
-		}
-
-		var field ast.FieldDefinition
-		field, err := p.field()
+		param, err := p.field()
 		if err != nil {
 			return nil, err
 		}
-		params = append(params, field)
+		params = append(params, param)
+
 		if p.tok.Kind == token.Comma {
-			comma = true
 			p.advance() // skip ","
+		} else if p.tok.Kind == token.RightParentheses {
+			// will be skipped at next iteration
+		} else {
+			return nil, p.unexpected(p.tok)
 		}
 	}
 }

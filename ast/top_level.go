@@ -106,6 +106,8 @@ type TopType struct {
 	Name Identifier
 
 	Spec TypeSpecifier
+
+	Public bool
 }
 
 var _ TopLevel = TopType{}

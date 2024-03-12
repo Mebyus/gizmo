@@ -53,9 +53,23 @@ func (g *Builder) TopType(top ast.TopType) {
 		g.TopStructType(top.Name, top.Spec.(ast.StructType))
 	case tps.Enum:
 		g.TopEnumType(top.Name, top.Spec.(ast.EnumType))
+	case tps.Function:
+		g.TopFunctionType(top.Name, top.Spec.(ast.FunctionType))
 	default:
 		g.write(fmt.Sprintf("<top %s type not implemented>", top.Spec.Kind()))
+		g.nl()
 	}
+}
+
+func (g *Builder) TopFunctionType(name ast.Identifier, spec ast.FunctionType) {
+	signature := spec.Signature
+	g.write("typedef ")
+	g.functionReturnType(signature.Result)
+	g.space()
+	g.Identifier(name)
+	g.functionParams(signature.Params)
+	g.semi()
+	g.nl()
 }
 
 func (g *Builder) TopStructType(name ast.Identifier, spec ast.StructType) {
