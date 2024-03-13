@@ -77,10 +77,28 @@ func (p *Parser) typeSpecifier() (ast.TypeSpecifier, error) {
 		return p.enumType()
 	case token.Fn:
 		return p.fnType()
+	case token.Union:
+		return p.unionType()
 	default:
 		return nil, fmt.Errorf("other type specifiers not implemented (start from %s at %s)",
 			p.tok.Kind.String(), p.tok.Pos.String())
 	}
+}
+
+func (p *Parser) unionType() (ast.UnionType, error) {
+	pos := p.pos()
+
+	p.advance() // skip "union"
+
+	fields, err := p.structFields()
+	if err != nil {
+		return ast.UnionType{}, err
+	}
+
+	return ast.UnionType{
+		Pos:    pos,
+		Fields: fields,
+	}, nil
 }
 
 func (p *Parser) fnType() (ast.FunctionType, error) {

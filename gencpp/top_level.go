@@ -55,10 +55,24 @@ func (g *Builder) TopType(top ast.TopType) {
 		g.TopEnumType(top.Name, top.Spec.(ast.EnumType))
 	case tps.Function:
 		g.TopFunctionType(top.Name, top.Spec.(ast.FunctionType))
+	case tps.Union:
+		g.TopUnionType(top.Name, top.Spec.(ast.UnionType))
 	default:
 		g.write(fmt.Sprintf("<top %s type not implemented>", top.Spec.Kind()))
 		g.nl()
 	}
+}
+
+func (g *Builder) TopUnionType(name ast.Identifier, spec ast.UnionType) {
+	g.write("union ")
+	g.Identifier(name)
+	g.space()
+
+	// methodsKey := g.symName(name)
+	g.structFields(spec.Fields, nil)
+
+	g.semi()
+	g.nl()
 }
 
 func (g *Builder) TopFunctionType(name ast.Identifier, spec ast.FunctionType) {

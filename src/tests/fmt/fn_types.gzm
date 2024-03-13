@@ -5,9 +5,14 @@ pub
 type Runner fn()
 
 pub
-type Adder fn(a: i32, b: i32) => i32
+type Adder fn(a: i32, b: i32, ) => i32
 
 pub
 fn use_adder(add: Adder, a: i32, b: i32) => i32 {
     return add(a, b);
+}
+
+type SmallString union {
+    small: [24]u8,
+    s: str,
 }

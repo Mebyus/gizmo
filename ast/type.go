@@ -197,6 +197,7 @@ func (t EnumType) Pin() source.Pos {
 	return t.Pos
 }
 
+// <FunctionType> = "fn" <FunctionSignature>
 type FunctionType struct {
 	nodeTypeSpecifier
 
@@ -213,5 +214,25 @@ func (FunctionType) Kind() tps.Kind {
 }
 
 func (t FunctionType) Pin() source.Pos {
+	return t.Pos
+}
+
+// <UnionType> = "union" "{" { <FieldDefinition> "," } "}"
+type UnionType struct {
+	nodeTypeSpecifier
+
+	Pos source.Pos
+
+	Fields []FieldDefinition
+}
+
+// Explicit interface implementation check
+var _ TypeSpecifier = UnionType{}
+
+func (UnionType) Kind() tps.Kind {
+	return tps.Union
+}
+
+func (t UnionType) Pin() source.Pos {
 	return t.Pos
 }
