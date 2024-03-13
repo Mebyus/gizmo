@@ -7,8 +7,8 @@ import (
 
 	"github.com/mebyus/gizmo/builder/impgraph"
 	"github.com/mebyus/gizmo/interp"
-	"github.com/mebyus/gizmo/source/origin"
 	"github.com/mebyus/gizmo/parser"
+	"github.com/mebyus/gizmo/source/origin"
 )
 
 const debug = true
@@ -80,10 +80,13 @@ func (g *Builder) SaveAndCompile(mod string, code []byte) error {
 // Scribe takes import graph, gathers unit files, parses them and combines
 // generated code into singular file build result
 func (g *Builder) Scribe(graph *impgraph.Graph) ([]byte, error) {
-	pool := NewPool(g.cache, len(graph.Nodes))
+	pool := NewPool(&g.cfg, g.cache, len(graph.Nodes))
 	for _, cohort := range graph.Cohorts {
 		for _, node := range cohort {
-			pool.AddTask(&BuildTask{dep: graph.Nodes[node].Bud.(*DepEntry)})
+			pool.AddTask(&BuildTask{
+				dep:      graph.Nodes[node].Bud.(*DepEntry),
+				scanMain: graph.Nodes[node].Pinnacle(),
+			})
 		}
 	}
 

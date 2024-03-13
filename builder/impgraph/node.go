@@ -28,6 +28,14 @@ type Node struct {
 	Bud Bud
 }
 
+func (n *Node) Root() bool {
+	return len(n.Anc) == 0
+}
+
+func (n *Node) Pinnacle() bool {
+	return len(n.Des) == 0
+}
+
 type Bud interface {
 	// Gives unique (among all possible data values) string identifier
 	UID() string
@@ -69,8 +77,8 @@ func Dump(w io.Writer, g *Graph) {
 		io.WriteString(w, fmt.Sprintf("%-4d => %s\n", node.Index, node.Bud.UID()))
 	}
 
-	io.WriteString(w, fmt.Sprintf("pins=%v\n",g.Pinnacles))
-	io.WriteString(w, fmt.Sprintf("roots=%v\n",g.Roots))
+	io.WriteString(w, fmt.Sprintf("pins=%v\n", g.Pinnacles))
+	io.WriteString(w, fmt.Sprintf("roots=%v\n", g.Roots))
 
 	io.WriteString(w, "cons:\n")
 	for _, node := range g.Nodes {

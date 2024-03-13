@@ -20,6 +20,9 @@ type BuildTask struct {
 	// order number of this task, used to produce deterministic
 	// build results when gathering outputs from multiple workers
 	order int
+
+	// scan this unit for main function
+	scanMain bool
 }
 
 type BuildTaskResult struct {
@@ -45,12 +48,14 @@ type Pool struct {
 
 	tasks []*BuildTask
 
+	cfg   *Config
 	cache *Cache
 }
 
-func NewPool(cache *Cache, tasknum int) *Pool {
+func NewPool(cfg *Config, cache *Cache, tasknum int) *Pool {
 	return &Pool{
 		tasks: make([]*BuildTask, 0, tasknum),
+		cfg:   cfg,
 		cache: cache,
 	}
 }
@@ -76,7 +81,7 @@ func (p *Pool) Start() {
 
 	for i := 0; i < poolSize; i++ {
 		p.wg.Add(1)
-		go SpawnWorker(p.cache, wctl)
+		go SpawnWorker(p.cfg, p.cache, wctl)
 	}
 
 	sctl := StaplerControls{
@@ -138,6 +143,9 @@ type BuildOutput struct {
 	err error
 
 	code []byte
+
+	// list of paths to already built object files (produced from asm code)
+	objs []string
 }
 
 type StaplerControls struct {
@@ -179,6 +187,10 @@ func SpawnStapler(output *BuildOutput, ctl StaplerControls) {
 		// staple available parts together
 		for tip < ctl.parts && results[tip] != nil {
 			buf.Write(results[tip].genout)
+			if results[tip].obj != "" {
+				output.objs = append(output.objs, results[tip].obj)
+			}
+
 			tip += 1
 		}
 	}
@@ -193,6 +205,15 @@ func SpawnStapler(output *BuildOutput, ctl StaplerControls) {
 
 // Worker accepts unit build tasks and processes them
 type Worker struct {
+	cfg   *Config
+	cache *Cache
+}
+
+func NewWorker(cfg *Config, cache *Cache) *Worker {
+	return &Worker{
+		cfg:   cfg,
+		cache: cache,
+	}
 }
 
 type WorkerControls struct {
@@ -210,9 +231,10 @@ type WorkerControls struct {
 
 // SpawnWorker meant to be run in a separate goroutine. Loops through incoming
 // tasks, processes them and sends results further
-func SpawnWorker(cache *Cache, ctl WorkerControls) {
+func SpawnWorker(cfg *Config, cache *Cache, ctl WorkerControls) {
 	defer ctl.wg.Done()
 
+	w := NewWorker(cfg, cache)
 	for {
 		select {
 		case task, ok := <-ctl.tap:
@@ -220,7 +242,7 @@ func SpawnWorker(cache *Cache, ctl WorkerControls) {
 				return
 			}
 
-			result := processTask(cache, task)
+			result := w.Process(task)
 
 			select {
 			case ctl.sink <- result:
@@ -233,8 +255,8 @@ func SpawnWorker(cache *Cache, ctl WorkerControls) {
 	}
 }
 
-func processTask(cache *Cache, task *BuildTask) *BuildTaskResult {
-	result, err := ProcessTask(cache, task)
+func (w *Worker) Process(task *BuildTask) *BuildTaskResult {
+	result, err := w.process(task)
 	if err != nil {
 		return &BuildTaskResult{
 			err:  err,
@@ -247,13 +269,13 @@ func processTask(cache *Cache, task *BuildTask) *BuildTaskResult {
 	return result
 }
 
-func ProcessTask(cache *Cache, task *BuildTask) (*BuildTaskResult, error) {
+func (w *Worker) process(task *BuildTask) (*BuildTaskResult, error) {
 	if len(task.dep.BuildInfo.Files) == 0 {
 		return nil, nil
 	}
 
 	p := task.dep.Path
-	_, err := cache.InitUnitDir(p)
+	_, err := w.cache.InitUnitDir(p)
 	if err != nil {
 		return nil, fmt.Errorf("create unit \"%s\" cache directory: %w", p.String(), err)
 	}
@@ -274,7 +296,7 @@ func ProcessTask(cache *Cache, task *BuildTask) (*BuildTaskResult, error) {
 			return nil, fmt.Errorf("file \"%s\" points to a separate directory", name)
 		}
 
-		src, err := cache.InfoSourceFile(task.dep.Path, name)
+		src, err := w.cache.InfoSourceFile(task.dep.Path, name)
 		if err != nil {
 			return nil, err
 		}
@@ -296,12 +318,12 @@ func ProcessTask(cache *Cache, task *BuildTask) (*BuildTaskResult, error) {
 		files = append(files, src)
 	}
 
-	asmObj, err := asmBuildObject(cache, task.dep, asmFiles)
+	asmObj, err := asmBuildObject(w.cache, task.dep, asmFiles)
 	if err != nil {
 		return nil, err
 	}
 
-	genout, ok := cache.LoadUnitGenout(task.dep.Path, unitModTime)
+	genout, ok := w.cache.LoadUnitGenout(task.dep.Path, unitModTime)
 	if ok {
 		return &BuildTaskResult{
 			task:   task,
@@ -317,9 +339,9 @@ func ProcessTask(cache *Cache, task *BuildTask) (*BuildTaskResult, error) {
 
 		switch file.Kind {
 		case source.GZM:
-			err = gizmoGenout(&buf, cache, task.dep, file.Name)
+			err = w.gizmoGenout(&buf, task.dep, file.Name)
 		case source.CPP:
-			err = cppGenout(&buf, cache, task.dep, file.Name)
+			err = w.cppGenout(&buf, task.dep, file.Name)
 		case source.ASM:
 			panic("unexpected source file kind: " + file.Kind.String())
 		default:
@@ -336,7 +358,7 @@ func ProcessTask(cache *Cache, task *BuildTask) (*BuildTaskResult, error) {
 		genout: buf.Bytes(),
 		obj:    asmObj,
 	}
-	cache.SaveUnitGenout(task.dep.Path, result.genout)
+	w.cache.SaveUnitGenout(task.dep.Path, result.genout)
 	return result, nil
 }
 
@@ -364,9 +386,9 @@ func asmBuildObject(cache *Cache, dep *DepEntry, srcs []*source.File) (string, e
 	return path, nil
 }
 
-func cppGenout(buf *bytes.Buffer, cache *Cache, dep *DepEntry, name string) error {
+func (w *Worker) cppGenout(buf *bytes.Buffer, dep *DepEntry, name string) error {
 	p := dep.Path
-	src, err := cache.LoadSourceFile(p, name)
+	src, err := w.cache.LoadSourceFile(p, name)
 	if err != nil {
 		return err
 	}
@@ -374,13 +396,13 @@ func cppGenout(buf *bytes.Buffer, cache *Cache, dep *DepEntry, name string) erro
 	return nil
 }
 
-func gizmoGenout(buf *bytes.Buffer, cache *Cache, dep *DepEntry, name string) error {
+func (w *Worker) gizmoGenout(buf *bytes.Buffer, dep *DepEntry, name string) error {
 	p := dep.Path
-	src, err := cache.LoadSourceFile(p, name)
+	src, err := w.cache.LoadSourceFile(p, name)
 	if err != nil {
 		return err
 	}
-	genout, ok := cache.LoadFileGenout(p, src)
+	genout, ok := w.cache.LoadFileGenout(p, src)
 	if ok {
 		// implementation always writes all bytes without error
 		buf.Write(genout)
@@ -395,6 +417,9 @@ func gizmoGenout(buf *bytes.Buffer, cache *Cache, dep *DepEntry, name string) er
 	genConfig := gencpp.Config{
 		Size:             len(src.Bytes),
 		DefaultNamespace: dep.BuildInfo.DefaultNamespace,
+
+		GlobalNamespacePrefix:  w.cfg.BaseNamespace,
+		SourceLocationComments: w.cfg.BuildKind == BuildDebug,
 	}
 	start := buf.Len()
 	err = gencpp.Gen(buf, &genConfig, atom)
@@ -403,6 +428,6 @@ func gizmoGenout(buf *bytes.Buffer, cache *Cache, dep *DepEntry, name string) er
 	}
 	genout = buf.Bytes()[start:]
 
-	cache.SaveFileGenout(p, src, genout)
+	w.cache.SaveFileGenout(p, src, genout)
 	return nil
 }
