@@ -11,3 +11,10 @@ fn stdout_write(c: []u8, n: int) {
 #[ abi = "c4" ]
 #[ link.name = "another_link_name" ]
 declare fn with_external_linkage(x: *u32, y: *uarch) => i32
+
+// test prop with tags
+// TODO: refine syntax
+// #[ test = (tag1, tag2) ]
+fn test_add(t: *gtf::Test) {
+    t.error("Test error");
+}

@@ -28,7 +28,7 @@ func NamespaceScopes(block ast.NamespaceBlock) []string {
 
 func Index(atom ast.UnitAtom) Meta {
 	sm := make(map[string][]ast.FunctionDeclaration)
-	sp := make(map[string]PropsRef)
+	sp := make(map[string]*PropsRef)
 
 	for _, block := range atom.Blocks {
 		scopes := NamespaceScopes(block)

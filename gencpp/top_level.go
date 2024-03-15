@@ -106,7 +106,7 @@ func (g *Builder) TopStructType(name ast.Identifier, spec ast.StructType) {
 //
 // This function with fixed linkname just calls the original function
 // with the same arguments
-func (g *Builder) topFnLinkNameBind(top ast.TopFunctionDefinition, linkName string, props ir.PropsRef) {
+func (g *Builder) topFnLinkNameBind(top ast.TopFunctionDefinition, linkName string, props *ir.PropsRef) {
 	g.write(`extern "C" `)
 	if top.Definition.Head.Signature.Never {
 		g.write("[[noreturn]] ")
@@ -147,7 +147,7 @@ func (g *Builder) topFnLinkNameBind(top ast.TopFunctionDefinition, linkName stri
 	g.nl()
 }
 
-func (g *Builder) topFnExport(top ast.TopFunctionDefinition, linkName string, props ir.PropsRef) {
+func (g *Builder) topFnExport(top ast.TopFunctionDefinition, linkName string, props *ir.PropsRef) {
 	if top.Definition.Head.Signature.Never {
 		g.write("[[noreturn]] ")
 	}
@@ -253,8 +253,8 @@ func (g *Builder) TopDeclare(top ast.TopFunctionDeclaration) {
 	props := g.meta.Symbols.Props[symName]
 
 	linkName := props.LinkName()
-	extLink := props.ExtLink()
-	if extLink && linkName != "" {
+	external := props.External()
+	if external && linkName != "" {
 		g.topDeclareExtLink(top, linkName)
 		return
 	}
