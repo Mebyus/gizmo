@@ -31,7 +31,7 @@ func determineUnitFile(path string) (string, error) {
 		return "", err
 	}
 	if info.IsDir() {
-		return filepath.Join(path, "unit.gzm"), nil
+		return filepath.Join(path, "unit.gm"), nil
 	}
 	return path, nil
 }

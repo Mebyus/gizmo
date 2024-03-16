@@ -6,7 +6,7 @@ unit math {
     files = [
         "add.asm",
 
-        "add.gzm",
+        "add.gm",
     ];
 
     default_namespace = "coven::math";

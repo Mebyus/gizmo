@@ -37,7 +37,7 @@ func ParseKindFromExtension(ext string) Kind {
 	switch ext {
 	case "":
 		return NoExt
-	case ".gzm":
+	case ".gm":
 		return GZM
 	case ".cpp":
 		return CPP
@@ -66,7 +66,7 @@ type File struct {
 
 	// File extension, including dot character. Examples:
 	//
-	//	- ".gzm"
+	//	- ".gm"
 	//	- ".cpp"
 	//	- ".asm"
 	//

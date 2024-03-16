@@ -55,13 +55,13 @@ func (c *Config) Recipe() []butler.Param {
 		{
 			Name: "file",
 			Kind: butler.String,
-			Def:  filepath.Join("build", "build.gzm"),
+			Def:  filepath.Join("build", "build.gm"),
 			Desc: "specify a file to use as a build script",
 		},
 		{
 			Name: "env",
 			Kind: butler.String,
-			Def:  filepath.Join("build", "env.gzm"),
+			Def:  filepath.Join("build", "env.gm"),
 			Desc: "specify a file to use for local build environment definitions",
 		},
 	}

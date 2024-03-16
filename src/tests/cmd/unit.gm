@@ -1,6 +1,6 @@
 unit main {
     files = [
-        "main.gzm",
+        "main.gm",
     ];
 
     default_namespace = "coven";

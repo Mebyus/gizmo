@@ -4,6 +4,6 @@ unit math {
     ];
 
     files = [
-        "fn_types.gzm",
+        "fn_types.gm",
     ];
 }

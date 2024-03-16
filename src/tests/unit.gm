@@ -13,8 +13,8 @@ unit tests {
     // This is used by "build" and "test" commands
     files = [
         "prelude.cpp",
-        "1.gzm",
-        "2.gzm",
+        "1.gm",
+        "2.gm",
     ];
 
     // List of unit test files

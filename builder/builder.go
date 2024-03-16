@@ -167,7 +167,7 @@ func (g *Builder) FindUnitBuildInfo(p origin.Path) (*DepEntry, error) {
 		g.debug(p.String())
 	}
 
-	src, err := g.cache.LoadSourceFile(p, "unit.gzm")
+	src, err := g.cache.LoadSourceFile(p, "unit.gm")
 	if err != nil {
 		return nil, fmt.Errorf("load unit build source: %w", err)
 	}
