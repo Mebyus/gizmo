@@ -45,9 +45,45 @@ func (g *Builder) Expression(expr ast.Expression) {
 		g.SliceExpression(expr.(ast.SliceExpression))
 	case exn.BitCast:
 		g.BitCastExpression(expr.(ast.BitCastExpression))
+	case exn.Object:
+		g.ObjectLiteral(expr.(ast.ObjectLiteral))
 	default:
 		g.write(fmt.Sprintf("<%s expr>", expr.Kind().String()))
 	}
+}
+
+func (g *Builder) ObjectField(field ast.ObjectField) {
+	g.write(".")
+	g.Identifier(field.Name)
+	g.write(" = ")
+	g.Expression(field.Value)
+}
+
+func (g *Builder) ObjectLiteral(lit ast.ObjectLiteral) {
+	if len(lit.Fields) == 0 {
+		g.write("{}")
+		return
+	}
+
+	g.write("{")
+	g.nl()
+
+	g.inc()
+
+	g.indent()
+	g.ObjectField(lit.Fields[0])
+	g.write(",")
+	g.nl()
+	for _, field := range lit.Fields[1:] {
+		g.indent()
+		g.ObjectField(field)
+		g.write(",")
+		g.nl()
+	}
+	g.dec()
+
+	g.indent()
+	g.write("}")
 }
 
 func (g *Builder) SliceExpression(expr ast.SliceExpression) {

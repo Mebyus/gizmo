@@ -6,6 +6,8 @@
 /build/.cache/
 
 /*.cpp
+/*.cc
+
 *.o
 *.log
 *.tar

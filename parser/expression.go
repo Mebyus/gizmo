@@ -303,12 +303,68 @@ func (p *Parser) bitCastExpression() (ast.BitCastExpression, error) {
 	}, nil
 }
 
+func (p *Parser) objectField() (ast.ObjectField, error) {
+	if p.tok.Kind != token.Identifier {
+		return ast.ObjectField{}, p.unexpected(p.tok)
+	}
+	name := p.idn()
+	p.advance() // skip field name
+
+	if p.tok.Kind != token.Colon {
+		return ast.ObjectField{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip ":"
+
+	value, err := p.expr()
+	if err != nil {
+		return ast.ObjectField{}, err
+	}
+
+	return ast.ObjectField{
+		Name:  name,
+		Value: value,
+	}, nil
+}
+
+func (p *Parser) objectLiteral() (ast.ObjectLiteral, error) {
+	pos := p.pos()
+	p.advance() // skip "{"
+
+	var fields []ast.ObjectField
+	for {
+		if p.tok.Kind == token.RightCurly {
+			p.advance() // skip "}"
+			return ast.ObjectLiteral{
+				Pos:    pos,
+				Fields: fields,
+			}, nil
+		}
+
+		field, err := p.objectField()
+		if err != nil {
+			return ast.ObjectLiteral{}, err
+		}
+		fields = append(fields, field)
+
+		if p.tok.Kind == token.Comma {
+			p.advance() // skip ","
+		} else if p.tok.Kind == token.RightCurly {
+			// will be skipped at next iteration
+		} else {
+			return ast.ObjectLiteral{}, p.unexpected(p.tok)
+		}
+	}
+}
+
 func (p *Parser) tryOperand() (ast.Operand, error) {
 	if p.tok.Kind == token.Cast {
 		return p.castExpression()
 	}
 	if p.tok.Kind == token.BitCast {
 		return p.bitCastExpression()
+	}
+	if p.tok.Kind == token.LeftCurly {
+		return p.objectLiteral()
 	}
 
 	if p.tok.IsLit() {
@@ -369,7 +425,7 @@ func (p *Parser) tryOperand() (ast.Operand, error) {
 	return nil, nil
 }
 
-// SubsExpression, SelectorExpression, IndexExpression or CallExpression
+// SubsExpression, SelectorExpression, IndexExpression, CallExpression or InstanceExpression
 func (p *Parser) identifierStartOperand() (ast.Operand, error) {
 	scoped, err := p.scopedIdentifier()
 	if err != nil {

@@ -333,9 +333,6 @@ func (e InstanceExpression) Pin() source.Pos {
 	return e.Target.Name.Pos
 }
 
-// <IndexableExpression> = <Identifier> | <SelectorExpression> | <IndexExpression>
-type IndexableExpression any
-
 type UnaryOperator struct {
 	Pos  source.Pos
 	Kind uop.Kind

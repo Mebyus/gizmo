@@ -39,7 +39,7 @@ func ParseKindFromExtension(ext string) Kind {
 		return NoExt
 	case ".gm":
 		return GZM
-	case ".cpp":
+	case ".cpp", ".cc":
 		return CPP
 	case ".asm":
 		return ASM

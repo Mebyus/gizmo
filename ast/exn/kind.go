@@ -12,6 +12,9 @@ const (
 	// basic literal operand
 	Basic
 
+	// object literal operand
+	Object
+
 	// list literal operand
 	List
 
@@ -47,6 +50,7 @@ var text = [...]string{
 	empty: "<nil>",
 
 	Basic:    "basic",
+	Object:   "object",
 	List:     "list",
 	Subs:     "subs",
 	Unary:    "unary",

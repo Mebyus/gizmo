@@ -27,7 +27,7 @@ func (l BasicLiteral) Pin() source.Pos {
 	return l.Token.Pos
 }
 
-// <ListLiteral> = ".[" { <Expression> "," } "]"
+// <ListLiteral> = "[" [ <Expression> { "," <Expression> } [ "," ] ] "]"
 type ListLiteral struct {
 	nodeOperand
 
@@ -41,5 +41,30 @@ func (ListLiteral) Kind() exn.Kind {
 }
 
 func (l ListLiteral) Pin() source.Pos {
+	return l.Pos
+}
+
+// <ObjectField> = <Name> ":" <Expression>
+//
+// <Name> = <Identifier>
+type ObjectField struct {
+	Name  Identifier
+	Value Expression
+}
+
+// <ObjectLiteral> = "{" [ <ObjectField> { "," <ObjectField> } [ "," ] ] "}"
+type ObjectLiteral struct {
+	nodeOperand
+
+	Pos source.Pos
+
+	Fields []ObjectField
+}
+
+func (ObjectLiteral) Kind() exn.Kind {
+	return exn.Object
+}
+
+func (l ObjectLiteral) Pin() source.Pos {
 	return l.Pos
 }
