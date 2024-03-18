@@ -9,6 +9,11 @@
 /*.cc
 
 *.o
+*.exe
+*.a
+*.lib
+*.dll
+*.so
 *.log
 *.tar
 *.gz

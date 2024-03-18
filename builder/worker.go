@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/mebyus/gizmo/gencpp"
+	"github.com/mebyus/gizmo/ir"
 	"github.com/mebyus/gizmo/parser"
 	"github.com/mebyus/gizmo/source"
 )
@@ -35,6 +36,9 @@ type BuildTaskResult struct {
 	//
 	// If there are no asm files in unit, then this field remains empty
 	obj string
+
+	// If this field is not empty that means unit contains entry point symbol
+	entry string
 
 	err error
 }
@@ -142,6 +146,9 @@ func SpawnDispatcher(tasks []*BuildTask, ctl DispatcherControls) {
 type BuildOutput struct {
 	err error
 
+	// entry point symbol link name
+	entry string
+
 	code []byte
 
 	// list of paths to already built object files (produced from asm code)
@@ -178,8 +185,14 @@ func SpawnStapler(output *BuildOutput, ctl StaplerControls) {
 		if result.err != nil {
 			// signal other goroutines in pool to stop early
 			close(ctl.stop)
-			output.err = result.err
+			output.err = fmt.Errorf("build unit \"%s\": %w", result.task.dep.UID(), result.err)
 			return
+		}
+		if result.entry != "" {
+			if output.entry != "" {
+				panic("two or more units with entry points")
+			}
+			output.entry = result.entry
 		}
 
 		results[result.task.order] = result
@@ -200,6 +213,11 @@ func SpawnStapler(output *BuildOutput, ctl StaplerControls) {
 	}
 
 	close(ctl.stop)
+	
+	if output.entry != "" {
+		gencpp.EntryPoint(&buf, output.entry, "coven_start", "coven::os::exit")
+	}
+
 	output.code = buf.Bytes()
 }
 
@@ -333,13 +351,20 @@ func (w *Worker) process(task *BuildTask) (*BuildTaskResult, error) {
 	}
 
 	var buf bytes.Buffer
-
+	var unitEntryPoint string
 	for _, file := range files {
 		var err error
 
 		switch file.Kind {
 		case source.GZM:
-			err = w.gizmoGenout(&buf, task.dep, file.Name)
+			var fileEntryPoint string
+			fileEntryPoint, err = w.gizmoGenout(&buf, task, file.Name)
+			if fileEntryPoint != "" {
+				if unitEntryPoint != "" {
+					return nil, fmt.Errorf("duplicate entry point \"%s\"", fileEntryPoint)
+				}
+				unitEntryPoint = fileEntryPoint
+			}
 		case source.CPP:
 			err = w.cppGenout(&buf, task.dep, file.Name)
 		case source.ASM:
@@ -357,6 +382,7 @@ func (w *Worker) process(task *BuildTask) (*BuildTaskResult, error) {
 		task:   task,
 		genout: buf.Bytes(),
 		obj:    asmObj,
+		entry:  unitEntryPoint,
 	}
 	w.cache.SaveUnitGenout(task.dep.Path, result.genout)
 	return result, nil
@@ -393,30 +419,38 @@ func (w *Worker) cppGenout(buf *bytes.Buffer, dep *DepEntry, name string) error 
 		return err
 	}
 	buf.Write(src.Bytes)
+	buf.WriteString("\n")
 	return nil
 }
 
-func (w *Worker) gizmoGenout(buf *bytes.Buffer, dep *DepEntry, name string) error {
-	p := dep.Path
+func (w *Worker) gizmoGenout(buf *bytes.Buffer, task *BuildTask, name string) (string, error) {
+	p := task.dep.Path
 	src, err := w.cache.LoadSourceFile(p, name)
 	if err != nil {
-		return err
+		return "", err
 	}
 	genout, ok := w.cache.LoadFileGenout(p, src)
 	if ok {
 		// implementation always writes all bytes without error
 		buf.Write(genout)
-		return nil
+		return "", nil
 	}
 
 	atom, err := parser.ParseSource(src)
 	if err != nil {
-		return err
+		return "", err
+	}
+
+	var entryPoint string
+	if task.scanMain {
+		if ir.CheckEntryPoint(atom, "main") {
+			entryPoint = "main"
+		}
 	}
 
 	genConfig := gencpp.Config{
 		Size:             len(src.Bytes),
-		DefaultNamespace: dep.BuildInfo.DefaultNamespace,
+		DefaultNamespace: task.dep.BuildInfo.DefaultNamespace,
 
 		GlobalNamespacePrefix:  w.cfg.BaseNamespace,
 		SourceLocationComments: w.cfg.BuildKind == BuildDebug,
@@ -424,10 +458,10 @@ func (w *Worker) gizmoGenout(buf *bytes.Buffer, dep *DepEntry, name string) erro
 	start := buf.Len()
 	err = gencpp.Gen(buf, &genConfig, atom)
 	if err != nil {
-		return err
+		return "", err
 	}
 	genout = buf.Bytes()[start:]
 
 	w.cache.SaveFileGenout(p, src, genout)
-	return nil
+	return entryPoint, nil
 }

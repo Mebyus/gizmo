@@ -1,0 +1,10 @@
+unit main {
+    imports = [
+        "std/core",
+        "tests/math",
+    ];
+
+    files = [
+        "main.gm",
+    ];
+}

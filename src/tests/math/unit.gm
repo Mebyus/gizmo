@@ -1,6 +1,6 @@
 unit math {
     imports = [
-        "tests/fmt",
+        // "tests/fmt",
     ];
 
     files = [
@@ -8,6 +8,4 @@ unit math {
 
         "add.gm",
     ];
-
-    default_namespace = "coven::math";
 }

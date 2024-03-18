@@ -184,8 +184,19 @@ func (g *Builder) TopConst(top ast.TopConst) {
 	g.nl()
 }
 
+func (g *Builder) topDeclareAsmLink(top ast.TopFunctionDeclaration, linkName string) {
+	g.comment("gizmo.link.obj = asm")
+	g.topDeclareBind(top, linkName)
+}
+
 func (g *Builder) topDeclareExtLink(top ast.TopFunctionDeclaration, linkName string) {
+	g.comment("gizmo.link.obj = external")
+	g.topDeclareBind(top, linkName)
+}
+
+func (g *Builder) topDeclareBind(top ast.TopFunctionDeclaration, linkName string) {
 	g.comment("gizmo.link.bind = " + top.Declaration.Name.Lit)
+
 	g.write(`extern "C" `)
 	if top.Declaration.Signature.Never {
 		g.write("[[noreturn]] ")
@@ -204,7 +215,8 @@ func (g *Builder) topDeclareExtLink(top ast.TopFunctionDeclaration, linkName str
 
 // Output a function definition of the form (example):
 //
-//	i32 original_source_name(s: str, k: int) noexcept {
+//	static i32
+//	original_source_name(s: str, k: int) noexcept {
 //		return custom_link_name(s, k);
 //	}
 //
@@ -252,10 +264,15 @@ func (g *Builder) TopDeclare(top ast.TopFunctionDeclaration) {
 	symName := g.symName(top.Declaration.Name)
 	props := g.meta.Symbols.Props[symName]
 
-	linkName := props.LinkName()
+	asm := props.Asm()
 	external := props.External()
+	linkName := props.LinkName()
 	if external && linkName != "" {
 		g.topDeclareExtLink(top, linkName)
+		return
+	}
+	if asm && linkName != "" {
+		g.topDeclareAsmLink(top, linkName)
 		return
 	}
 	if top.Declaration.Signature.Never {

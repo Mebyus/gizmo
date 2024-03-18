@@ -85,6 +85,7 @@ func build(config *Config, path string) error {
 		BaseOutputDir: filepath.Join("build", "target"),
 		BaseCacheDir:  filepath.Join("build", ".cache"),
 		BaseSourceDir: "src",
+		BaseNamespace: "coven",
 
 		BuildKind: kind,
 	}

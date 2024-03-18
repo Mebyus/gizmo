@@ -34,6 +34,14 @@ var genFlags = []string{
 	"-fno-rtti",
 }
 
+var customEntryFlags = []string{
+	"--entry=my_entry", // TODO: construct from builder entry point search
+	"-nodefaultlibs",
+	"-nolibc",
+	"-nostdlib",
+	"-nostartfiles",
+}
+
 const compiler = "g++"
 const compilerStdVersion = "20"
 const debugCompilerOptimizations = "g"
