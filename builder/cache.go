@@ -165,7 +165,7 @@ func (c *Cache) SaveFileGenout(p origin.Path, file *source.File, data []byte) {
 	}
 }
 
-func (c *Cache) SaveModGenout(mod string, code []byte) (string, error) {
+func (c *Cache) SaveModGenout(mod string, code *PartsBuffer) (string, error) {
 	name := filepath.Base(mod) + ".cpp"
 	dir := filepath.Join(c.dir, "mod", "gen", filepath.Dir(mod))
 	err := os.MkdirAll(dir, 0o775)
@@ -174,7 +174,7 @@ func (c *Cache) SaveModGenout(mod string, code []byte) (string, error) {
 	}
 
 	path := filepath.Join(dir, name)
-	err = os.WriteFile(path, code, 0o664)
+	err = SavePartsBuffer(path, code)
 	if err != nil {
 		return "", err
 	}

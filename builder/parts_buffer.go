@@ -1,6 +1,9 @@
 package builder
 
-import "io"
+import (
+	"io"
+	"os"
+)
 
 // PartsBuffer stores multiple parts of data (byte slices) in sequential manner
 // and implements Read and WriteTo methods which use stored parts to stream
@@ -54,6 +57,7 @@ func (p *PartsBuffer) AddStr(parts ...string) {
 	}
 }
 
+// Len returns total length of all stored parts
 func (p *PartsBuffer) Len() int {
 	return p.len
 }
@@ -102,4 +106,15 @@ func (p *PartsBuffer) WriteTo(w io.Writer) (n int64, err error) {
 		}
 	}
 	return
+}
+
+func SavePartsBuffer(filename string, buf *PartsBuffer) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = buf.WriteTo(file)
+	return err
 }

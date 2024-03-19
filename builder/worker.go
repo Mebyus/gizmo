@@ -149,7 +149,7 @@ type BuildOutput struct {
 	// entry point symbol link name
 	entry string
 
-	code []byte
+	code PartsBuffer
 
 	// list of paths to already built object files (produced from asm code)
 	objs []string
@@ -178,8 +178,6 @@ func SpawnStapler(output *BuildOutput, ctl StaplerControls) {
 	// stapler tip index inside results slice
 	tip := 0
 
-	var buf bytes.Buffer
-
 	for i := 0; i < ctl.parts; i++ {
 		result := <-ctl.tap
 		if result.err != nil {
@@ -199,7 +197,7 @@ func SpawnStapler(output *BuildOutput, ctl StaplerControls) {
 
 		// staple available parts together
 		for tip < ctl.parts && results[tip] != nil {
-			buf.Write(results[tip].genout)
+			output.code.Add(results[tip].genout)
 			if results[tip].obj != "" {
 				output.objs = append(output.objs, results[tip].obj)
 			}
@@ -215,10 +213,10 @@ func SpawnStapler(output *BuildOutput, ctl StaplerControls) {
 	close(ctl.stop)
 	
 	if output.entry != "" {
+		var buf bytes.Buffer
 		gencpp.EntryPoint(&buf, output.entry, "coven_start", "coven::os::exit")
+		output.code.Add(buf.Bytes())
 	}
-
-	output.code = buf.Bytes()
 }
 
 // Worker accepts unit build tasks and processes them

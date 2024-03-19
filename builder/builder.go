@@ -61,7 +61,7 @@ func (g *Builder) FindEntryPoints(graph *impgraph.Graph) {
 	}
 }
 
-func (g *Builder) SaveAndCompile(mod string, code []byte) error {
+func (g *Builder) SaveAndCompile(mod string, code *PartsBuffer) error {
 	path, err := g.cache.SaveModGenout(mod, code)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (g *Builder) SaveAndCompile(mod string, code []byte) error {
 
 // Scribe takes import graph, gathers unit files, parses them and combines
 // generated code into singular file build result
-func (g *Builder) Scribe(graph *impgraph.Graph) ([]byte, error) {
+func (g *Builder) Scribe(graph *impgraph.Graph) (*PartsBuffer, error) {
 	pool := NewPool(&g.cfg, g.cache, len(graph.Nodes))
 	for _, cohort := range graph.Cohorts {
 		for _, node := range cohort {
@@ -95,7 +95,7 @@ func (g *Builder) Scribe(graph *impgraph.Graph) ([]byte, error) {
 	if output.err != nil {
 		return nil, output.err
 	}
-	return output.code, nil
+	return &output.code, nil
 }
 
 func (g *Builder) WalkFrom(unit string) ([]*DepEntry, error) {
