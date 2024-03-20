@@ -19,6 +19,6 @@ func EntryPoint(buf *bytes.Buffer, name, entryPointLinkName, exitName string) {
 	// call exit
 	buf.WriteString("\t")
 	buf.WriteString(exitName)
-	buf.WriteString("();\n")
+	buf.WriteString("(0);\n")
 	buf.WriteString("}\n")
 }

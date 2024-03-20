@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -97,7 +98,7 @@ func (p *Pool) Start() {
 	}
 
 	p.wg.Add(1)
-	go SpawnStapler(&p.output, sctl)
+	go SpawnStapler(p.cfg, &p.output, sctl)
 
 	dctl := DispatcherControls{
 		wg: &p.wg,
@@ -168,7 +169,7 @@ type StaplerControls struct {
 	parts int
 }
 
-func SpawnStapler(output *BuildOutput, ctl StaplerControls) {
+func SpawnStapler(cfg *Config, output *BuildOutput, ctl StaplerControls) {
 	defer ctl.wg.Done()
 
 	// collection of build results from received from workers
@@ -187,6 +188,9 @@ func SpawnStapler(output *BuildOutput, ctl StaplerControls) {
 			return
 		}
 		if result.entry != "" {
+			if debug {
+				fmt.Println("entrypoint:", result.task.dep.Path.String(), result.entry)
+			}
 			if output.entry != "" {
 				panic("two or more units with entry points")
 			}
@@ -211,7 +215,7 @@ func SpawnStapler(output *BuildOutput, ctl StaplerControls) {
 	}
 
 	close(ctl.stop)
-	
+
 	if output.entry != "" {
 		var buf bytes.Buffer
 		gencpp.EntryPoint(&buf, output.entry, "coven_start", "coven::os::exit")
@@ -380,10 +384,23 @@ func (w *Worker) process(task *BuildTask) (*BuildTaskResult, error) {
 		task:   task,
 		genout: buf.Bytes(),
 		obj:    asmObj,
-		entry:  unitEntryPoint,
+		entry:  w.wrapEntryPoint(task, unitEntryPoint),
 	}
 	w.cache.SaveUnitGenout(task.dep.Path, result.genout)
 	return result, nil
+}
+
+// add global namespace prefix and unit default namespace to entry point name
+func (w *Worker) wrapEntryPoint(task *BuildTask, entry string) string {
+	if entry == "" {
+		return ""
+	}
+
+	globalPrefix := w.cfg.BaseNamespace
+	if globalPrefix != "" && !strings.HasSuffix(globalPrefix, "::") {
+		globalPrefix += "::"
+	}
+	return globalPrefix + task.dep.BuildInfo.DefaultNamespace + "::" + entry
 }
 
 // returns path to built object

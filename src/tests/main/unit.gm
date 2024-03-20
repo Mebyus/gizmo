@@ -5,6 +5,8 @@ unit main {
     ];
 
     files = [
+        "exit.asm",
+
         "main.gm",
     ];
 }

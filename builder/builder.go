@@ -47,11 +47,30 @@ func (g *Builder) Build(unit string) error {
 	if err != nil {
 		return err
 	}
-	genout, err := g.Scribe(graph)
+	buildOutput, err := g.Scribe(graph)
 	if err != nil {
 		return err
 	}
-	return g.SaveAndCompile(unit, genout)
+	targetObjectPath, err := g.SaveAndCompile(unit, &buildOutput.code)
+	if err != nil {
+		return err
+	}
+	if buildOutput.entry == "" {
+		// no linking needed because we do not have entry point
+		return nil
+	}
+
+	name := filepath.Base(unit)
+	dir := filepath.Join(g.cache.dir, "exe", filepath.Dir(unit))
+	err = os.MkdirAll(dir, 0o775)
+	if err != nil {
+		return err
+	}
+
+	exeOutPath := filepath.Join(dir, name)
+	linkObjects := append(buildOutput.objs, targetObjectPath)
+
+	return g.Link(linkObjects, "coven_start", exeOutPath)
 }
 
 func (g *Builder) FindEntryPoints(graph *impgraph.Graph) {
@@ -61,25 +80,29 @@ func (g *Builder) FindEntryPoints(graph *impgraph.Graph) {
 	}
 }
 
-func (g *Builder) SaveAndCompile(mod string, code *PartsBuffer) error {
+func (g *Builder) SaveAndCompile(mod string, code *PartsBuffer) (string, error) {
 	path, err := g.cache.SaveModGenout(mod, code)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	name := filepath.Base(mod) + ".o"
 	dir := filepath.Join(g.cache.dir, "mod", "obj", filepath.Dir(mod))
 	err = os.MkdirAll(dir, 0o775)
 	if err != nil {
-		return err
+		return "", err
 	}
 	out := filepath.Join(dir, name)
-	return g.Compile(path, out)
+	err = g.Compile(path, out)
+	if err != nil {
+		return "", err
+	}
+	return out, nil
 }
 
 // Scribe takes import graph, gathers unit files, parses them and combines
 // generated code into singular file build result
-func (g *Builder) Scribe(graph *impgraph.Graph) (*PartsBuffer, error) {
+func (g *Builder) Scribe(graph *impgraph.Graph) (*BuildOutput, error) {
 	pool := NewPool(&g.cfg, g.cache, len(graph.Nodes))
 	for _, cohort := range graph.Cohorts {
 		for _, node := range cohort {
@@ -95,7 +118,7 @@ func (g *Builder) Scribe(graph *impgraph.Graph) (*PartsBuffer, error) {
 	if output.err != nil {
 		return nil, output.err
 	}
-	return &output.code, nil
+	return &output, nil
 }
 
 func (g *Builder) WalkFrom(unit string) ([]*DepEntry, error) {
