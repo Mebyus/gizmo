@@ -2,6 +2,7 @@ package builder
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -27,7 +28,11 @@ type Cache struct {
 	// config seed
 	dir string
 
+	cfg *Config
+
 	src *source.Loader
+
+	cmap *CacheMap
 
 	// If this flag is true than disk cache was empty before
 	// build cache object was created. Thus by using the flag
@@ -47,6 +52,7 @@ func NewCache(cfg *Config) (*Cache, error) {
 	c := &Cache{
 		dir: dir,
 		src: source.NewLoader(),
+		cfg: cfg,
 
 		srcdir: cfg.BaseSourceDir,
 	}
@@ -55,6 +61,7 @@ func NewCache(cfg *Config) (*Cache, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init build cache dir: %w", err)
 	}
+	c.loadMap()
 
 	return c, nil
 }
@@ -82,8 +89,70 @@ func (c *Cache) initBaseDir() error {
 	return nil
 }
 
-func (c *Cache) LookupBuild(unit string) {
+func (c *Cache) loadMap() {
+	c.loadMapFromFile()
+	if c.cmap != nil && len(c.cmap.Unit) != 0 {
+		if debug {
+			c.debug("loaded map with %d stored units", len(c.cmap.Unit))
+		}
+		return
+	}
+	c.cmap = &CacheMap{Unit: make(map[string]*CacheUnit)}
+	if debug {
+		c.debug("using new blank map")
+	}
+}
 
+func (c *Cache) loadMapFromFile() {
+	if c.init {
+		return
+	}
+
+	file, err := os.Open(filepath.Join(c.dir, "map.json"))
+	if err != nil {
+		if debug {
+			c.debug("warn: failed to load map file: %s", err)
+		}
+		return
+	}
+	defer file.Close()
+
+	var m CacheMap
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&m)
+	if err != nil {
+		if debug {
+			c.debug("warn: failed to decode map file: %s", err)
+		}
+		return
+	}
+	c.cmap = &m
+}
+
+func (c *Cache) SaveMap() {
+	path := filepath.Join(c.dir, "map.json")
+	file, err := os.Create(path)
+	if err != nil {
+		if debug {
+			c.debug("warn: failed to create map file: %s", err)
+		}
+		return
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "    ")
+	err = encoder.Encode(c.cmap)
+	if err != nil {
+		if debug {
+			c.debug("warn: failed to encode map file: %s", err)
+		}
+		return
+	}
+
+	if debug {
+		c.debug("saved map with %d stored units as \"%s\"", len(c.cmap.Unit), path)
+	}
 }
 
 func (c *Cache) LoadSourceFile(p origin.Path, name string) (*source.File, error) {
@@ -137,22 +206,31 @@ func (c *Cache) SaveUnitGenout(p origin.Path, data []byte) {
 }
 
 func (c *Cache) InitUnitDir(p origin.Path) (string, error) {
-	dir := filepath.Join(c.dir, "unit", formatHash(p.Hash()))
+	hash := formatHash(p.Hash())
+	dir := filepath.Join(c.dir, "unit", hash)
 	err := os.MkdirAll(dir, 0o775)
-	return dir, err
+	if err != nil {
+		return "", err
+	}
+
+	cachedUnit := c.cmap.Unit[hash]
+	if cachedUnit == nil {
+		c.cmap.Unit[hash] = &CacheUnit{
+			Path: UnitPath{
+				Origin: p.Origin.String(),
+				Import: p.ImpStr,
+			},
+		}
+	}
+
+	return dir, nil
 }
 
 func (c *Cache) SaveFileGenout(p origin.Path, file *source.File, data []byte) {
-	dir, err := c.InitUnitDir(p)
-	if err != nil {
-		if debug {
-			c.debug("warn: failed to create dir \"%s\": %s", dir, err)
-		}
-		return
-	}
-
+	hash := formatHash(p.Hash())
+	dir := filepath.Join(c.dir, "unit", hash)
 	path := filepath.Join(dir, genPartName(file))
-	err = os.WriteFile(path, data, 0o664)
+	err := os.WriteFile(path, data, 0o664)
 	if err != nil {
 		if debug {
 			c.debug("warn: failed to save file \"%s\": %s", path, err)

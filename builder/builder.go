@@ -35,9 +35,8 @@ func (g *Builder) Build(unit string) error {
 	if err != nil {
 		return err
 	}
+	defer cache.SaveMap()
 	g.cache = cache
-
-	cache.LookupBuild(unit)
 
 	deps, err := g.WalkFrom(unit)
 	if err != nil {
@@ -71,13 +70,6 @@ func (g *Builder) Build(unit string) error {
 	linkObjects := append(buildOutput.objs, targetObjectPath)
 
 	return g.Link(linkObjects, "coven_start", exeOutPath)
-}
-
-func (g *Builder) FindEntryPoints(graph *impgraph.Graph) {
-	for _, pinnacle := range graph.Pinnacles {
-		entry := graph.Nodes[pinnacle].Bud.(*DepEntry)
-		_ = entry
-	}
 }
 
 func (g *Builder) SaveAndCompile(mod string, code *PartsBuffer) (string, error) {
