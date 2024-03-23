@@ -345,15 +345,21 @@ func (w *Worker) process(task *BuildTask) (*BuildTaskResult, error) {
 
 	genout, ok := w.cache.LoadUnitGenout(task.dep.Path, unitModTime)
 	if ok {
+		var cachedUnitEntryPoint string
+		if task.scanMain {
+			cachedUnitEntryPoint = w.cache.LoadUnitEntryPoint(task.dep.Path)
+		}
 		return &BuildTaskResult{
 			task:   task,
 			genout: genout,
 			obj:    asmObj,
+			entry:  w.wrapEntryPoint(task, cachedUnitEntryPoint),
 		}, nil
 	}
 
 	var buf bytes.Buffer
 	var unitEntryPoint string
+	var unitEntryPointFile string
 	for _, file := range files {
 		var err error
 
@@ -366,6 +372,7 @@ func (w *Worker) process(task *BuildTask) (*BuildTaskResult, error) {
 					return nil, fmt.Errorf("duplicate entry point \"%s\"", fileEntryPoint)
 				}
 				unitEntryPoint = fileEntryPoint
+				unitEntryPointFile = file.Name
 			}
 		case source.CPP:
 			err = w.cppGenout(&buf, task.dep, file.Name)
@@ -380,13 +387,19 @@ func (w *Worker) process(task *BuildTask) (*BuildTaskResult, error) {
 		}
 	}
 
+	if task.scanMain {
+		if unitEntryPoint == "" {
+			unitEntryPoint = w.cache.LoadUnitEntryPoint(task.dep.Path)
+		}
+	}
+
 	result := &BuildTaskResult{
 		task:   task,
 		genout: buf.Bytes(),
 		obj:    asmObj,
 		entry:  w.wrapEntryPoint(task, unitEntryPoint),
 	}
-	w.cache.SaveUnitGenout(task.dep.Path, result.genout)
+	w.cache.SaveUnitGenout(task.dep.Path, result.genout, unitEntryPoint, unitEntryPointFile)
 	return result, nil
 }
 
@@ -438,6 +451,10 @@ func (w *Worker) cppGenout(buf *bytes.Buffer, dep *DepEntry, name string) error 
 	return nil
 }
 
+func (w *Worker) debug(format string, args ...any) {
+	fmt.Printf("[debug] worker  | "+format+"\n", args...)
+}
+
 func (w *Worker) gizmoGenout(buf *bytes.Buffer, task *BuildTask, name string) (string, error) {
 	p := task.dep.Path
 	src, err := w.cache.LoadSourceFile(p, name)
@@ -449,6 +466,10 @@ func (w *Worker) gizmoGenout(buf *bytes.Buffer, task *BuildTask, name string) (s
 		// implementation always writes all bytes without error
 		buf.Write(genout)
 		return "", nil
+	}
+
+	if debug {
+		w.debug("compile \"%s\"", src.Path)
 	}
 
 	atom, err := parser.ParseSource(src)
@@ -476,7 +497,7 @@ func (w *Worker) gizmoGenout(buf *bytes.Buffer, task *BuildTask, name string) (s
 		return "", err
 	}
 	genout = buf.Bytes()[start:]
-
 	w.cache.SaveFileGenout(p, src, genout)
+	w.cache.SaveUnitFileToMap(p, src)
 	return entryPoint, nil
 }

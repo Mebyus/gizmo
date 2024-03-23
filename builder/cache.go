@@ -126,10 +126,28 @@ func (c *Cache) loadMapFromFile() {
 		}
 		return
 	}
+
+	for _, unit := range m.Unit {
+		files := unit.Parts.Gizmo.Files
+		if len(files) == 0 {
+			continue
+		}
+
+		fm := make(map[string]int, len(files))
+		for i, file := range files {
+			fm[file.Name] = i
+		}
+		unit.Parts.Gizmo.fm = fm
+	}
+
 	c.cmap = &m
 }
 
 func (c *Cache) SaveMap() {
+	for _, unit := range c.cmap.Unit {
+		unit.Parts.Gizmo.SortFiles()
+	}
+
 	path := filepath.Join(c.dir, "map.json")
 	file, err := os.Create(path)
 	if err != nil {
@@ -181,8 +199,16 @@ func (c *Cache) InfoSourceFile(p origin.Path, name string) (*source.File, error)
 	}
 }
 
-func (c *Cache) SaveUnitGenout(p origin.Path, data []byte) {
-	dir := filepath.Join(c.dir, "unit", formatHash(p.Hash()))
+func (c *Cache) SaveUnitGenout(p origin.Path, data []byte, entry, entryFile string) {
+	hash := formatHash(p.Hash())
+	if entry != "" {
+		c.cmap.Unit[hash].EntryPoint = &EntryPoint{
+			Name:   entry,
+			Origin: entryFile,
+		}
+	}
+
+	dir := filepath.Join(c.dir, "unit", hash)
 	err := os.MkdirAll(dir, 0o775)
 	if err != nil {
 		if debug {
@@ -191,7 +217,7 @@ func (c *Cache) SaveUnitGenout(p origin.Path, data []byte) {
 		return
 	}
 
-	path := filepath.Join(dir, "stapled_unit.cpp")
+	path := filepath.Join(dir, "unit.gen.cc")
 	err = os.WriteFile(path, data, 0o664)
 	if err != nil {
 		if debug {
@@ -244,7 +270,7 @@ func (c *Cache) SaveFileGenout(p origin.Path, file *source.File, data []byte) {
 }
 
 func (c *Cache) SaveModGenout(mod string, code *PartsBuffer) (string, error) {
-	name := filepath.Base(mod) + ".cpp"
+	name := filepath.Base(mod) + ".gen.cc"
 	dir := filepath.Join(c.dir, "mod", "gen", filepath.Dir(mod))
 	err := os.MkdirAll(dir, 0o775)
 	if err != nil {
@@ -266,7 +292,7 @@ func (c *Cache) LoadUnitGenout(p origin.Path, mod time.Time) ([]byte, bool) {
 	if c.init {
 		return nil, false
 	}
-	path := filepath.Join(c.dir, "unit", formatHash(p.Hash()), "stapled_unit.cpp")
+	path := filepath.Join(c.dir, "unit", formatHash(p.Hash()), "unit.gen.cc")
 	m, ok := getFileModTime(path)
 	if !ok {
 		return nil, false
@@ -285,6 +311,47 @@ func (c *Cache) LoadUnitGenout(p origin.Path, mod time.Time) ([]byte, bool) {
 		c.debug("stapled unit \"%s\" is up to date (%d bytes)", p.String(), len(data))
 	}
 	return data, true
+}
+
+func (c *Cache) LoadUnitEntryPoint(p origin.Path) string {
+	if c.init {
+		return ""
+	}
+
+	hash := formatHash(p.Hash())
+	entry := c.cmap.Unit[hash].EntryPoint
+	if entry == nil {
+		return ""
+	}
+
+	if debug {
+		c.debug("unit \"%s\" entry point \"%s\" found in map", p.String(), entry.Name)
+	}
+	return entry.Name
+}
+
+func (c *Cache) SaveUnitFileToMap(p origin.Path, file *source.File) {
+	hash := formatHash(p.Hash())
+	unit := c.cmap.Unit[hash]
+	i, ok := unit.Parts.Gizmo.fm[file.Name]
+	if ok {
+		unit.Parts.Gizmo.Files[i] = CachePartFile{
+			Name: file.Name,
+			Size: file.Size,
+			Hash: file.Hash,
+
+			Timestamp: file.ModTime.UnixMicro(),
+		}
+		return
+	}
+
+	unit.Parts.Gizmo.Files = append(unit.Parts.Gizmo.Files, CachePartFile{
+		Name: file.Name,
+		Size: file.Size,
+		Hash: file.Hash,
+
+		Timestamp: file.ModTime.UnixMicro(),
+	})
 }
 
 // LoadFileGenout load bytes stored in chache for generated output of a file in particular
@@ -316,7 +383,7 @@ func (c *Cache) LoadFileGenout(p origin.Path, file *source.File) ([]byte, bool) 
 }
 
 func genPartName(file *source.File) string {
-	return "part_" + formatHash(file.Hash) + "_" + strconv.FormatUint(file.Size, 10) + ".gen.cpp"
+	return "part_" + formatHash(file.Hash) + "_" + strconv.FormatUint(file.Size, 10) + ".gen.cc"
 }
 
 // Generates hashed file name of the form:
@@ -329,7 +396,7 @@ func genPartName(file *source.File) string {
 func genPartObjName(files []*source.File) string {
 	hash1 := formatHash(filePathsHash(files))
 	hash2 := formatHash(fileHashesHash(files))
-	return "part_obj_" + hash1 + "_" + hash2 + ".o"
+	return "part_obj_" + hash1 + "_" + hash2 + ".asm.o"
 }
 
 func filePathsHash(files []*source.File) uint64 {
@@ -389,9 +456,7 @@ func getFileModTime(path string) (time.Time, bool) {
 }
 
 func (c *Cache) debug(format string, args ...any) {
-	fmt.Print("[debug] cache   | ")
-	fmt.Printf(format, args...)
-	fmt.Println()
+	fmt.Printf("[debug] cache   | "+format+"\n", args...)
 }
 
 func formatHash(h uint64) string {
@@ -401,4 +466,24 @@ func formatHash(h uint64) string {
 
 func formatCacheSeed(seed uint64) string {
 	return formatHash(seed)
+}
+
+func (c *Cache) SaveUnitBuildInfo(p origin.Path, file *source.File) {
+	hash := formatHash(p.Hash())
+	unit := c.cmap.Unit[hash]
+	if unit == nil {
+		unit = &CacheUnit{}
+		c.cmap.Unit[hash] = unit
+	}
+
+	unit.Path = UnitPath{
+		Origin: p.Origin.String(),
+		Import: p.ImpStr,
+	}
+	unit.Parts.Build = BuildPart{
+		Hash: file.Hash,
+		Size: file.Size,
+
+		Timestamp: file.ModTime.UnixMicro(),
+	}
 }

@@ -206,6 +206,7 @@ func (g *Builder) FindUnitBuildInfo(p origin.Path) (*DepEntry, error) {
 			return nil, fmt.Errorf("empty import path")
 		}
 	}
+	g.cache.SaveUnitBuildInfo(p, src)
 	return &DepEntry{
 		BuildInfo: UnitBuildInfo{
 			Files:     result.Files,

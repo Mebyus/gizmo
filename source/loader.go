@@ -103,9 +103,7 @@ func NewLoader() *Loader {
 }
 
 func (l *Loader) debug(format string, args ...any) {
-	fmt.Print("[debug] loader  | ")
-	fmt.Printf(format, args...)
-	fmt.Println()
+	fmt.Printf("[debug] loader  | "+format+"\n", args...)
 }
 
 // Load source file specified by path. Argument should be
@@ -123,11 +121,24 @@ func (l *Loader) Load(path string) (*File, error) {
 	switch entry.state {
 	case empty:
 		panic("empty state")
-	case failed, loaded:
-		return entry.file, entry.err
+	case failed:
+		return nil, entry.err
 	case basic:
 		entry.loadFromInfo()
-		return entry.file, entry.err
+		if entry.state == failed {
+			if debug {
+				l.debug("cache \"%s\" (state=%s) %s",
+					entry.path, entry.state.String(), entry.err)
+			}
+			return nil, entry.err
+		}
+		if debug {
+			l.debug("cache \"%s\" (state=%s hash=%016x size=%d)",
+				entry.path, entry.state.String(), entry.file.Hash, entry.file.Size)
+		}
+		return entry.file, nil
+	case loaded:
+		return entry.file, nil
 	default:
 		panic(fmt.Sprintf("unexpected state: %d", entry.state))
 	}
@@ -203,13 +214,13 @@ func (l *Loader) loadAndSave(path string) *Entry {
 func (l *Loader) save(entry *Entry) {
 	if debug {
 		if entry.state == failed {
-			l.debug("save \"%s\" (state=%s) %s",
+			l.debug("cache \"%s\" (state=%s) %s",
 				entry.path, entry.state.String(), entry.err)
 		} else if entry.state == basic {
-			l.debug("save \"%s\" (state=%s size=%d)",
+			l.debug("cache \"%s\" (state=%s size=%d)",
 				entry.path, entry.state.String(), entry.file.Size)
 		} else {
-			l.debug("save \"%s\" (state=%s hash=%016x size=%d)",
+			l.debug("cache \"%s\" (state=%s hash=%016x size=%d)",
 				entry.path, entry.state.String(), entry.file.Hash, entry.file.Size)
 		}
 	}

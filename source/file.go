@@ -67,6 +67,7 @@ type File struct {
 	// File extension, including dot character. Examples:
 	//
 	//	- ".gm"
+	//	- ".cc"
 	//	- ".cpp"
 	//	- ".asm"
 	//
