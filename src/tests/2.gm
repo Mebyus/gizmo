@@ -11,7 +11,7 @@ fn compare_empty_string(s: str) => bool {
 
 fn for_each_loop_example(k: int) => int {
     var s: int = 0;
-    for i in range(k) {
+    for let i in range(k) {
         s += i;
     }
     return s;

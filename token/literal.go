@@ -91,7 +91,6 @@ var Literal = [...]string{
 	Unit:      "unit",
 	Let:       "let",
 	Declare:   "declare",
-	Method:    "method",
 	Namespace: "namespace",
 
 	// Special literals
@@ -101,6 +100,8 @@ var Literal = [...]string{
 	Nil:   "nil",
 	True:  "true",
 	False: "false",
+
+	Receiver: "rv",
 
 	LabelNext: "@.next",
 	LabelEnd:  "@.end",

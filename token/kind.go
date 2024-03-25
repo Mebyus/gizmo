@@ -95,7 +95,6 @@ const (
 	Namespace
 	Defer
 	Fn
-	Method
 	Import
 	Declare
 
@@ -124,6 +123,8 @@ const (
 	Nil
 	True
 	False
+
+	Receiver
 
 	LabelNext // @.next
 	LabelEnd  // @.end

@@ -8,6 +8,10 @@ import (
 )
 
 func (p *Parser) topLevelFn() (ast.TopLevel, error) {
+	if p.next.Kind == token.LeftSquare {
+		return p.topLevelMethod()
+	}
+
 	p.advance() // consume "fn"
 	if p.tok.Kind != token.Identifier {
 		return nil, p.unexpected(p.tok)

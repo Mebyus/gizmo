@@ -1,0 +1,128 @@
+/*
+
+Memory Chunk
+
+Represents continuous region in memory in form of raw bytes.
+Chunk by definition is nil when number of bytes in it equals zero
+
+Meaning of chunk contents are dependant on its specific usage. For example,
+bytes in a chunk can represent a utf-8 string, bitmap of an image or a
+network packet. Users should specify meaning of chunk in place where they use it
+
+Chunk can point to static, stack or heap allocated memory. It is
+responsibility of the user to keep track of different usages and deallocate
+backing memory (if needed)
+
+Depending on particular usage chunk may either be:
+ 1) a view into memory owned by someone else
+ 2) owned memory region
+
+*/
+type mc struct {
+    // Pointer to first byte in chunk
+    ptr: [*]u8,
+
+    // Number of bytes in chunk
+    len: uint,
+}
+
+fn make_nil_mc() => []u8 {
+    let c: []u8 = {
+        ptr: ptr,
+        len: len,
+    };
+
+    return c;
+}
+
+fn make_mc(ptr: [*]u8, len: uint) => []u8 {
+    must(ptr != nil);
+    must(len != 0);
+
+    let c: []u8 = {
+        ptr: ptr,
+        len: len,
+    };
+
+    return c;
+}
+
+fn [mc] slice(start: uint, end: uint) => []u8 {
+    must(end > start);
+
+    return make_mc(rv.ptr + start, end - start);
+}
+
+fn [mc] is_nil() => bool {
+    return rv.len == 0;
+}
+
+fn [mc] clear() {
+    must(ptr != nil);
+    must(len != 0);
+
+    var i: uint = 0;
+    for i < rv.len {
+        rv.ptr.[i] = 0;
+
+        i += 1;
+    }
+}
+
+fn [mc] unsafe_copy(c: []u8) {
+    mem.unsafe_copy(c.ptr, rv.ptr, c.len);
+}
+
+fn [mc] copy(c: []u8) => uint {
+    let n: uint = min(rv.len, c.len);
+    if n == 0 {
+        return 0;
+    }
+
+    rv.unsafe_copy(c[:n]);
+    return n;
+}
+
+fn [mc] reverse() {
+    if rv.is_nil() {
+        return;
+    }
+
+    var i: uint = 0;
+    var j: uint = rv.len - 1;
+
+    for i < j {
+        swap(rv.ptr.[i], rv.ptr.[j])
+
+        i += 1;
+        j -= 1;
+    }
+}
+
+/*
+
+Stores elements (of the same type) and their number together as a single
+data structure. Inside the chunk elemetns are stored in continuous memory region
+
+Behaves much alike to []u8 struct 
+
+*/
+type chunk(T) struct {
+    // Pointer to first element in chunk
+    ptr: [*]T,
+
+    // Number of elements in chunk
+    len: uint,
+}
+
+fn make_chunk($ T)(ptr: [*]T, len: uint) => []chunk(T) {
+    must(ptr != nil);
+    must(len != 0);
+
+    let c: []chunk(T) = {
+        ptr: ptr,
+        len: len,
+    };
+
+    return c;
+}

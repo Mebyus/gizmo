@@ -141,8 +141,6 @@ func (p *Parser) topLevel() (ast.TopLevel, error) {
 		return p.topLevelFn()
 	case token.Const:
 		return p.topLevelConst()
-	case token.Method:
-		return p.topLevelMethod()
 	case token.Pub:
 		return p.topLevelPub()
 	default:

@@ -32,7 +32,7 @@ var words = map[string]Kind{
 	"let":       Let,
 	"declare":   Declare,
 	"const":     Const,
-	"method":    Method,
+	"rv":        Receiver,
 	"namespace": Namespace,
 }
 

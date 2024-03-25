@@ -8,10 +8,10 @@ import (
 // returns receiver name and its type params, if method is not a template
 // second return value will be nil slice
 func (p *Parser) methodReceiver() (ast.Identifier, []ast.Identifier, error) {
-	if p.tok.Kind != token.LeftParentheses {
+	if p.tok.Kind != token.LeftSquare {
 		return ast.Identifier{}, nil, p.unexpected(p.tok)
 	}
-	p.advance() // skip "("
+	p.advance() // skip "["
 
 	if p.tok.Kind != token.Identifier {
 		return ast.Identifier{}, nil, p.unexpected(p.tok)
@@ -19,9 +19,9 @@ func (p *Parser) methodReceiver() (ast.Identifier, []ast.Identifier, error) {
 	receiver := p.idn()
 	p.advance() // skip receiver name
 
-	if p.tok.Kind == token.RightParentheses {
+	if p.tok.Kind == token.RightSquare {
 		// no type params
-		p.advance() // skip ")"
+		p.advance() // skip "]"
 		return receiver, nil, nil
 	}
 
@@ -34,16 +34,16 @@ func (p *Parser) methodReceiver() (ast.Identifier, []ast.Identifier, error) {
 		return ast.Identifier{}, nil, err
 	}
 
-	if p.tok.Kind != token.RightParentheses {
+	if p.tok.Kind != token.RightSquare {
 		return ast.Identifier{}, nil, p.unexpected(p.tok)
 	}
-	p.advance() // skip ")"
+	p.advance() // skip "]"
 
 	return receiver, params, nil
 }
 
 func (p *Parser) method() (ast.TopLevel, error) {
-	p.advance() // skip "method"
+	p.advance() // skip "fn"
 
 	receiver, params, err := p.methodReceiver()
 	if err != nil {
