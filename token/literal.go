@@ -90,7 +90,6 @@ var Literal = [...]string{
 	Pub:       "pub",
 	Unit:      "unit",
 	Let:       "let",
-	Declare:   "declare",
 	Namespace: "namespace",
 
 	// Special literals

@@ -32,7 +32,10 @@ func (p *Parser) topLevelFn() (ast.TopLevel, error) {
 	declaration.Signature = signature
 
 	if p.tok.Kind != token.LeftCurly {
-		return nil, p.unexpected(p.tok)
+		return ast.TopFunctionDeclaration{
+			Declaration: declaration,
+			Props:       p.takeProps(),
+		}, nil
 	}
 	body, err := p.block()
 	if err != nil {
@@ -185,32 +188,4 @@ func (p *Parser) field() (field ast.FieldDefinition, err error) {
 	}
 	field.Type = spec
 	return
-}
-
-func (p *Parser) topLevelDeclare() (ast.TopFunctionDeclaration, error) {
-	p.advance() // consume "declare"
-	if p.tok.Kind != token.Fn {
-		return ast.TopFunctionDeclaration{}, p.unexpected(p.tok)
-	}
-
-	p.advance() // consume "fn"
-	if p.tok.Kind != token.Identifier {
-		return ast.TopFunctionDeclaration{}, p.unexpected(p.tok)
-	}
-
-	declaration := ast.FunctionDeclaration{
-		Name: p.idn(),
-	}
-	p.advance() // consume function name identifier
-
-	signature, err := p.functionSignature()
-	if err != nil {
-		return ast.TopFunctionDeclaration{}, err
-	}
-	declaration.Signature = signature
-
-	return ast.TopFunctionDeclaration{
-		Declaration: declaration,
-		Props:       p.takeProps(),
-	}, nil
 }

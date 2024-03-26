@@ -133,10 +133,6 @@ func (p *Parser) topLevel() (ast.TopLevel, error) {
 		return p.topLevelType()
 	case token.Var:
 		return p.topLevelVar()
-	// case token.Import:
-	// 	return p.topLevelImport(false)
-	case token.Declare:
-		return p.topLevelDeclare()
 	case token.Fn:
 		return p.topLevelFn()
 	case token.Const:
@@ -195,6 +191,10 @@ func (p *Parser) topLevelPubFn() (ast.TopLevel, error) {
 	switch fn.Kind() {
 	case toplvl.Fn:
 		f := fn.(ast.TopFunctionDefinition)
+		f.Public = true
+		return f, nil
+	case toplvl.Declare:
+		f := fn.(ast.TopFunctionDeclaration)
 		f.Public = true
 		return f, nil
 	case toplvl.FnTemplate:

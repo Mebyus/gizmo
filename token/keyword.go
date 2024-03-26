@@ -30,7 +30,6 @@ var words = map[string]Kind{
 	"true":      True,
 	"false":     False,
 	"let":       Let,
-	"declare":   Declare,
 	"const":     Const,
 	"rv":        Receiver,
 	"namespace": Namespace,

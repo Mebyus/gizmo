@@ -2,7 +2,8 @@ namespace os {
 
 #[ asm ]
 #[ link.name = "coven_linux_syscall_exit" ]
-declare fn exit(code: i32)
+pub
+fn exit(code: i32) => never
 
 }
 

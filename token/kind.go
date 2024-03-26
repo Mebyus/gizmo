@@ -96,7 +96,6 @@ const (
 	Defer
 	Fn
 	Import
-	Declare
 
 	Bag
 	BitCast
