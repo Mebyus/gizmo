@@ -15,8 +15,8 @@ func RenderUnitAtom(w io.Writer, atom ast.UnitAtom) error {
 func ConvertUnitAtom(atom ast.UnitAtom) Node {
 	nodes := make([]Node, 0, len(atom.Blocks)+1)
 
-	if atom.Unit != nil {
-		nodes = append(nodes, ConvertUnitBlock(atom.Unit))
+	if atom.Header.Unit != nil {
+		nodes = append(nodes, ConvertUnitBlock(atom.Header.Unit))
 	}
 
 	for _, block := range atom.Blocks {

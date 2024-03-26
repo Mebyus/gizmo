@@ -55,7 +55,7 @@ func (o Origin) String() string {
 // Empty string yields local origin
 func Parse(s string) (Origin, bool) {
 	switch s {
-	case "":
+	case "", "loc":
 		return Loc, true
 	case "std":
 		return Std, true

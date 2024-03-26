@@ -11,7 +11,8 @@ import (
 )
 
 var Ubev = &butler.Lackey{
-	Name:  "ubev",
+	Name: "ubev",
+
 	Short: "evaluate unit build block",
 	Usage: "gizmo ubev [options] <unit|file>",
 
@@ -46,10 +47,10 @@ func ubev(path string) error {
 	if err != nil {
 		return err
 	}
-	if unit.Unit == nil {
+	if unit.Header.Unit == nil {
 		return fmt.Errorf("file does not contain unit block")
 	}
-	result, err := interp.Interpret(unit.Unit)
+	result, err := interp.Interpret(unit.Header.Unit)
 	if err != nil {
 		return err
 	}

@@ -8,7 +8,8 @@ import (
 )
 
 var Clean = &butler.Lackey{
-	Name:  "clean",
+	Name: "clean",
+
 	Short: "clean project build output and local cache",
 	Usage: "gizmo clean [options]",
 
@@ -20,7 +21,7 @@ func execute(r *butler.Lackey, _ []string) error {
 }
 
 func clean() error {
-	dirs := []string{filepath.Join("build", "target"),  filepath.Join("build", ".cache")}
+	dirs := []string{filepath.Join("build", "target"), filepath.Join("build", ".cache")}
 	for _, dir := range dirs {
 		err := os.RemoveAll(dir)
 		if err != nil {

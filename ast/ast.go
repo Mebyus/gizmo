@@ -1,7 +1,11 @@
 package ast
 
+import "github.com/mebyus/gizmo/source/origin"
+
 // <UnitBlock> = "unit" <UnitName> "{" { <Statement> } "}"
 type UnitBlock struct {
+	Props []Prop
+
 	Name Identifier
 
 	Block BlockStatement
@@ -13,9 +17,27 @@ type UnitBlock struct {
 //
 // <UnitAtom> = [ <UnitBlock> ] { <Namespace> }
 type UnitAtom struct {
-	// Can be nil in case UnitBlock is not present
-	Unit *UnitBlock
+	Header AtomHeader
 
 	// Saved in order they appear in source code
 	Blocks []NamespaceBlock
+}
+
+// AtomHeader stores info about atom that affects build-time decisions.
+// Includes:
+//
+//   - unit clause (explicit unit name + build props)
+//   - units imported in this atom
+type AtomHeader struct {
+	Imports AtomImports
+
+	// Can be nil in case UnitClause is not present
+	Unit *UnitBlock
+}
+
+type AtomImports struct {
+	ImportBlocks []ImportBlock
+
+	// preprocessed data from blocks
+	ImportPaths []origin.Path
 }

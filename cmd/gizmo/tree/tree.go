@@ -10,7 +10,8 @@ import (
 )
 
 var Tree = &butler.Lackey{
-	Name:  "tree",
+	Name: "tree",
+
 	Short: "display AST of a given unit or source file",
 	Usage: "gizmo tree [options] <files>",
 

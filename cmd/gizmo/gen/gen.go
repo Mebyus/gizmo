@@ -11,7 +11,8 @@ import (
 )
 
 var Gen = &butler.Lackey{
-	Name:  "gen",
+	Name: "gen",
+
 	Short: "generate C++ code from a given gizmo source file",
 	Usage: "gizmo gen [options] <files>",
 

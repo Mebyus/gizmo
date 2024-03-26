@@ -27,7 +27,7 @@ type Stack struct {
 
 fn make_empty_stack() => Stack {
     let s: Stack = {
-        // TODO: syntax for zeroed array
+        s: dirty,
         p: 0,
     };
 

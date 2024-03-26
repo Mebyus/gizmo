@@ -6,10 +6,27 @@ import (
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/lexer"
 	"github.com/mebyus/gizmo/source"
+	"github.com/mebyus/gizmo/source/origin"
 	"github.com/mebyus/gizmo/token"
 )
 
+// Parser keeps track of atom parsing state. In most cases parser usage
+// should be logically close to following:
+//
+//	src, err := source.Load(filename)
+//	if err != nil {
+//		// handle error
+//	}
+//	p := FromSource(src)
+//	header, err := p.Header()
+//	// analyze atom header
+//	atom, err := p.Parse()
+//	// process atom tree
 type Parser struct {
+	// stored output to transfer already parsed data
+	// between external methods calls
+	atom ast.UnitAtom
+
 	// tokens saved by advance backup
 	buf CycleTokenBuffer
 
@@ -85,10 +102,10 @@ func FromFile(filename string) (*Parser, error) {
 	return New(lx), nil
 }
 
-func FromSource(src *source.File) (p *Parser, err error) {
+func FromSource(src *source.File) *Parser {
 	lx := lexer.FromSource(src)
-	p = New(lx)
-	return p, nil
+	p := New(lx)
+	return p
 }
 
 func ParseBytes(b []byte) (ast.UnitAtom, error) {
@@ -105,10 +122,7 @@ func ParseFile(filename string) (ast.UnitAtom, error) {
 }
 
 func ParseSource(src *source.File) (ast.UnitAtom, error) {
-	p, err := FromSource(src)
-	if err != nil {
-		return ast.UnitAtom{}, err
-	}
+	p := FromSource(src)
 	return p.parse()
 }
 
@@ -120,16 +134,50 @@ func Parse(r io.Reader) (ast.UnitAtom, error) {
 	return p.parse()
 }
 
-func (p *Parser) parse() (ast.UnitAtom, error) {
+// Header returns list of all import paths specified in parsed atom.
+// Should be called before calling Parse method. Under the hood this method
+// parses first blocks in atom until it encounteres non-import top-level block
+//
+// Resulting slice may be empty or contain non-unique entries
+func (p *Parser) Header() (ast.AtomHeader, error) {
 	var unit *ast.UnitBlock
 	var err error
 	if p.tok.Kind == token.Unit {
 		unit, err = p.unitBlock()
 		if err != nil {
-			return ast.UnitAtom{}, err
+			return ast.AtomHeader{}, err
 		}
 	}
+	p.atom.Header.Unit = unit
 
+	blocks, err := p.imports()
+	if err != nil {
+		return ast.AtomHeader{}, err
+	}
+	p.atom.Header.Imports.ImportBlocks = blocks
+
+	var paths []origin.Path
+	for _, block := range blocks {
+		for _, spec := range block.Specs {
+			paths = append(paths, origin.Path{
+				Origin: block.Origin,
+				ImpStr: spec.String.Lit,
+			})
+		}
+	}
+	p.atom.Header.Imports.ImportPaths = paths
+
+	return p.atom.Header, nil
+}
+
+// Parse continues atom parsing from the state where Header method left.
+// Resulting atom tree is complete and also contains info gathered by
+// Header method
+func (p *Parser) Parse() (ast.UnitAtom, error) {
+	return ast.UnitAtom{}, nil
+}
+
+func (p *Parser) parse() (ast.UnitAtom, error) {
 	var blocks []ast.NamespaceBlock
 	def := ast.NamespaceBlock{Default: true}
 	for {
@@ -138,10 +186,8 @@ func (p *Parser) parse() (ast.UnitAtom, error) {
 				blocks = append(blocks, def)
 			}
 
-			return ast.UnitAtom{
-				Unit:   unit,
-				Blocks: blocks,
-			}, nil
+			p.atom.Blocks = blocks
+			return p.atom, nil
 		}
 
 		if p.tok.Kind == token.Namespace {

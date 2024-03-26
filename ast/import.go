@@ -1,21 +1,36 @@
 package ast
 
-import "github.com/mebyus/gizmo/token"
+import (
+	"github.com/mebyus/gizmo/source"
+	"github.com/mebyus/gizmo/source/origin"
+)
 
-// <ImportBlock> = [ "pub" ] "import" [ <ImportOrigin> ] "{" { <Import> } "}"
+// <ImportBlock> = [ "pub" ] "import" [ <ImportOrigin> ] "{" { <ImportSpec> } "}"
+//
+// <ImportOrigin> = "std" | "pkg" | "loc"
+//
+// If <ImportOrigin> is absent in block, then it is equivalent to <ImportOrigin> = "loc".
+// Canonical gizmo code style omits import origin in such cases, instead of specifying
+// it to "loc" explicitly
 type ImportBlock struct {
-	Specs []Import
+	Pos source.Pos
 
-	Origin Identifier
+	Specs []ImportSpec
+
+	Origin origin.Origin
 
 	Public bool
 }
 
-// <Import> = <Name> "=>" <ImportString>
-type Import struct {
+// <ImportSpec> = <Name> "=>" <ImportString>
+//
+// <ImportString> = <String> (cannot be empty)
+type ImportSpec struct {
 	Name   Identifier
 	String ImportString
 }
 
-// Token.Kind is String
-type ImportString token.Token
+type ImportString struct {
+	Pos source.Pos
+	Lit string
+}

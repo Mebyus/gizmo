@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/mebyus/gizmo/butler"
+	"github.com/mebyus/gizmo/cmd/gizmo/atom"
 	"github.com/mebyus/gizmo/cmd/gizmo/build"
 	"github.com/mebyus/gizmo/cmd/gizmo/clean"
 	"github.com/mebyus/gizmo/cmd/gizmo/gen"
@@ -38,6 +39,7 @@ var root = &butler.Lackey{
 		build.Build,
 		ubev.Ubev,
 		clean.Clean,
+		atom.Atom,
 	},
 }
 

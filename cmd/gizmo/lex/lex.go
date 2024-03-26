@@ -9,7 +9,8 @@ import (
 )
 
 var Lex = &butler.Lackey{
-	Name:  "lex",
+	Name: "lex",
+
 	Short: "list token stream produced by a given source file",
 	Usage: "gizmo lex [options] <file>",
 

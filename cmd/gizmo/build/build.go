@@ -9,7 +9,8 @@ import (
 )
 
 var Build = &butler.Lackey{
-	Name:  "build",
+	Name: "build",
+
 	Short: "build specified targets and their dependencies",
 	Usage: "gizmo build [options] <targets>",
 

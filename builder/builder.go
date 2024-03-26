@@ -190,10 +190,10 @@ func (g *Builder) FindUnitBuildInfo(p origin.Path) (*DepEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	if unit.Unit == nil {
+	if unit.Header.Unit == nil {
 		return nil, fmt.Errorf("file \"%s\" does not contain unit block", src.Path)
 	}
-	result, err := interp.Interpret(unit.Unit)
+	result, err := interp.Interpret(unit.Header.Unit)
 	if err != nil {
 		return nil, err
 	}
