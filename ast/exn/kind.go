@@ -35,6 +35,7 @@ const (
 	Index
 	Call
 	Start
+	Receiver
 	Indirect
 	Address
 	Slice
@@ -62,6 +63,7 @@ var text = [...]string{
 	Index:    "index",
 	Call:     "call",
 	Start:    "start",
+	Receiver: "receiver",
 	Address:  "address",
 	Slice:    "slice",
 	Indirect: "indirect",

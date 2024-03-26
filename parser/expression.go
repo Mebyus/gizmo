@@ -377,6 +377,10 @@ func (p *Parser) tryOperand() (ast.Operand, error) {
 		return p.identifierStartOperand()
 	}
 
+	if p.tok.Kind == token.Receiver && p.next.Kind == token.Period {
+		return p.receiverStartOperand()
+	}
+
 	if p.tok.IsLeftPar() {
 		p.advance() // skip "("
 		expr, err := p.expr()
@@ -423,6 +427,13 @@ func (p *Parser) tryOperand() (ast.Operand, error) {
 	}
 
 	return nil, nil
+}
+
+func (p *Parser) receiverStartOperand() (ast.Operand, error) {
+	pos := p.pos()
+	p.advance() // skip "rv"
+
+	return p.chainOperand(ast.Receiver{Pos: pos})
 }
 
 // SubsExpression, SelectorExpression, IndexExpression, CallExpression or InstanceExpression

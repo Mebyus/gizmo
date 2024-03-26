@@ -30,7 +30,7 @@ func (p *Parser) parseStatement() (statement ast.Statement, err error) {
 	case token.Jump:
 		return p.jumpStatement()
 	default:
-		return p.identifierStartStatement()
+		return p.otherStatement()
 	}
 }
 
@@ -477,19 +477,35 @@ func (p *Parser) tryParseConstStatement() (statement ast.Statement, err error) {
 	return
 }
 
-func (p *Parser) tryAssignStatement() (ast.Statement, error) {
-	if p.tok.Kind != token.Identifier {
-		return nil, nil
+// ExpressionStatement or AssignStatement
+func (p *Parser) otherStatement() (ast.Statement, error) {
+	if p.tok.Kind != token.Identifier && p.tok.Kind != token.Receiver {
+		return nil, p.unexpected(p.tok)
 	}
 
-	identifier, err := p.scopedIdentifier()
-	if err != nil {
-		return nil, err
-	}
+	var err error
+	var target ast.ChainOperand
 
-	target, err := p.chainOperand(ast.ChainStart{Identifier: identifier})
-	if err != nil {
-		return nil, err
+	if p.tok.Kind == token.Identifier {
+		identifier, err := p.scopedIdentifier()
+		if err != nil {
+			return nil, err
+		}
+
+		target, err = p.chainOperand(ast.ChainStart{Identifier: identifier})
+		if err != nil {
+			return nil, err
+		}
+	} else if p.tok.Kind == token.Receiver {
+		pos := p.pos()
+		p.advance() // skip "rv"
+
+		target, err = p.chainOperand(ast.Receiver{Pos: pos})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		panic(fmt.Sprintf("unexpected token %s at %s", p.tok.Kind.String(), p.tok.Pos.String()))
 	}
 
 	switch p.tok.Kind {
@@ -551,10 +567,6 @@ func (p *Parser) continueExpressionStatement(operand ast.Operand) (ast.Expressio
 
 	p.advance() // consume ";"
 	return ast.ExpressionStatement{Expression: expr}, nil
-}
-
-func (p *Parser) identifierStartStatement() (ast.Statement, error) {
-	return p.tryAssignStatement()
 }
 
 // func (p *Parser) continueParseMultipleAssignStatement(
