@@ -197,8 +197,8 @@ func (p *Parser) topLevelPubFn() (ast.TopLevel, error) {
 		f := fn.(ast.TopFunctionDeclaration)
 		f.Public = true
 		return f, nil
-	case toplvl.FnTemplate:
-		f := fn.(ast.TopFunctionTemplate)
+	case toplvl.Blue:
+		f := fn.(ast.TopBlueprint)
 		f.Public = true
 		return f, nil
 	default:
@@ -217,8 +217,8 @@ func (p *Parser) topLevelPubType() (ast.TopLevel, error) {
 		t := typ.(ast.TopType)
 		t.Public = true
 		return t, nil
-	case toplvl.TypeTemplate:
-		t := typ.(ast.TopTypeTemplate)
+	case toplvl.Proto:
+		t := typ.(ast.TopPrototype)
 		t.Public = true
 		return t, nil
 	default:

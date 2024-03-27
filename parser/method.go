@@ -29,17 +29,18 @@ func (p *Parser) methodReceiver() (ast.Identifier, []ast.Identifier, error) {
 		return ast.Identifier{}, nil, p.unexpected(p.tok)
 	}
 
-	params, err := p.templateParams()
-	if err != nil {
-		return ast.Identifier{}, nil, err
-	}
+	// TODO: repair receiver args
+	// params, err := p.templateParams()
+	// if err != nil {
+	// 	return ast.Identifier{}, nil, err
+	// }
 
 	if p.tok.Kind != token.RightSquare {
 		return ast.Identifier{}, nil, p.unexpected(p.tok)
 	}
 	p.advance() // skip "]"
 
-	return receiver, params, nil
+	return receiver, nil, nil
 }
 
 func (p *Parser) method() (ast.TopLevel, error) {
@@ -78,9 +79,9 @@ func (p *Parser) method() (ast.TopLevel, error) {
 			Body:      body,
 		}, nil
 	}
-	return ast.MethodTemplate{
+	return ast.ProtoMethodBlueprint{
 		Receiver:   receiver,
-		TypeParams: params,
+		// TypeParams: params,
 		Name:       name,
 		Signature:  signature,
 		Body:       body,

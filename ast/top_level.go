@@ -139,14 +139,14 @@ func (t TopVar) Pin() source.Pos {
 	return t.Pos
 }
 
-// <TopFunctionTemplate> = [ "pub" ] "fn" <Name> <TypeParams> <FunctionSignature> <Body>
-type TopFunctionTemplate struct {
+// <TopBlueprint> = [ "pub" ] "fn" <Name> <TypeParams> <FunctionSignature> <Body>
+type TopBlueprint struct {
 	nodeTopLevel
 
 	Name Identifier
 
 	// Contains at least one element
-	TypeParams []Identifier
+	Params []TypeParam
 
 	Signature FunctionSignature
 
@@ -155,24 +155,24 @@ type TopFunctionTemplate struct {
 	Public bool
 }
 
-var _ TopLevel = TopFunctionTemplate{}
+var _ TopLevel = TopBlueprint{}
 
-func (TopFunctionTemplate) Kind() toplvl.Kind {
-	return toplvl.FnTemplate
+func (TopBlueprint) Kind() toplvl.Kind {
+	return toplvl.Blue
 }
 
-func (t TopFunctionTemplate) Pin() source.Pos {
+func (t TopBlueprint) Pin() source.Pos {
 	return t.Name.Pos
 }
 
-// <TopTypeTemplate> = [ "pub" ] "type" <Name> <TypeParams> <TypeSpecifier>
-type TopTypeTemplate struct {
+// <TopPrototype> = [ "pub" ] "type" <Name> <TypeParams> <TypeSpecifier>
+type TopPrototype struct {
 	nodeTopLevel
 
 	Name Identifier
 
 	// Contains at least one element
-	TypeParams []Identifier
+	Params []TypeParam
 
 	// Must be struct type
 	Spec TypeSpecifier
@@ -180,12 +180,12 @@ type TopTypeTemplate struct {
 	Public bool
 }
 
-var _ TopLevel = TopTypeTemplate{}
+var _ TopLevel = TopPrototype{}
 
-func (TopTypeTemplate) Kind() toplvl.Kind {
-	return toplvl.TypeTemplate
+func (TopPrototype) Kind() toplvl.Kind {
+	return toplvl.Proto
 }
 
-func (t TopTypeTemplate) Pin() source.Pos {
+func (t TopPrototype) Pin() source.Pos {
 	return t.Name.Pos
 }

@@ -43,8 +43,8 @@ func Index(atom ast.UnitAtom) Meta {
 				})
 			}
 
-			if node.Kind() == toplvl.MethodTemplate {
-				method := node.(ast.MethodTemplate)
+			if node.Kind() == toplvl.Pmb {
+				method := node.(ast.ProtoMethodBlueprint)
 				key := strings.Join(append(scopes, method.Receiver.Lit), "::")
 				sm[key] = append(sm[key], ast.FunctionDeclaration{
 					Signature: method.Signature,

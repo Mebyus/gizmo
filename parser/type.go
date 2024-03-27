@@ -13,8 +13,8 @@ func (p *Parser) topLevelType() (ast.TopLevel, error) {
 	if p.tok.Kind != token.Identifier {
 		return nil, p.unexpected(p.tok)
 	}
-	if p.next.Kind == token.LeftDoubleSquare {
-		return p.topTypeTemplate()
+	if p.next.Kind == token.LeftParentheses {
+		return p.topPrototype()
 	}
 
 	name := p.idn()
@@ -31,31 +31,87 @@ func (p *Parser) topLevelType() (ast.TopLevel, error) {
 	}, nil
 }
 
-func (p *Parser) topTypeTemplate() (ast.TopTypeTemplate, error) {
+func (p *Parser) topPrototype() (ast.TopPrototype, error) {
 	name := p.idn()
 	p.advance() // skip name identifier
 
-	if p.tok.Kind != token.LeftDoubleSquare {
+	if p.tok.Kind != token.LeftParentheses {
 		panic("unexpected token")
 	}
 
-	params, err := p.templateParams()
+	params, err := p.protoParams()
 	if err != nil {
-		return ast.TopTypeTemplate{}, err
+		return ast.TopPrototype{}, err
 	}
 
 	if p.tok.Kind != token.Struct {
-		return ast.TopTypeTemplate{}, fmt.Errorf("templates of %s are not allowed %s", p.tok.Kind.String(), p.tok.Pos.String())
+		return ast.TopPrototype{}, fmt.Errorf("prototypes of %s are not allowed %s", p.tok.Kind.String(), p.tok.Pos.String())
 	}
 	spec, err := p.structType()
 	if err != nil {
-		return ast.TopTypeTemplate{}, err
+		return ast.TopPrototype{}, err
 	}
 
-	return ast.TopTypeTemplate{
+	return ast.TopPrototype{
+		Name:   name,
+		Spec:   spec,
+		Params: params,
+	}, nil
+}
+
+func (p *Parser) protoParams() ([]ast.TypeParam, error) {
+	p.advance() // skip "("
+
+	var params []ast.TypeParam
+	for {
+		if p.tok.Kind == token.RightParentheses {
+			if len(params) == 0 {
+				return nil, fmt.Errorf("no params in prototype %s", p.pos().String())
+			}
+
+			p.advance() // skip ")"
+			return params, nil
+		}
+
+		param, err := p.protoParam()
+		if err != nil {
+			return nil, err
+		}
+		params = append(params, param)
+
+		if p.tok.Kind == token.Comma {
+			p.advance() // skip ","
+		} else if p.tok.Kind == token.RightParentheses {
+			// will be skipped at next iteration
+		} else {
+			return nil, p.unexpected(p.tok)
+		}
+	}
+}
+
+func (p *Parser) protoParam() (ast.TypeParam, error) {
+	err := p.expect(token.Identifier)
+	if err != nil {
+		return ast.TypeParam{}, err
+	}
+	name := p.idn()
+	p.advance() // skip param name identifier
+
+	err = p.expect(token.Colon)
+	if err != nil {
+		return ast.TypeParam{}, err
+	}
+	p.advance() // skip ":"
+	
+	// TODO: design data type to represent constraint 
+	if p.tok.Kind != token.Type {
+		return ast.TypeParam{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip "type"
+
+	return ast.TypeParam{
 		Name:       name,
-		Spec:       spec,
-		TypeParams: params,
+		Constraint: nil,
 	}, nil
 }
 

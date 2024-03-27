@@ -107,7 +107,7 @@ data structure. Inside the chunk elemetns are stored in continuous memory region
 Behaves much alike to []u8 struct 
 
 */
-type chunk(T) struct {
+type chunk(T: type) struct {
     // Pointer to first element in chunk
     ptr: [*]T,
 
@@ -115,7 +115,7 @@ type chunk(T) struct {
     len: uint,
 }
 
-fn make_chunk($ T)(ptr: [*]T, len: uint) => []chunk(T) {
+fn make_chunk(T: type, ptr: [*]T, len: uint) => []chunk(T) {
     must(ptr != nil);
     must(len != 0);
 

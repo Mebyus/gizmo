@@ -1,0 +1,7 @@
+type chunk(T: type) struct {
+    // Pointer to first element in chunk
+    ptr: [*]T,
+
+    // Number of elements in chunk
+    len: uint,
+}

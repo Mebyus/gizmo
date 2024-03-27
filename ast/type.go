@@ -236,3 +236,10 @@ func (UnionType) Kind() tps.Kind {
 func (t UnionType) Pin() source.Pos {
 	return t.Pos
 }
+
+type TypeParam struct {
+	Name Identifier
+
+	// Equals nil if there is no constraint on this param
+	Constraint any
+}

@@ -5,7 +5,7 @@ import (
 	"github.com/mebyus/gizmo/source"
 )
 
-// <Method> = "method" "(" <Receiver> ")" <Name> <Signature> <Body>
+// <Method> = "fn" "[" <Receiver> "]" <Name> <Signature> <Body>
 //
 // <Receiver> = <Identifier>
 // <Name> = <Identifier>
@@ -33,19 +33,19 @@ func (m Method) Pin() source.Pos {
 	return m.Name.Pos
 }
 
-// <Method> = "method" "(" <Receiver> <TypeParams> ")" <Name> <Signature> <Body>
+// <ProtoMethodBlueprint> = "fn" "[" <Receiver> <Args> "]" <Name> <Signature> <Body>
 //
 // <Receiver> = <Identifier>
 // <Name> = <Identifier>
 // <Signature> = <FunctionSignature>
 // <Body> = <BlockStatement>
-type MethodTemplate struct {
+type ProtoMethodBlueprint struct {
 	nodeTopLevel
 
 	Receiver Identifier
 
 	// Contains at least one element
-	TypeParams []Identifier
+	TypeParams []TypeParam
 
 	Name Identifier
 
@@ -56,10 +56,10 @@ type MethodTemplate struct {
 
 var _ TopLevel = Method{}
 
-func (MethodTemplate) Kind() toplvl.Kind {
-	return toplvl.MethodTemplate
+func (ProtoMethodBlueprint) Kind() toplvl.Kind {
+	return toplvl.Pmb
 }
 
-func (m MethodTemplate) Pin() source.Pos {
+func (m ProtoMethodBlueprint) Pin() source.Pos {
 	return m.Name.Pos
 }

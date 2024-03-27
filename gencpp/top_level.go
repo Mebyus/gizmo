@@ -27,21 +27,21 @@ func (g *Builder) TopLevel(node ast.TopLevel) {
 		g.TopVar(node.(ast.TopVar))
 	case toplvl.Method:
 		g.Method(node.(ast.Method))
-	case toplvl.FnTemplate:
-		g.TopFunctionTemplate(node.(ast.TopFunctionTemplate))
-	case toplvl.TypeTemplate:
-		g.TopTypeTemplate(node.(ast.TopTypeTemplate))
-	case toplvl.MethodTemplate:
-		g.MethodTemplate(node.(ast.MethodTemplate))
+	case toplvl.Blue:
+		g.TopFunctionTemplate(node.(ast.TopBlueprint))
+	case toplvl.Proto:
+		g.TopTypeTemplate(node.(ast.TopPrototype))
+	case toplvl.Pmb:
+		g.MethodTemplate(node.(ast.ProtoMethodBlueprint))
 	default:
 		g.write(fmt.Sprintf("<%s node not implemented>", node.Kind().String()))
 		g.nl()
 	}
 }
 
-func (g *Builder) TopTypeTemplate(top ast.TopTypeTemplate) {
+func (g *Builder) TopTypeTemplate(top ast.TopPrototype) {
 	g.write("template")
-	g.templateParams(top.TypeParams)
+	g.templateParams(top.Params)
 	g.nl()
 
 	g.TopStructType(top.Name, top.Spec.(ast.StructType))
@@ -305,7 +305,7 @@ func (g *Builder) Method(top ast.Method) {
 	g.nl()
 }
 
-func (g *Builder) MethodTemplate(top ast.MethodTemplate) {
+func (g *Builder) MethodTemplate(top ast.ProtoMethodBlueprint) {
 	g.write("template")
 	g.templateParams(top.TypeParams)
 	g.nl()
@@ -321,12 +321,12 @@ func (g *Builder) MethodTemplate(top ast.MethodTemplate) {
 	g.nl()
 }
 
-func (g *Builder) templateReceiverArgs(args []ast.Identifier) {
+func (g *Builder) templateReceiverArgs(args []ast.TypeParam) {
 	g.write("<")
-	g.Identifier(args[0])
+	g.Identifier(args[0].Name)
 	for _, param := range args[1:] {
 		g.write(", ")
-		g.Identifier(param)
+		g.Identifier(param.Name)
 	}
 	g.write(">")
 }
@@ -370,19 +370,19 @@ func (g *Builder) typeParam(param ast.Identifier) {
 	g.Identifier(param)
 }
 
-func (g *Builder) templateParams(params []ast.Identifier) {
+func (g *Builder) templateParams(params []ast.TypeParam) {
 	g.write("<")
-	g.typeParam(params[0])
+	g.typeParam(params[0].Name)
 	for _, param := range params[1:] {
 		g.write(", ")
-		g.typeParam(param)
+		g.typeParam(param.Name)
 	}
 	g.write(">")
 }
 
-func (g *Builder) TopFunctionTemplate(top ast.TopFunctionTemplate) {
+func (g *Builder) TopFunctionTemplate(top ast.TopBlueprint) {
 	g.write("template")
-	g.templateParams(top.TypeParams)
+	g.templateParams(top.Params)
 	g.nl()
 
 	symName := g.symName(top.Name)
