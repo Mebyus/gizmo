@@ -21,7 +21,7 @@ type Statement interface {
 // Dummy provides quick, easy to use implementation of discriminator Statement() method
 //
 // Used for embedding into other (non-dummy) statement nodes
-type nodeStatement struct{ uidHolder }
+type nodeStatement struct{}
 
 func (nodeStatement) Statement() {}
 

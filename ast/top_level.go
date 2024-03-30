@@ -32,7 +32,7 @@ type TopLevel interface {
 // Dummy provides quick, easy to use implementation of discriminator TopLevel() method
 //
 // Used for embedding into other (non-dummy) type specifier nodes
-type nodeTopLevel struct{ uidHolder }
+type nodeTopLevel struct{}
 
 func (nodeTopLevel) TopLevel() {}
 

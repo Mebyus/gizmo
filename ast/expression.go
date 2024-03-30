@@ -18,7 +18,7 @@ type Expression interface {
 	Kind() exn.Kind
 }
 
-type nodeExpression struct{ uidHolder }
+type nodeExpression struct{}
 
 func (nodeExpression) Expression() {}
 

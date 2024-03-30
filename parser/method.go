@@ -80,10 +80,10 @@ func (p *Parser) method() (ast.TopLevel, error) {
 		}, nil
 	}
 	return ast.ProtoMethodBlueprint{
-		Receiver:   receiver,
+		Receiver: receiver,
 		// TypeParams: params,
-		Name:       name,
-		Signature:  signature,
-		Body:       body,
+		Name:      name,
+		Signature: signature,
+		Body:      body,
 	}, nil
 }

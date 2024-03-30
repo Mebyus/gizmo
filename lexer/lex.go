@@ -3,6 +3,12 @@ package lexer
 import "github.com/mebyus/gizmo/token"
 
 func (lx *Lexer) Lex() token.Token {
+	tok := lx.lex()
+	lx.pos.Num += 1
+	return tok
+}
+
+func (lx *Lexer) lex() token.Token {
 	if lx.eof {
 		return lx.create(token.EOF)
 	}
@@ -318,7 +324,7 @@ func (lx *Lexer) lexStringLiteral() (tok token.Token) {
 	tok.Pos = lx.pos
 
 	lx.advance() // skip '"'
-	
+
 	if lx.c == '"' {
 		// common case of empty string literal
 		lx.advance()

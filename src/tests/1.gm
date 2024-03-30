@@ -208,7 +208,7 @@ type AwesomeTemplate(T: type) struct {
     field: T,
 }
 
-fn [AwesomeTemplate(T)] set(t: T) {
+fn [AwesomeTemplate(T: type)] set(t: T) {
     field = t;
 }
 

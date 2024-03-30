@@ -17,7 +17,7 @@ type Label interface {
 // Dummy provides quick, easy to use implementation of discriminator Label() method
 //
 // Used for embedding into other (non-dummy) label nodes
-type nodeLabel struct{ uidHolder }
+type nodeLabel struct{}
 
 func (nodeLabel) Label() {}
 

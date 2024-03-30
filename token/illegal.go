@@ -10,7 +10,7 @@ const (
 	MalformedOctalInteger
 	MalformedDecimalInteger
 	MalformedHexadecimalInteger
-	
+
 	BadEscapeInString
 )
 

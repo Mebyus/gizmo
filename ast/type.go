@@ -20,7 +20,7 @@ type TypeSpecifier interface {
 // Dummy provides quick, easy to use implementation of discriminator TypeSpecifier() method
 //
 // Used for embedding into other (non-dummy) type specifier nodes
-type nodeTypeSpecifier struct{ uidHolder }
+type nodeTypeSpecifier struct{}
 
 func (nodeTypeSpecifier) TypeSpecifier() {}
 
@@ -30,7 +30,7 @@ type TypeName struct {
 	Name ScopedIdentifier
 }
 
-// interface implementation check
+// Explicit interface implementation check
 var _ TypeSpecifier = TypeName{}
 
 func (TypeName) Kind() tps.Kind {

@@ -57,7 +57,6 @@ func Locals(ss []string) []Path {
 	return paths
 }
 
-
 func (p Path) Hash() uint64 {
 	var buf [2]byte
 

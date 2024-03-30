@@ -97,7 +97,7 @@ func (t Token) Literal() string {
 		case '\r':
 			return `'\r'`
 		}
-		return "'" + string(rune(t.Val)) +  "'"
+		return "'" + string(rune(t.Val)) + "'"
 	case String:
 		return "\"" + t.Lit + "\""
 	case Nil:
@@ -113,10 +113,10 @@ func (t Token) Literal() string {
 
 func (t Token) Short() string {
 	if t.Kind.hasStaticLiteral() {
-		return fmt.Sprintf("%-12s%-12s%s", t.Pos.Short(), ".", t.Kind.String())
+		return fmt.Sprintf("%-6d%-12s%-12s%s", t.Pos.Num+1, t.Pos.Short(), ".", t.Kind.String())
 	}
 
-	return fmt.Sprintf("%-12s%-12s%s", t.Pos.Short(), t.Kind.String(), t.Literal())
+	return fmt.Sprintf("%-6d%-12s%-12s%s", t.Pos.Num+1, t.Pos.Short(), t.Kind.String(), t.Literal())
 }
 
 func (t Token) String() string {

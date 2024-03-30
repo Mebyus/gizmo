@@ -102,8 +102,8 @@ func (p *Parser) protoParam() (ast.TypeParam, error) {
 		return ast.TypeParam{}, err
 	}
 	p.advance() // skip ":"
-	
-	// TODO: design data type to represent constraint 
+
+	// TODO: design data type to represent constraint
 	if p.tok.Kind != token.Type {
 		return ast.TypeParam{}, p.unexpected(p.tok)
 	}

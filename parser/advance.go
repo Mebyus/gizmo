@@ -28,11 +28,11 @@ func (p *Parser) backtrack(n uint) {
 	}
 	p.back = n
 	p.buf.len = n
-	
+
 	tok := p.tok
 	p.tok = p.buf.Pop()
 	p.buf.Push(tok)
-	
+
 	next := p.next
 	p.next = p.buf.Pop()
 	p.buf.Push(next)

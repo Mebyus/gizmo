@@ -35,7 +35,7 @@ type PropValue interface {
 // Dummy prop value node provides quick, easy to use implementation of discriminator PropValue() method
 //
 // Used for embedding into other (non-dummy) prop value nodes
-type nodePropValue struct{ uidHolder }
+type nodePropValue struct{}
 
 func (nodePropValue) PropValue() {}
 

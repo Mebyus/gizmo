@@ -9,10 +9,13 @@ type Pos struct {
 	// byte offset in stream
 	Ofs uint32
 
-	// zero-based numeration
+	// order number, starts from zero
+	Num uint32
+
+	// starts from zero
 	Line uint32
 
-	// in code points, zero-based numeration
+	// column number, starts from zero
 	Col uint32
 }
 
