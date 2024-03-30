@@ -174,7 +174,7 @@ func (p *Parser) Header() (ast.AtomHeader, error) {
 // Resulting atom tree is complete and also contains info gathered by
 // Header method
 func (p *Parser) Parse() (ast.UnitAtom, error) {
-	return ast.UnitAtom{}, nil
+	return p.parse()
 }
 
 func (p *Parser) parse() (ast.UnitAtom, error) {

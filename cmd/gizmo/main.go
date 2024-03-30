@@ -12,6 +12,7 @@ import (
 	"github.com/mebyus/gizmo/cmd/gizmo/lex"
 	"github.com/mebyus/gizmo/cmd/gizmo/tree"
 	"github.com/mebyus/gizmo/cmd/gizmo/ubev"
+	"github.com/mebyus/gizmo/cmd/gizmo/unit"
 )
 
 func main() {
@@ -40,6 +41,7 @@ var root = &butler.Lackey{
 		ubev.Ubev,
 		clean.Clean,
 		atom.Atom,
+		unit.Unit,
 	},
 }
 

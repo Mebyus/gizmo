@@ -1,6 +1,11 @@
 package tt
 
-import "github.com/mebyus/gizmo/ast"
+import (
+	"fmt"
+
+	"github.com/mebyus/gizmo/ast"
+	"github.com/mebyus/gizmo/ast/toplvl"
+)
 
 // Merger is a high-level algorithm driver that gathers multiple ASTs of unit's atoms
 // to produce that unit's type tree.
@@ -27,6 +32,21 @@ type Context struct {
 }
 
 func (m *Merger) Add(atom ast.UnitAtom) error {
+	for _, block := range atom.Blocks {
+		// TODO: remove namespace blocks support
+		if !block.Default {
+			continue
+		}
+
+		for _, top := range block.Nodes {
+			switch top.Kind() {
+			case toplvl.Fn:
+				fmt.Println("fn", top.(ast.TopFunctionDefinition).Definition.Head.Name.Lit)
+			case toplvl.Type:
+				fmt.Println("type", top.(ast.TopType).Name.Lit)
+			}
+		}
+	}
 	return nil
 }
 
