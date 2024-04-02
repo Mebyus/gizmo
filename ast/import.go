@@ -34,3 +34,11 @@ type ImportString struct {
 	Pos source.Pos
 	Lit string
 }
+
+// ImportBind is not produced by parser. It is convenience struct for passing around
+// preprocessed data related to a single import spec
+type ImportBind struct {
+	Name   Identifier
+	Path   origin.Path
+	Public bool
+}

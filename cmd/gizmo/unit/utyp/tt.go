@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/mebyus/gizmo/butler"
+	"github.com/mebyus/gizmo/er"
 	"github.com/mebyus/gizmo/parser"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/tt"
@@ -24,7 +25,15 @@ func execute(r *butler.Lackey, units []string) error {
 	if len(units) == 0 {
 		return fmt.Errorf("at least one unit must be specified")
 	}
-	return utyp(units[0])
+	err := utyp(units[0])
+	if err != nil {
+		e, ok := err.(er.Error)
+		if !ok {
+			return err
+		}
+		e.Format(os.Stdout, "text")
+	}
+	return err
 }
 
 func utyp(unit string) error {

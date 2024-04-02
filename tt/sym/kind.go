@@ -9,10 +9,10 @@ const (
 	// Mostly a trick to detect places where Kind is left unspecified.
 	empty Kind = iota
 
-	// Function definition
+	// Function (produced from declaration or definition)
 	Fn
 
-	// Method definition
+	// Method (produced from declaration or definition)
 	Method
 
 	// Type definition
@@ -35,6 +35,9 @@ const (
 
 	// Prototype method bluepint, aka "method template"
 	Pmb
+
+	// Symbol created by importing other unit
+	Import
 )
 
 var text = [...]string{
@@ -49,6 +52,7 @@ var text = [...]string{
 	Blue:   "blue",
 	Proto:  "proto",
 	Pmb:    "pmb",
+	Import: "import",
 }
 
 func (k Kind) String() string {
