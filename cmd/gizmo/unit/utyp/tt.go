@@ -42,7 +42,7 @@ func utyp(unit string) error {
 		return err
 	}
 
-	m := tt.New(tt.Context{})
+	m := tt.New(tt.Context{Global: tt.NewGlobalScope()})
 	for _, file := range files {
 		p := parser.FromSource(file)
 		_, err := p.Header()

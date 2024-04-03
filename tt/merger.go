@@ -31,7 +31,7 @@ func New(ctx Context) *Merger {
 	return &Merger{
 		ctx: ctx,
 		unit: Unit{
-			sm: make(map[string]*Symbol),
+			Scope: NewUnitScope(ctx.Global),
 		},
 	}
 }
@@ -40,6 +40,7 @@ func New(ctx Context) *Merger {
 // about imported units. It also holds build conditions under which unit compilation
 // is performed.
 type Context struct {
+	Global *Scope
 }
 
 func (m *Merger) Add(atom ast.UnitAtom) error {
@@ -102,14 +103,13 @@ func (m *Merger) Merge() (*Unit, error) {
 
 // add top-level symbol to unit
 func (m *Merger) add(s *Symbol) {
-	m.unit.Top = append(m.unit.Top, s)
-	m.unit.sm[s.Name] = s
+	m.unit.Scope.Bind(s)
 }
 
 // check if top-level symbol with a given name already exists in unit
 func (m *Merger) has(name string) bool {
-	_, ok := m.unit.sm[name]
-	return ok
+	s := m.unit.Scope.sym(name)
+	return s != nil
 }
 
 func (m *Merger) errMultDef(name string, pos source.Pos) error {

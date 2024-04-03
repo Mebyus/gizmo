@@ -1,9 +1,10 @@
 package tt
 
 type Unit struct {
-	// List of all top-level symbols defined in this unit
-	Top []*Symbol
+	Name string
 
-	// Symbol map. Maps top-level symbol name to the symbol itself
-	sm map[string]*Symbol
+	// Scope that holds all top-level symbols from all unit atoms.
+	//
+	// This field is always not nil and Scope.Kind is always equal to scp.Unit.
+	Scope *Scope
 }
