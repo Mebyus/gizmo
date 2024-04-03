@@ -27,6 +27,13 @@ const (
 	// Variable definition (name + type + initial value)
 	Var
 
+	// Runtime function or method parameter
+	Param
+
+	// Type, function or method parameter for which argument value must be known at
+	// buildtime
+	StaticParam
+
 	// Blueprint, aka "function template"
 	Blue
 

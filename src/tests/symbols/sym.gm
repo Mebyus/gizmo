@@ -14,6 +14,10 @@ type Result enum u32 {
     Unknown = 2,
 }
 
+fn [Result] is_ok() => bool {
+    return rv == Result.Ok;
+}
+
 fn add(a: u32, b: u32) => u32 {
     let c: u32 = a + b;
     return c;

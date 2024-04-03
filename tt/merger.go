@@ -12,10 +12,17 @@ import (
 
 // Merger is a high-level algorithm driver that gathers multiple ASTs of unit's atoms
 // to produce that unit's type tree.
+//
+// Unit merging is done in two separate phases:
+//
+//   - phase 1 - atoms gathering (via Add method)
+//   - phase 2 - symbol indexing, type checking, etc. for the whole unit (via Merge method)
+//
+// Semantic checks and tree construction is split between this two phases.
 type Merger struct {
 	ctx Context
 
-	// Unit that is currently built by merger
+	// Unit that is currently being built by merger.
 	unit Unit
 
 	// Processing of this nodes is deferred until phase 2, because they do not produce
@@ -24,7 +31,7 @@ type Merger struct {
 	//
 	//	- method
 	//	- prototype method blueprint
-	noSymbolNodes []ast.TopLevel
+	symBindNodes []ast.TopLevel
 }
 
 func New(ctx Context) *Merger {
@@ -80,7 +87,7 @@ func (m *Merger) Add(atom ast.UnitAtom) error {
 				// defer processing until phase 2
 				m.addPhaseTwoNode(top)
 			default:
-				panic(fmt.Sprintf("<top-level %s node not implemented>", top.Kind().String()))
+				panic(fmt.Sprintf("top-level %s node not implemented", top.Kind().String()))
 			}
 
 			if err != nil {
@@ -93,11 +100,15 @@ func (m *Merger) Add(atom ast.UnitAtom) error {
 }
 
 func (m *Merger) addPhaseTwoNode(top ast.TopLevel) {
-	m.noSymbolNodes = append(m.noSymbolNodes, top)
+	m.symBindNodes = append(m.symBindNodes, top)
 }
 
 // Merge is called after all unit atoms were added to merger to build type tree of the unit.
 func (m *Merger) Merge() (*Unit, error) {
+	err := m.runPhaseTwo()
+	if err != nil {
+		return nil, err
+	}
 	return &m.unit, nil
 }
 
