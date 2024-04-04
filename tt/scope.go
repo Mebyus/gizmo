@@ -51,10 +51,6 @@ func NewScope(kind scp.Kind, parent *Scope, pos uint32) *Scope {
 	}
 }
 
-func NewGlobalScope() *Scope {
-	return NewScope(scp.Global, nil, 0)
-}
-
 func NewUnitScope(global *Scope) *Scope {
 	return NewScope(scp.Unit, global, 0)
 }

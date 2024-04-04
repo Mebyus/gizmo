@@ -18,6 +18,10 @@ fn [Result] is_ok() => bool {
     return rv == Result.Ok;
 }
 
+fn [Result] is_err() => bool {
+    return rv == Result.Error;
+}
+
 fn add(a: u32, b: u32) => u32 {
     let c: u32 = a + b;
     return c;
@@ -31,8 +35,6 @@ fn sub(a: i32, b: i32) => i32 {
     return c;
 }
 
-/*
-fn sub(a: i32) => i32 {
-    return a - 5;
+fn sub_five(a: i32) => i32 {
+    return sub(a, 5);
 }
-*/

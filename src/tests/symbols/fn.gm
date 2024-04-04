@@ -1,0 +1,15 @@
+fn inc(x: *int) => int {
+    x.@ += 1;
+    let x2: int = x.@;
+
+    if x2 >= 19 {
+        return 19;
+    }
+    return x2;
+}
+
+fn use_inc() {
+    var x: int = 1;
+    let r: int = inc(x.&);
+}
+

@@ -58,10 +58,3 @@ type SymDef interface {
 type nodeSymDef struct{}
 
 func (nodeSymDef) SymDef() {}
-
-type FnDef struct {
-	nodeSymDef
-}
-
-// Explicit interface implementation check
-var _ SymDef = FnDef{}

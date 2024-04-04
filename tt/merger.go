@@ -32,6 +32,9 @@ type Merger struct {
 	//	- method
 	//	- prototype method blueprint
 	symBindNodes []ast.TopLevel
+
+	// list of all function symbols in unit
+	fns []*Symbol
 }
 
 func New(ctx Context) *Merger {
@@ -159,8 +162,10 @@ func (m *Merger) addFn(top ast.TopFunctionDefinition) error {
 		Name:   name,
 		Pos:    pos,
 		Public: top.Public,
+		Def:    NewTempFnDef(top),
 	}
 	m.add(s)
+	m.fns = append(m.fns, s)
 	return nil
 }
 
@@ -177,6 +182,7 @@ func (m *Merger) addType(top ast.TopType) error {
 		Name:   name,
 		Pos:    pos,
 		Public: top.Public,
+		Def:    NewTempTypeDef(top),
 	}
 	m.add(s)
 	return nil
@@ -195,6 +201,7 @@ func (m *Merger) addConst(top ast.TopConst) error {
 		Name:   name,
 		Pos:    pos,
 		Public: top.Public,
+		// Def:    NewTempDef(top),
 	}
 	m.add(s)
 	return nil

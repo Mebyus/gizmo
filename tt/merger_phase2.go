@@ -5,6 +5,7 @@ import (
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/toplvl"
+	"github.com/mebyus/gizmo/tt/sym"
 )
 
 // Phase 2 merger indexing coagulates info from AST nodes that were skipped during
@@ -16,6 +17,14 @@ import (
 //   - type checking of various operations
 func (m *Merger) runPhaseTwo() error {
 	err := m.bindNodes()
+	if err != nil {
+		return err
+	}
+	err = m.scanTypes()
+	if err != nil {
+		return err
+	}
+	err = m.scanFns()
 	if err != nil {
 		return err
 	}
@@ -48,6 +57,54 @@ func (m *Merger) bindMethod(method ast.Method) error {
 		return fmt.Errorf("%s: unresolved symbol \"%s\" in method receiver", method.Receiver.Pos.String(), rvName)
 	}
 
-	// TODO: add method to list of receiver's type methods
+	err := rvSym.Def.(*TempTypeDef).addMethod(method)
+	return err
+}
+
+func (m *Merger) scanTypes() error {
+	// TODO: graph based scanning
+	for _, s := range m.unit.Scope.Symbols {
+		if s.Kind == sym.Type {
+			def := s.Def.(*TempTypeDef)
+			t, err := m.scanType(def)
+			if err != nil {
+				return err
+			}
+			s.Def = t
+		}
+	}
 	return nil
+}
+
+func (m *Merger) scanType(def *TempTypeDef) (*Type, error) {
+	return &Type{}, nil
+}
+
+func (m *Merger) scanFns() error {
+	for _, s := range m.fns {
+		def := s.Def.(TempFnDef)
+		fn, err := m.scanFn(def)
+		if err != nil {
+			return err
+		}
+		s.Def = fn
+	}
+	return nil
+}
+
+func (m *Merger) scanFn(def TempFnDef) (*FnDef, error) {
+	var params []*Symbol
+	for _, p := range def.top.Definition.Head.Signature.Params {
+		params = append(params, &Symbol{
+			Pos:  p.Name.Pos,
+			Name: p.Name.Lit,
+			Type: m.lookupType(p.Type),
+			Kind: sym.Param,
+		})
+	}
+	return &FnDef{
+		Params: params,
+		Result: m.lookupType(def.top.Definition.Head.Signature.Result),
+		Never:  def.top.Definition.Head.Signature.Never,
+	}, nil
 }
