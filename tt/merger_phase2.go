@@ -102,9 +102,15 @@ func (m *Merger) scanFn(def TempFnDef) (*FnDef, error) {
 			Kind: sym.Param,
 		})
 	}
-	return &FnDef{
+
+	fn := &FnDef{
 		Params: params,
 		Result: m.lookupType(def.top.Definition.Head.Signature.Result),
 		Never:  def.top.Definition.Head.Signature.Never,
-	}, nil
+		Body: Block{
+			Pos:   def.top.Definition.Body.Pos,
+			Scope: NewTopScope(m.unit.Scope),
+		},
+	}
+	return fn, nil
 }

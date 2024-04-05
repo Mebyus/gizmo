@@ -23,6 +23,7 @@ const (
 	ForEach
 	Match
 	Jump
+	Defer
 )
 
 var text = [...]string{
@@ -42,6 +43,7 @@ var text = [...]string{
 	ForEach:   "for_each",
 	Match:     "match",
 	Jump:      "jump",
+	Defer:     "defer",
 }
 
 func (k Kind) String() string {

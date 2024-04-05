@@ -27,6 +27,18 @@ type Scope struct {
 	// global, unit and top scopes.
 	Pos uint32
 
+	// Scope's nesting level. Starts from 0 for global scope. Language structure
+	// implies that first levels are dependant on Kind:
+	//
+	//	// kind => level
+	//	- global => 0
+	//	- unit   => 1
+	//	- top    => 2
+	//
+	// Subsequent levels are created inside function and method bodies by means of
+	// various language constructs.
+	Level uint32
+
 	Kind scp.Kind
 }
 
@@ -47,7 +59,9 @@ func NewScope(kind scp.Kind, parent *Scope, pos uint32) *Scope {
 		Kind:   kind,
 		Pos:    pos,
 		Parent: parent,
-		sm:     make(map[string]*Symbol),
+		Level:  parent.nextLevel(),
+
+		sm: make(map[string]*Symbol),
 	}
 }
 
@@ -59,9 +73,28 @@ func NewTopScope(unit *Scope) *Scope {
 	return NewScope(scp.Top, unit, 0)
 }
 
+func (s *Scope) nextLevel() uint32 {
+	if s == nil {
+		return 0
+	}
+	return s.Level + 1
+}
+
 // Lookup a symbol by its name and source code position inside scope
-// and (if not found) all of its parents.
+// and (if not found) all of its parents. If symbol is found its usage
+// count is increased.
 func (s *Scope) Lookup(name string, pos uint32) *Symbol {
+	sym := s.lookup(name, pos)
+	if sym == nil {
+		return nil
+	}
+
+	sym.RefNum += 1
+	return sym
+}
+
+// Same as Lookup, but usage count for found symbol is not increased.
+func (s *Scope) lookup(name string, pos uint32) *Symbol {
 	// for global and unit scopes lookup position is irrelevant
 	if s.Kind == scp.Global {
 		return s.sym(name)
@@ -99,7 +132,7 @@ func (s *Scope) Sym(name string, pos uint32) *Symbol {
 	return nil
 }
 
-// lookup symbol in local scope without position check
+// lookup symbol in local scope without position check.
 func (s *Scope) sym(name string) *Symbol {
 	if len(s.Symbols) == 0 {
 		return nil
@@ -122,4 +155,5 @@ func (s *Scope) sym(name string) *Symbol {
 func (s *Scope) Bind(sym *Symbol) {
 	s.Symbols = append(s.Symbols, sym)
 	s.sm[sym.Name] = sym
+	sym.Scope = s
 }
