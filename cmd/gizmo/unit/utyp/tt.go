@@ -42,7 +42,7 @@ func utyp(unit string) error {
 		return err
 	}
 
-	m := tt.New(tt.Context{Global: tt.NewGlobalScope()})
+	m := tt.New(tt.UnitContext{Global: tt.NewGlobalScope()})
 	for _, file := range files {
 		p := parser.FromSource(file)
 		_, err := p.Header()
@@ -59,7 +59,13 @@ func utyp(unit string) error {
 		}
 	}
 	_, err = m.Merge()
-	return err
+	if err != nil {
+		return err
+	}
+	for _, warn := range m.Warns {
+		fmt.Println(warn)
+	}
+	return nil
 }
 
 const maxFileSize = 1 << 26

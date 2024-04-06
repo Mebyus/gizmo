@@ -15,7 +15,7 @@ func newNamedTypeSymbol(name string, typ *Type) *Symbol {
 }
 
 func NewGlobalScope() *Scope {
-	s := NewScope(scp.Global, nil, 0)
+	s := NewScope(scp.Global, nil, nil)
 
 	s.Bind(newNamedTypeSymbol("u8", &Type{}))
 	s.Bind(newNamedTypeSymbol("u16", &Type{}))
@@ -38,9 +38,7 @@ func NewGlobalScope() *Scope {
 }
 
 type True struct {
-
 }
 
 type False struct {
-	
 }

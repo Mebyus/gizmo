@@ -13,3 +13,10 @@ fn use_inc() {
     let r: int = inc(x.&);
 }
 
+fn test_dead_code(a: int) {
+    var x: int = a;
+    var x: str = "";
+    return;
+
+    let r: int = inc(x.&);
+}

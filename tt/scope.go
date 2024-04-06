@@ -1,6 +1,9 @@
 package tt
 
-import "github.com/mebyus/gizmo/tt/scp"
+import (
+	"github.com/mebyus/gizmo/source"
+	"github.com/mebyus/gizmo/tt/scp"
+)
 
 type Scope struct {
 	// List of all symbols defined inside this scope. Symbols are
@@ -23,9 +26,9 @@ type Scope struct {
 	// Types *Tindex
 
 	// Local position of scope inclusion point in parent scope.
-	// Determined by Pos.Num of scope block start. Irrelevant for
+	// Determined by Pos of scope block start. Irrelevant for
 	// global, unit and top scopes.
-	Pos uint32
+	Pos *source.Pos
 
 	// Scope's nesting level. Starts from 0 for global scope. Language structure
 	// implies that first levels are dependant on Kind:
@@ -42,7 +45,7 @@ type Scope struct {
 	Kind scp.Kind
 }
 
-func NewScope(kind scp.Kind, parent *Scope, pos uint32) *Scope {
+func NewScope(kind scp.Kind, parent *Scope, pos *source.Pos) *Scope {
 	if kind == scp.Global && parent != nil {
 		panic("global scope cannot have a parent")
 	}
@@ -52,7 +55,7 @@ func NewScope(kind scp.Kind, parent *Scope, pos uint32) *Scope {
 	if kind == scp.Top && parent.Kind != scp.Unit {
 		panic("parent of top-level scope must always be unit scope")
 	}
-	if kind > scp.Top && pos == 0 {
+	if kind >= scp.Top && pos == nil {
 		panic("scope parent inclusion position is not specified")
 	}
 	return &Scope{
@@ -66,11 +69,11 @@ func NewScope(kind scp.Kind, parent *Scope, pos uint32) *Scope {
 }
 
 func NewUnitScope(global *Scope) *Scope {
-	return NewScope(scp.Unit, global, 0)
+	return NewScope(scp.Unit, global, nil)
 }
 
-func NewTopScope(unit *Scope) *Scope {
-	return NewScope(scp.Top, unit, 0)
+func NewTopScope(unit *Scope, pos *source.Pos) *Scope {
+	return NewScope(scp.Top, unit, pos)
 }
 
 func (s *Scope) nextLevel() uint32 {

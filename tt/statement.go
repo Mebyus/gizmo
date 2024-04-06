@@ -24,3 +24,24 @@ type Statement interface {
 type nodeStatement struct{}
 
 func (nodeStatement) Statement() {}
+
+type VarStatement struct {
+	nodeStatement
+
+	// Symbol created by this statement.
+	Sym *Symbol
+
+	// Equals nil if init expression is dirty.
+	Expr any
+}
+
+// Explicit interface implementation check
+var _ Statement = &VarStatement{}
+
+func (s *VarStatement) Pin() source.Pos {
+	return s.Sym.Pos
+}
+
+func (s *VarStatement) Kind() stm.Kind {
+	return stm.Var
+}

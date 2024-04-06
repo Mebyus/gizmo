@@ -103,14 +103,39 @@ func (m *Merger) scanFn(def TempFnDef) (*FnDef, error) {
 		})
 	}
 
+	pos := def.top.Definition.Body.Pos
 	fn := &FnDef{
 		Params: params,
 		Result: m.lookupType(def.top.Definition.Head.Signature.Result),
 		Never:  def.top.Definition.Head.Signature.Never,
-		Body: Block{
-			Pos:   def.top.Definition.Body.Pos,
-			Scope: NewTopScope(m.unit.Scope),
-		},
+		Body:   Block{Pos: pos},
 	}
+	fn.Body.Scope = NewTopScope(m.unit.Scope, &fn.Body.Pos)
+
+	err := m.scanFnBody(fn, def.top.Definition.Body.Statements)
+	if err != nil {
+		return nil, err
+	}
+
 	return fn, nil
+}
+
+func (m *Merger) scanFnBody(def *FnDef, statements []ast.Statement) error {
+	if len(statements) == 0 {
+		if def.Result != nil {
+			return fmt.Errorf("%s: function with return type cannot have empty body", def.Body.Pos.String())
+		}
+		if def.Never {
+			return fmt.Errorf("%s: function marked as never returning cannot have empty body", def.Body.Pos.String())
+		}
+		return nil
+	}
+
+	ctx := m.newFnCtx(def)
+	err := def.Body.fill(ctx, statements)
+	if err != nil {
+		return err
+	}
+	def.Refs = ctx.ref.Elems()
+	return nil
 }

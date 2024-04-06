@@ -45,12 +45,35 @@ type Symbol struct {
 
 	Kind sym.Kind
 
-	// Number of times symbol is referenced (used in source code outside its origin)
+	// Number of times symbol is referenced (used in source code outside its origin).
 	RefNum uint32
 
 	// Used only for top-level symbols in unit. If true than other units, which import unit where this
 	// symbol is declared, can use this symbol in their code.
 	Public bool
+}
+
+// Set of symbols
+type SymSet map[*Symbol]struct{}
+
+func NewSymSet() SymSet {
+	return make(SymSet)
+}
+
+func (s SymSet) Add(sym *Symbol) {
+	s[sym] = struct{}{}
+}
+
+func (s SymSet) Elems() []*Symbol {
+	if len(s) == 0 {
+		return nil
+	}
+
+	elems := make([]*Symbol, 0, len(s))
+	for sym := range s {
+		elems = append(elems, sym)
+	}
+	return elems
 }
 
 type SymDef interface {

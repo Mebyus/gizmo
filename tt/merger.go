@@ -20,7 +20,7 @@ import (
 //
 // Semantic checks and tree construction is split between this two phases.
 type Merger struct {
-	ctx Context
+	ctx UnitContext
 
 	// Unit that is currently being built by merger.
 	unit Unit
@@ -35,9 +35,11 @@ type Merger struct {
 
 	// list of all function symbols in unit
 	fns []*Symbol
+
+	Warns []error
 }
 
-func New(ctx Context) *Merger {
+func New(ctx UnitContext) *Merger {
 	return &Merger{
 		ctx: ctx,
 		unit: Unit{
@@ -46,10 +48,10 @@ func New(ctx Context) *Merger {
 	}
 }
 
-// Context is a reference data structure that contains type and symbol information
+// UnitContext is a reference data structure that contains type and symbol information
 // about imported units. It also holds build conditions under which unit compilation
 // is performed.
-type Context struct {
+type UnitContext struct {
 	Global *Scope
 }
 
