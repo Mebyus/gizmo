@@ -1,6 +1,8 @@
 package tt
 
 import (
+	"fmt"
+
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/tt/scp"
 )
@@ -159,4 +161,20 @@ func (s *Scope) Bind(sym *Symbol) {
 	s.Symbols = append(s.Symbols, sym)
 	s.sm[sym.Name] = sym
 	sym.Scope = s
+}
+
+// CheckUsage scans symbols usage count in this scope. Returns error if there are
+// declared, but not used symbols.
+func (s *Scope) CheckUsage() error {
+	var list []*Symbol
+	for _, sym := range s.Symbols {
+		if sym.RefNum == 0 {
+			list = append(list, sym)
+		}
+	}
+	if len(list) == 0 {
+		return nil
+	}
+	sym := list[0]
+	return fmt.Errorf("%s: symbol \"%s\" declared and not used", sym.Pos.String(), sym.Name)
 }

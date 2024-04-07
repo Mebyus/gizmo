@@ -24,6 +24,8 @@ const (
 	Match
 	Jump
 	Defer
+
+	SymbolAssign
 )
 
 var text = [...]string{
@@ -44,6 +46,8 @@ var text = [...]string{
 	Match:     "match",
 	Jump:      "jump",
 	Defer:     "defer",
+
+	SymbolAssign: "symbol_assign",
 }
 
 func (k Kind) String() string {

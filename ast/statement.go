@@ -68,6 +68,26 @@ func (s AssignStatement) Pin() source.Pos {
 	return s.Target.Pin()
 }
 
+// <SymbolAssignStatement> = <Identifier> "=" <Expression> ";"
+type SymbolAssignStatement struct {
+	nodeStatement
+
+	Target Identifier
+
+	Expression Expression
+}
+
+// Explicit interface implementation check
+var _ Statement = SymbolAssignStatement{}
+
+func (SymbolAssignStatement) Kind() stm.Kind {
+	return stm.SymbolAssign
+}
+
+func (s SymbolAssignStatement) Pin() source.Pos {
+	return s.Target.Pos
+}
+
 // <AddAssignStatement> = <Target> "+=" <Expression> ";"
 //
 // <Target> = <ChainOperand>

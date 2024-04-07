@@ -483,6 +483,10 @@ func (p *Parser) otherStatement() (ast.Statement, error) {
 		return nil, p.unexpected(p.tok)
 	}
 
+	if p.tok.Kind == token.Identifier && p.next.Kind == token.Assign {
+		return p.symbolAssignStatement()
+	}
+
 	var err error
 	var target ast.ChainOperand
 
@@ -499,6 +503,10 @@ func (p *Parser) otherStatement() (ast.Statement, error) {
 	} else if p.tok.Kind == token.Receiver {
 		pos := p.pos()
 		p.advance() // skip "rv"
+
+		if p.tok.Kind == token.Assign {
+			return nil, fmt.Errorf("%s: receiver cannot be assigned to", p.tok.Kind.String())
+		}
 
 		target, err = p.chainOperand(ast.Receiver{Pos: pos})
 		if err != nil {
@@ -547,6 +555,28 @@ func (p *Parser) otherStatement() (ast.Statement, error) {
 	default:
 		panic("unexpected assign token: " + assignTokenKind.String())
 	}
+}
+
+func (p *Parser) symbolAssignStatement() (ast.SymbolAssignStatement, error) {
+	target := p.idn()
+	p.advance() // skip target identifier
+
+	p.advance() // skip "="
+
+	expr, err := p.expr()
+	if err != nil {
+		return ast.SymbolAssignStatement{}, err
+	}
+
+	if p.tok.Kind != token.Semicolon {
+		return ast.SymbolAssignStatement{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip ";"
+
+	return ast.SymbolAssignStatement{
+		Target:     target,
+		Expression: expr,
+	}, nil
 }
 
 func (p *Parser) continueExpressionStatement(operand ast.Operand) (ast.ExpressionStatement, error) {

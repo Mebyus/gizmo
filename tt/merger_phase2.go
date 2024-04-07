@@ -132,7 +132,7 @@ func (m *Merger) scanFnBody(def *FnDef, statements []ast.Statement) error {
 	}
 
 	ctx := m.newFnCtx(def)
-	err := def.Body.fill(ctx, statements)
+	err := def.Body.Fill(ctx, statements)
 	if err != nil {
 		return err
 	}

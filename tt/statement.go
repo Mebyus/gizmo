@@ -45,3 +45,29 @@ func (s *VarStatement) Pin() source.Pos {
 func (s *VarStatement) Kind() stm.Kind {
 	return stm.Var
 }
+
+// SymbolAssignStatement is a simple form of generic assign statement,
+// where target is a symbol (not a complex expression).
+type SymbolAssignStatement struct {
+	nodeStatement
+
+	// Position of assign statement.
+	Pos source.Pos
+
+	// Target of the assignment.
+	Target *Symbol
+
+	// Assigned expression.
+	Expr any
+}
+
+// Explicit interface implementation check
+var _ Statement = &SymbolAssignStatement{}
+
+func (s *SymbolAssignStatement) Pin() source.Pos {
+	return s.Pos
+}
+
+func (s *SymbolAssignStatement) Kind() stm.Kind {
+	return stm.Assign
+}

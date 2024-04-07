@@ -6,6 +6,7 @@ import (
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/stm"
 	"github.com/mebyus/gizmo/source"
+	"github.com/mebyus/gizmo/tt/scp"
 	"github.com/mebyus/gizmo/tt/sym"
 )
 
@@ -33,6 +34,14 @@ func (b *Block) Kind() stm.Kind {
 
 func (b *Block) addNode(node Statement) {
 	b.Nodes = append(b.Nodes, node)
+}
+
+func (b *Block) Fill(ctx *Context, statements []ast.Statement) error {
+	err := b.fill(ctx, statements)
+	if err != nil {
+		return err
+	}
+	return b.Scope.CheckUsage()
 }
 
 func (b *Block) fill(ctx *Context, statements []ast.Statement) error {
@@ -70,8 +79,10 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 		// g.IfStatement(statement.(ast.IfStatement))
 	case stm.Expr:
 		// g.ExpressionStatement(statement.(ast.ExpressionStatement))
+	case stm.SymbolAssign:
+		return b.addSymbolAssign(ctx, statement.(ast.SymbolAssignStatement))
 	case stm.Assign:
-		// g.AssignStatement(statement.(ast.AssignStatement))
+		// return b.addAssign(ctx, statement.(ast.AssignStatement))
 	case stm.AddAssign:
 		// g.AddAssignStatement(statement.(ast.AddAssignStatement))
 	case stm.For:
@@ -89,6 +100,24 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	default:
 		panic(fmt.Sprintf("%s statement not implemented", statement.Kind().String()))
 	}
+	return nil
+}
+
+func (b *Block) addSymbolAssign(ctx *Context, stmt ast.SymbolAssignStatement) error {
+	name := stmt.Target.Lit
+	pos := stmt.Target.Pos
+	s := b.Scope.Lookup(name, pos.Num)
+	if s == nil {
+		return fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
+	}
+	if s.Scope.Kind == scp.Unit {
+		ctx.ref.Add(s)
+	}
+
+	b.addNode(&SymbolAssignStatement{
+		Target: s,
+		// TODO: fill expression
+	})
 	return nil
 }
 
