@@ -16,7 +16,7 @@ func (lx *Lexer) advance() {
 	if lx.c == '\n' {
 		lx.pos.Line += 1
 		lx.pos.Col = 0
-	} else if lx.c < nonASCII {
+	} else if isCodePointStart(lx.c) {
 		lx.pos.Col += 1
 	}
 
