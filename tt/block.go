@@ -97,6 +97,8 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 		// g.ForEachStatement(statement.(ast.ForEachStatement))
 	case stm.Let:
 		// g.LetStatement(statement.(ast.LetStatement))
+	case stm.Defer:
+		//
 	default:
 		panic(fmt.Sprintf("%s statement not implemented", statement.Kind().String()))
 	}

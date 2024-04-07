@@ -17,6 +17,7 @@ fn use_inc() {
 fn test_dead_code(a: int) {
     var x: int = a;
     x = "";
+    defer use_inc();
     return;
 
     let r: int = inc(x.&);

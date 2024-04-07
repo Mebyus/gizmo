@@ -29,9 +29,56 @@ func (p *Parser) parseStatement() (statement ast.Statement, err error) {
 		return p.matchStatement()
 	case token.Jump:
 		return p.jumpStatement()
+	case token.Defer:
+		return p.deferStatement()
 	default:
 		return p.otherStatement()
 	}
+}
+
+func (p *Parser) deferStatement() (ast.DeferStatement, error) {
+	pos := p.pos()
+	p.advance() // skip "defer"
+
+	if p.tok.Kind != token.Identifier && p.tok.Kind != token.Receiver {
+		return ast.DeferStatement{}, p.unexpected(p.tok)
+	}
+
+	var cop ast.ChainOperand
+	var err error
+	if p.tok.Kind == token.Identifier {
+		identifier, err := p.scopedIdentifier()
+		if err != nil {
+			return ast.DeferStatement{}, err
+		}
+
+		cop, err = p.chainOperand(ast.ChainStart{Identifier: identifier})
+		if err != nil {
+			return ast.DeferStatement{}, err
+		}
+	} else {
+		rvPos := p.pos()
+		p.advance() // skip "rv"
+
+		cop, err = p.chainOperand(ast.Receiver{Pos: rvPos})
+		if err != nil {
+			return ast.DeferStatement{}, err
+		}
+	}
+
+	if cop.Kind() != exn.Call {
+		return ast.DeferStatement{}, fmt.Errorf("%s: only call statements can be deferred", pos.String())
+	}
+
+	if p.tok.Kind != token.Semicolon {
+		return ast.DeferStatement{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip ";"
+
+	return ast.DeferStatement{
+		Pos:  pos,
+		Call: cop.(ast.CallExpression),
+	}, nil
 }
 
 func (p *Parser) jumpStatement() (ast.JumpStatement, error) {

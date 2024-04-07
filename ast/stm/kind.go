@@ -23,7 +23,12 @@ const (
 	ForEach
 	Match
 	Jump
+
+	// Defer function or method call
 	Defer
+
+	// Defer block statement
+	DeferBlock
 
 	SymbolAssign
 )
@@ -47,6 +52,7 @@ var text = [...]string{
 	Jump:      "jump",
 	Defer:     "defer",
 
+	DeferBlock:   "defer_block",
 	SymbolAssign: "symbol_assign",
 }
 

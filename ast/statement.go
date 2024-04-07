@@ -393,3 +393,22 @@ func (LetStatement) Kind() stm.Kind {
 func (s LetStatement) Pin() source.Pos {
 	return s.Pos
 }
+
+// <DeferStatement> = "defer" <CallExpression> ";"
+type DeferStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	Call CallExpression
+}
+
+var _ Statement = DeferStatement{}
+
+func (DeferStatement) Kind() stm.Kind {
+	return stm.Defer
+}
+
+func (s DeferStatement) Pin() source.Pos {
+	return s.Pos
+}
