@@ -20,7 +20,7 @@ fn test_dead_code(a: int) {
     defer use_inc();
     return;
 
-    let r: int = inc(x.&);
+    /* тестируем позицию токена после комментария с utf-8 */ let r: int = inc(x.&);
 }
 
 fn test_assign() => uint {

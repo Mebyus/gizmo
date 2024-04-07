@@ -36,7 +36,7 @@ type Merger struct {
 	// list of all function symbols in unit
 	fns []*Symbol
 
-	Warns []error
+	Warns []Warn
 }
 
 func New(ctx UnitContext) *Merger {

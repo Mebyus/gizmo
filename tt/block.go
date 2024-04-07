@@ -57,7 +57,7 @@ func (b *Block) fill(ctx *Context, statements []ast.Statement) error {
 		if s.Kind() == stm.Return {
 			if i+1 < len(statements) {
 				pos := statements[i+1].Pin()
-				ctx.m.warn(fmt.Errorf("%s: dead code after return", pos.String()))
+				ctx.m.warn(pos, "dead code after return")
 			}
 			return nil
 		}
