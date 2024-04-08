@@ -3,9 +3,10 @@ package tt
 import (
 	"github.com/mebyus/gizmo/tt/scp"
 	"github.com/mebyus/gizmo/tt/sym"
+	"github.com/mebyus/gizmo/tt/typ"
 )
 
-func newNamedTypeSymbol(name string, typ *Type) *Symbol {
+func newTypeSymbol(name string, typ *Type) *Symbol {
 	return &Symbol{
 		Name: name,
 		Kind: sym.Type,
@@ -14,25 +15,66 @@ func newNamedTypeSymbol(name string, typ *Type) *Symbol {
 	}
 }
 
+func (s *Scope) addBuiltinUnsignedType(name string, size uint32) {
+	t := &Type{
+		Name:    name,
+		Kind:    typ.Unsigned,
+		Def:     IntTypeDef{Size: size},
+		Builtin: true,
+	}
+	t.Base = t
+	s.Bind(newTypeSymbol(name, t))
+}
+
+func (s *Scope) addBuiltinSignedType(name string, size uint32) {
+	t := &Type{
+		Name:    name,
+		Kind:    typ.Signed,
+		Def:     IntTypeDef{Size: size},
+		Builtin: true,
+	}
+	t.Base = t
+	s.Bind(newTypeSymbol(name, t))
+}
+
+func (s *Scope) addBuiltinBoolType() {
+	t := &Type{
+		Name:    "bool",
+		Kind:    typ.Boolean,
+		Builtin: true,
+	}
+	t.Base = t
+	s.Bind(newTypeSymbol("bool", t))
+}
+
+func (s *Scope) addBuiltinStringType() {
+	t := &Type{
+		Name:    "str",
+		Kind:    typ.String,
+		Builtin: true,
+	}
+	t.Base = t
+	s.Bind(newTypeSymbol("str", t))
+}
+
 func NewGlobalScope() *Scope {
 	s := NewScope(scp.Global, nil, nil)
 
-	s.Bind(newNamedTypeSymbol("u8", &Type{}))
-	s.Bind(newNamedTypeSymbol("u16", &Type{}))
-	s.Bind(newNamedTypeSymbol("u32", &Type{}))
-	s.Bind(newNamedTypeSymbol("u64", &Type{}))
+	s.addBuiltinUnsignedType("u8", 1)
+	s.addBuiltinUnsignedType("u16", 2)
+	s.addBuiltinUnsignedType("u32", 4)
+	s.addBuiltinUnsignedType("u64", 8)
+	s.addBuiltinUnsignedType("uint", 8) // TODO: adjust uint size based on target arch
 
-	s.Bind(newNamedTypeSymbol("i8", &Type{}))
-	s.Bind(newNamedTypeSymbol("i16", &Type{}))
-	s.Bind(newNamedTypeSymbol("i32", &Type{}))
-	s.Bind(newNamedTypeSymbol("i64", &Type{}))
+	s.addBuiltinSignedType("i8", 1)
+	s.addBuiltinSignedType("i16", 2)
+	s.addBuiltinSignedType("i32", 4)
+	s.addBuiltinSignedType("i64", 8)
+	s.addBuiltinSignedType("int", 8) // TODO: adjust int size based on target arch
 
-	s.Bind(newNamedTypeSymbol("uint", &Type{}))
-	s.Bind(newNamedTypeSymbol("int", &Type{}))
-
-	s.Bind(newNamedTypeSymbol("bool", &Type{}))
-	s.Bind(newNamedTypeSymbol("rune", &Type{}))
-	s.Bind(newNamedTypeSymbol("str", &Type{}))
+	s.addBuiltinBoolType()
+	s.addBuiltinStringType()
+	s.addBuiltinUnsignedType("rune", 4)
 
 	return s
 }

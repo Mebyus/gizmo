@@ -81,9 +81,9 @@ type SymDef interface {
 	SymDef()
 }
 
-// Dummy provides quick, easy to use implementation of discriminator SymDef() method
+// This is dummy implementation of SymDef interface.
 //
-// Used for embedding into other (non-dummy) symbol definition nodes
+// Used for embedding into other (non-dummy) symbol definition nodes.
 type nodeSymDef struct{}
 
 func (nodeSymDef) SymDef() {}
