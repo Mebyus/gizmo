@@ -5,6 +5,8 @@ import (
 
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/tt/scp"
+	"github.com/mebyus/gizmo/tt/sym"
+	"github.com/mebyus/gizmo/tt/typ"
 )
 
 type Scope struct {
@@ -20,6 +22,8 @@ type Scope struct {
 	//
 	// Next levels may vary based on source code that defines the scope.
 	Parent *Scope
+
+	Types *TypeIndex
 
 	// Symbol map. Maps name to its local symbol.
 	sm map[string]*Symbol
@@ -60,7 +64,7 @@ func NewScope(kind scp.Kind, parent *Scope, pos *source.Pos) *Scope {
 	if kind >= scp.Top && pos == nil {
 		panic("scope parent inclusion position is not specified")
 	}
-	return &Scope{
+	s := &Scope{
 		Kind:   kind,
 		Pos:    pos,
 		Parent: parent,
@@ -68,6 +72,18 @@ func NewScope(kind scp.Kind, parent *Scope, pos *source.Pos) *Scope {
 
 		sm: make(map[string]*Symbol),
 	}
+	s.Types = &TypeIndex{
+		scope: s,
+		tm:    inheritTypeMap(parent),
+	}
+	return s
+}
+
+func inheritTypeMap(parent *Scope) map[Stable]*Type {
+	if parent == nil {
+		return make(map[Stable]*Type)
+	}
+	return parent.Types.tm
 }
 
 func NewUnitScope(global *Scope) *Scope {
@@ -157,10 +173,19 @@ func (s *Scope) sym(name string) *Symbol {
 }
 
 // Bind adds given symbol to this scope.
-func (s *Scope) Bind(sym *Symbol) {
-	s.Symbols = append(s.Symbols, sym)
-	s.sm[sym.Name] = sym
-	sym.Scope = s
+func (s *Scope) Bind(symbol *Symbol) {
+	s.Symbols = append(s.Symbols, symbol)
+	s.sm[symbol.Name] = symbol
+	symbol.Scope = s
+
+	if symbol.Kind == sym.Type {
+		t := symbol.Def.(*Type)
+
+		if !(t.Builtin || t.Kind == typ.Named) {
+			panic(fmt.Sprintf("unexpected type kind: %s", t.Kind.String()))
+		}
+		s.Types.tm[t.Stable()] = t
+	}
 }
 
 // CheckUsage scans symbols usage count in this scope. Returns error if there are

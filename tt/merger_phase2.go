@@ -93,26 +93,46 @@ func (m *Merger) scanFns() error {
 }
 
 func (m *Merger) scanFn(def TempFnDef) (*FnDef, error) {
+	scope := m.unit.Scope
+
 	var params []*Symbol
 	for _, p := range def.top.Definition.Head.Signature.Params {
+		t, err := scope.Types.Lookup(p.Type)
+		if err != nil {
+			return nil, err
+		}
+
 		params = append(params, &Symbol{
 			Pos:  p.Name.Pos,
 			Name: p.Name.Lit,
-			Type: m.lookupType(p.Type),
+			Type: t,
 			Kind: sym.Param,
 		})
 	}
 
 	pos := def.top.Definition.Body.Pos
+	result, err := scope.Types.Lookup(def.top.Definition.Head.Signature.Result)
+	if err != nil {
+		return nil, err
+	}
 	fn := &FnDef{
 		Params: params,
-		Result: m.lookupType(def.top.Definition.Head.Signature.Result),
+		Result: result,
 		Never:  def.top.Definition.Head.Signature.Never,
 		Body:   Block{Pos: pos},
 	}
 	fn.Body.Scope = NewTopScope(m.unit.Scope, &fn.Body.Pos)
+	
+	for _, param := range params {
+		name := param.Name
+		s := fn.Body.Scope.sym(name)
+		if s != nil {
+			return nil, fmt.Errorf("%s: parameter \"%s\" redeclared in this function", pos.String(), name)
+		}
+		fn.Body.Scope.Bind(param)
+	}
 
-	err := m.scanFnBody(fn, def.top.Definition.Body.Statements)
+	err = m.scanFnBody(fn, def.top.Definition.Body.Statements)
 	if err != nil {
 		return nil, err
 	}
