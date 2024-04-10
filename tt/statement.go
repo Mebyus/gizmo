@@ -46,8 +46,30 @@ func (s *VarStatement) Kind() stm.Kind {
 	return stm.Var
 }
 
+type ReturnStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	// Equals nil if return does not have expression.
+	Expr any
+}
+
+// Explicit interface implementation check
+var _ Statement = &ReturnStatement{}
+
+func (s *ReturnStatement) Pin() source.Pos {
+	return s.Pos
+}
+
+func (s *ReturnStatement) Kind() stm.Kind {
+	return stm.Return
+}
+
 // SymbolAssignStatement is a simple form of generic assign statement,
-// where target is a symbol (not a complex expression).
+// where target is a symbol (not a complex expression). Example:
+//
+//	x = 10 + a;
 type SymbolAssignStatement struct {
 	nodeStatement
 
@@ -69,5 +91,33 @@ func (s *SymbolAssignStatement) Pin() source.Pos {
 }
 
 func (s *SymbolAssignStatement) Kind() stm.Kind {
-	return stm.Assign
+	return stm.SymbolAssign
+}
+
+// IndirectAssignStatement is a simple form of generic assign statement,
+// where target is an indirect on a symbol. Example:
+//
+//	x.@ = 10 + a;
+type IndirectAssignStatement struct {
+	nodeStatement
+
+	// Position of assign statement.
+	Pos source.Pos
+
+	// Target of the assignment.
+	Target *Symbol
+
+	// Assigned expression.
+	Expr any
+}
+
+// Explicit interface implementation check
+var _ Statement = &IndirectAssignStatement{}
+
+func (s *IndirectAssignStatement) Pin() source.Pos {
+	return s.Pos
+}
+
+func (s *IndirectAssignStatement) Kind() stm.Kind {
+	return stm.IndirectAssign
 }

@@ -537,7 +537,22 @@ func (p *Parser) otherStatement() (ast.Statement, error) {
 	var err error
 	var target ast.ChainOperand
 
-	if p.tok.Kind == token.Identifier {
+	if p.tok.Kind == token.Identifier && p.next.Kind == token.Indirect {
+		idn := p.idn()
+		p.advance() // skip identifier
+		p.advance() // skip ".@"
+
+		if p.tok.Kind == token.Assign {
+			return p.indirectAssignStatement(idn)
+		}
+		target, err = p.chainOperand(ast.IndirectExpression{
+			Target:     ast.ChainStart{Identifier: ast.ScopedIdentifier{Name: idn}},
+			ChainDepth: 1,
+		})
+		if err != nil {
+			return nil, err
+		}
+	} else if p.tok.Kind == token.Identifier {
 		identifier, err := p.scopedIdentifier()
 		if err != nil {
 			return nil, err
@@ -621,6 +636,25 @@ func (p *Parser) symbolAssignStatement() (ast.SymbolAssignStatement, error) {
 	p.advance() // skip ";"
 
 	return ast.SymbolAssignStatement{
+		Target:     target,
+		Expression: expr,
+	}, nil
+}
+
+func (p *Parser) indirectAssignStatement(target ast.Identifier) (ast.IndirectAssignStatement, error) {
+	p.advance() // skip "="
+
+	expr, err := p.expr()
+	if err != nil {
+		return ast.IndirectAssignStatement{}, err
+	}
+
+	if p.tok.Kind != token.Semicolon {
+		return ast.IndirectAssignStatement{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip ";"
+
+	return ast.IndirectAssignStatement{
 		Target:     target,
 		Expression: expr,
 	}, nil

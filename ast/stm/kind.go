@@ -30,7 +30,15 @@ const (
 	// Defer block statement
 	DeferBlock
 
+	// Example:
+	//
+	//	x = 10 + a;
 	SymbolAssign
+
+	// Example:
+	//
+	//	x.@ = 10 + a;
+	IndirectAssign
 )
 
 var text = [...]string{
@@ -52,8 +60,10 @@ var text = [...]string{
 	Jump:      "jump",
 	Defer:     "defer",
 
-	DeferBlock:   "defer_block",
-	SymbolAssign: "symbol_assign",
+	DeferBlock:     "defer_block",
+	
+	SymbolAssign:   "symbol_assign",
+	IndirectAssign: "indirect_assign",
 }
 
 func (k Kind) String() string {

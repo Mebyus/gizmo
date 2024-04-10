@@ -70,7 +70,7 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	case stm.Block:
 		// g.BlockStatement(statement.(ast.BlockStatement))
 	case stm.Return:
-		// g.ReturnStatement(statement.(ast.ReturnStatement))
+		return b.addReturn(ctx, statement.(ast.ReturnStatement))
 	case stm.Const:
 		// g.ConstStatement(statement.(ast.ConstStatement))
 	case stm.Var:
@@ -81,6 +81,8 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 		// g.ExpressionStatement(statement.(ast.ExpressionStatement))
 	case stm.SymbolAssign:
 		return b.addSymbolAssign(ctx, statement.(ast.SymbolAssignStatement))
+	case stm.IndirectAssign:
+		return b.addIndirectAssign(ctx, statement.(ast.IndirectAssignStatement))
 	case stm.Assign:
 		// return b.addAssign(ctx, statement.(ast.AssignStatement))
 	case stm.AddAssign:
@@ -105,6 +107,54 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	return nil
 }
 
+func (b *Block) addReturn(ctx *Context, stmt ast.ReturnStatement) error {
+	pos := stmt.Pos
+
+	if stmt.Expression == nil {
+		if ctx.ret != nil {
+			return fmt.Errorf("%s: empty return in function which return value is not empty", pos.String())
+		}
+		if ctx.never {
+			return fmt.Errorf("%s: return used in function which is marked as never returning", pos.String())
+		}
+
+		b.addNode(&ReturnStatement{Pos: pos})
+		return nil
+	}
+
+	if ctx.ret == nil {
+		return fmt.Errorf("%s: return with expression in function which does not return a value", pos.String())
+	}
+	if ctx.never {
+		panic("unreachable: impossible condition")
+	}
+
+	b.addNode(&ReturnStatement{
+		Pos: pos,
+		// TODO: fill expression
+	})
+	return nil
+}
+
+func (b *Block) addIndirectAssign(ctx *Context, stmt ast.IndirectAssignStatement) error {
+	name := stmt.Target.Lit
+	pos := stmt.Target.Pos
+	s := b.Scope.Lookup(name, pos.Num)
+	if s == nil {
+		return fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
+	}
+	if s.Scope.Kind == scp.Unit {
+		ctx.ref.Add(s)
+	}
+
+	b.addNode(&IndirectAssignStatement{
+		Pos:    pos,
+		Target: s,
+		// TODO: fill expression
+	})
+	return nil
+}
+
 func (b *Block) addSymbolAssign(ctx *Context, stmt ast.SymbolAssignStatement) error {
 	name := stmt.Target.Lit
 	pos := stmt.Target.Pos
@@ -117,6 +167,7 @@ func (b *Block) addSymbolAssign(ctx *Context, stmt ast.SymbolAssignStatement) er
 	}
 
 	b.addNode(&SymbolAssignStatement{
+		Pos:    pos,
 		Target: s,
 		// TODO: fill expression
 	})

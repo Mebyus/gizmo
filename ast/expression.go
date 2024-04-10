@@ -121,6 +121,9 @@ type ChainOperand interface {
 	Operand
 
 	ChainOperand()
+
+	// Depth of chain operand. Starts from zero for the first operand in chain.
+	Depth() uint32
 }
 
 type nodeChainOperand struct{ nodeOperand }
@@ -144,6 +147,10 @@ func (r Receiver) Pin() source.Pos {
 	return r.Pos
 }
 
+func (r Receiver) Depth() uint32 {
+	return 0
+}
+
 // <ChainStart> = <ScopedIdentifier>
 type ChainStart struct {
 	nodeChainOperand
@@ -161,12 +168,18 @@ func (s ChainStart) Pin() source.Pos {
 	return s.Identifier.Pin()
 }
 
+func (s ChainStart) Depth() uint32 {
+	return 0
+}
+
 // <CallExpression> = <CallableExpression> "(" { <Expression> "," } ")"
 type CallExpression struct {
 	nodeChainOperand
 
 	Callee    ChainOperand
 	Arguments []Expression
+
+	ChainDepth uint32
 }
 
 var _ ChainOperand = CallExpression{}
@@ -179,12 +192,18 @@ func (e CallExpression) Pin() source.Pos {
 	return e.Callee.Pin()
 }
 
+func (e CallExpression) Depth() uint32 {
+	return e.ChainDepth
+}
+
 // <SelectorExpression> = <SelectableExpression> "." <Identifier>
 type SelectorExpression struct {
 	nodeChainOperand
 
 	Target   ChainOperand
 	Selected Identifier
+
+	ChainDepth uint32
 }
 
 var _ ChainOperand = SelectorExpression{}
@@ -197,12 +216,18 @@ func (e SelectorExpression) Pin() source.Pos {
 	return e.Target.Pin()
 }
 
+func (e SelectorExpression) Depth() uint32 {
+	return e.ChainDepth
+}
+
 // <IndexExpression> = <IndexableExpression> "[" <Expression> "]"
 type IndexExpression struct {
 	nodeChainOperand
 
 	Target ChainOperand
 	Index  Expression
+
+	ChainDepth uint32
 }
 
 var _ ChainOperand = IndexExpression{}
@@ -215,11 +240,17 @@ func (e IndexExpression) Pin() source.Pos {
 	return e.Target.Pin()
 }
 
+func (e IndexExpression) Depth() uint32 {
+	return e.ChainDepth
+}
+
 // <IndirectExpression> = <ChainOperand> ".@"
 type IndirectExpression struct {
 	nodeChainOperand
 
 	Target ChainOperand
+
+	ChainDepth uint32
 }
 
 var _ ChainOperand = IndirectExpression{}
@@ -232,11 +263,17 @@ func (e IndirectExpression) Pin() source.Pos {
 	return e.Target.Pin()
 }
 
+func (e IndirectExpression) Depth() uint32 {
+	return e.ChainDepth
+}
+
 // <AddressExpression> = <ChainOperand> ".&"
 type AddressExpression struct {
 	nodeChainOperand
 
 	Target ChainOperand
+
+	ChainDepth uint32
 }
 
 var _ ChainOperand = AddressExpression{}
@@ -249,6 +286,10 @@ func (e AddressExpression) Pin() source.Pos {
 	return e.Target.Pin()
 }
 
+func (e AddressExpression) Depth() uint32 {
+	return e.ChainDepth
+}
+
 // <IndirectIndexExpression> = <Target> ".[" <Index> "]"
 //
 // <Target> = <ChainOperand>
@@ -259,6 +300,8 @@ type IndirectIndexExpression struct {
 
 	Target ChainOperand
 	Index  Expression
+
+	ChainDepth uint32
 }
 
 var _ ChainOperand = IndirectIndexExpression{}
@@ -269,6 +312,10 @@ func (IndirectIndexExpression) Kind() exn.Kind {
 
 func (e IndirectIndexExpression) Pin() source.Pos {
 	return e.Target.Pin()
+}
+
+func (e IndirectIndexExpression) Depth() uint32 {
+	return e.ChainDepth
 }
 
 // <SliceExpression> = <Target> "[" [ <Start> ] ":" [ <End> ] "]"
@@ -282,6 +329,8 @@ type SliceExpression struct {
 
 	// Part after ":". Can be nil if expression is omitted
 	End Expression
+
+	ChainDepth uint32
 }
 
 var _ ChainOperand = SliceExpression{}
@@ -292,6 +341,10 @@ func (SliceExpression) Kind() exn.Kind {
 
 func (e SliceExpression) Pin() source.Pos {
 	return e.Target.Pin()
+}
+
+func (e SliceExpression) Depth() uint32 {
+	return e.ChainDepth
 }
 
 // <CastExpression> = "cast" "[" <Expression> ":" <TypeSpecifier> "]"

@@ -451,17 +451,6 @@ func (p *Parser) identifierStartOperand() (ast.Operand, error) {
 		return nil, err
 	}
 
-	if p.tok.Kind == token.LeftDoubleSquare {
-		instance, err := p.instanceExpression(scoped)
-		if err != nil {
-			return nil, err
-		}
-		if p.tok.Kind != token.LeftParentheses {
-			return nil, p.unexpected(p.tok)
-		}
-		return p.chainOperand(instance)
-	}
-
 	switch p.tok.Kind {
 	case token.Period, token.LeftParentheses, token.LeftSquare, token.Indirect, token.Address:
 		return p.chainOperand(ast.ChainStart{Identifier: scoped})

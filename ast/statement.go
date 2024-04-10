@@ -45,79 +45,13 @@ func (s BlockStatement) Pin() source.Pos {
 	return s.Pos
 }
 
-// <AssignStatement> = <Target> "=" <Expression> ";"
-//
-// <Target> = <ChainOperand>
-type AssignStatement struct {
-	nodeStatement
-
-	// cannot be call expression
-	Target ChainOperand
-
-	Expression Expression
-}
-
-// interface implementation check
-var _ Statement = AssignStatement{}
-
-func (AssignStatement) Kind() stm.Kind {
-	return stm.Assign
-}
-
-func (s AssignStatement) Pin() source.Pos {
-	return s.Target.Pin()
-}
-
-// <SymbolAssignStatement> = <Identifier> "=" <Expression> ";"
-type SymbolAssignStatement struct {
-	nodeStatement
-
-	Target Identifier
-
-	Expression Expression
-}
-
-// Explicit interface implementation check
-var _ Statement = SymbolAssignStatement{}
-
-func (SymbolAssignStatement) Kind() stm.Kind {
-	return stm.SymbolAssign
-}
-
-func (s SymbolAssignStatement) Pin() source.Pos {
-	return s.Target.Pos
-}
-
-// <AddAssignStatement> = <Target> "+=" <Expression> ";"
-//
-// <Target> = <ChainOperand>
-type AddAssignStatement struct {
-	nodeStatement
-
-	// cannot be call expression
-	Target ChainOperand
-
-	Expression Expression
-}
-
-// interface implementation check
-var _ Statement = AddAssignStatement{}
-
-func (AddAssignStatement) Kind() stm.Kind {
-	return stm.AddAssign
-}
-
-func (s AddAssignStatement) Pin() source.Pos {
-	return s.Target.Pin()
-}
-
 // <ReturnStatement> = "return" [ <Expression> ] ";"
 type ReturnStatement struct {
 	nodeStatement
 
 	Pos source.Pos
 
-	// Equals nil if return does not have expression
+	// Equals nil if return does not have expression.
 	Expression Expression
 }
 
