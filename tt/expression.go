@@ -1,9 +1,8 @@
 package tt
 
 import (
-	"github.com/mebyus/gizmo/ast/bop"
+	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/exn"
-	"github.com/mebyus/gizmo/ast/uop"
 	"github.com/mebyus/gizmo/source"
 )
 
@@ -63,10 +62,7 @@ func (e *SymbolExpression) Pin() source.Pos {
 	return e.Pos
 }
 
-type UnaryOperator struct {
-	Pos  source.Pos
-	Kind uop.Kind
-}
+type UnaryOperator ast.UnaryOperator
 
 type UnaryExpression struct {
 	nodeExpression
@@ -86,10 +82,7 @@ func (e *UnaryExpression) Pin() source.Pos {
 	return e.Operator.Pos
 }
 
-type BinaryOperator struct {
-	Pos  source.Pos
-	Kind bop.Kind
-}
+type BinaryOperator ast.BinaryOperator
 
 type BinaryExpression struct {
 	nodeExpression
@@ -108,4 +101,89 @@ func (*BinaryExpression) Kind() exn.Kind {
 
 func (e *BinaryExpression) Pin() source.Pos {
 	return e.Left.Pin()
+}
+
+type ChainOperand interface {
+	Operand
+
+	ChainOperand()
+
+	// Depth of chain operand. Starts from zero for the first operand in chain.
+	Depth() uint32
+}
+
+type nodeChainOperand struct{ nodeOperand }
+
+func (nodeChainOperand) ChainOperand() {}
+
+type ChainStart struct {
+	nodeChainOperand
+
+	Pos source.Pos
+
+	// Symbol which is referenced in chain start.
+	Sym *Symbol
+}
+
+var _ ChainOperand = &ChainStart{}
+
+func (*ChainStart) Kind() exn.Kind {
+	return exn.Start
+}
+
+func (s *ChainStart) Pin() source.Pos {
+	return s.Pos
+}
+
+func (s *ChainStart) Depth() uint32 {
+	return 0
+}
+
+type IndirectExpression struct {
+	nodeChainOperand
+
+	Pos source.Pos
+
+	Target ChainOperand
+
+	ChainDepth uint32
+}
+
+var _ ChainOperand = &IndirectExpression{}
+
+func (*IndirectExpression) Kind() exn.Kind {
+	return exn.Indirect
+}
+
+func (e *IndirectExpression) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *IndirectExpression) Depth() uint32 {
+	return e.ChainDepth
+}
+
+type CallExpression struct {
+	nodeChainOperand
+
+	Pos source.Pos
+
+	Callee    ChainOperand
+	Arguments []Expression
+
+	ChainDepth uint32
+}
+
+var _ ChainOperand = &CallExpression{}
+
+func (*CallExpression) Kind() exn.Kind {
+	return exn.Call
+}
+
+func (e *CallExpression) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *CallExpression) Depth() uint32 {
+	return e.ChainDepth
 }

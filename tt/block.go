@@ -41,7 +41,7 @@ func (b *Block) Fill(ctx *Context, statements []ast.Statement) error {
 	if err != nil {
 		return err
 	}
-	return b.Scope.CheckUsage()
+	return b.Scope.CheckUsage(ctx)
 }
 
 func (b *Block) fill(ctx *Context, statements []ast.Statement) error {
@@ -98,7 +98,7 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	case stm.ForEach:
 		// g.ForEachStatement(statement.(ast.ForEachStatement))
 	case stm.Let:
-		// g.LetStatement(statement.(ast.LetStatement))
+		return b.addLet(ctx, statement.(ast.LetStatement))
 	case stm.Defer:
 		//
 	default:
@@ -197,10 +197,15 @@ func (b *Block) addVar(ctx *Context, stmt ast.VarStatement) error {
 		return fmt.Errorf("%s: symbol \"%s\" redeclared in this block", pos.String(), name)
 	}
 
+	t, err := b.Scope.Types.Lookup(stmt.Type)
+	if err != nil {
+		return err
+	}
+
 	s = &Symbol{
 		Pos:  pos,
 		Name: name,
-		Type: ctx.m.lookupType(stmt.Type),
+		Type: t,
 		Kind: sym.Var,
 	}
 
@@ -214,6 +219,45 @@ func (b *Block) addVar(ctx *Context, stmt ast.VarStatement) error {
 	b.Scope.Bind(s)
 
 	b.addNode(&VarStatement{
+		Sym:  s,
+		Expr: expr,
+	})
+	return nil
+}
+
+func (b *Block) addLet(ctx *Context, stmt ast.LetStatement) error {
+	name := stmt.Name.Lit
+	pos := stmt.Name.Pos
+	s := b.Scope.Sym(name, pos.Num)
+	if s != nil {
+		return fmt.Errorf("%s: symbol \"%s\" redeclared in this block", pos.String(), name)
+	}
+
+	t, err := b.Scope.Types.Lookup(stmt.Type)
+	if err != nil {
+		return err
+	}
+
+	s = &Symbol{
+		Pos:  pos,
+		Name: name,
+		Type: t,
+		Kind: sym.Let,
+	}
+
+	if stmt.Expression == nil {
+		panic("nil init expression in let statement")
+	}
+	expr, err := b.Scope.Scan(ctx, stmt.Expression)
+	if err != nil {
+		return err
+	}
+
+	// bind occurs after expression scan, because variable
+	// that is being defined must not be visible in init expression
+	b.Scope.Bind(s)
+
+	b.addNode(&LetStatement{
 		Sym:  s,
 		Expr: expr,
 	})

@@ -8,10 +8,11 @@ fn inc(x: *int) => int {
     return x2;
 }
 
-fn use_inc() {
+fn use_inc() => int {
     var x: int = 1;
     let r: int = inc(x.&);
     x = 2;
+    return r;
 }
 
 fn test_dead_code(a: int) {

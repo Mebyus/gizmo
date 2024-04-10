@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"hash/fnv"
 
-	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/tt/typ"
 )
 
@@ -113,13 +112,6 @@ func (t *Type) Stable() Stable {
 		BaseHash: t.Base.Hash(),
 		BaseKind: t.Base.Kind,
 	}
-}
-
-func (m *Merger) lookupType(spec ast.TypeSpecifier) *Type {
-	if spec == nil {
-		return nil
-	}
-	return &Type{}
 }
 
 func HashName(name string) uint64 {

@@ -18,9 +18,9 @@ type Statement interface {
 	Kind() stm.Kind
 }
 
-// Dummy provides quick, easy to use implementation of discriminator Statement() method
+// This is dummy implementation of Statement interface.
 //
-// Used for embedding into other (non-dummy) statement nodes
+// Used for embedding into other (non-dummy) statement nodes.
 type nodeStatement struct{}
 
 func (nodeStatement) Statement() {}
@@ -44,6 +44,27 @@ func (s *VarStatement) Pin() source.Pos {
 
 func (s *VarStatement) Kind() stm.Kind {
 	return stm.Var
+}
+
+type LetStatement struct {
+	nodeStatement
+
+	// Symbol created by this statement.
+	Sym *Symbol
+
+	// Init expression for created symbol. Always not nil.
+	Expr Expression
+}
+
+// Explicit interface implementation check
+var _ Statement = &LetStatement{}
+
+func (s *LetStatement) Pin() source.Pos {
+	return s.Sym.Pos
+}
+
+func (s *LetStatement) Kind() stm.Kind {
+	return stm.Let
 }
 
 type ReturnStatement struct {

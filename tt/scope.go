@@ -190,11 +190,15 @@ func (s *Scope) Bind(symbol *Symbol) {
 
 // CheckUsage scans symbols usage count in this scope. Returns error if there are
 // declared, but not used symbols.
-func (s *Scope) CheckUsage() error {
+func (s *Scope) CheckUsage(ctx *Context) error {
 	var list []*Symbol
-	for _, sym := range s.Symbols {
-		if sym.RefNum == 0 {
-			list = append(list, sym)
+	for _, symbol := range s.Symbols {
+		if symbol.RefNum == 0 {
+			if symbol.Kind == sym.Param {
+				ctx.m.warn(symbol.Pos, fmt.Sprintf("unused function parameter \"%s\"", symbol.Name))
+			} else {
+				list = append(list, symbol)
+			}
 		}
 	}
 	if len(list) == 0 {

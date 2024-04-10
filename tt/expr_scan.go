@@ -15,22 +15,29 @@ func (s *Scope) Scan(ctx *Context, expr ast.Expression) (Expression, error) {
 	if expr == nil {
 		return nil, nil
 	}
+	if expr.Kind() == exn.Start {
+		panic("chain start cannot appear as standalone expression")
+	}
 
+	return s.scan(ctx, expr)
+}
+
+func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 	switch expr.Kind() {
-	// case exn.Start:
-	// 	// g.ScopedIdentifier(expr.(ast.ChainStart).Identifier)
-	case exn.Symbol:
-		return s.scanSymbolExpression(ctx, expr.(ast.SymbolExpression))
 	case exn.Basic:
 		return scanBasicLiteral(expr.(ast.BasicLiteral)), nil
-	// case exn.Indirect:
-	// 	// g.IndirectExpression(expr.(ast.IndirectExpression))
+	case exn.Symbol:
+		return s.scanSymbolExpression(ctx, expr.(ast.SymbolExpression))
+	case exn.Start:
+		return s.scanChainStart(ctx, expr.(ast.ChainStart))
+	case exn.Indirect:
+		return s.scanIndirectExpression(ctx, expr.(ast.IndirectExpression))
 	case exn.Unary:
 		return s.scanUnaryExpression(ctx, expr.(*ast.UnaryExpression))
 	case exn.Binary:
 		return s.scanBinaryExpression(ctx, expr.(ast.BinaryExpression))
-	// case exn.Call:
-	// 	// g.CallExpression(expr.(ast.CallExpression))
+	case exn.Call:
+		return s.scanCallExpression(ctx, expr.(ast.CallExpression))
 	// case exn.Indirx:
 	// 	// g.IndirectIndexExpression(expr.(ast.IndirectIndexExpression))
 	// case exn.Paren:
@@ -78,7 +85,49 @@ func (s *Scope) scanUnaryExpression(ctx *Context, expr *ast.UnaryExpression) (*U
 }
 
 func (s *Scope) scanBinaryExpression(ctx *Context, expr ast.BinaryExpression) (*BinaryExpression, error) {
-	return &BinaryExpression{}, nil
+	left, err := s.scan(ctx, expr.Left)
+	if err != nil {
+		return nil, err
+	}
+	right, err := s.scan(ctx, expr.Right)
+	if err != nil {
+		return nil, err
+	}
+
+	return &BinaryExpression{
+		Operator: BinaryOperator(expr.Operator),
+		Left:     left,
+		Right:    right,
+	}, nil
+}
+
+func (s *Scope) scanChainStart(ctx *Context, start ast.ChainStart) (*ChainStart, error) {
+	name := start.Identifier.Name.Lit
+	pos := start.Identifier.Name.Pos
+	symbol := s.Lookup(name, pos.Num)
+	if symbol == nil {
+		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
+	}
+	if symbol.Scope.Kind == scp.Unit {
+		ctx.ref.Add(symbol)
+	}
+
+	return &ChainStart{
+		Pos: pos,
+		Sym: symbol,
+	}, nil
+}
+
+func (s *Scope) scanIndirectExpression(ctx *Context, expr ast.IndirectExpression) (*IndirectExpression, error) {
+	return &IndirectExpression{
+		ChainDepth: expr.ChainDepth,
+	}, nil
+}
+
+func (s *Scope) scanCallExpression(ctx *Context, expr ast.CallExpression) (*CallExpression, error) {
+	return &CallExpression{
+		ChainDepth: expr.ChainDepth,
+	}, nil
 }
 
 func scanBasicLiteral(lit ast.BasicLiteral) Literal {
