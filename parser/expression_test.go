@@ -61,8 +61,8 @@ func sidn(lits ...string) ast.ScopedIdentifier {
 	}
 }
 
-func subs(names ...string) ast.SubsExpression {
-	return ast.SubsExpression{Identifier: sidn(names...)}
+func subs(names ...string) ast.SymbolExpression {
+	return ast.SymbolExpression{Identifier: sidn(names...)}
 }
 
 func par(x ast.Expression) ast.ParenthesizedExpression {

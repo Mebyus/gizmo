@@ -19,8 +19,8 @@ func ConvertInnerExpression(expr ast.Expression) Node {
 	switch expr.Kind() {
 	case exn.Binary:
 		return ConvertBinaryExpression(expr.(ast.BinaryExpression))
-	case exn.Subs:
-		return ConvertSubsExpression(expr.(ast.SubsExpression))
+	case exn.Symbol:
+		return ConvertSubsExpression(expr.(ast.SymbolExpression))
 	case exn.Basic:
 		return ConvertBasicLiteral(expr.(ast.BasicLiteral))
 	case exn.Call:
@@ -68,7 +68,7 @@ func ConvertCallArguments(args []ast.Expression) Node {
 	}
 }
 
-func ConvertSubsExpression(expr ast.SubsExpression) Node {
+func ConvertSubsExpression(expr ast.SymbolExpression) Node {
 	return Node{
 		Text: "subs: " + expr.Identifier.String(),
 	}

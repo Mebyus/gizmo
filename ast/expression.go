@@ -41,20 +41,20 @@ type nodeOperand struct{ nodeExpression }
 
 func (nodeOperand) Operand() {}
 
-// <SubsExpression> = <ScopedIdentifier>
-type SubsExpression struct {
+// <SymbolExpression> = <ScopedIdentifier>
+type SymbolExpression struct {
 	nodeOperand
 
 	Identifier ScopedIdentifier
 }
 
-var _ Operand = SubsExpression{}
+var _ Operand = SymbolExpression{}
 
-func (SubsExpression) Kind() exn.Kind {
-	return exn.Subs
+func (SymbolExpression) Kind() exn.Kind {
+	return exn.Symbol
 }
 
-func (e SubsExpression) Pin() source.Pos {
+func (e SymbolExpression) Pin() source.Pos {
 	return e.Identifier.Pin()
 }
 

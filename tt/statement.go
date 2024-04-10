@@ -32,7 +32,7 @@ type VarStatement struct {
 	Sym *Symbol
 
 	// Equals nil if init expression is dirty.
-	Expr any
+	Expr Expression
 }
 
 // Explicit interface implementation check
@@ -52,7 +52,7 @@ type ReturnStatement struct {
 	Pos source.Pos
 
 	// Equals nil if return does not have expression.
-	Expr any
+	Expr Expression
 }
 
 // Explicit interface implementation check
@@ -79,8 +79,8 @@ type SymbolAssignStatement struct {
 	// Target of the assignment.
 	Target *Symbol
 
-	// Assigned expression.
-	Expr any
+	// Assigned expression. Always not nil.
+	Expr Expression
 }
 
 // Explicit interface implementation check
@@ -107,8 +107,8 @@ type IndirectAssignStatement struct {
 	// Target of the assignment.
 	Target *Symbol
 
-	// Assigned expression.
-	Expr any
+	// Assigned expression. Always not nil.
+	Expr Expression
 }
 
 // Explicit interface implementation check

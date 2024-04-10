@@ -19,7 +19,7 @@ const (
 	List
 
 	// direct substitution of identifier or scoped identifier operand
-	Subs
+	Symbol
 
 	Unary
 	Binary
@@ -45,6 +45,18 @@ const (
 
 	// Template instance
 	Instance
+
+	// Integer literal
+	Integer
+
+	// String literal
+	String
+
+	// True literal
+	True
+
+	// False literal
+	False
 )
 
 var text = [...]string{
@@ -53,7 +65,7 @@ var text = [...]string{
 	Basic:    "basic",
 	Object:   "object",
 	List:     "list",
-	Subs:     "subs",
+	Symbol:   "symbol",
 	Unary:    "unary",
 	Binary:   "binary",
 	Cast:     "cast",
@@ -69,6 +81,11 @@ var text = [...]string{
 	Indirect: "indirect",
 	Indirx:   "indirect_index",
 	Instance: "instance",
+
+	Integer: "integer",
+	String:  "string",
+	True:    "true",
+	False:   "false",
 }
 
 func (k Kind) String() string {

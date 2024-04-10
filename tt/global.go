@@ -78,9 +78,3 @@ func NewGlobalScope() *Scope {
 
 	return s
 }
-
-type True struct {
-}
-
-type False struct {
-}

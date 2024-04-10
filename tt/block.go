@@ -102,7 +102,7 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	case stm.Defer:
 		//
 	default:
-		panic(fmt.Sprintf("%s statement not implemented", statement.Kind().String()))
+		panic(fmt.Sprintf("not implemented for %s statement", statement.Kind().String()))
 	}
 	return nil
 }
@@ -129,9 +129,14 @@ func (b *Block) addReturn(ctx *Context, stmt ast.ReturnStatement) error {
 		panic("unreachable: impossible condition")
 	}
 
+	expr, err := b.Scope.Scan(ctx, stmt.Expression)
+	if err != nil {
+		return err
+	}
+
 	b.addNode(&ReturnStatement{
-		Pos: pos,
-		// TODO: fill expression
+		Pos:  pos,
+		Expr: expr,
 	})
 	return nil
 }
@@ -147,10 +152,15 @@ func (b *Block) addIndirectAssign(ctx *Context, stmt ast.IndirectAssignStatement
 		ctx.ref.Add(s)
 	}
 
+	expr, err := b.Scope.Scan(ctx, stmt.Expression)
+	if err != nil {
+		return err
+	}
+
 	b.addNode(&IndirectAssignStatement{
 		Pos:    pos,
 		Target: s,
-		// TODO: fill expression
+		Expr:   expr,
 	})
 	return nil
 }
@@ -166,10 +176,15 @@ func (b *Block) addSymbolAssign(ctx *Context, stmt ast.SymbolAssignStatement) er
 		ctx.ref.Add(s)
 	}
 
+	expr, err := b.Scope.Scan(ctx, stmt.Expression)
+	if err != nil {
+		return err
+	}
+
 	b.addNode(&SymbolAssignStatement{
 		Pos:    pos,
 		Target: s,
-		// TODO: fill expression
+		Expr:   expr,
 	})
 	return nil
 }
@@ -188,11 +203,19 @@ func (b *Block) addVar(ctx *Context, stmt ast.VarStatement) error {
 		Type: ctx.m.lookupType(stmt.Type),
 		Kind: sym.Var,
 	}
+
+	expr, err := b.Scope.Scan(ctx, stmt.Expression)
+	if err != nil {
+		return err
+	}
+
+	// bind occurs after expression scan, because variable
+	// that is being defined must not be visible in init expression
 	b.Scope.Bind(s)
 
 	b.addNode(&VarStatement{
-		Sym: s,
-		// TODO: fill expression
+		Sym:  s,
+		Expr: expr,
 	})
 	return nil
 }

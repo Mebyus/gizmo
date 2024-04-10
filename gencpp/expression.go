@@ -15,8 +15,8 @@ func (g *Builder) Expression(expr ast.Expression) {
 	switch expr.Kind() {
 	case exn.Start:
 		g.ScopedIdentifier(expr.(ast.ChainStart).Identifier)
-	case exn.Subs:
-		g.ScopedIdentifier(expr.(ast.SubsExpression).Identifier)
+	case exn.Symbol:
+		g.ScopedIdentifier(expr.(ast.SymbolExpression).Identifier)
 	case exn.Basic:
 		g.BasicLiteral(expr.(ast.BasicLiteral))
 	case exn.Indirect:

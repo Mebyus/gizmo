@@ -444,7 +444,7 @@ func (p *Parser) receiverStartOperand() (ast.Operand, error) {
 	return p.chainOperand(rv)
 }
 
-// SubsExpression, SelectorExpression, IndexExpression, CallExpression or InstanceExpression
+// SymbolExpression, SelectorExpression, IndexExpression, CallExpression or InstanceExpression
 func (p *Parser) identifierStartOperand() (ast.Operand, error) {
 	scoped, err := p.scopedIdentifier()
 	if err != nil {
@@ -455,7 +455,7 @@ func (p *Parser) identifierStartOperand() (ast.Operand, error) {
 	case token.Period, token.LeftParentheses, token.LeftSquare, token.Indirect, token.Address:
 		return p.chainOperand(ast.ChainStart{Identifier: scoped})
 	default:
-		return ast.SubsExpression{Identifier: scoped}, nil
+		return ast.SymbolExpression{Identifier: scoped}, nil
 	}
 }
 

@@ -17,7 +17,7 @@ type BasicLiteral struct {
 	Token token.Token
 }
 
-var _ Expression = BasicLiteral{}
+var _ Operand = BasicLiteral{}
 
 func (BasicLiteral) Kind() exn.Kind {
 	return exn.Basic
