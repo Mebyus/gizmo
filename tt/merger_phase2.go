@@ -122,7 +122,7 @@ func (m *Merger) scanFn(def TempFnDef) (*FnDef, error) {
 		Body:   Block{Pos: pos},
 	}
 	fn.Body.Scope = NewTopScope(m.unit.Scope, &fn.Body.Pos)
-	
+
 	for _, param := range params {
 		name := param.Name
 		s := fn.Body.Scope.sym(name)

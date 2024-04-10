@@ -248,4 +248,3 @@ var text = [...]string{
 func (k Kind) String() string {
 	return text[k]
 }
-

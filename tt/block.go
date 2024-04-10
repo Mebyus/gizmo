@@ -7,6 +7,7 @@ import (
 	"github.com/mebyus/gizmo/ast/stm"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/tt/scp"
+	"github.com/mebyus/gizmo/tt/sfp"
 	"github.com/mebyus/gizmo/tt/sym"
 )
 
@@ -18,7 +19,11 @@ type Block struct {
 
 	Nodes []Statement
 
+	Flow []FlowPoint
+
 	Scope *Scope
+
+	FlowKind sfp.Kind
 }
 
 // Explicit interface implementation check
@@ -76,7 +81,7 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	case stm.Var:
 		return b.addVar(ctx, statement.(ast.VarStatement))
 	case stm.If:
-		// g.IfStatement(statement.(ast.IfStatement))
+		return b.addIf(ctx, statement.(ast.IfStatement))
 	case stm.Expr:
 		// g.ExpressionStatement(statement.(ast.ExpressionStatement))
 	case stm.SymbolAssign:
@@ -104,6 +109,38 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	default:
 		panic(fmt.Sprintf("not implemented for %s statement", statement.Kind().String()))
 	}
+	return nil
+}
+
+func (b *Block) addIf(ctx *Context, stmt ast.IfStatement) error {
+	if len(stmt.ElseIf) != 0 || stmt.Else != nil {
+		panic("not implemented")
+	}
+
+	if stmt.If.Condition == nil {
+		panic("nil condition expression in if statement")
+	}
+	condition, err := b.Scope.Scan(ctx, stmt.If.Condition)
+	if err != nil {
+		return err
+	}
+	if len(stmt.If.Body.Statements) == 0 {
+		ctx.m.warn(stmt.If.Body.Pos, "empty if branch")
+	}
+
+	node := &SimpleIfStatement{
+		Pos:       stmt.If.Pos,
+		Condition: condition,
+		Body:      Block{Pos: stmt.If.Body.Pos},
+	}
+	node.Body.Scope = NewScope(scp.If, b.Scope, &node.Body.Pos)
+
+	err = node.Body.Fill(ctx, stmt.If.Body.Statements)
+	if err != nil {
+		return err
+	}
+
+	b.addNode(node)
 	return nil
 }
 

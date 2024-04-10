@@ -56,7 +56,7 @@ func (x *TypeIndex) lookupPointer(spec ast.TypeSpecifier) (*Type, error) {
 	if err != nil {
 		return nil, err
 	}
-	return x.storePointer(ref), nil 
+	return x.storePointer(ref), nil
 }
 
 func (x *TypeIndex) lookupNamed(idn ast.Identifier) (*Type, error) {

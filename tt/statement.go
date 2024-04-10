@@ -142,3 +142,24 @@ func (s *IndirectAssignStatement) Pin() source.Pos {
 func (s *IndirectAssignStatement) Kind() stm.Kind {
 	return stm.IndirectAssign
 }
+
+type SimpleIfStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	// Always not nil.
+	Condition Expression
+
+	Body Block
+}
+
+var _ Statement = &SimpleIfStatement{}
+
+func (*SimpleIfStatement) Kind() stm.Kind {
+	return stm.SimpleIf
+}
+
+func (s *SimpleIfStatement) Pin() source.Pos {
+	return s.Pos
+}

@@ -2,7 +2,7 @@ package lexer
 
 // utf-8 code point starts either from [0xxx xxxx] or [11xx xxxx].
 // Non-starting byte of non-ascii code point has from [10xx xxxx].
-// Thus we need to check that higher bits of a given byte are not 10 
+// Thus we need to check that higher bits of a given byte are not 10.
 func isCodePointStart(c byte) bool {
 	return (c & 0b1100_0000) != 0b1000_0000
 }

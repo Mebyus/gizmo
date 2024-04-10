@@ -39,6 +39,9 @@ const (
 	//
 	//	x.@ = 10 + a;
 	IndirectAssign
+
+	// If without else and else-if clauses.
+	SimpleIf
 )
 
 var text = [...]string{
@@ -60,10 +63,12 @@ var text = [...]string{
 	Jump:      "jump",
 	Defer:     "defer",
 
-	DeferBlock:     "defer_block",
-	
+	DeferBlock: "defer_block",
+
 	SymbolAssign:   "symbol_assign",
 	IndirectAssign: "indirect_assign",
+
+	SimpleIf: "simple_if",
 }
 
 func (k Kind) String() string {
