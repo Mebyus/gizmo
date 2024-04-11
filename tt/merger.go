@@ -36,6 +36,9 @@ type Merger struct {
 	// list of all function symbols in unit
 	fns []*Symbol
 
+	// list of all constant symbols in unit
+	constants []*Symbol
+
 	Warns []Warn
 }
 
@@ -153,7 +156,7 @@ func (m *Merger) addImport(bind ast.ImportBind) error {
 
 func (m *Merger) addFn(top ast.TopFunctionDefinition) error {
 	name := top.Definition.Head.Name.Lit
-	pos := top.Pin()
+	pos := top.Definition.Head.Name.Pos
 
 	if m.has(name) {
 		return m.errMultDef(name, pos)
@@ -173,7 +176,7 @@ func (m *Merger) addFn(top ast.TopFunctionDefinition) error {
 
 func (m *Merger) addType(top ast.TopType) error {
 	name := top.Name.Lit
-	pos := top.Pin()
+	pos := top.Name.Pos
 
 	if m.has(name) {
 		return m.errMultDef(name, pos)
@@ -192,7 +195,7 @@ func (m *Merger) addType(top ast.TopType) error {
 
 func (m *Merger) addConst(top ast.TopConst) error {
 	name := top.Name.Lit
-	pos := top.Pin()
+	pos := top.Name.Pos
 
 	if m.has(name) {
 		return m.errMultDef(name, pos)
@@ -203,8 +206,9 @@ func (m *Merger) addConst(top ast.TopConst) error {
 		Name:   name,
 		Pos:    pos,
 		Public: top.Public,
-		// Def:    NewTempDef(top),
+		Def:    NewTempConstDef(top),
 	}
 	m.add(s)
+	m.constants = append(m.constants, s)
 	return nil
 }

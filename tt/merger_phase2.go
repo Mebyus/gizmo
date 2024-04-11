@@ -24,6 +24,10 @@ func (m *Merger) runPhaseTwo() error {
 	if err != nil {
 		return err
 	}
+	err = m.scanConstants()
+	if err != nil {
+		return err
+	}
 	err = m.scanFns()
 	if err != nil {
 		return err
@@ -79,6 +83,55 @@ func (m *Merger) scanTypes() error {
 
 func (m *Merger) scanType(def *TempTypeDef) (*Type, error) {
 	return &Type{}, nil
+}
+
+func (m *Merger) scanConstants() error {
+	for _, s := range m.constants {
+		def := s.Def.(TempConstDef)
+		c, err := m.scanConst(s, def)
+		if err != nil {
+			return err
+		}
+		s.Def = c
+
+		if c.Type != nil {
+			s.Type = c.Type
+		} else {
+			// TODO: this won't work if expression has other constants
+			// which are not yet processed
+			s.Type = c.Expr.Type()
+		}
+	}
+	return nil
+}
+
+func (m *Merger) scanConst(s *Symbol, def TempConstDef) (*ConstDef, error) {
+	scope := m.unit.Scope
+
+	t, err := scope.Types.Lookup(def.top.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	expr := def.top.Expression
+	if expr == nil {
+		panic("nil expression in constant definition")
+	}
+	ctx := m.newConstCtx()
+	e, err := scope.Scan(ctx, expr)
+	if err != nil {
+		return nil, err
+	}
+
+	if ctx.ref.Has(s) {
+		return nil, fmt.Errorf("%s: init cycle (constant \"%s\" definition references itself)", s.Pos.String(), s.Name)
+	}
+
+	return &ConstDef{
+		Expr: e,
+		Refs: ctx.ref.Elems(),
+		Type: t,
+	}, nil
 }
 
 func (m *Merger) scanFns() error {

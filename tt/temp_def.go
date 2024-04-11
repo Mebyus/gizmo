@@ -61,3 +61,13 @@ func errMultMethodDef(name string, pos source.Pos) error {
 
 // Explicit interface implementation check
 var _ SymDef = &TempTypeDef{}
+
+type TempConstDef struct {
+	nodeSymDef
+
+	top ast.TopConst
+}
+
+func NewTempConstDef(top ast.TopConst) TempConstDef {
+	return TempConstDef{top: top}
+}

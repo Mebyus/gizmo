@@ -24,3 +24,10 @@ func (m *Merger) newFnCtx(def *FnDef) *Context {
 		never: def.Never,
 	}
 }
+
+func (m *Merger) newConstCtx() *Context {
+	return &Context{
+		m:   m,
+		ref: NewSymSet(),
+	}
+}

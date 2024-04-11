@@ -64,6 +64,11 @@ func (s SymSet) Add(sym *Symbol) {
 	s[sym] = struct{}{}
 }
 
+func (s SymSet) Has(sym *Symbol) bool {
+	_, ok := s[sym]
+	return ok
+}
+
 func (s SymSet) Elems() []*Symbol {
 	if len(s) == 0 {
 		return nil

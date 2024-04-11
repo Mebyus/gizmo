@@ -8,7 +8,7 @@ type FnDef struct {
 	// Function parameters, equals nil if function has no parameters.
 	Params []*Symbol
 
-	// List of top-level package symbols which are used in function.
+	// List of top-level unit symbols which are used in function.
 	Refs []*Symbol
 
 	// Function return type. Equals nil if function returns nothing or never returns.
