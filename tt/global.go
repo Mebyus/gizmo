@@ -57,8 +57,32 @@ func (s *Scope) addBuiltinStringType() {
 	s.Bind(newTypeSymbol("str", t))
 }
 
+func newStaticType(kind typ.Kind) *Type {
+	t := &Type{Kind: kind}
+	t.Base = t
+	return t
+}
+
+var (
+	StaticInteger = newStaticType(typ.StaticInteger)
+	StaticFloat   = newStaticType(typ.StaticFloat)
+	StaticString  = newStaticType(typ.StaticString)
+	StaticBoolean = newStaticType(typ.StaticBoolean)
+	StaticNil     = newStaticType(typ.StaticNil)
+)
+
+func (s *Scope) addStaticTypes() {
+	s.Types.tm[StaticInteger.Stable()] = StaticInteger
+	s.Types.tm[StaticFloat.Stable()] = StaticFloat
+	s.Types.tm[StaticString.Stable()] = StaticString
+	s.Types.tm[StaticBoolean.Stable()] = StaticBoolean
+	s.Types.tm[StaticNil.Stable()] = StaticNil
+}
+
 func NewGlobalScope() *Scope {
 	s := NewScope(scp.Global, nil, nil)
+
+	s.addStaticTypes()
 
 	s.addBuiltinUnsignedType("u8", 1)
 	s.addBuiltinUnsignedType("u16", 2)

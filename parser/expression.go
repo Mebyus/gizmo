@@ -493,10 +493,12 @@ func (p *Parser) instanceExpression(identifier ast.ScopedIdentifier) (ast.Instan
 }
 
 func (p *Parser) chainOperand(start ast.ChainOperand) (ast.ChainOperand, error) {
-	// note conversion to interface type
 	var tip ast.ChainOperand = start
-
+	
+	depth := tip.Depth()
 	for {
+		depth += 1
+
 		switch p.tok.Kind {
 		case token.LeftParentheses:
 			args, err := p.callArguments()
@@ -520,8 +522,13 @@ func (p *Parser) chainOperand(start ast.ChainOperand) (ast.ChainOperand, error) 
 				Selected: selected,
 			}
 		case token.Indirect:
+			pos := p.pos()
 			p.advance() // skip ".@"
-			tip = ast.IndirectExpression{Target: tip}
+			tip = ast.IndirectExpression{
+				Pos:        pos,
+				Target:     tip,
+				ChainDepth: depth,
+			}
 		case token.Address:
 			p.advance() // skip ".&"
 			if tip.Kind() == exn.Call {

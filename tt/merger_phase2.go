@@ -28,6 +28,7 @@ func (m *Merger) runPhaseTwo() error {
 	if err != nil {
 		return err
 	}
+	m.unit.Scope.WarnUnused(&Context{m: m})
 	return nil
 }
 

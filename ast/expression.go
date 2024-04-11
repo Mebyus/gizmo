@@ -248,6 +248,8 @@ func (e IndexExpression) Depth() uint32 {
 type IndirectExpression struct {
 	nodeChainOperand
 
+	Pos source.Pos
+
 	Target ChainOperand
 
 	ChainDepth uint32
@@ -260,7 +262,7 @@ func (IndirectExpression) Kind() exn.Kind {
 }
 
 func (e IndirectExpression) Pin() source.Pos {
-	return e.Target.Pin()
+	return e.Pos
 }
 
 func (e IndirectExpression) Depth() uint32 {

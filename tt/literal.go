@@ -37,6 +37,10 @@ func (t True) Pin() source.Pos {
 	return t.Pos
 }
 
+func (True) Type() *Type {
+	return StaticBoolean
+}
+
 // False represents "false" literal usage in source code.
 type False struct {
 	nodeLiteral
@@ -53,6 +57,10 @@ func (False) Kind() exn.Kind {
 
 func (f False) Pin() source.Pos {
 	return f.Pos
+}
+
+func (False) Type() *Type {
+	return StaticBoolean
 }
 
 // Integer represents integer literal usage in source code.
@@ -75,6 +83,10 @@ func (n Integer) Pin() source.Pos {
 	return n.Pos
 }
 
+func (Integer) Type() *Type {
+	return StaticInteger
+}
+
 // String represents string literal usage in source code.
 type String struct {
 	nodeLiteral
@@ -93,4 +105,8 @@ func (String) Kind() exn.Kind {
 
 func (s String) Pin() source.Pos {
 	return s.Pos
+}
+
+func (String) Type() *Type {
+	return StaticString
 }

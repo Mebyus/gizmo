@@ -7,6 +7,7 @@ import (
 	"github.com/mebyus/gizmo/ast/exn"
 	"github.com/mebyus/gizmo/token"
 	"github.com/mebyus/gizmo/tt/scp"
+	"github.com/mebyus/gizmo/tt/typ"
 )
 
 // Scan constructs expression from a given AST. Uses current scope for symbol
@@ -119,8 +120,21 @@ func (s *Scope) scanChainStart(ctx *Context, start ast.ChainStart) (*ChainStart,
 }
 
 func (s *Scope) scanIndirectExpression(ctx *Context, expr ast.IndirectExpression) (*IndirectExpression, error) {
+	tg, err := s.scan(ctx, expr.Target)
+	if err != nil {
+		return nil, err
+	}
+	target := tg.(ChainOperand)
+	targetType := target.Type()
+	if targetType.Kind != typ.Pointer {
+		return nil, fmt.Errorf("%s: invalid operation (indirect on non-pointer type)", expr.Pos)
+	}
 	return &IndirectExpression{
+		Pos:        expr.Pos,
+		Target:     target,
 		ChainDepth: expr.ChainDepth,
+
+		typ: targetType.Def.(PtrTypeDef).RefType,
 	}, nil
 }
 

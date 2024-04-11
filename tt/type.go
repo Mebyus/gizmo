@@ -144,6 +144,16 @@ func (t *Type) computeHash() uint64 {
 		return HashName(t.Name)
 	case typ.Pointer:
 		return HashPointerType(t.Def.(PtrTypeDef).RefType)
+	case typ.StaticInteger:
+		return uint64(typ.StaticInteger)
+	case typ.StaticBoolean:
+		return uint64(typ.StaticBoolean)
+	case typ.StaticFloat:
+		return uint64(typ.StaticFloat)
+	case typ.StaticString:
+		return uint64(typ.StaticString)
+	case typ.StaticNil:
+		return uint64(typ.StaticNil)
 	default:
 		panic(fmt.Sprintf("not implemented for %s", t.Kind.String()))
 	}

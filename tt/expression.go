@@ -13,6 +13,8 @@ type Expression interface {
 	Expression()
 
 	Kind() exn.Kind
+
+	Type() *Type
 }
 
 // This is dummy implementation of Expression interface.
@@ -62,6 +64,10 @@ func (e *SymbolExpression) Pin() source.Pos {
 	return e.Pos
 }
 
+func (e *SymbolExpression) Type() *Type {
+	return e.Sym.Type
+}
+
 type UnaryOperator ast.UnaryOperator
 
 type UnaryExpression struct {
@@ -69,6 +75,8 @@ type UnaryExpression struct {
 
 	Operator UnaryOperator
 	Inner    Expression
+
+	typ *Type
 }
 
 // Explicit interface implementation check
@@ -82,6 +90,14 @@ func (e *UnaryExpression) Pin() source.Pos {
 	return e.Operator.Pos
 }
 
+func (e *UnaryExpression) Type() *Type {
+	if e.typ != nil {
+		return e.typ
+	}
+	e.typ = e.Inner.Type()
+	return e.typ
+}
+
 type BinaryOperator ast.BinaryOperator
 
 type BinaryExpression struct {
@@ -90,6 +106,8 @@ type BinaryExpression struct {
 	Operator BinaryOperator
 	Left     Expression
 	Right    Expression
+
+	typ *Type
 }
 
 // Explicit interface implementation check
@@ -101,6 +119,14 @@ func (*BinaryExpression) Kind() exn.Kind {
 
 func (e *BinaryExpression) Pin() source.Pos {
 	return e.Left.Pin()
+}
+
+func (e *BinaryExpression) Type() *Type {
+	if e.typ != nil {
+		return e.typ
+	}
+	e.typ = e.Left.Type()
+	return e.typ
 }
 
 type ChainOperand interface {
@@ -135,6 +161,10 @@ func (s *ChainStart) Pin() source.Pos {
 	return s.Pos
 }
 
+func (s *ChainStart) Type() *Type {
+	return s.Sym.Type
+}
+
 func (s *ChainStart) Depth() uint32 {
 	return 0
 }
@@ -145,6 +175,8 @@ type IndirectExpression struct {
 	Pos source.Pos
 
 	Target ChainOperand
+
+	typ *Type
 
 	ChainDepth uint32
 }
@@ -159,6 +191,10 @@ func (e *IndirectExpression) Pin() source.Pos {
 	return e.Pos
 }
 
+func (e *IndirectExpression) Type() *Type {
+	return e.typ
+}
+
 func (e *IndirectExpression) Depth() uint32 {
 	return e.ChainDepth
 }
@@ -170,6 +206,8 @@ type CallExpression struct {
 
 	Callee    ChainOperand
 	Arguments []Expression
+
+	typ *Type
 
 	ChainDepth uint32
 }
@@ -186,4 +224,8 @@ func (e *CallExpression) Pin() source.Pos {
 
 func (e *CallExpression) Depth() uint32 {
 	return e.ChainDepth
+}
+
+func (e *CallExpression) Type() *Type {
+	return e.typ
 }

@@ -207,3 +207,13 @@ func (s *Scope) CheckUsage(ctx *Context) error {
 	sym := list[0]
 	return fmt.Errorf("%s: symbol \"%s\" declared and not used", sym.Pos.String(), sym.Name)
 }
+
+// WarnUnused acts much like CheckUsage, but does not produce an error, only warnings
+// about unused symbols.
+func (s *Scope) WarnUnused(ctx *Context) {
+	for _, symbol := range s.Symbols {
+		if !symbol.Public && symbol.RefNum == 0 {
+			ctx.m.warn(symbol.Pos, fmt.Sprintf("symbol \"%s\" has no references inside unit", symbol.Name))
+		}
+	}
+}

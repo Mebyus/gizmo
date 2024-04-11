@@ -9,6 +9,7 @@ import (
 	"github.com/mebyus/gizmo/tt/scp"
 	"github.com/mebyus/gizmo/tt/sfp"
 	"github.com/mebyus/gizmo/tt/sym"
+	"github.com/mebyus/gizmo/tt/typ"
 )
 
 type Block struct {
@@ -187,6 +188,10 @@ func (b *Block) addIndirectAssign(ctx *Context, stmt ast.IndirectAssignStatement
 	}
 	if s.Scope.Kind == scp.Unit {
 		ctx.ref.Add(s)
+	}
+
+	if s.Type.Kind != typ.Pointer {
+		return fmt.Errorf("%s: invalid operation (indirect on non-pointer type)", pos)
 	}
 
 	expr, err := b.Scope.Scan(ctx, stmt.Expression)

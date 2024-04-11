@@ -24,6 +24,7 @@ fn test_dead_code(a: int) {
     /* тестируем позицию токена после комментария с utf-8 */ let r: int = inc(x.&);
 }
 
+pub
 fn test_assign() => uint {
     var c: uint = dirty;
     c = 1;
