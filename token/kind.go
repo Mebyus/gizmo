@@ -141,6 +141,10 @@ const (
 	DecimalFloat       // 123.45
 	Rune               // 'a', '\t', 'p'
 	String             // "abc", "", "\t\n  42Hello\n"
+
+	// Comments
+	LineComment // Line comment starts with //
+	MultComment // Multiline comment inside /* comment */ block
 )
 
 func (k Kind) String() string {

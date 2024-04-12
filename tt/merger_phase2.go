@@ -127,9 +127,15 @@ func (m *Merger) scanConst(s *Symbol, def TempConstDef) (*ConstDef, error) {
 		return nil, fmt.Errorf("%s: init cycle (constant \"%s\" definition references itself)", s.Pos.String(), s.Name)
 	}
 
+	// TODO: check that expression type and constant type match
+	refs := ctx.ref.Elems()
+	if len(refs) != 0 {
+		panic("referencing other symbols in constant definition is not implemented")
+	}
+
 	return &ConstDef{
 		Expr: e,
-		Refs: ctx.ref.Elems(),
+		Refs: refs,
 		Type: t,
 	}, nil
 }

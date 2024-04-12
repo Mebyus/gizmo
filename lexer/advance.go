@@ -60,6 +60,41 @@ func (lx *Lexer) take() (string, bool) {
 	return string(lx.view()), true
 }
 
+func lastByte(s []byte) byte {
+	return s[len(s)-1]
+}
+
+// same as method take, but removes possible whitespace suffix from the resulting string
+func (lx *Lexer) trimWhitespaceSuffixTake() (string, bool) {
+	view := lx.view()
+	if len(view) == 0 {
+		return "", true
+	}
+	if !isWhitespace(lastByte(view)) {
+		if len(view) > maxTokenByteLength {
+			return "", false
+		}
+		return string(view), true
+	}
+
+	i := len(view)
+	for {
+		if i == 0 {
+			return "", true
+		}
+		i -= 1
+		c := view[i]
+
+		if !isWhitespace(c) {
+			length := i + 1
+			if length > maxTokenByteLength {
+				return "", false
+			}
+			return string(view[:length]), true
+		}
+	}
+}
+
 func (lx *Lexer) view() []byte {
 	return lx.src[lx.mark:lx.s]
 }

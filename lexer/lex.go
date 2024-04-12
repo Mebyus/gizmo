@@ -18,6 +18,10 @@ func (lx *Lexer) lex() token.Token {
 		return lx.create(token.EOF)
 	}
 
+	return lx.codeToken()
+}
+
+func (lx *Lexer) codeToken() token.Token {
 	if isLetterOrUnderscore(lx.c) {
 		return lx.lexName()
 	}

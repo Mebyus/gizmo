@@ -115,6 +115,12 @@ func (t Token) Short() string {
 	if t.Kind.hasStaticLiteral() {
 		return fmt.Sprintf("%-6d%-12s%-12s%s", t.Pos.Num+1, t.Pos.Short(), ".", t.Kind.String())
 	}
+	if t.Kind == LineComment {
+		return fmt.Sprintf("%-6d%-12s%-12s%s", t.Pos.Num+1, t.Pos.Short(), "// ...", t.Kind.String())
+	}
+	if t.Kind == MultComment {
+		return fmt.Sprintf("%-6d%-12s%-12s%s", t.Pos.Num+1, t.Pos.Short(), "/* ... */", t.Kind.String())
+	}
 
 	return fmt.Sprintf("%-6d%-12s%-12s%s", t.Pos.Num+1, t.Pos.Short(), t.Kind.String(), t.Literal())
 }

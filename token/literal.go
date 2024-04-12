@@ -116,6 +116,11 @@ var Literal = [...]string{
 	DecimalInteger:     "INT.DEC",
 	HexadecimalInteger: "INT.HEX",
 	DecimalFloat:       "FLT.DEC",
+
+	// Comments
+
+	LineComment: "COM.LINE",
+	MultComment: "COM.MULT",
 }
 
 // ScanStringByteSize determines how many bytes are needed to represent a given

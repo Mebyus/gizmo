@@ -8,6 +8,7 @@ import (
 	"github.com/mebyus/gizmo/cmd/gizmo/atom"
 	"github.com/mebyus/gizmo/cmd/gizmo/build"
 	"github.com/mebyus/gizmo/cmd/gizmo/clean"
+	"github.com/mebyus/gizmo/cmd/gizmo/format"
 	"github.com/mebyus/gizmo/cmd/gizmo/gen"
 	"github.com/mebyus/gizmo/cmd/gizmo/lex"
 	"github.com/mebyus/gizmo/cmd/gizmo/tree"
@@ -42,6 +43,7 @@ var root = &butler.Lackey{
 		clean.Clean,
 		atom.Atom,
 		unit.Unit,
+		format.Format,
 	},
 }
 
