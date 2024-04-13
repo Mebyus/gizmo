@@ -1,8 +1,6 @@
 package ast
 
 import (
-	"strings"
-
 	"github.com/mebyus/gizmo/source"
 )
 
@@ -18,33 +16,4 @@ func (n Identifier) String() string {
 	}
 
 	return n.Lit
-}
-
-// <ScopedIdentifier> = <Identifier> { "::" <Identifier> }
-type ScopedIdentifier struct {
-	// Can be nil if <ScopedIdentifier> represents regular <Identifier>
-	Scopes []Identifier
-
-	// Last name in chain
-	Name Identifier
-}
-
-func (s ScopedIdentifier) Pin() source.Pos {
-	if len(s.Scopes) == 0 {
-		return s.Name.Pos
-	}
-	return s.Scopes[0].Pos
-}
-
-func (s ScopedIdentifier) String() string {
-	if len(s.Scopes) == 0 && len(s.Name.Lit) == 0 {
-		return "<nil>"
-	}
-
-	ss := make([]string, 0, len(s.Scopes)+1)
-	for _, name := range s.Scopes {
-		ss = append(ss, name.String())
-	}
-	ss = append(ss, s.Name.String())
-	return strings.Join(ss, "::")
 }

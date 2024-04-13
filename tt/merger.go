@@ -58,7 +58,7 @@ type UnitContext struct {
 	Global *Scope
 }
 
-func (m *Merger) Add(atom ast.UnitAtom) error {
+func (m *Merger) Add(atom ast.Atom) error {
 	for _, block := range atom.Header.Imports.ImportBlocks {
 		for _, spec := range block.Specs {
 			err := m.addImport(ast.ImportBind{
@@ -75,32 +75,25 @@ func (m *Merger) Add(atom ast.UnitAtom) error {
 		}
 	}
 
-	for _, block := range atom.Blocks {
-		// TODO: remove namespace blocks support
-		if !block.Default {
-			continue
+	for _, top := range atom.Nodes {
+		var err error
+
+		switch top.Kind() {
+		case toplvl.Fn:
+			err = m.addFn(top.(ast.TopFunctionDefinition))
+		case toplvl.Type:
+			err = m.addType(top.(ast.TopType))
+		case toplvl.Const:
+			err = m.addConst(top.(ast.TopConst))
+		case toplvl.Method, toplvl.Pmb:
+			// defer processing until phase 2
+			m.addPhaseTwoNode(top)
+		default:
+			panic(fmt.Sprintf("top-level %s node not implemented", top.Kind().String()))
 		}
 
-		for _, top := range block.Nodes {
-			var err error
-
-			switch top.Kind() {
-			case toplvl.Fn:
-				err = m.addFn(top.(ast.TopFunctionDefinition))
-			case toplvl.Type:
-				err = m.addType(top.(ast.TopType))
-			case toplvl.Const:
-				err = m.addConst(top.(ast.TopConst))
-			case toplvl.Method, toplvl.Pmb:
-				// defer processing until phase 2
-				m.addPhaseTwoNode(top)
-			default:
-				panic(fmt.Sprintf("top-level %s node not implemented", top.Kind().String()))
-			}
-
-			if err != nil {
-				return err
-			}
+		if err != nil {
+			return err
 		}
 	}
 

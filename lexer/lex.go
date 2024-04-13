@@ -555,9 +555,6 @@ func (lx *Lexer) lexOther() token.Token {
 		if lx.next == ']' {
 			return lx.lexTwoBytes(token.Chunk)
 		}
-		if lx.next == '[' {
-			return lx.lexTwoBytes(token.LeftDoubleSquare)
-		}
 		if lx.next == '_' {
 			pos := lx.pos
 			lx.advance() // skip "["
@@ -596,9 +593,6 @@ func (lx *Lexer) lexOther() token.Token {
 		}
 		return lx.lexByte(token.LeftSquare)
 	case ']':
-		if lx.next == ']' {
-			return lx.lexTwoBytes(token.RightDoubleSquare)
-		}
 		return lx.lexByte(token.RightSquare)
 	case '<':
 		switch lx.next {

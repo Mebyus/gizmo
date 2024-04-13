@@ -5,11 +5,9 @@ import (
 	"strings"
 
 	"github.com/mebyus/gizmo/ast"
-	"github.com/mebyus/gizmo/ir"
 )
 
-func Gen(w io.Writer, cfg *Config, atom ast.UnitAtom) error {
-	meta := ir.Index(atom)
+func Gen(w io.Writer, cfg *Config, atom ast.Atom) error {
 
 	if cfg == nil {
 		cfg = &Config{
@@ -22,8 +20,6 @@ func Gen(w io.Writer, cfg *Config, atom ast.UnitAtom) error {
 	}
 
 	builder := NewBuilder(cfg)
-	builder.meta = meta
-	builder.UnitAtom(atom)
 
 	_, err := io.Copy(w, builder)
 	return err

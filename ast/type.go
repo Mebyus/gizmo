@@ -27,7 +27,7 @@ func (nodeTypeSpecifier) TypeSpecifier() {}
 type TypeName struct {
 	nodeTypeSpecifier
 
-	Name ScopedIdentifier
+	Name Identifier
 }
 
 // Explicit interface implementation check
@@ -38,7 +38,7 @@ func (TypeName) Kind() tps.Kind {
 }
 
 func (t TypeName) Pin() source.Pos {
-	return t.Name.Pin()
+	return t.Name.Pos
 }
 
 // <StructTypeLiteral> = "struct" "{" { <FieldDefinition> "," } "}"
@@ -59,29 +59,6 @@ func (StructType) Kind() tps.Kind {
 
 func (t StructType) Pin() source.Pos {
 	return t.Pos
-}
-
-// <TemplateInstanceType> = <TemplateName> "[[" { <TypeSpecifier> "," } "]]"
-//
-// <TemplateName> = <ScopedIdentifier>
-type TemplateInstanceType struct {
-	nodeTypeSpecifier
-
-	// Cannot be nil
-	Params []TypeSpecifier
-
-	Name ScopedIdentifier
-}
-
-// Explicit interface implementation check
-var _ TypeSpecifier = TemplateInstanceType{}
-
-func (TemplateInstanceType) Kind() tps.Kind {
-	return tps.Instance
-}
-
-func (t TemplateInstanceType) Pin() source.Pos {
-	return t.Name.Pin()
 }
 
 // <PointerType> = "*" <ReferencedType>

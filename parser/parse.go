@@ -65,63 +65,6 @@ func (p *Parser) unitBlock() (*ast.UnitBlock, error) {
 	}, nil
 }
 
-func (p *Parser) namespaceBlock() (ast.NamespaceBlock, error) {
-	p.advance() // skip "namespace"
-	name, err := p.scopedIdentifier()
-	if err != nil {
-		return ast.NamespaceBlock{}, err
-	}
-
-	if p.tok.Kind != token.LeftCurly {
-		return ast.NamespaceBlock{}, p.unexpected(p.tok)
-	}
-	p.advance() // skip "{"
-
-	var nodes []ast.TopLevel
-	for {
-		if p.tok.Kind == token.RightCurly {
-			p.advance() // skip "}"
-			return ast.NamespaceBlock{
-				Name:  name,
-				Nodes: nodes,
-			}, nil
-		}
-
-		node, err := p.topLevel()
-		if err != nil {
-			return ast.NamespaceBlock{}, err
-		}
-		nodes = append(nodes, node)
-	}
-}
-
-func (p *Parser) scopedIdentifier() (ast.ScopedIdentifier, error) {
-	if p.tok.Kind != token.Identifier {
-		return ast.ScopedIdentifier{}, p.unexpected(p.tok)
-	}
-	name := p.idn()
-	p.advance() // skip identifier
-
-	var scopes []ast.Identifier
-	for {
-		if p.tok.Kind != token.DoubleColon {
-			return ast.ScopedIdentifier{
-				Scopes: scopes,
-				Name:   name,
-			}, nil
-		}
-		p.advance() // skip "::"
-
-		if p.tok.Kind != token.Identifier {
-			return ast.ScopedIdentifier{}, p.unexpected(p.tok)
-		}
-
-		scopes = append(scopes, name)
-		name = p.idn()
-		p.advance() // skip identifier
-	}
-}
-
 func (p *Parser) topLevel() (ast.TopLevel, error) {
 	err := p.gatherProps()
 	if err != nil {

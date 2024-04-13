@@ -10,12 +10,6 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-func tok(k token.Kind) token.Token {
-	return token.Token{
-		Kind: k,
-	}
-}
-
 func lit(kind token.Kind, lit string) ast.BasicLiteral {
 	return ast.BasicLiteral{
 		Token: token.Token{
@@ -38,31 +32,16 @@ func dflt(l string) ast.BasicLiteral {
 	return lit(token.DecimalFloat, l)
 }
 
-func idn(lit string) ast.Identifier {
-	return ast.Identifier{Lit: lit}
+func idn(name string) ast.Identifier {
+	return ast.Identifier{Lit: name}
 }
 
-func cst(lit ...string) ast.ChainStart {
-	return ast.ChainStart{Identifier: sidn(lit...)}
+func cst(name string) ast.ChainStart {
+	return ast.ChainStart{Identifier: idn(name)}
 }
 
-func sidn(lits ...string) ast.ScopedIdentifier {
-	var scopes []ast.Identifier
-	if len(lits) > 1 {
-		scopes = make([]ast.Identifier, 0, len(lits)-1)
-		for _, lit := range lits[:len(lits)-1] {
-			scopes = append(scopes, idn(lit))
-		}
-	}
-
-	return ast.ScopedIdentifier{
-		Scopes: scopes,
-		Name:   idn(lits[len(lits)-1]),
-	}
-}
-
-func subs(names ...string) ast.SymbolExpression {
-	return ast.SymbolExpression{Identifier: sidn(names...)}
+func subs(name string) ast.SymbolExpression {
+	return ast.SymbolExpression{Identifier: idn(name)}
 }
 
 func par(x ast.Expression) ast.ParenthesizedExpression {

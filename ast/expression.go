@@ -41,11 +41,11 @@ type nodeOperand struct{ nodeExpression }
 
 func (nodeOperand) Operand() {}
 
-// <SymbolExpression> = <ScopedIdentifier>
+// <SymbolExpression> = <Identifier>
 type SymbolExpression struct {
 	nodeOperand
 
-	Identifier ScopedIdentifier
+	Identifier Identifier
 }
 
 var _ Operand = SymbolExpression{}
@@ -55,7 +55,7 @@ func (SymbolExpression) Kind() exn.Kind {
 }
 
 func (e SymbolExpression) Pin() source.Pos {
-	return e.Identifier.Pin()
+	return e.Identifier.Pos
 }
 
 // <ParenthesizedExpression> = "(" <Expression> ")"
@@ -151,11 +151,11 @@ func (r Receiver) Depth() uint32 {
 	return 0
 }
 
-// <ChainStart> = <ScopedIdentifier>
+// <ChainStart> = <Identifier>
 type ChainStart struct {
 	nodeChainOperand
 
-	Identifier ScopedIdentifier
+	Identifier Identifier
 }
 
 var _ ChainOperand = ChainStart{}
@@ -165,7 +165,7 @@ func (ChainStart) Kind() exn.Kind {
 }
 
 func (s ChainStart) Pin() source.Pos {
-	return s.Identifier.Pin()
+	return s.Identifier.Pos
 }
 
 func (s ChainStart) Depth() uint32 {
@@ -383,26 +383,6 @@ func (BitCastExpression) Kind() exn.Kind {
 
 func (e BitCastExpression) Pin() source.Pos {
 	return e.Target.Pin()
-}
-
-// <InstanceExpression> = <ScopedIdentifier> "[[" <Args> "]]"
-type InstanceExpression struct {
-	nodeChainOperand
-
-	Target ScopedIdentifier
-
-	// Always has at least one element
-	Args []TypeSpecifier
-}
-
-var _ Expression = InstanceExpression{}
-
-func (InstanceExpression) Kind() exn.Kind {
-	return exn.Instance
-}
-
-func (e InstanceExpression) Pin() source.Pos {
-	return e.Target.Name.Pos
 }
 
 type UnaryOperator struct {

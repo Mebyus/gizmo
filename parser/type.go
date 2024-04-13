@@ -118,7 +118,7 @@ func (p *Parser) protoParam() (ast.TypeParam, error) {
 func (p *Parser) typeSpecifier() (ast.TypeSpecifier, error) {
 	switch p.tok.Kind {
 	case token.Identifier:
-		return p.typeNameOrInstance()
+		return p.typeName()
 	case token.Asterisk:
 		return p.pointerType()
 	case token.ArrayPointer:
@@ -173,60 +173,10 @@ func (p *Parser) fnType() (ast.FunctionType, error) {
 }
 
 func (p *Parser) typeName() (ast.TypeName, error) {
-	name, err := p.scopedIdentifier()
-	if err != nil {
-		return ast.TypeName{}, err
-	}
+	name := p.idn()
+	p.advance() // skip type name identifier
+
 	return ast.TypeName{Name: name}, nil
-}
-
-func (p *Parser) typeNameOrInstance() (ast.TypeSpecifier, error) {
-	name, err := p.scopedIdentifier()
-	if err != nil {
-		return nil, err
-	}
-	if p.tok.Kind != token.LeftDoubleSquare {
-		return ast.TypeName{Name: name}, nil
-	}
-
-	args, err := p.templateArgs()
-	if err != nil {
-		return nil, err
-	}
-	return ast.TemplateInstanceType{
-		Params: args,
-		Name:   name,
-	}, nil
-}
-
-func (p *Parser) templateArgs() ([]ast.TypeSpecifier, error) {
-	p.advance() // skip "[["
-
-	var args []ast.TypeSpecifier
-	for {
-		if p.tok.Kind == token.RightDoubleSquare {
-			if len(args) == 0 {
-				return nil, fmt.Errorf("no args in template instance %s", p.pos().String())
-			}
-
-			p.advance() // skip "]]"
-			return args, nil
-		}
-
-		arg, err := p.typeSpecifier()
-		if err != nil {
-			return nil, err
-		}
-		args = append(args, arg)
-
-		if p.tok.Kind == token.Comma {
-			p.advance() // skip ","
-		} else if p.tok.Kind == token.RightDoubleSquare {
-			// will be skipped at next iteration
-		} else {
-			return nil, p.unexpected(p.tok)
-		}
-	}
 }
 
 func (p *Parser) enumType() (ast.EnumType, error) {

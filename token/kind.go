@@ -60,14 +60,12 @@ const (
 
 	// Brackets
 
-	LeftCurly         // {
-	RightCurly        // }
-	LeftSquare        // [
-	RightSquare       // ]
-	LeftParentheses   // (
-	RightParentheses  // )
-	LeftDoubleSquare  // [[
-	RightDoubleSquare // ]]
+	LeftCurly        // {
+	RightCurly       // }
+	LeftSquare       // [
+	RightSquare      // ]
+	LeftParentheses  // (
+	RightParentheses // )
 
 	PropStart // #[
 
@@ -92,7 +90,6 @@ const (
 	In
 	For
 
-	Namespace
 	Defer
 	Fn
 	Import

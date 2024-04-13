@@ -7,17 +7,6 @@ import (
 	"github.com/mebyus/gizmo/ast/prv"
 )
 
-type Meta struct {
-	Structs StructsMap
-
-	Symbols SymbolsMap
-}
-
-type SymbolsMap struct {
-	// Maps symbol name into its props reference
-	Props map[string]*PropsRef
-}
-
 // Maps prop key into its value for a specific symbol
 type PropsRef struct {
 	val map[string]ast.PropValue

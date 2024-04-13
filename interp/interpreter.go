@@ -27,7 +27,7 @@ func Interpret(unit *ast.UnitBlock) (*Result, error) {
 	for _, statement := range unit.Block.Statements {
 		switch s := statement.(type) {
 		case ast.AssignStatement:
-			target := s.Target.(ast.ChainStart).Identifier.Name
+			target := s.Target.(ast.ChainStart).Identifier
 			switch target.Lit {
 			case "files":
 				list, err := getStringsFromExpression(s.Expression)

@@ -29,7 +29,7 @@ func (x *TypeIndex) Lookup(spec ast.TypeSpecifier) (*Type, error) {
 func (x *TypeIndex) lookup(spec ast.TypeSpecifier) (*Type, error) {
 	switch spec.Kind() {
 	case tps.Name:
-		return x.lookupNamed(spec.(ast.TypeName).Name.Name)
+		return x.lookupNamed(spec.(ast.TypeName).Name)
 	case tps.Pointer:
 		return x.lookupPointer(spec.(ast.PointerType).RefType)
 	default:

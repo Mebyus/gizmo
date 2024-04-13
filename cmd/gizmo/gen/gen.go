@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/mebyus/gizmo/butler"
-	"github.com/mebyus/gizmo/gencpp"
 	"github.com/mebyus/gizmo/parser"
 )
 
@@ -67,5 +66,9 @@ func gen(config *Config, filename string) error {
 		defer f.Close()
 		out = f
 	}
-	return gencpp.Gen(out, nil, unit)
+
+	_ = unit
+	_ = out
+
+	return nil
 }

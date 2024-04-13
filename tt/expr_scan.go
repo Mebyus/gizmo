@@ -65,8 +65,8 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 }
 
 func (s *Scope) scanSymbolExpression(ctx *Context, expr ast.SymbolExpression) (*SymbolExpression, error) {
-	name := expr.Identifier.Name.Lit
-	pos := expr.Identifier.Name.Pos
+	name := expr.Identifier.Lit
+	pos := expr.Identifier.Pos
 	symbol := s.Lookup(name, pos.Num)
 	if symbol == nil {
 		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
@@ -103,8 +103,8 @@ func (s *Scope) scanBinaryExpression(ctx *Context, expr ast.BinaryExpression) (*
 }
 
 func (s *Scope) scanChainStart(ctx *Context, start ast.ChainStart) (*ChainStart, error) {
-	name := start.Identifier.Name.Lit
-	pos := start.Identifier.Name.Pos
+	name := start.Identifier.Lit
+	pos := start.Identifier.Pos
 	symbol := s.Lookup(name, pos.Num)
 	if symbol == nil {
 		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)

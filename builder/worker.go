@@ -218,7 +218,7 @@ func SpawnStapler(cfg *Config, output *BuildOutput, ctl StaplerControls) {
 
 	if output.entry != "" {
 		var buf bytes.Buffer
-		gencpp.EntryPoint(&buf, output.entry, "coven_start", "coven::os::exit")
+		// gencpp.EntryPoint(&buf, output.entry, "coven_start", "coven::os::exit")
 		output.code.Add(buf.Bytes())
 	}
 }

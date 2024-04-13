@@ -47,10 +47,8 @@ func (p *Parser) deferStatement() (ast.DeferStatement, error) {
 	var cop ast.ChainOperand
 	var err error
 	if p.tok.Kind == token.Identifier {
-		identifier, err := p.scopedIdentifier()
-		if err != nil {
-			return ast.DeferStatement{}, err
-		}
+		identifier := p.idn()
+		p.advance() // skip identifier
 
 		cop, err = p.chainOperand(ast.ChainStart{Identifier: identifier})
 		if err != nil {
@@ -425,105 +423,6 @@ func (p *Parser) ifClause() (clause ast.IfClause, err error) {
 	}, nil
 }
 
-func (p *Parser) tryParseConstStatement() (statement ast.Statement, err error) {
-	// if p.tok.IsIdent() && p.next.Kind == token.ShortAssign {
-	// 	target := p.ident()
-	// 	p.advance() // skip identifier
-	// 	p.advance() // skip ":="
-	// 	var expr ast.Expression
-	// 	expr, err = p.expr()
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// 	err = p.expect(token.Semicolon)
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// 	p.advance() // skip ";"
-	// 	statement = ast.ShortAssign{
-	// 		Name:       target,
-	// 		Expression: expr,
-	// 	}
-	// 	return
-	// }
-
-	// if p.tok.IsIdent() && p.next.Kind == token.Assign {
-	// 	target := p.idn()
-	// 	p.advance() // skip identifier
-	// 	p.advance() // skip "="
-	// 	var expr ast.Expression
-	// 	expr, err = p.expr()
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// 	err = p.expect(token.Semicolon)
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// 	p.advance() // skip ";"
-	// 	statement = ast.AssignStatement{
-	// 		Target:     target,
-	// 		Expression: expr,
-	// 	}
-	// 	return
-	// }
-
-	// if p.tok.IsIdent() && p.next.Kind == token.AddAssign {
-	// 	target := p.ident()
-	// 	p.advance() // skip identifier
-	// 	p.advance() // skip "+="
-	// 	var expr ast.Expression
-	// 	expr, err = p.expr()
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// 	err = p.expect(token.Semicolon)
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// 	p.advance() // skip ";"
-	// 	statement = ast.AddAssign{
-	// 		Target:     target,
-	// 		Expression: expr,
-	// 	}
-	// 	return
-	// }
-
-	// if p.tok.IsIdent() && p.next.Kind == token.Colon {
-	// 	name := p.ident()
-	// 	p.advance() // skip identifier
-	// 	p.advance() // skip ":"
-	// 	var spec ast.TypeSpecifier
-	// 	spec, err = p.parseTypeSpecifier()
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// 	err = p.expect(token.Assign)
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// 	p.advance() // skip "="
-	// 	var expr ast.Expression
-	// 	expr, err = p.expr()
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// 	err = p.expect(token.Semicolon)
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// 	p.advance() // skip ";"
-	// 	statement = ast.TypedAssign{
-	// 		Name:       name,
-	// 		Type:       spec,
-	// 		Expression: expr,
-	// 	}
-	// 	return
-	// }
-
-	return
-}
-
 // ExpressionStatement or AssignStatement
 func (p *Parser) otherStatement() (ast.Statement, error) {
 	if p.tok.Kind != token.Identifier && p.tok.Kind != token.Receiver {
@@ -546,17 +445,15 @@ func (p *Parser) otherStatement() (ast.Statement, error) {
 			return p.indirectAssignStatement(idn)
 		}
 		target, err = p.chainOperand(ast.IndirectExpression{
-			Target:     ast.ChainStart{Identifier: ast.ScopedIdentifier{Name: idn}},
+			Target:     ast.ChainStart{Identifier: idn},
 			ChainDepth: 1,
 		})
 		if err != nil {
 			return nil, err
 		}
 	} else if p.tok.Kind == token.Identifier {
-		identifier, err := p.scopedIdentifier()
-		if err != nil {
-			return nil, err
-		}
+		identifier := p.idn()
+		p.advance() // skip identifier
 
 		target, err = p.chainOperand(ast.ChainStart{Identifier: identifier})
 		if err != nil {

@@ -25,7 +25,7 @@ import (
 type Parser struct {
 	// stored output to transfer already parsed data
 	// between external methods calls
-	atom ast.UnitAtom
+	atom ast.Atom
 
 	// tokens saved by advance backup
 	buf CycleTokenBuffer
@@ -108,28 +108,28 @@ func FromSource(src *source.File) *Parser {
 	return p
 }
 
-func ParseBytes(b []byte) (ast.UnitAtom, error) {
+func ParseBytes(b []byte) (ast.Atom, error) {
 	p := FromBytes(b)
 	return p.parse()
 }
 
-func ParseFile(filename string) (ast.UnitAtom, error) {
+func ParseFile(filename string) (ast.Atom, error) {
 	p, err := FromFile(filename)
 	if err != nil {
-		return ast.UnitAtom{}, err
+		return ast.Atom{}, err
 	}
 	return p.parse()
 }
 
-func ParseSource(src *source.File) (ast.UnitAtom, error) {
+func ParseSource(src *source.File) (ast.Atom, error) {
 	p := FromSource(src)
 	return p.parse()
 }
 
-func Parse(r io.Reader) (ast.UnitAtom, error) {
+func Parse(r io.Reader) (ast.Atom, error) {
 	p, err := FromReader(r)
 	if err != nil {
-		return ast.UnitAtom{}, err
+		return ast.Atom{}, err
 	}
 	return p.parse()
 }
@@ -173,39 +173,22 @@ func (p *Parser) Header() (ast.AtomHeader, error) {
 // Parse continues atom parsing from the state where Header method left.
 // Resulting atom tree is complete and also contains info gathered by
 // Header method
-func (p *Parser) Parse() (ast.UnitAtom, error) {
+func (p *Parser) Parse() (ast.Atom, error) {
 	return p.parse()
 }
 
-func (p *Parser) parse() (ast.UnitAtom, error) {
-	var blocks []ast.NamespaceBlock
-	def := ast.NamespaceBlock{Default: true}
+func (p *Parser) parse() (ast.Atom, error) {
+	var nodes []ast.TopLevel
 	for {
 		if p.isEOF() {
-			if len(def.Nodes) != 0 {
-				blocks = append(blocks, def)
-			}
-
-			p.atom.Blocks = blocks
+			p.atom.Nodes = nodes
 			return p.atom, nil
 		}
 
-		if p.tok.Kind == token.Namespace {
-			block, err := p.namespaceBlock()
-			if err != nil {
-				return ast.UnitAtom{}, err
-			}
-			if len(def.Nodes) != 0 {
-				blocks = append(blocks, def)
-				def = ast.NamespaceBlock{Default: true}
-			}
-			blocks = append(blocks, block)
-		} else {
-			top, err := p.topLevel()
-			if err != nil {
-				return ast.UnitAtom{}, err
-			}
-			def.Nodes = append(def.Nodes, top)
+		top, err := p.topLevel()
+		if err != nil {
+			return ast.Atom{}, err
 		}
+		nodes = append(nodes, top)
 	}
 }

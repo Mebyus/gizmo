@@ -6,21 +6,22 @@ import (
 	"github.com/mebyus/gizmo/ast"
 )
 
-func RenderUnitAtom(w io.Writer, atom ast.UnitAtom) error {
+func RenderUnitAtom(w io.Writer, atom ast.Atom) error {
 	tree := ConvertUnitAtom(atom)
 	Render(w, tree)
 	return nil
 }
 
-func ConvertUnitAtom(atom ast.UnitAtom) Node {
-	nodes := make([]Node, 0, len(atom.Blocks)+1)
+func ConvertUnitAtom(atom ast.Atom) Node {
+	nodes := make([]Node, 0, len(atom.Nodes)+1)
 
 	if atom.Header.Unit != nil {
 		nodes = append(nodes, ConvertUnitBlock(atom.Header.Unit))
 	}
 
-	for _, block := range atom.Blocks {
-		nodes = append(nodes, ConvertNamespaceBlock(block))
+	for _, top := range atom.Nodes {
+		node := ConvertTopLevel(top)
+		nodes = append(nodes, node)
 	}
 
 	return Node{
@@ -30,34 +31,8 @@ func ConvertUnitAtom(atom ast.UnitAtom) Node {
 }
 
 func ConvertUnitBlock(block *ast.UnitBlock) Node {
-	// uid := block.Block.UID()
 	return Node{
 		Text:  "unit",
 		Nodes: nil,
-	}
-}
-
-func ConvertNamespaceBlock(block ast.NamespaceBlock) Node {
-	nodesTitle := "nodes"
-	if len(block.Nodes) == 0 {
-		nodesTitle += ": <empty>"
-	}
-	nodes := make([]Node, 0, len(block.Nodes))
-	for _, top := range block.Nodes {
-		node := ConvertTopLevel(top)
-		nodes = append(nodes, node)
-	}
-
-	return Node{
-		Text: "namespace",
-		Nodes: []Node{
-			{
-				Text: "name: " + block.Name.String(),
-			},
-			{
-				Text:  nodesTitle,
-				Nodes: nodes,
-			},
-		},
 	}
 }

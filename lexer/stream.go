@@ -12,6 +12,11 @@ type Stream interface {
 	Lex() token.Token
 }
 
+// Flexer same as Stream, but can yield comment tokens.
+type Flexer interface {
+	Flex() token.Token
+}
+
 // Parrot implements Stream by yielding tokens from supplied list
 type Parrot struct {
 	toks []token.Token

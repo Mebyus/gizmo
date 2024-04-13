@@ -11,16 +11,16 @@ type UnitBlock struct {
 	Block BlockStatement
 }
 
-// UnitAtom smallest piece of processed source code inside a unit. In most
+// Atom smallest piece of processed source code inside a unit. In most
 // cases this represents a file with source code. Exceptions may include
-// source code generated at compile time
+// source code generated at compile time.
 //
-// <UnitAtom> = [ <UnitBlock> ] { <Namespace> }
-type UnitAtom struct {
+// <Atom> = [ <UnitBlock> ] { <Namespace> }
+type Atom struct {
 	Header AtomHeader
 
-	// Saved in order they appear in source code
-	Blocks []NamespaceBlock
+	// Saved in order they appear inside atom.
+	Nodes []TopLevel
 }
 
 // AtomHeader stores info about atom that affects build-time decisions.

@@ -446,55 +446,20 @@ func (p *Parser) receiverStartOperand() (ast.Operand, error) {
 
 // SymbolExpression, SelectorExpression, IndexExpression, CallExpression or InstanceExpression
 func (p *Parser) identifierStartOperand() (ast.Operand, error) {
-	scoped, err := p.scopedIdentifier()
-	if err != nil {
-		return nil, err
-	}
+	identifier := p.idn()
+	p.advance() // skip identifier
 
 	switch p.tok.Kind {
 	case token.Period, token.LeftParentheses, token.LeftSquare, token.Indirect, token.Address:
-		return p.chainOperand(ast.ChainStart{Identifier: scoped})
+		return p.chainOperand(ast.ChainStart{Identifier: identifier})
 	default:
-		return ast.SymbolExpression{Identifier: scoped}, nil
-	}
-}
-
-func (p *Parser) instanceExpression(identifier ast.ScopedIdentifier) (ast.InstanceExpression, error) {
-	p.advance() // skip "[["
-
-	var args []ast.TypeSpecifier
-	for {
-		if p.tok.Kind == token.RightDoubleSquare {
-			if len(args) == 0 {
-				return ast.InstanceExpression{}, fmt.Errorf("no args in instance expression %s", p.pos().String())
-			}
-
-			p.advance() // skip "]]"
-			return ast.InstanceExpression{
-				Target: identifier,
-				Args:   args,
-			}, nil
-		}
-
-		arg, err := p.typeSpecifier()
-		if err != nil {
-			return ast.InstanceExpression{}, err
-		}
-		args = append(args, arg)
-
-		if p.tok.Kind == token.Comma {
-			p.advance() // skip ","
-		} else if p.tok.Kind == token.RightDoubleSquare {
-			// will be skipped at next iteration
-		} else {
-			return ast.InstanceExpression{}, p.unexpected(p.tok)
-		}
+		return ast.SymbolExpression{Identifier: identifier}, nil
 	}
 }
 
 func (p *Parser) chainOperand(start ast.ChainOperand) (ast.ChainOperand, error) {
 	var tip ast.ChainOperand = start
-	
+
 	depth := tip.Depth()
 	for {
 		depth += 1

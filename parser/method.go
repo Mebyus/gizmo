@@ -25,16 +25,6 @@ func (p *Parser) methodReceiver() (ast.Identifier, []ast.Identifier, error) {
 		return receiver, nil, nil
 	}
 
-	if p.tok.Kind != token.LeftDoubleSquare {
-		return ast.Identifier{}, nil, p.unexpected(p.tok)
-	}
-
-	// TODO: repair receiver args
-	// params, err := p.templateParams()
-	// if err != nil {
-	// 	return ast.Identifier{}, nil, err
-	// }
-
 	if p.tok.Kind != token.RightSquare {
 		return ast.Identifier{}, nil, p.unexpected(p.tok)
 	}

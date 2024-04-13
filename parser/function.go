@@ -14,9 +14,6 @@ func (p *Parser) topLevelFn() (ast.TopLevel, error) {
 	if p.tok.Kind != token.Identifier {
 		return nil, p.unexpected(p.tok)
 	}
-	if p.next.Kind == token.LeftDoubleSquare {
-		return p.topLevelBlueprint()
-	}
 
 	declaration := ast.FunctionDeclaration{
 		Name: p.idn(),
@@ -46,34 +43,6 @@ func (p *Parser) topLevelFn() (ast.TopLevel, error) {
 	return ast.TopFunctionDefinition{
 		Definition: definition,
 		Props:      p.takeProps(),
-	}, nil
-}
-
-func (p *Parser) topLevelBlueprint() (ast.TopBlueprint, error) {
-	name := p.idn()
-	p.advance() // consume function name identifier
-
-	// TODO: repair blueprint params
-	// params, err := p.templateParams()
-	// if err != nil {
-	// 	return ast.TopBlueprint{}, err
-	// }
-
-	signature, err := p.functionSignature()
-	if err != nil {
-		return ast.TopBlueprint{}, err
-	}
-
-	body, err := p.block()
-	if err != nil {
-		return ast.TopBlueprint{}, err
-	}
-
-	return ast.TopBlueprint{
-		Name: name,
-		// Params:    params,
-		Signature: signature,
-		Body:      body,
 	}, nil
 }
 
