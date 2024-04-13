@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/mebyus/gizmo/ast"
+	"github.com/mebyus/gizmo/source"
 )
 
 func Gen(w io.Writer, cfg *Config, atom ast.Atom) error {
@@ -19,7 +20,7 @@ func Gen(w io.Writer, cfg *Config, atom ast.Atom) error {
 		cfg.GlobalNamespacePrefix = cfg.GlobalNamespacePrefix + "::"
 	}
 
-	builder := NewBuilder(cfg)
+	builder := source.NewBuilder(cfg.Size)
 
 	_, err := io.Copy(w, builder)
 	return err

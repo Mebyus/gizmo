@@ -126,14 +126,6 @@ func ParseSource(src *source.File) (ast.Atom, error) {
 	return p.parse()
 }
 
-func Parse(r io.Reader) (ast.Atom, error) {
-	p, err := FromReader(r)
-	if err != nil {
-		return ast.Atom{}, err
-	}
-	return p.parse()
-}
-
 // Header returns list of all import paths specified in parsed atom.
 // Should be called before calling Parse method. Under the hood this method
 // parses first blocks in atom until it encounteres non-import top-level block

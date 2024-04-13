@@ -164,6 +164,10 @@ func (k Kind) IsIdent() bool {
 	return k == Identifier
 }
 
+func (k Kind) IsComment() bool {
+	return k == LineComment || k == MultComment
+}
+
 func (k Kind) IsLeftPar() bool {
 	return k == LeftParentheses
 }
