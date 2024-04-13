@@ -1,8 +1,6 @@
 package lexer
 
 const (
-	nonASCII = 1 << 7
-
 	maxTokenByteLength = 1 << 10
 )
 

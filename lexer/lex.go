@@ -503,13 +503,13 @@ func (s *Lexer) scanGreaterStart() (tok token.Token) {
 	return
 }
 
-func (lx *Lexer) lexByte(k token.Kind) token.Token {
+func (lx *Lexer) oneByteToken(k token.Kind) token.Token {
 	tok := lx.create(k)
 	lx.advance()
 	return tok
 }
 
-func (lx *Lexer) lexTwoBytes(k token.Kind) token.Token {
+func (lx *Lexer) twoBytesToken(k token.Kind) token.Token {
 	tok := lx.create(k)
 	lx.advance()
 	lx.advance()
@@ -532,7 +532,7 @@ func (lx *Lexer) illegalWord(code uint64) (tok token.Token) {
 	return
 }
 
-func (lx *Lexer) lexIllegalByte() (tok token.Token) {
+func (lx *Lexer) illegalByteToken() (tok token.Token) {
 	tok.Pos = lx.pos
 	tok.Kind = token.Illegal
 	tok.Lit = toString(byte(lx.c))
@@ -544,16 +544,16 @@ func (lx *Lexer) lexIllegalByte() (tok token.Token) {
 func (lx *Lexer) lexOther() token.Token {
 	switch lx.c {
 	case '(':
-		return lx.lexByte(token.LeftParentheses)
+		return lx.oneByteToken(token.LeftParentheses)
 	case ')':
-		return lx.lexByte(token.RightParentheses)
+		return lx.oneByteToken(token.RightParentheses)
 	case '{':
-		return lx.lexByte(token.LeftCurly)
+		return lx.oneByteToken(token.LeftCurly)
 	case '}':
-		return lx.lexByte(token.RightCurly)
+		return lx.oneByteToken(token.RightCurly)
 	case '[':
 		if lx.next == ']' {
-			return lx.lexTwoBytes(token.Chunk)
+			return lx.twoBytesToken(token.Chunk)
 		}
 		if lx.next == '_' {
 			pos := lx.pos
@@ -591,101 +591,101 @@ func (lx *Lexer) lexOther() token.Token {
 				Kind: token.ArrayPointer,
 			}
 		}
-		return lx.lexByte(token.LeftSquare)
+		return lx.oneByteToken(token.LeftSquare)
 	case ']':
-		return lx.lexByte(token.RightSquare)
+		return lx.oneByteToken(token.RightSquare)
 	case '<':
 		switch lx.next {
 		case '=':
-			return lx.lexTwoBytes(token.LessOrEqual)
+			return lx.twoBytesToken(token.LessOrEqual)
 		case '<':
-			return lx.lexTwoBytes(token.LeftShift)
+			return lx.twoBytesToken(token.LeftShift)
 		case '-':
-			return lx.lexTwoBytes(token.LeftArrow)
+			return lx.twoBytesToken(token.LeftArrow)
 		default:
-			return lx.lexByte(token.LeftAngle)
+			return lx.oneByteToken(token.LeftAngle)
 		}
 	case '>':
 		return lx.scanGreaterStart()
 	case '+':
 		if lx.next == '=' {
-			return lx.lexTwoBytes(token.AddAssign)
+			return lx.twoBytesToken(token.AddAssign)
 		}
-		return lx.lexByte(token.Plus)
+		return lx.oneByteToken(token.Plus)
 	case '-':
 		if lx.next == '=' {
-			return lx.lexTwoBytes(token.SubtractAssign)
+			return lx.twoBytesToken(token.SubtractAssign)
 		}
-		return lx.lexByte(token.Minus)
+		return lx.oneByteToken(token.Minus)
 	case ',':
-		return lx.lexByte(token.Comma)
+		return lx.oneByteToken(token.Comma)
 	case '=':
 		switch lx.next {
 		case '=':
-			return lx.lexTwoBytes(token.Equal)
+			return lx.twoBytesToken(token.Equal)
 		case '>':
-			return lx.lexTwoBytes(token.RightArrow)
+			return lx.twoBytesToken(token.RightArrow)
 		default:
-			return lx.lexByte(token.Assign)
+			return lx.oneByteToken(token.Assign)
 		}
 	case ':':
 		if lx.next == '=' {
-			return lx.lexTwoBytes(token.ShortAssign)
+			return lx.twoBytesToken(token.ShortAssign)
 		}
 		if lx.next == ':' {
-			return lx.lexTwoBytes(token.DoubleColon)
+			return lx.twoBytesToken(token.DoubleColon)
 		}
-		return lx.lexByte(token.Colon)
+		return lx.oneByteToken(token.Colon)
 	case ';':
-		return lx.lexByte(token.Semicolon)
+		return lx.oneByteToken(token.Semicolon)
 	case '.':
 		switch lx.next {
 		case '&':
-			return lx.lexTwoBytes(token.Address)
+			return lx.twoBytesToken(token.Address)
 		case '@':
-			return lx.lexTwoBytes(token.Indirect)
+			return lx.twoBytesToken(token.Indirect)
 		case '{':
-			return lx.lexTwoBytes(token.Compound)
+			return lx.twoBytesToken(token.Compound)
 		case '[':
-			return lx.lexTwoBytes(token.IndirectIndex)
+			return lx.twoBytesToken(token.IndirectIndex)
 		case '!':
-			return lx.lexTwoBytes(token.Insist)
+			return lx.twoBytesToken(token.Insist)
 		case '?':
-			return lx.lexTwoBytes(token.Chain)
+			return lx.twoBytesToken(token.Chain)
 		default:
-			return lx.lexByte(token.Period)
+			return lx.oneByteToken(token.Period)
 		}
 	case '%':
-		return lx.lexByte(token.Percent)
+		return lx.oneByteToken(token.Percent)
 	case '*':
-		return lx.lexByte(token.Asterisk)
+		return lx.oneByteToken(token.Asterisk)
 	case '&':
 		if lx.next == '&' {
-			return lx.lexTwoBytes(token.LogicalAnd)
+			return lx.twoBytesToken(token.LogicalAnd)
 		}
-		return lx.lexByte(token.Ampersand)
+		return lx.oneByteToken(token.Ampersand)
 	case '/':
-		return lx.lexByte(token.Slash)
+		return lx.oneByteToken(token.Slash)
 	case '!':
 		if lx.next == '=' {
-			return lx.lexTwoBytes(token.NotEqual)
+			return lx.twoBytesToken(token.NotEqual)
 		}
-		return lx.lexByte(token.Not)
+		return lx.oneByteToken(token.Not)
 	case '?':
-		return lx.lexByte(token.Quest)
+		return lx.oneByteToken(token.Quest)
 	case '^':
-		return lx.lexByte(token.Caret)
+		return lx.oneByteToken(token.Caret)
 	case '|':
 		if lx.next == '|' {
-			return lx.lexTwoBytes(token.LogicalOr)
+			return lx.twoBytesToken(token.LogicalOr)
 		}
-		return lx.lexByte(token.Pipe)
+		return lx.oneByteToken(token.Pipe)
 	case '#':
 		if lx.next == '[' {
-			return lx.lexTwoBytes(token.PropStart)
+			return lx.twoBytesToken(token.PropStart)
 		}
-		return lx.lexIllegalByte()
+		return lx.illegalByteToken()
 	default:
-		return lx.lexIllegalByte()
+		return lx.illegalByteToken()
 	}
 }
