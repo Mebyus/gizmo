@@ -7,6 +7,8 @@
 
 /*.cpp
 /*.cc
+/*.asm
+/*.c
 
 *.gen.cc
 *.o
@@ -17,7 +19,12 @@
 *.so
 *.log
 *.tar
+*.zip
 *.gz
 *.lock
 *.tmp
 *.temp
+
+*.png
+*.jpeg
+*.jpg
