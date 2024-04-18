@@ -140,8 +140,8 @@ const (
 	String             // "abc", "", "\t\n  42Hello\n"
 
 	// Comments
-	LineComment // Line comment starts with //
-	MultComment // Multiline comment inside /* comment */ block
+	LineComment  // Line comment starts with //
+	BlockComment // Comment inside /* comment */ block
 )
 
 func (k Kind) String() string {
@@ -165,7 +165,7 @@ func (k Kind) IsIdent() bool {
 }
 
 func (k Kind) IsComment() bool {
-	return k == LineComment || k == MultComment
+	return k == LineComment || k == BlockComment
 }
 
 func (k Kind) IsLeftPar() bool {

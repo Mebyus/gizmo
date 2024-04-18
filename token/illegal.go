@@ -10,6 +10,7 @@ const (
 	MalformedOctalInteger
 	MalformedDecimalInteger
 	MalformedHexadecimalInteger
+	MalformedBlockComment
 
 	BadEscapeInString
 )

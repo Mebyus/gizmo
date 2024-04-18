@@ -22,7 +22,7 @@ func (lx *Lexer) flex() token.Token {
 		return lx.lineComment()
 	}
 	if lx.c == '/' && lx.next == '*' {
-		return lx.multComment()
+		return lx.blockComment()
 	}
 
 	return lx.codeToken()
@@ -70,17 +70,24 @@ func (lx *Lexer) lineComment() (tok token.Token) {
 	return
 }
 
-func (lx *Lexer) multComment() (tok token.Token) {
+func (lx *Lexer) blockComment() (tok token.Token) {
+	tok.Pos = lx.pos
+
 	lx.advance() // skip '/'
 	lx.advance() // skip '*'
 
+	lx.start()
 	for !lx.eof && !(lx.c == '*' && lx.next == '/') {
 		lx.advance()
 	}
 
 	if lx.eof {
+		tok.SetIllegalError(token.MalformedBlockComment)
 		return
 	}
+
+	tok.Kind = token.BlockComment
+	tok.Lit = string(lx.view())
 
 	lx.advance() // skip '*'
 	lx.advance() // skip '/'

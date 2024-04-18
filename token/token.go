@@ -118,7 +118,7 @@ func (t Token) Short() string {
 	if t.Kind == LineComment {
 		return fmt.Sprintf("%-6d%-12s%-12s%s", t.Pos.Num+1, t.Pos.Short(), "// ...", t.Kind.String())
 	}
-	if t.Kind == MultComment {
+	if t.Kind == BlockComment {
 		return fmt.Sprintf("%-6d%-12s%-12s%s", t.Pos.Num+1, t.Pos.Short(), "/* ... */", t.Kind.String())
 	}
 

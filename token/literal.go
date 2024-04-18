@@ -116,8 +116,8 @@ var Literal = [...]string{
 
 	// Comments
 
-	LineComment: "COM.LINE",
-	MultComment: "COM.MULT",
+	LineComment:  "COM.LINE",
+	BlockComment: "COM.BLOCK",
 }
 
 // ScanStringByteSize determines how many bytes are needed to represent a given

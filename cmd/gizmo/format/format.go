@@ -5,7 +5,8 @@ import (
 	"os"
 
 	"github.com/mebyus/gizmo/butler"
-	"github.com/mebyus/gizmo/lexer"
+
+	ft "github.com/mebyus/gizmo/format"
 )
 
 var Format = &butler.Lackey{
@@ -24,14 +25,6 @@ func execute(r *butler.Lackey, files []string) error {
 	return format(files[0])
 }
 
-func format(filename string) error {
-	lx, err := lexer.FromFile(filename)
-	if err != nil {
-		return err
-	}
-	err = lexer.List(os.Stdout, lx)
-	if err != nil {
-		return err
-	}
-	return nil
+func format(path string) error {
+	return ft.FormatFile(os.Stdout, path)
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/lexer"
 	"github.com/mebyus/gizmo/parser"
+	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/token"
 )
 
@@ -27,10 +28,27 @@ func FormatFile(w io.Writer, path string) error {
 		return err
 	}
 
-	Format(atom, holder.Tokens())
-	return nil
+	b := Format(atom, holder.Tokens())
+	_, err = w.Write(b)
+	return err
 }
 
-func Format(atom ast.Atom, tokens []token.Token) {
+func Format(atom ast.Atom, tokens []token.Token) []byte {
+	f := New()
+	return f.Format(atom, tokens)
+}
 
+type Formatter struct {
+	g source.Builder
+}
+
+func New() *Formatter {
+	return &Formatter{}
+}
+
+func (f *Formatter) Format(atom ast.Atom, tokens []token.Token) []byte {
+	for _, top := range atom.Nodes {
+		f.TopLevel(top)
+	}
+	return f.g.Bytes()
 }
