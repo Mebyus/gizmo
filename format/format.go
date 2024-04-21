@@ -38,17 +38,17 @@ func Format(atom ast.Atom, tokens []token.Token) []byte {
 	return f.Format(atom, tokens)
 }
 
-type Formatter struct {
+type Builder struct {
 	g source.Builder
 }
 
-func New() *Formatter {
-	return &Formatter{}
+func New() *Builder {
+	return &Builder{}
 }
 
-func (f *Formatter) Format(atom ast.Atom, tokens []token.Token) []byte {
+func (g *Builder) Format(atom ast.Atom, tokens []token.Token) []byte {
 	for _, top := range atom.Nodes {
-		f.TopLevel(top)
+		g.TopLevel(top)
 	}
-	return f.g.Bytes()
+	return g.g.Bytes()
 }
