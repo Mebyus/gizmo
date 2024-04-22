@@ -5,6 +5,7 @@ import (
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/toplvl"
+	"github.com/mebyus/gizmo/token"
 )
 
 func (g *Builder) TopLevel(node ast.TopLevel) {
@@ -43,9 +44,17 @@ func (g *Builder) TopVar(top ast.TopVar) {
 }
 
 func (g *Builder) Method(top ast.Method) {
-	g.g.Str("<method>\n")
+
 }
 
 func (g *Builder) TopType(top ast.TopType) {
+	if top.Public {
+		g.pub()
+	}
 
+	g.gen(token.Type)
+	g.ss()
+	g.idn(top.Name)
+	g.ss()
+	g.TypeSpecifier(top.Spec)
 }

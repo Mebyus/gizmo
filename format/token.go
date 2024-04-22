@@ -51,6 +51,12 @@ func (g *Builder) space() {
 
 }
 
+// place a "strict space" which cannot be substituted with newline break,
+// such space between two tokens always leads to a space character in output
+func (g *Builder) ss() {
+
+}
+
 // add potential separator into output
 func (g *Builder) sep() {
 
@@ -64,6 +70,18 @@ func (g *Builder) indent() {
 // start a new statement in output
 func (g *Builder) start() {
 
+}
+
+// place on optional trailing comma, if next brace token is on the same line
+// it will be skipped by stapler
+func (g *Builder) trailComma() {
+
+}
+
+// place "pub" keyword and start new line
+func (g *Builder) pub() {
+	g.gen(token.Pub)
+	g.nl()
 }
 
 // start new line in generated output
