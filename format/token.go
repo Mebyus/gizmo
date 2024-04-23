@@ -21,6 +21,10 @@ func (g *Builder) idn(idn ast.Identifier) {
 
 }
 
+func (g *Builder) bop(op ast.BinaryOperator) {
+
+}
+
 // place generated token with source position information into output
 func (g *Builder) genpos(kind token.Kind, pos source.Pos) {
 

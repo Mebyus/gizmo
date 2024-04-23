@@ -382,6 +382,8 @@ func (p *Parser) tryOperand() (ast.Operand, error) {
 	}
 
 	if p.tok.IsLeftPar() {
+		pos := p.pos()
+
 		p.advance() // skip "("
 		expr, err := p.expr()
 		if err != nil {
@@ -392,7 +394,10 @@ func (p *Parser) tryOperand() (ast.Operand, error) {
 			return nil, err
 		}
 		p.advance() // skip ")"
-		return ast.ParenthesizedExpression{Inner: expr}, nil
+		return ast.ParenthesizedExpression{
+			Pos:   pos,
+			Inner: expr,
+		}, nil
 	}
 
 	if p.tok.Kind == token.LeftSquare {
