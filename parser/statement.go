@@ -636,7 +636,7 @@ func (p *Parser) continueExpressionStatement(operand ast.Operand) (ast.Expressio
 // }
 
 func (p *Parser) varStatement() (statement ast.VarStatement, err error) {
-	pos := p.tok.Pos
+	pos := p.pos()
 
 	p.advance() // skip "var"
 	err = p.expect(token.Identifier)

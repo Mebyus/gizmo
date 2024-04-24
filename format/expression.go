@@ -26,9 +26,22 @@ func (g *Builder) Expression(expr ast.Expression) {
 		g.AddressExpression(expr.(ast.AddressExpression))
 	case exn.Paren:
 		g.ParenthesizedExpression(expr.(ast.ParenthesizedExpression))
+	case exn.Indirect:
+		g.IndirectExpression(expr.(ast.IndirectExpression))
+	case exn.Start:
+		g.ChainStart(expr.(ast.ChainStart))
 	default:
 		panic(fmt.Sprintf("%s expression node not implemented", expr.Kind().String()))
 	}
+}
+
+func (g *Builder) ChainStart(expr ast.ChainStart) {
+	g.idn(expr.Identifier)
+}
+
+func (g *Builder) IndirectExpression(expr ast.IndirectExpression) {
+	g.Expression(expr.Target)
+	g.genpos(token.Indirect, expr.Pos)
 }
 
 func (g *Builder) AddressExpression(expr ast.AddressExpression) {
