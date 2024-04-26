@@ -26,14 +26,6 @@ func (g *Builder) BlockStatement(block ast.BlockStatement) {
 	g.Block(block)
 }
 
-func (g *Builder) startBlock(pos source.Pos) {
-	g.genpos(token.LeftCurly, pos)
-}
-
-func (g *Builder) endBlock() {
-	g.gen(token.RightCurly)
-}
-
 func (g *Builder) emptyBlock(pos source.Pos) {
 	g.genpos(token.LeftCurly, pos)
 	g.sep()
@@ -126,9 +118,9 @@ func (g *Builder) IndirectAssignStatement(node ast.IndirectAssignStatement) {
 
 func (g *Builder) SymbolAssignStatement(node ast.SymbolAssignStatement) {
 	g.idn(node.Target)
-	g.space()
+	g.ss()
 	g.gen(token.Assign)
-	g.space()
+	g.ss()
 	g.Expression(node.Expression)
 	g.semi()
 }
@@ -149,9 +141,9 @@ func (g *Builder) LetStatement(node ast.LetStatement) {
 
 func (g *Builder) IfStatement(node ast.IfStatement) {
 	g.genpos(token.If, node.If.Pos)
-	g.space()
+	g.ss()
 	g.Expression(node.If.Condition)
-	g.space()
+	g.ss()
 	g.Block(node.If.Body)
 
 	for _, clause := range node.ElseIf {

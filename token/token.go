@@ -63,6 +63,10 @@ func (t Token) IsLeftPar() bool {
 }
 
 func (t Token) Literal() string {
+	if t.Kind.hasStaticLiteral() {
+		return t.Kind.String()
+	}
+
 	switch t.Kind {
 	case Identifier:
 		return t.Lit
