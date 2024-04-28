@@ -16,9 +16,16 @@ func (g *Builder) TypeSpecifier(spec ast.TypeSpecifier) {
 		g.EnumType(spec.(ast.EnumType))
 	case tps.Name:
 		g.TypeName(spec.(ast.TypeName))
+	case tps.Pointer:
+		g.PointerType(spec.(ast.PointerType))
 	default:
 		panic(fmt.Sprintf("%s type node not implemented", spec.Kind().String()))
 	}
+}
+
+func (g *Builder) PointerType(spec ast.PointerType) {
+	g.genpos(token.Asterisk, spec.Pos)
+	g.TypeSpecifier(spec.RefType)
 }
 
 func (g *Builder) TypeName(spec ast.TypeName) {
