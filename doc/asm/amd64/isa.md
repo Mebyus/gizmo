@@ -69,6 +69,45 @@ movabs 0x1021324354 => rsi  |  48 be 54 43 32 21 10 00 00 00
 movabs 0x1021324354 => rdi  |  48 bf 54 43 32 21 10 00 00 00
 ----------------------------------------------------------
 
+=====================================================
+load 32-bit constant into 64-bit wide memory location
+denoted by address stored in register (family-0)
+-----------------------------------------------------
+
+movq 0x1234 => [rax]  |  48 c7 00 34 12 00 00
+movq 0x1234 => [rcx]  |  48 c7 01 34 12 00 00
+movq 0x1234 => [rdx]  |  48 c7 02 34 12 00 00
+movq 0x1234 => [rax]  |  48 c7 07 34 12 00 00
+
+movq 0xa    => [rdi]  |  48 c7 07 0a 00 00 00
+-----------------------------------------------------
+
+================================================================
+load 64-bit value stored in register (family-0) into 64-bit wide
+memory location denoted by address stored in another register (family-0)
+----------------------------------------------------------------
+
+mov rax => [rax]  |  48 89 00
+mov rax => [rcx]  |  48 89 01
+mov rax => [rdx]  |  48 89 02
+mov rax => [rdi]  |  48 89 07
+
+mov rcx => [rax]  |  48 89 08
+mov rcx => [rcx]  |  48 89 09
+mov rcx => [rdx]  |  48 89 0a
+mov rcx => [rdi]  |  48 89 0f
+
+mov rdx => [rax]  |  48 89 10
+mov rdx => [rcx]  |  48 89 11
+mov rdx => [rdx]  |  48 89 12
+mov rdx => [rdi]  |  48 89 17
+
+mov rdi => [rax]  |  48 89 38
+mov rdi => [rcx]  |  48 89 39
+mov rdi => [rdx]  |  48 89 3a
+mov rdi => [rdi]  |  48 89 3f
+----------------------------------------------------------------
+
 =================================
 family-0 register => number (0x)
 ---------------------------------
