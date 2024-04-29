@@ -33,6 +33,7 @@ func FormatFile(w io.Writer, path string) error {
 }
 
 func Format(atom ast.Atom, tokens []token.Token) []byte {
-	f := New()
-	return f.Format(atom, tokens)
+	g := New(tokens)
+	nodes := g.Nodes(atom)
+	return NewStapler(tokens, nodes).staple()
 }

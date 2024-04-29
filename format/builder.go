@@ -6,16 +6,18 @@ import (
 )
 
 type Builder struct {
-	s Stapler
+	tokens []token.Token
+	nodes  []Node
 }
 
-func New() *Builder {
-	return &Builder{}
+func New(tokens []token.Token) *Builder {
+	// TODO: prealloc space for nodes
+	return &Builder{tokens: tokens}
 }
 
-func (g *Builder) Format(atom ast.Atom, tokens []token.Token) []byte {
+func (g *Builder) Nodes(atom ast.Atom) []Node {
 	for _, top := range atom.Nodes {
 		g.TopLevel(top)
 	}
-	return g.s.staple()
+	return g.nodes
 }

@@ -18,6 +18,13 @@ type Stapler struct {
 	nodes []Node
 }
 
+func NewStapler(tokens []token.Token, nodes []Node) *Stapler {
+	return &Stapler{
+		tokens: tokens,
+		nodes:  nodes,
+	}
+}
+
 func (s *Stapler) add(node Node) {
 	s.nodes = append(s.nodes, node)
 }
@@ -26,11 +33,11 @@ func (s *Stapler) staple() []byte {
 	for i := 0; i < len(s.nodes); i += 1 {
 		node := s.nodes[i]
 
-		switch node.Kind() {
+		switch node.Kind {
 		case GenNode:
-			s.gen(node.(Gen).TokenKind)
+			s.gen(token.Kind(node.Val))
 		case TokNode:
-			s.tok(node.(Tok).Token)
+			s.tok(node.Val)
 		case StrictSpaceNode:
 			s.ss()
 		case StartNode:
@@ -43,8 +50,14 @@ func (s *Stapler) staple() []byte {
 			s.sb()
 		case EndBlockNode:
 			s.eb()
+		case SepNode:
+			// TODO: logic for non default SepNode behaviour
+		case TrailCommaNode:
+			// TODO: logic for non default TrailCommaNode behaviour
+		case SpaceNode:
+			s.space()
 		default:
-			panic(fmt.Sprintf("unknown node %s", node.Kind().String()))
+			panic(fmt.Sprintf("unknown node %s", node.Kind.String()))
 		}
 	}
 
@@ -55,7 +68,8 @@ func (s *Stapler) gen(kind token.Kind) {
 	s.buf.write(kind.String())
 }
 
-func (s *Stapler) tok(tok token.Token) {
+func (s *Stapler) tok(num uint32) {
+	tok := s.tokens[num]
 	s.buf.write(tok.Literal())
 }
 
@@ -65,6 +79,11 @@ func (s *Stapler) inc() {
 
 func (s *Stapler) dec() {
 	s.buf.dec()
+}
+
+func (s *Stapler) space() {
+	// TODO: logic for non default SpaceNode behaviour
+	s.ss()
 }
 
 func (s *Stapler) ss() {

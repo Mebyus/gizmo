@@ -46,7 +46,7 @@ func (g *Builder) FunctionParams(params []ast.FieldDefinition) {
 		return
 	}
 
-	for i := 0; i < len(params) - 1; i += 1 {
+	for i := 0; i < len(params)-1; i += 1 {
 		p := params[i]
 
 		g.idn(p.Name)
@@ -57,7 +57,7 @@ func (g *Builder) FunctionParams(params []ast.FieldDefinition) {
 		g.space()
 	}
 
-	last := params[len(params) - 1]
+	last := params[len(params)-1]
 
 	g.idn(last.Name)
 	g.gen(token.Colon)
