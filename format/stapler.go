@@ -56,6 +56,8 @@ func (s *Stapler) staple() []byte {
 			// TODO: logic for non default TrailCommaNode behaviour
 		case SpaceNode:
 			s.space()
+		case BlankNode:
+			s.blank()
 		default:
 			panic(fmt.Sprintf("unknown node %s", node.Kind.String()))
 		}
@@ -84,6 +86,11 @@ func (s *Stapler) dec() {
 func (s *Stapler) space() {
 	// TODO: logic for non default SpaceNode behaviour
 	s.ss()
+}
+
+func (s *Stapler) blank() {
+	s.buf.nl()
+	s.buf.nl()
 }
 
 func (s *Stapler) ss() {

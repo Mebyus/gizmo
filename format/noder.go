@@ -5,19 +5,20 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-type Builder struct {
+type Noder struct {
 	tokens []token.Token
 	nodes  []Node
 }
 
-func New(tokens []token.Token) *Builder {
+func NewNoder(tokens []token.Token) *Noder {
 	// TODO: prealloc space for nodes
-	return &Builder{tokens: tokens}
+	return &Noder{tokens: tokens}
 }
 
-func (g *Builder) Nodes(atom ast.Atom) []Node {
+func (g *Noder) Nodes(atom ast.Atom) []Node {
 	for _, top := range atom.Nodes {
 		g.TopLevel(top)
+		g.blank()
 	}
 	return g.nodes
 }

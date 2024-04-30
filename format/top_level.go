@@ -8,7 +8,7 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-func (g *Builder) TopLevel(node ast.TopLevel) {
+func (g *Noder) TopLevel(node ast.TopLevel) {
 	switch node.Kind() {
 	case toplvl.Fn:
 		g.TopFn(node.(ast.TopFunctionDefinition))
@@ -27,27 +27,27 @@ func (g *Builder) TopLevel(node ast.TopLevel) {
 	}
 }
 
-func (g *Builder) TopFn(top ast.TopFunctionDefinition) {
+func (g *Noder) TopFn(top ast.TopFunctionDefinition) {
 	g.FunctionDefinition(top.Definition)
 }
 
-func (g *Builder) TopConst(top ast.TopConst) {
+func (g *Noder) TopConst(top ast.TopConst) {
 	// f.ConstInit(top.ConstInit)
 }
 
-func (g *Builder) TopDeclare(top ast.TopFunctionDeclaration) {
+func (g *Noder) TopDeclare(top ast.TopFunctionDeclaration) {
 	// f.FunctionDeclaration(top.Declaration)
 }
 
-func (g *Builder) TopVar(top ast.TopVar) {
+func (g *Noder) TopVar(top ast.TopVar) {
 	// f.VarInit(top.VarInit)
 }
 
-func (g *Builder) Method(top ast.Method) {
+func (g *Noder) Method(top ast.Method) {
 
 }
 
-func (g *Builder) TopType(top ast.TopType) {
+func (g *Noder) TopType(top ast.TopType) {
 	if top.Public {
 		g.pub()
 	}

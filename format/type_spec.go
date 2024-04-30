@@ -8,7 +8,7 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-func (g *Builder) TypeSpecifier(spec ast.TypeSpecifier) {
+func (g *Noder) TypeSpecifier(spec ast.TypeSpecifier) {
 	switch spec.Kind() {
 	case tps.Struct:
 		g.StructType(spec.(ast.StructType))
@@ -23,16 +23,16 @@ func (g *Builder) TypeSpecifier(spec ast.TypeSpecifier) {
 	}
 }
 
-func (g *Builder) PointerType(spec ast.PointerType) {
+func (g *Noder) PointerType(spec ast.PointerType) {
 	g.genpos(token.Asterisk, spec.Pos)
 	g.TypeSpecifier(spec.RefType)
 }
 
-func (g *Builder) TypeName(spec ast.TypeName) {
+func (g *Noder) TypeName(spec ast.TypeName) {
 	g.idn(spec.Name)
 }
 
-func (g *Builder) StructType(spec ast.StructType) {
+func (g *Noder) StructType(spec ast.StructType) {
 	g.genpos(token.Struct, spec.Pos)
 	g.ss()
 
@@ -55,7 +55,7 @@ func (g *Builder) StructType(spec ast.StructType) {
 	g.gen(token.RightCurly)
 }
 
-func (g *Builder) EnumType(spec ast.EnumType) {
+func (g *Noder) EnumType(spec ast.EnumType) {
 	g.genpos(token.Enum, spec.Pos)
 	g.ss()
 	g.idn(spec.Base.Name)

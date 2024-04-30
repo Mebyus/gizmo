@@ -9,7 +9,7 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-func (g *Builder) Block(block ast.BlockStatement) {
+func (g *Noder) Block(block ast.BlockStatement) {
 	if len(block.Statements) == 0 {
 		g.emptyBlock(block.Pos)
 		return
@@ -22,17 +22,17 @@ func (g *Builder) Block(block ast.BlockStatement) {
 	g.endBlock()
 }
 
-func (g *Builder) BlockStatement(block ast.BlockStatement) {
+func (g *Noder) BlockStatement(block ast.BlockStatement) {
 	g.Block(block)
 }
 
-func (g *Builder) emptyBlock(pos source.Pos) {
+func (g *Noder) emptyBlock(pos source.Pos) {
 	g.genpos(token.LeftCurly, pos)
 	g.sep()
 	g.gen(token.RightCurly)
 }
 
-func (g *Builder) Statement(node ast.Statement) {
+func (g *Noder) Statement(node ast.Statement) {
 	g.start()
 
 	switch node.Kind() {
@@ -59,7 +59,7 @@ func (g *Builder) Statement(node ast.Statement) {
 	}
 }
 
-func (g *Builder) AddAssignStatement(node ast.AddAssignStatement) {
+func (g *Noder) AddAssignStatement(node ast.AddAssignStatement) {
 	g.Expression(node.Target)
 	g.ss()
 	g.gen(token.AddAssign)
@@ -68,14 +68,14 @@ func (g *Builder) AddAssignStatement(node ast.AddAssignStatement) {
 	g.semi()
 }
 
-func (g *Builder) DeferStatement(node ast.DeferStatement) {
+func (g *Noder) DeferStatement(node ast.DeferStatement) {
 	g.genpos(token.Defer, node.Pos)
 	g.ss()
 	g.Expression(node.Call)
 	g.semi()
 }
 
-func (g *Builder) VarStatement(node ast.VarStatement) {
+func (g *Noder) VarStatement(node ast.VarStatement) {
 	g.genpos(token.Var, node.Pos)
 	g.ss()
 	g.idn(node.Name)
@@ -93,7 +93,7 @@ func (g *Builder) VarStatement(node ast.VarStatement) {
 	g.semi()
 }
 
-func (g *Builder) ReturnStatement(node ast.ReturnStatement) {
+func (g *Noder) ReturnStatement(node ast.ReturnStatement) {
 	g.genpos(token.Return, node.Pos)
 
 	if node.Expression == nil {
@@ -106,7 +106,7 @@ func (g *Builder) ReturnStatement(node ast.ReturnStatement) {
 	g.semi()
 }
 
-func (g *Builder) IndirectAssignStatement(node ast.IndirectAssignStatement) {
+func (g *Noder) IndirectAssignStatement(node ast.IndirectAssignStatement) {
 	g.idn(node.Target)
 	g.gen(token.Indirect)
 	g.ss()
@@ -116,7 +116,7 @@ func (g *Builder) IndirectAssignStatement(node ast.IndirectAssignStatement) {
 	g.semi()
 }
 
-func (g *Builder) SymbolAssignStatement(node ast.SymbolAssignStatement) {
+func (g *Noder) SymbolAssignStatement(node ast.SymbolAssignStatement) {
 	g.idn(node.Target)
 	g.ss()
 	g.gen(token.Assign)
@@ -125,7 +125,7 @@ func (g *Builder) SymbolAssignStatement(node ast.SymbolAssignStatement) {
 	g.semi()
 }
 
-func (g *Builder) LetStatement(node ast.LetStatement) {
+func (g *Noder) LetStatement(node ast.LetStatement) {
 	g.genpos(token.Let, node.Pos)
 	g.ss()
 	g.idn(node.Name)
@@ -139,7 +139,7 @@ func (g *Builder) LetStatement(node ast.LetStatement) {
 	g.semi()
 }
 
-func (g *Builder) IfStatement(node ast.IfStatement) {
+func (g *Noder) IfStatement(node ast.IfStatement) {
 	g.genpos(token.If, node.If.Pos)
 	g.ss()
 	g.Expression(node.If.Condition)

@@ -8,7 +8,7 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-func (g *Builder) Expression(expr ast.Expression) {
+func (g *Noder) Expression(expr ast.Expression) {
 	switch expr.Kind() {
 	case exn.Symbol:
 		g.SymbolExpression(expr.(ast.SymbolExpression))
@@ -35,21 +35,21 @@ func (g *Builder) Expression(expr ast.Expression) {
 	}
 }
 
-func (g *Builder) ChainStart(expr ast.ChainStart) {
+func (g *Noder) ChainStart(expr ast.ChainStart) {
 	g.idn(expr.Identifier)
 }
 
-func (g *Builder) IndirectExpression(expr ast.IndirectExpression) {
+func (g *Noder) IndirectExpression(expr ast.IndirectExpression) {
 	g.Expression(expr.Target)
 	g.genpos(token.Indirect, expr.Pos)
 }
 
-func (g *Builder) AddressExpression(expr ast.AddressExpression) {
+func (g *Noder) AddressExpression(expr ast.AddressExpression) {
 	g.Expression(expr.Target)
 	g.gen(token.Address)
 }
 
-func (g *Builder) CallExpression(expr ast.CallExpression) {
+func (g *Noder) CallExpression(expr ast.CallExpression) {
 	g.Expression(expr.Callee)
 
 	args := expr.Arguments
@@ -77,14 +77,14 @@ func (g *Builder) CallExpression(expr ast.CallExpression) {
 	g.gen(token.RightParentheses)
 }
 
-func (g *Builder) IndexExpression(expr ast.IndexExpression) {
+func (g *Noder) IndexExpression(expr ast.IndexExpression) {
 	g.Expression(expr)
 	g.gen(token.LeftSquare)
 	g.Expression(expr.Index)
 	g.gen(token.RightSquare)
 }
 
-func (g *Builder) BinaryExpression(expr ast.BinaryExpression) {
+func (g *Noder) BinaryExpression(expr ast.BinaryExpression) {
 	g.Expression(expr.Left)
 	g.space()
 	g.bop(expr.Operator)
@@ -92,19 +92,19 @@ func (g *Builder) BinaryExpression(expr ast.BinaryExpression) {
 	g.Expression(expr.Right)
 }
 
-func (g *Builder) BasicLiteral(lit ast.BasicLiteral) {
+func (g *Noder) BasicLiteral(lit ast.BasicLiteral) {
 	g.tok(lit.Token)
 }
 
-func (g *Builder) ReceiverExpression(expr ast.Receiver) {
+func (g *Noder) ReceiverExpression(expr ast.Receiver) {
 	g.genpos(token.Receiver, expr.Pos)
 }
 
-func (g *Builder) SymbolExpression(expr ast.SymbolExpression) {
+func (g *Noder) SymbolExpression(expr ast.SymbolExpression) {
 	g.idn(expr.Identifier)
 }
 
-func (g *Builder) ParenthesizedExpression(expr ast.ParenthesizedExpression) {
+func (g *Noder) ParenthesizedExpression(expr ast.ParenthesizedExpression) {
 	g.genpos(token.LeftParentheses, expr.Pos)
 	g.sep()
 	g.Expression(expr.Inner)

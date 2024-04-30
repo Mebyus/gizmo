@@ -5,12 +5,12 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-func (g *Builder) FunctionDefinition(node ast.FunctionDefinition) {
+func (g *Noder) FunctionDefinition(node ast.FunctionDefinition) {
 	g.FunctionDeclaration(node.Head)
 	g.Block(node.Body)
 }
 
-func (g *Builder) FunctionDeclaration(decl ast.FunctionDeclaration) {
+func (g *Noder) FunctionDeclaration(decl ast.FunctionDeclaration) {
 	g.gen(token.Fn)
 	g.ss()
 	g.idn(decl.Name)
@@ -41,7 +41,7 @@ func (g *Builder) FunctionDeclaration(decl ast.FunctionDeclaration) {
 	g.ss()
 }
 
-func (g *Builder) FunctionParams(params []ast.FieldDefinition) {
+func (g *Noder) FunctionParams(params []ast.FieldDefinition) {
 	if len(params) == 0 {
 		return
 	}

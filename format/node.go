@@ -48,6 +48,9 @@ const (
 	// Mandatory newline with indent.
 	NewlineIndentNode
 
+	// Mandatory blank line.
+	BlankNode
+
 	TrailCommaNode
 	StartBlockNode
 	EndBlockNode
@@ -66,10 +69,11 @@ var kindText = [...]string{
 	StrictSpaceNode: "ss",
 	SepNode:         "sep",
 	NewlineNode:     "nl",
-	TrailCommaNode:  "tc",
-	StartBlockNode:  "sb",
-	EndBlockNode:    "eb",
+	TrailCommaNode:  "trail_comma",
+	StartBlockNode:  "start_block",
+	EndBlockNode:    "end_block",
 	StartNode:       "start",
+	BlankNode:       "blank",
 }
 
 func (k NodeKind) String() string {
@@ -89,6 +93,7 @@ type Node struct {
 	//	- SepNode           - (reserved) always 0
 	//	- NewlineNode       - (reserved) always 0
 	//	- NewlineIndentNode - (reserved) always 0
+	//	- BlankNode         - (reserved) always 0
 	//	- TrailCommaNode    - (reserved) always 0
 	//	- StartNode         - (reserved) always 0
 	//
@@ -97,123 +102,117 @@ type Node struct {
 	Kind NodeKind
 }
 
-func (g *Builder) verify(kind token.Kind, num uint32) {
+func (g *Noder) verify(kind token.Kind, num uint32) {
 	exp := g.tokens[num].Kind
 	if kind != exp {
 		panic(fmt.Sprintf("unexpected generated token %s instead of %s", kind.String(), exp.String()))
 	}
 }
 
-func (g *Builder) add(kind NodeKind, val uint32) {
+func (g *Noder) add(kind NodeKind, val uint32) {
 	g.nodes = append(g.nodes, Node{Kind: kind, Val: val})
 }
 
 // place original token with source position information into output
-func (g *Builder) tok(tok token.Token) {
+func (g *Noder) tok(tok token.Token) {
 	g.add(TokNode, tok.Pos.Num)
 }
 
 // place generated token into output
-func (g *Builder) gen(kind token.Kind) {
+func (g *Noder) gen(kind token.Kind) {
 	g.add(GenNode, uint32(kind))
 }
 
 // place identifier token into output
-func (g *Builder) idn(idn ast.Identifier) {
+func (g *Noder) idn(idn ast.Identifier) {
 	g.verify(token.Identifier, idn.Pos.Num)
 	g.add(TokNode, idn.Pos.Num)
 }
 
-func (g *Builder) bop(op ast.BinaryOperator) {
+func (g *Noder) bop(op ast.BinaryOperator) {
 	g.add(TokNode, op.Pos.Num)
 }
 
 // place generated token with source position information into output
-func (g *Builder) genpos(kind token.Kind, pos source.Pos) {
+func (g *Noder) genpos(kind token.Kind, pos source.Pos) {
 	g.verify(kind, pos.Num)
 	g.add(TokNode, pos.Num)
 }
 
 // place generated semicolon token into output
-func (g *Builder) semi() {
+func (g *Noder) semi() {
 	g.gen(token.Semicolon)
 }
 
 // increment indentation buffer by one level.
-func (g *Builder) inc() {
+func (g *Noder) inc() {
 	g.add(IncNode, 0)
 }
 
 // decrement indentation buffer by one level
-func (g *Builder) dec() {
+func (g *Noder) dec() {
 	g.add(DecNode, 0)
 }
 
 // add a space between tokens into output
-func (g *Builder) space() {
+func (g *Noder) space() {
 	g.add(SpaceNode, 0)
 }
 
 // place a "strict space" which cannot be substituted with newline break,
 // such space between two tokens always leads to a space character in output
-func (g *Builder) ss() {
+func (g *Noder) ss() {
 	g.add(StrictSpaceNode, 0)
 }
 
+// place a blank line into output
+func (g *Noder) blank() {
+	g.add(BlankNode, 0)
+}
+
 // add potential separator into output
-func (g *Builder) sep() {
+func (g *Noder) sep() {
 	g.add(SepNode, 0)
 }
 
 // place a copy of indentation buffer into output
-func (g *Builder) indent() {
+func (g *Noder) indent() {
 
 }
 
 // start a new statement in output
-func (g *Builder) start() {
+func (g *Noder) start() {
 	g.add(StartNode, 0)
 }
 
-func (g *Builder) startBlock(pos source.Pos) {
+func (g *Noder) startBlock(pos source.Pos) {
 	g.verify(token.LeftCurly, pos.Num)
 	g.add(StartBlockNode, 0)
 }
 
-func (g *Builder) endBlock() {
+func (g *Noder) endBlock() {
 	g.add(EndBlockNode, 0)
 }
 
 // place on optional trailing comma, if next brace token is on the same line
 // it will be skipped by stapler
-func (g *Builder) trailComma() {
+func (g *Noder) trailComma() {
 	g.add(TrailCommaNode, 0)
 }
 
 // place "pub" keyword and start new line
-func (g *Builder) pub() {
+func (g *Noder) pub() {
 	g.gen(token.Pub)
 	g.nl()
 }
 
 // start new line in generated output
-func (g *Builder) nl() {
+func (g *Noder) nl() {
 
 }
 
 // start new line and place indentation into output
-func (g *Builder) nli() {
+func (g *Noder) nli() {
 	g.nl()
 	g.indent()
-}
-
-// place a blank line into output
-func (g *Builder) blank() {
-	g.nl()
-	g.nl()
-}
-
-// place a string into output, without any additional logic
-func (g *Builder) str(s string) {
-
 }
