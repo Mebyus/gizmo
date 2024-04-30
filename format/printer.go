@@ -22,11 +22,12 @@ func NewPrinter(tokens []token.Token, nodes []Node) *Printer {
 	}
 }
 
-func (s *Printer) add(node Node) {
-	s.nodes = append(s.nodes, node)
+func Print(tokens []token.Token, nodes []Node) []byte {
+	p := NewPrinter(tokens, nodes)
+	return p.print()
 }
 
-func (p *Printer) staple() []byte {
+func (p *Printer) print() []byte {
 	for i := 0; i < len(p.nodes); i += 1 {
 		node := p.nodes[i]
 
