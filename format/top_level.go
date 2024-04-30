@@ -28,6 +28,10 @@ func (g *Noder) TopLevel(node ast.TopLevel) {
 }
 
 func (g *Noder) TopFn(top ast.TopFunctionDefinition) {
+	if top.Public {
+		g.pub()
+	}
+
 	g.FunctionDefinition(top.Definition)
 }
 

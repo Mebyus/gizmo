@@ -7,111 +7,114 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-type Stapler struct {
+type Printer struct {
 	buf Buffer
-
-	prev token.Token
-	next token.Token
 
 	tokens []token.Token
 
 	nodes []Node
 }
 
-func NewStapler(tokens []token.Token, nodes []Node) *Stapler {
-	return &Stapler{
+func NewPrinter(tokens []token.Token, nodes []Node) *Printer {
+	return &Printer{
 		tokens: tokens,
 		nodes:  nodes,
 	}
 }
 
-func (s *Stapler) add(node Node) {
+func (s *Printer) add(node Node) {
 	s.nodes = append(s.nodes, node)
 }
 
-func (s *Stapler) staple() []byte {
-	for i := 0; i < len(s.nodes); i += 1 {
-		node := s.nodes[i]
+func (p *Printer) staple() []byte {
+	for i := 0; i < len(p.nodes); i += 1 {
+		node := p.nodes[i]
 
 		switch node.Kind {
 		case GenNode:
-			s.gen(token.Kind(node.Val))
+			p.gen(token.Kind(node.Val))
 		case TokNode:
-			s.tok(node.Val)
+			p.tok(node.Val)
 		case StrictSpaceNode:
-			s.ss()
+			p.ss()
 		case StartNode:
-			s.start()
+			p.start()
 		case IncNode:
-			s.inc()
+			p.inc()
 		case DecNode:
-			s.dec()
+			p.dec()
 		case StartBlockNode:
-			s.sb()
+			p.sb()
 		case EndBlockNode:
-			s.eb()
+			p.eb()
 		case SepNode:
 			// TODO: logic for non default SepNode behaviour
 		case TrailCommaNode:
 			// TODO: logic for non default TrailCommaNode behaviour
 		case SpaceNode:
-			s.space()
+			p.space()
 		case BlankNode:
-			s.blank()
+			p.blank()
+		case NewlineNode:
+			p.nl()
 		default:
 			panic(fmt.Sprintf("unknown node %s", node.Kind.String()))
 		}
 	}
 
-	return s.buf.Bytes()
+	return p.buf.Bytes()
 }
 
-func (s *Stapler) gen(kind token.Kind) {
-	s.buf.write(kind.String())
+func (p *Printer) gen(kind token.Kind) {
+	p.buf.write(kind.String())
 }
 
-func (s *Stapler) tok(num uint32) {
-	tok := s.tokens[num]
-	s.buf.write(tok.Literal())
+func (p *Printer) tok(num uint32) {
+	tok := p.tokens[num]
+	p.buf.write(tok.Literal())
 }
 
-func (s *Stapler) inc() {
-	s.buf.inc()
+func (p *Printer) inc() {
+	p.buf.inc()
 }
 
-func (s *Stapler) dec() {
-	s.buf.dec()
+func (p *Printer) dec() {
+	p.buf.dec()
 }
 
-func (s *Stapler) space() {
+func (p *Printer) space() {
 	// TODO: logic for non default SpaceNode behaviour
-	s.ss()
+	p.ss()
 }
 
-func (s *Stapler) blank() {
-	s.buf.nl()
-	s.buf.nl()
+func (p *Printer) blank() {
+	p.buf.nl()
+	p.buf.nl()
 }
 
-func (s *Stapler) ss() {
-	s.buf.ss()
+func (p *Printer) nl() {
+	p.buf.nl()
 }
 
-func (s *Stapler) start() {
-	s.buf.nl()
-	s.buf.indent()
+func (p *Printer) ss() {
+	p.buf.ss()
 }
 
-func (s *Stapler) sb() {
-	s.buf.put('{')
-	s.buf.inc()
+func (p *Printer) start() {
+	p.buf.nl()
+	p.buf.indent()
 }
 
-func (s *Stapler) eb() {
-	s.buf.dec()
-	s.buf.nl()
-	s.buf.indent()
-	s.buf.put('}')
+func (p *Printer) sb() {
+	p.buf.put('{')
+	p.buf.inc()
+}
+
+func (p *Printer) eb() {
+	p.buf.dec()
+	p.buf.nl()
+	p.buf.indent()
+	p.buf.put('}')
 }
 
 // Buffer is used to accumulate formatted source code output.

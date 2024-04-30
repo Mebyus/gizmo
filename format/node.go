@@ -208,7 +208,7 @@ func (g *Noder) pub() {
 
 // start new line in generated output
 func (g *Noder) nl() {
-
+	g.add(NewlineNode, 0)
 }
 
 // start new line and place indentation into output
