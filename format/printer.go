@@ -72,6 +72,12 @@ func (p *Printer) gen(kind token.Kind) {
 
 func (p *Printer) tok(num uint32) {
 	tok := p.tokens[num]
+
+	if tok.Kind == token.LineComment {
+		p.lcom(tok.Lit)
+		return
+	}
+
 	p.buf.write(tok.Literal())
 }
 
@@ -86,6 +92,12 @@ func (p *Printer) dec() {
 func (p *Printer) space() {
 	// TODO: logic for non default SpaceNode behaviour
 	p.ss()
+}
+
+func (p *Printer) lcom(s string) {
+	p.buf.write("// ")
+	p.buf.write(s)
+	p.buf.nl()
 }
 
 func (p *Printer) blank() {

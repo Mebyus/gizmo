@@ -15,6 +15,7 @@ fn use_inc() => int {
     return r;
 }
 
+// top-level test comment
 fn test_dead_code(a: int) {
     var x: int = a;
     x = "";
