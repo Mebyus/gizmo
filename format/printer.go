@@ -58,6 +58,8 @@ func (p *Printer) print() []byte {
 			p.blank()
 		case NewlineNode:
 			p.nl()
+		case NewlineIndentNode:
+			p.nli()
 		default:
 			panic(fmt.Sprintf("unknown node %s", node.Kind.String()))
 		}
@@ -107,6 +109,11 @@ func (p *Printer) blank() {
 
 func (p *Printer) nl() {
 	p.buf.nl()
+}
+
+func (p *Printer) nli() {
+	p.buf.nl()
+	p.buf.indent()
 }
 
 func (p *Printer) ss() {

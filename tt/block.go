@@ -171,6 +171,10 @@ func (b *Block) addReturn(ctx *Context, stmt ast.ReturnStatement) error {
 	if err != nil {
 		return err
 	}
+	t := expr.Type()
+	if t == nil {
+		panic(fmt.Sprintf("%s expression has no type", expr.Kind()))
+	}
 
 	b.addNode(&ReturnStatement{
 		Pos:  pos,

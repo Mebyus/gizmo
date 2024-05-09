@@ -151,6 +151,7 @@ type ChainStart struct {
 	Sym *Symbol
 }
 
+// Explicit interface implementation check
 var _ ChainOperand = &ChainStart{}
 
 func (*ChainStart) Kind() exn.Kind {
@@ -181,6 +182,7 @@ type IndirectExpression struct {
 	ChainDepth uint32
 }
 
+// Explicit interface implementation check
 var _ ChainOperand = &IndirectExpression{}
 
 func (*IndirectExpression) Kind() exn.Kind {
@@ -212,6 +214,7 @@ type CallExpression struct {
 	ChainDepth uint32
 }
 
+// Explicit interface implementation check
 var _ ChainOperand = &CallExpression{}
 
 func (*CallExpression) Kind() exn.Kind {
@@ -228,4 +231,27 @@ func (e *CallExpression) Depth() uint32 {
 
 func (e *CallExpression) Type() *Type {
 	return e.typ
+}
+
+type ParenthesizedExpression struct {
+	nodeOperand
+
+	Pos source.Pos
+
+	Inner Expression
+}
+
+// Explicit interface implementation check
+var _ Operand = &ParenthesizedExpression{}
+
+func (*ParenthesizedExpression) Kind() exn.Kind {
+	return exn.Paren
+}
+
+func (e *ParenthesizedExpression) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *ParenthesizedExpression) Type() *Type {
+	return e.Inner.Type()
 }

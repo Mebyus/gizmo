@@ -41,6 +41,10 @@ func Staple(tokens []token.Token, nodes []Node) []Node {
 			s.sb()
 		case EndBlockNode:
 			s.eb()
+		case SepNode:
+			s.sep()
+		case StartNode:
+			s.start()
 		default:
 			s.add(node)
 		}
@@ -57,6 +61,34 @@ func (s *Stapler) node(kind NodeKind) {
 	s.add(Node{Kind: kind})
 }
 
+func (s *Stapler) nli() {
+	s.node(NewlineIndentNode)
+}
+
+func (s *Stapler) blank() {
+	s.node(BlankNode)
+}
+
+func (s *Stapler) ss() {
+	s.node(StrictSpaceNode)
+}
+
+func (s *Stapler) start() {
+	prev := s.tokens[s.num]
+	next := s.tokens[s.num+1]
+	if next.Kind != token.LineComment {
+		s.nli()
+		return
+	}
+
+	if next.Pos.Line == prev.Pos.Line {
+		s.ss()
+		return
+	}
+
+	s.blank()
+}
+
 func (s *Stapler) sb() {
 	s.advance(token.LeftCurly)
 	s.node(StartBlockNode)
@@ -65,6 +97,20 @@ func (s *Stapler) sb() {
 func (s *Stapler) eb() {
 	s.advance(token.RightCurly)
 	s.node(EndBlockNode)
+}
+
+func (s *Stapler) sep() {
+	prev := s.tokens[s.num].Pos
+	next := s.tokens[s.num+1].Pos
+	if next.Line == prev.Line {
+		return
+	}
+	if next.Line == prev.Line+1 {
+		s.nli()
+		return
+	}
+	s.blank()
+	s.node(IndentNode)
 }
 
 func (s *Stapler) advance(kind token.Kind) {

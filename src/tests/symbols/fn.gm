@@ -22,7 +22,8 @@ fn test_dead_code(a: int) {
     defer use_inc();
     return;
 
-    /* тестируем позицию токена после комментария с utf-8 */ let r: int = inc(x.&);
+    // line comment before statement
+    let r: int = inc(x.&);
 }
 
 pub
@@ -31,4 +32,15 @@ fn test_assign() => uint {
     c = 1;
     c += 2;
     return c;
+}
+
+fn abs(a: int) => int {
+    if a < 0 {
+        return -a;
+    }
+    return a;
+}
+
+fn use_parens(a: int, b: int) => int {
+    return (a + 2 * b) / 3;
 }

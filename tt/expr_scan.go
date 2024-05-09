@@ -41,8 +41,8 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 		return s.scanCallExpression(ctx, expr.(ast.CallExpression))
 	// case exn.Indirx:
 	// 	// g.IndirectIndexExpression(expr.(ast.IndirectIndexExpression))
-	// case exn.Paren:
-	// 	// g.ParenthesizedExpression(expr.(ast.ParenthesizedExpression))
+	case exn.Paren:
+		return s.scanParenthesizedExpression(ctx, expr.(ast.ParenthesizedExpression))
 	// case exn.Select:
 	// 	// g.SelectorExpression(expr.(ast.SelectorExpression))
 	// case exn.Address:
@@ -64,6 +64,19 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 	}
 }
 
+func (s *Scope) scanParenthesizedExpression(ctx *Context, expr ast.ParenthesizedExpression) (*ParenthesizedExpression, error) {
+	pos := expr.Pos
+	inner, err := s.scan(ctx, expr.Inner)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ParenthesizedExpression{
+		Pos:   pos,
+		Inner: inner,
+	}, nil
+}
+
 func (s *Scope) scanSymbolExpression(ctx *Context, expr ast.SymbolExpression) (*SymbolExpression, error) {
 	name := expr.Identifier.Lit
 	pos := expr.Identifier.Pos
@@ -82,7 +95,15 @@ func (s *Scope) scanSymbolExpression(ctx *Context, expr ast.SymbolExpression) (*
 }
 
 func (s *Scope) scanUnaryExpression(ctx *Context, expr *ast.UnaryExpression) (*UnaryExpression, error) {
-	return &UnaryExpression{}, nil
+	inner, err := s.scan(ctx, expr.Inner)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UnaryExpression{
+		Operator: UnaryOperator(expr.Operator),
+		Inner:    inner,
+	}, nil
 }
 
 func (s *Scope) scanBinaryExpression(ctx *Context, expr ast.BinaryExpression) (*BinaryExpression, error) {
