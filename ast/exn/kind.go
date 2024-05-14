@@ -40,6 +40,20 @@ const (
 	Address
 	Slice
 
+	// Simplified special case of general call expression,
+	// when the callee is an isolated symbol:
+	//
+	//	example_symbol(arg1, arg2)
+	//
+	SymbolCall
+
+	// Simplified special case of general address expression,
+	// when the target is an isolated symbol:
+	//
+	//	example_symbol.&
+	//
+	SymbolAddress
+
 	// Indirect index expression
 	Indirx
 
@@ -81,6 +95,9 @@ var text = [...]string{
 	Indirect: "indirect",
 	Indirx:   "indirect_index",
 	Instance: "instance",
+
+	SymbolCall:    "symbol_call",
+	SymbolAddress: "symbol_address",
 
 	Integer: "integer",
 	String:  "string",

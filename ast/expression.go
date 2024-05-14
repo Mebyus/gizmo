@@ -196,6 +196,28 @@ func (e CallExpression) Depth() uint32 {
 	return e.ChainDepth
 }
 
+// <SymbolCallExpression> = <Identifier> "(" { <Expression> "," } ")"
+type SymbolCallExpression struct {
+	nodeChainOperand
+
+	Callee    Identifier
+	Arguments []Expression
+}
+
+var _ ChainOperand = SymbolCallExpression{}
+
+func (SymbolCallExpression) Kind() exn.Kind {
+	return exn.SymbolCall
+}
+
+func (e SymbolCallExpression) Pin() source.Pos {
+	return e.Callee.Pos
+}
+
+func (e SymbolCallExpression) Depth() uint32 {
+	return 0
+}
+
 // <SelectorExpression> = <SelectableExpression> "." <Identifier>
 type SelectorExpression struct {
 	nodeChainOperand
@@ -290,6 +312,27 @@ func (e AddressExpression) Pin() source.Pos {
 
 func (e AddressExpression) Depth() uint32 {
 	return e.ChainDepth
+}
+
+// <SymbolAddressExpression> = <Identifier> ".&"
+type SymbolAddressExpression struct {
+	nodeChainOperand
+
+	Target Identifier
+}
+
+var _ ChainOperand = SymbolAddressExpression{}
+
+func (SymbolAddressExpression) Kind() exn.Kind {
+	return exn.SymbolAddress
+}
+
+func (e SymbolAddressExpression) Pin() source.Pos {
+	return e.Target.Pos
+}
+
+func (e SymbolAddressExpression) Depth() uint32 {
+	return 0
 }
 
 // <IndirectIndexExpression> = <Target> ".[" <Index> "]"

@@ -451,14 +451,41 @@ func (p *Parser) receiverStartOperand() (ast.Operand, error) {
 
 // SymbolExpression, SelectorExpression, IndexExpression, CallExpression or InstanceExpression
 func (p *Parser) identifierStartOperand() (ast.Operand, error) {
-	identifier := p.idn()
+	idn := p.idn()
 	p.advance() // skip identifier
 
 	switch p.tok.Kind {
-	case token.Period, token.LeftParentheses, token.LeftSquare, token.Indirect, token.Address:
-		return p.chainOperand(ast.ChainStart{Identifier: identifier})
+	case token.LeftParentheses:
+		args, err := p.callArguments()
+		if err != nil {
+			return nil, err
+		}
+		expr := ast.SymbolCallExpression{
+			Callee:    idn,
+			Arguments: args,
+		}
+
+		switch p.tok.Kind {
+		case token.LeftParentheses, token.Period, token.LeftSquare, token.Indirect, token.Address:
+			return p.chainOperand(expr)
+		default:
+			return expr, nil
+		}
+	case token.Address:
+		p.advance() // skip ".&"
+
+		expr := ast.SymbolAddressExpression{Target: idn}
+
+		switch p.tok.Kind {
+		case token.LeftParentheses, token.Period, token.LeftSquare, token.Indirect, token.Address:
+			return p.chainOperand(expr)
+		default:
+			return expr, nil
+		}
+	case token.Period, token.LeftSquare, token.Indirect:
+		return p.chainOperand(ast.ChainStart{Identifier: idn})
 	default:
-		return ast.SymbolExpression{Identifier: identifier}, nil
+		return ast.SymbolExpression{Identifier: idn}, nil
 	}
 }
 

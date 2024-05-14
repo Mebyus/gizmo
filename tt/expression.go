@@ -201,6 +201,42 @@ func (e *IndirectExpression) Depth() uint32 {
 	return e.ChainDepth
 }
 
+type SymbolAddressExpression struct {
+	nodeChainOperand
+
+	Pos source.Pos
+
+	Target *Symbol
+
+	typ *Type
+}
+
+// Explicit interface implementation check
+var _ ChainOperand = &IndirectExpression{}
+
+func (*SymbolAddressExpression) Kind() exn.Kind {
+	return exn.SymbolAddress
+}
+
+func (e *SymbolAddressExpression) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *SymbolAddressExpression) Type() *Type {
+	if e.typ != nil {
+		return e.typ
+	}
+
+	ref := e.Target.Type
+	scope := e.Target.Scope
+	e.typ = scope.Types.storePointer(ref)
+	return e.typ
+}
+
+func (e *SymbolAddressExpression) Depth() uint32 {
+	return 0
+}
+
 type CallExpression struct {
 	nodeChainOperand
 
@@ -231,6 +267,34 @@ func (e *CallExpression) Depth() uint32 {
 
 func (e *CallExpression) Type() *Type {
 	return e.typ
+}
+
+type SymbolCallExpression struct {
+	nodeChainOperand
+
+	Pos source.Pos
+
+	Arguments []Expression
+	Callee    *Symbol
+}
+
+// Explicit interface implementation check
+var _ ChainOperand = &SymbolCallExpression{}
+
+func (*SymbolCallExpression) Kind() exn.Kind {
+	return exn.Call
+}
+
+func (e *SymbolCallExpression) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *SymbolCallExpression) Depth() uint32 {
+	return 0
+}
+
+func (e *SymbolCallExpression) Type() *Type {
+	return e.Callee.Def.(*FnDef).Result
 }
 
 type ParenthesizedExpression struct {
