@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hash/fnv"
 
+	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/tt/typ"
 )
 
@@ -204,4 +205,83 @@ func newPointerType(ref *Type) *Type {
 	}
 	t.Base = t
 	return t
+}
+
+// returns an error if argument type does not match parameter type
+func checkCallArgType(param *Symbol, arg Expression) error {
+	t := arg.Type()
+	pt := param.Type
+	if t == pt {
+		return nil
+	}
+
+	if (pt.Base.Kind == typ.Unsigned || pt.Base.Kind == typ.Signed) && t.Kind == typ.StaticInteger {
+		// TODO: check that static integer fits into parameter type max value
+		// and there is no "signedness conflict" between type and value
+		return nil
+	}
+
+	// panic("unhandled case")
+	return fmt.Errorf("%s: mismatched types of call argument and parameter", arg.Pin())
+}
+
+type MemberKind uint8
+
+const (
+	memberEmpty MemberKind = iota
+
+	MemberField
+	MemberMethod
+)
+
+var memberText = [...]string{
+	memberEmpty: "<nil>",
+
+	MemberField:  "field",
+	MemberMethod: "method",
+}
+
+func (k MemberKind) String() string {
+	return memberText[k]
+}
+
+type Member struct {
+	// position where this member is defined.
+	Pos source.Pos
+
+	// Field or method name. Cannot be empty.
+	Name string
+
+	Type *Type
+
+	Kind MemberKind
+}
+
+type MembersList struct {
+	Members []Member
+
+	// maps member name to its index inside Members slice
+	index map[string]int
+}
+
+func (l *MembersList) Init(size int) {
+	if size == 0 {
+		return
+	}
+
+	l.Members = make([]Member, 0, size)
+	l.index = make(map[string]int, size)
+}
+
+func (l *MembersList) Find(name string) *Member {
+	i, ok := l.index[name]
+	if !ok {
+		return nil
+	}
+	return &l.Members[i]
+}
+
+func (l *MembersList) Add(member Member) {
+	l.index[member.Name] = len(l.Members)
+	l.Members = append(l.Members, member)
 }

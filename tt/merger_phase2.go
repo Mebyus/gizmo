@@ -43,7 +43,7 @@ func (m *Merger) bindNodes() error {
 		switch top.Kind() {
 		case toplvl.Method:
 			err = m.bindMethod(top.(ast.Method))
-		case toplvl.Pmb:
+		// case toplvl.Pmb:
 		default:
 			panic(fmt.Sprintf("unexpected top-level %s node", top.Kind().String()))
 		}
@@ -61,28 +61,12 @@ func (m *Merger) bindMethod(method ast.Method) error {
 	if rvSym == nil {
 		return fmt.Errorf("%s: unresolved symbol \"%s\" in method receiver", method.Receiver.Pos.String(), rvName)
 	}
+	if rvSym.Kind != sym.Type {
+		return fmt.Errorf("%s: only types can have methods, but \"%s\" is not a type", method.Receiver.Pos.String(), rvName)
+	}
 
 	err := rvSym.Def.(*TempTypeDef).addMethod(method)
 	return err
-}
-
-func (m *Merger) scanTypes() error {
-	// TODO: graph based scanning
-	for _, s := range m.unit.Scope.Symbols {
-		if s.Kind == sym.Type {
-			def := s.Def.(*TempTypeDef)
-			t, err := m.scanType(def)
-			if err != nil {
-				return err
-			}
-			s.Def = t
-		}
-	}
-	return nil
-}
-
-func (m *Merger) scanType(def *TempTypeDef) (*Type, error) {
-	return &Type{}, nil
 }
 
 func (m *Merger) scanConstants() error {

@@ -33,11 +33,14 @@ type Merger struct {
 	//	- prototype method blueprint
 	symBindNodes []ast.TopLevel
 
-	// list of all function symbols in unit
+	// list of all top-level function symbols defined in unit
 	fns []*Symbol
 
-	// list of all constant symbols in unit
+	// list of all top-level constant symbols defined in unit
 	constants []*Symbol
+
+	// list of all top-level type symbols defined in unit
+	types []*Symbol
 
 	Warns []Warn
 }
@@ -176,13 +179,14 @@ func (m *Merger) addType(top ast.TopType) error {
 	}
 
 	s := &Symbol{
-		Kind:   sym.Const,
+		Kind:   sym.Type,
 		Name:   name,
 		Pos:    pos,
 		Public: top.Public,
 		Def:    NewTempTypeDef(top),
 	}
 	m.add(s)
+	m.types = append(m.types, s)
 	return nil
 }
 

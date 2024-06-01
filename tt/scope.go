@@ -174,18 +174,28 @@ func (s *Scope) sym(name string) *Symbol {
 
 // Bind adds given symbol to this scope.
 func (s *Scope) Bind(symbol *Symbol) {
+	s.bind(symbol)
+}
+
+func (s *Scope) bind(symbol *Symbol) {
 	s.Symbols = append(s.Symbols, symbol)
 	s.sm[symbol.Name] = symbol
 	symbol.Scope = s
+}
 
-	if symbol.Kind == sym.Type {
-		t := symbol.Def.(*Type)
+func (s *Scope) BindTypeSymbol(symbol *Symbol) {
+	s.bind(symbol)
 
-		if !(t.Builtin || t.Kind == typ.Named) {
-			panic(fmt.Sprintf("unexpected type kind: %s", t.Kind.String()))
-		}
-		s.Types.tm[t.Stable()] = t
+	if symbol.Kind != sym.Type {
+		panic("method must be called only with symbols representing a type")
 	}
+
+	t := symbol.Def.(*Type)
+
+	if !(t.Builtin || t.Kind == typ.Named) {
+		panic(fmt.Sprintf("unexpected type kind: %s", t.Kind.String()))
+	}
+	s.Types.tm[t.Stable()] = t
 }
 
 // CheckUsage scans symbols usage count in this scope. Returns error if there are

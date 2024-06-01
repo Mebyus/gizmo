@@ -23,7 +23,7 @@ func (s *Scope) addBuiltinUnsignedType(name string, size uint32) {
 		Builtin: true,
 	}
 	t.Base = t
-	s.Bind(newTypeSymbol(name, t))
+	s.BindTypeSymbol(newTypeSymbol(name, t))
 }
 
 func (s *Scope) addBuiltinSignedType(name string, size uint32) {
@@ -34,7 +34,7 @@ func (s *Scope) addBuiltinSignedType(name string, size uint32) {
 		Builtin: true,
 	}
 	t.Base = t
-	s.Bind(newTypeSymbol(name, t))
+	s.BindTypeSymbol(newTypeSymbol(name, t))
 }
 
 func (s *Scope) addBuiltinBoolType() {
@@ -44,7 +44,7 @@ func (s *Scope) addBuiltinBoolType() {
 		Builtin: true,
 	}
 	t.Base = t
-	s.Bind(newTypeSymbol("bool", t))
+	s.BindTypeSymbol(newTypeSymbol("bool", t))
 }
 
 func (s *Scope) addBuiltinStringType() {
@@ -54,7 +54,7 @@ func (s *Scope) addBuiltinStringType() {
 		Builtin: true,
 	}
 	t.Base = t
-	s.Bind(newTypeSymbol("str", t))
+	s.BindTypeSymbol(newTypeSymbol("str", t))
 }
 
 func newStaticType(kind typ.Kind) *Type {

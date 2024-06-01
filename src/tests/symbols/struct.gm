@@ -1,0 +1,14 @@
+type Counter struct {
+    c: int,
+    string_field: *Counter,
+}
+
+fn [Counter] inc() => int {
+    let c: int = rv.c;
+    rv.c += 1;
+    return c;
+}
+
+fn use_counter(c: *Counter) => int {
+    return c.inc();
+}

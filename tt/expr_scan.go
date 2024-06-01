@@ -157,7 +157,8 @@ func (s *Scope) scanCallArgs(ctx *Context, params []*Symbol, exprs []ast.Express
 			return nil, err
 		}
 
-		if arg.Type() != param.Type {
+		err = checkCallArgType(param, arg)
+		if err != nil {
 			return nil, fmt.Errorf("%s: mismatched types of call argument and parameter", arg.Pin())
 		}
 

@@ -220,6 +220,8 @@ const (
 )
 
 var text = [...]string{
+	empty: "<nil>",
+
 	StaticInteger: "static_integer",
 	StaticFloat:   "static_float",
 	StaticString:  "static_string",
