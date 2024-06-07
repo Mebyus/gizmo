@@ -18,7 +18,7 @@ const (
 	// list literal operand
 	List
 
-	// direct substitution of identifier or scoped identifier operand
+	// direct substitution of identifier operand
 	Symbol
 
 	Unary
@@ -40,12 +40,12 @@ const (
 	Address
 	Slice
 
-	// Simplified special case of general call expression,
-	// when the callee is an isolated symbol:
+	// Simplified special case of general select expression,
+	// when the target is an isolated symbol:
 	//
-	//	example_symbol(arg1, arg2)
+	//	example_symbol.member
 	//
-	SymbolCall
+	Member
 
 	// Simplified special case of general address expression,
 	// when the target is an isolated symbol:
@@ -53,6 +53,34 @@ const (
 	//	example_symbol.&
 	//
 	SymbolAddress
+
+	// Simplified special case of general indirect expression,
+	// when the target is an isolated symbol:
+	//
+	//	example_symbol.@
+	//
+	SymbolIndirect
+
+	// Simplified special case of general call expression,
+	// when the callee is an isolated symbol:
+	//
+	//	example_symbol(arg1, arg2)
+	//
+	SymbolCall
+
+	// Simplified special case of general call expression,
+	// when the callee is an isolated symbol selector:
+	//
+	//	example_object.call(arg1, arg2)
+	//
+	MemberCall
+
+	// Simplified special case of general call expression,
+	// when the callee is an isolated receiver:
+	//
+	//	rv.call(arg1, arg2)
+	//
+	ReceiverMemberCall
 
 	// Indirect index expression
 	Indirx

@@ -251,6 +251,7 @@ func (s *Scope) scanIndirectExpression(ctx *Context, expr ast.IndirectExpression
 
 func (s *Scope) scanCallExpression(ctx *Context, expr ast.CallExpression) (*CallExpression, error) {
 	return &CallExpression{
+		Pos:        expr.Pos,
 		ChainDepth: expr.ChainDepth,
 	}, nil
 }

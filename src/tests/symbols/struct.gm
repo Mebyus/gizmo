@@ -1,4 +1,5 @@
 type Counter struct {
+    names: []str,
     c: int,
     string_field: *Counter,
 }

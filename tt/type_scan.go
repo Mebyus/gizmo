@@ -5,6 +5,8 @@ import (
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/tps"
+	"github.com/mebyus/gizmo/tt/scp"
+	"github.com/mebyus/gizmo/tt/sym"
 	"github.com/mebyus/gizmo/tt/typ"
 )
 
@@ -162,6 +164,15 @@ func NewTypeContext() *TypeContext {
 	}
 }
 
+func (c *TypeContext) push(kind TypeLinkKind) TypeLinkKind {
+	k := c.kind
+	if k == linkDirect {
+		// only direct link can be changed by descending nested type specifiers
+		c.kind = kind
+	}
+	return k
+}
+
 func (m *Merger) scanTypes() error {
 	// TODO: graph based scanning
 	for _, s := range m.types {
@@ -256,17 +267,52 @@ func (m *Merger) shallowScanTypeSpecifier(ctx *TypeContext, spec ast.TypeSpecifi
 		return m.shallowScanPointerType(ctx, spec.(ast.PointerType))
 	case tps.Chunk:
 		return m.shallowScanChunkType(ctx, spec.(ast.ChunkType))
+	case tps.Array:
+		return m.shallowScanArrayType(ctx, spec.(ast.ArrayType))
+	case tps.ArrayPointer:
+		return m.shallowScanArrayPointerType(ctx, spec.(ast.ArrayPointerType))
 	case tps.Struct:
 		return fmt.Errorf("%s: anonymous nested structs are not allowed", spec.Pin().String())
+	case tps.Enum:
+		return fmt.Errorf("%s: anonymous nested enums are not allowed", spec.Pin().String())
+	case tps.Union:
+		return fmt.Errorf("%s: anonymous nested unions are not allowed", spec.Pin().String())
 	default:
 		panic(fmt.Sprintf("not implemented for %s", spec.Kind().String()))
 	}
 }
 
+func (m *Merger) shallowScanArrayType(ctx *TypeContext, spec ast.ArrayType) error {
+	// save previous link kind for later
+	k := ctx.push(linkDirect)
+
+	err := m.shallowScanTypeSpecifier(ctx, spec.ElemType)
+	if err != nil {
+		return err
+	}
+
+	// restore previous link kind
+	ctx.kind = k
+	return nil
+}
+
+func (m *Merger) shallowScanArrayPointerType(ctx *TypeContext, spec ast.ArrayPointerType) error {
+	// save previous link kind for later
+	k := ctx.push(linkIndirect)
+
+	err := m.shallowScanTypeSpecifier(ctx, spec.ElemType)
+	if err != nil {
+		return err
+	}
+
+	// restore previous link kind
+	ctx.kind = k
+	return nil
+}
+
 func (m *Merger) shallowScanChunkType(ctx *TypeContext, spec ast.ChunkType) error {
 	// save previous link kind for later
-	k := ctx.kind
-	ctx.kind = linkIndirect
+	k := ctx.push(linkIndirect)
 
 	err := m.shallowScanTypeSpecifier(ctx, spec.ElemType)
 	if err != nil {
@@ -280,8 +326,7 @@ func (m *Merger) shallowScanChunkType(ctx *TypeContext, spec ast.ChunkType) erro
 
 func (m *Merger) shallowScanPointerType(ctx *TypeContext, spec ast.PointerType) error {
 	// save previous link kind for later
-	k := ctx.kind
-	ctx.kind = linkIndirect
+	k := ctx.push(linkIndirect)
 
 	err := m.shallowScanTypeSpecifier(ctx, spec.RefType)
 	if err != nil {
@@ -302,7 +347,12 @@ func (m *Merger) shallowScanNamedType(ctx *TypeContext, spec ast.TypeName) error
 	if symbol == nil {
 		return fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
 	}
+	if symbol.Kind != sym.Type {
+		return fmt.Errorf("%s: symbol \"%s\" is not a type", pos.String(), name)
+	}
 
-	ctx.links.Add(symbol, ctx.kind)
+	if symbol.Scope.Kind == scp.Unit {
+		ctx.links.Add(symbol, ctx.kind)
+	}
 	return nil
 }

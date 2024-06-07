@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/ast"
+	"github.com/mebyus/gizmo/ast/tps"
 	"github.com/mebyus/gizmo/token"
 )
 
@@ -20,7 +21,7 @@ func (p *Parser) topLevelType() (ast.TopLevel, error) {
 	name := p.idn()
 	p.advance() // skip name identifier
 
-	spec, err := p.typeSpecifier()
+	spec, err := p.DefTypeSpecifier()
 	if err != nil {
 		return nil, err
 	}
@@ -115,6 +116,21 @@ func (p *Parser) protoParam() (ast.TypeParam, error) {
 	}, nil
 }
 
+// variant of generic type specifier parsing for usage in context
+// of explicit named type definition via construct
+//
+//	type MyType <TypeSpecifier>
+func (p *Parser) DefTypeSpecifier() (ast.TypeSpecifier, error) {
+	t, err := p.typeSpecifier()
+	if err != nil {
+		return nil, err
+	}
+	if t.Kind() == tps.Tuple {
+		return nil, fmt.Errorf("%s: tuples are not allowed to be named types", t.Pin().String())
+	}
+	return t, nil
+}
+
 func (p *Parser) typeSpecifier() (ast.TypeSpecifier, error) {
 	switch p.tok.Kind {
 	case token.Identifier:
@@ -135,10 +151,86 @@ func (p *Parser) typeSpecifier() (ast.TypeSpecifier, error) {
 		return p.fnType()
 	case token.Union:
 		return p.unionType()
+	case token.Bag:
+		return p.bagType()
+	case token.LeftParentheses:
+		return p.tupleType()
 	default:
 		return nil, fmt.Errorf("other type specifiers not implemented (start from %s at %s)",
 			p.tok.Kind.String(), p.tok.Pos.String())
 	}
+}
+
+func (p *Parser) tupleType() (ast.TupleType, error) {
+	pos := p.pos()
+
+	fields, err := p.functionParams()
+	if err != nil {
+		return ast.TupleType{}, err
+	}
+
+	return ast.TupleType{
+		Pos:    pos,
+		Fields: fields,
+	}, nil
+}
+
+func (p *Parser) bagType() (ast.BagType, error) {
+	pos := p.pos()
+
+	p.advance() // skip "bag"
+
+	if p.tok.Kind != token.LeftCurly {
+		return ast.BagType{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip "{"
+
+	var methods []ast.BagMethodSpec
+	for {
+		if p.tok.Kind == token.RightCurly {
+			p.advance() // skip "}"
+
+			return ast.BagType{
+				Pos:     pos,
+				Methods: methods,
+			}, nil
+		}
+
+		method, err := p.bagMethodSpec()
+		if err != nil {
+			return ast.BagType{}, err
+		}
+		methods = append(methods, method)
+
+		if p.tok.Kind == token.Comma {
+			p.advance() // skip ","
+		} else if p.tok.Kind == token.RightCurly {
+			// will be skipped at next iteration
+		} else {
+			return ast.BagType{}, p.unexpected(p.tok)
+		}
+	}
+}
+
+func (p *Parser) bagMethodSpec() (ast.BagMethodSpec, error) {
+	if p.tok.Kind != token.Identifier {
+		return ast.BagMethodSpec{}, p.unexpected(p.tok)
+	}
+	name := p.idn()
+	p.advance() // skip method name
+
+	signature, err := p.functionSignature()
+	if err != nil {
+		return ast.BagMethodSpec{}, err
+	}
+
+	return ast.BagMethodSpec{
+		Name: name,
+
+		Params: signature.Params,
+		Result: signature.Result,
+		Never:  signature.Never,
+	}, nil
 }
 
 func (p *Parser) unionType() (ast.UnionType, error) {

@@ -220,3 +220,61 @@ type TypeParam struct {
 	// Equals nil if there is no constraint on this param
 	Constraint any
 }
+
+// <BagMethodSpec> = <Name> <Parameters> [ "=>" ( <Result> | "never" ) ]
+//
+// <Name> = <Identifier>
+//
+// <Parameters> = "(" { <FieldDefinition> "," } ")"
+type BagMethodSpec struct {
+	// Equals nil if there are no parameters in signature
+	Params []FieldDefinition
+
+	// Equals nil if function returns nothing or never returns
+	Result TypeSpecifier
+
+	Name Identifier
+
+	// Equals true if function never returns
+	Never bool
+}
+
+// <BagType> = <bag> "{" { <BagMethodSpec> "," } "}"
+type BagType struct {
+	nodeTypeSpecifier
+
+	Pos source.Pos
+
+	Methods []BagMethodSpec
+}
+
+// Explicit interface implementation check
+var _ TypeSpecifier = UnionType{}
+
+func (BagType) Kind() tps.Kind {
+	return tps.Bag
+}
+
+func (t BagType) Pin() source.Pos {
+	return t.Pos
+}
+
+// <TupleType> = "(" { <FieldDefinition> "," } ")"
+type TupleType struct {
+	nodeTypeSpecifier
+
+	Pos source.Pos
+
+	Fields []FieldDefinition
+}
+
+// Explicit interface implementation check
+var _ TypeSpecifier = UnionType{}
+
+func (TupleType) Kind() tps.Kind {
+	return tps.Tuple
+}
+
+func (t TupleType) Pin() source.Pos {
+	return t.Pos
+}

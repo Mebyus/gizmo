@@ -176,6 +176,8 @@ func (s ChainStart) Depth() uint32 {
 type CallExpression struct {
 	nodeChainOperand
 
+	Pos source.Pos
+
 	Callee    ChainOperand
 	Arguments []Expression
 
@@ -189,7 +191,7 @@ func (CallExpression) Kind() exn.Kind {
 }
 
 func (e CallExpression) Pin() source.Pos {
-	return e.Callee.Pin()
+	return e.Pos
 }
 
 func (e CallExpression) Depth() uint32 {
@@ -216,6 +218,31 @@ func (e SymbolCallExpression) Pin() source.Pos {
 
 func (e SymbolCallExpression) Depth() uint32 {
 	return 0
+}
+
+// <MemberCallExpression> = <Identifier> "." <Identifier> "(" { <Expression> "," } ")"
+type MemberCallExpression struct {
+	nodeChainOperand
+
+	Pos source.Pos
+
+	Object    Identifier
+	Member    Identifier
+	Arguments []Expression
+}
+
+var _ ChainOperand = MemberCallExpression{}
+
+func (MemberCallExpression) Kind() exn.Kind {
+	return exn.MemberCall
+}
+
+func (e MemberCallExpression) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e MemberCallExpression) Depth() uint32 {
+	return 1
 }
 
 // <SelectorExpression> = <SelectableExpression> "." <Identifier>

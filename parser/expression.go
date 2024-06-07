@@ -498,13 +498,17 @@ func (p *Parser) chainOperand(start ast.ChainOperand) (ast.ChainOperand, error) 
 
 		switch p.tok.Kind {
 		case token.LeftParentheses:
+			pos := p.pos()
+
 			args, err := p.callArguments()
 			if err != nil {
 				return nil, err
 			}
 			tip = ast.CallExpression{
-				Callee:    tip,
-				Arguments: args,
+				Pos:        pos,
+				Callee:     tip,
+				Arguments:  args,
+				ChainDepth: depth,
 			}
 		case token.Period:
 			p.advance() // skip "."
@@ -515,8 +519,9 @@ func (p *Parser) chainOperand(start ast.ChainOperand) (ast.ChainOperand, error) 
 			selected := p.idn()
 			p.advance() // skip identifier
 			tip = ast.SelectorExpression{
-				Target:   tip,
-				Selected: selected,
+				Target:     tip,
+				Selected:   selected,
+				ChainDepth: depth,
 			}
 		case token.Indirect:
 			pos := p.pos()
@@ -531,7 +536,10 @@ func (p *Parser) chainOperand(start ast.ChainOperand) (ast.ChainOperand, error) 
 			if tip.Kind() == exn.Call {
 				return nil, fmt.Errorf("cannot take address of a call result %s", tip.Pin().String())
 			}
-			tip = ast.AddressExpression{Target: tip}
+			tip = ast.AddressExpression{
+				Target:     tip,
+				ChainDepth: depth,
+			}
 		case token.IndirectIndex:
 			p.advance() // skip ".["
 			index, err := p.expr()
@@ -543,8 +551,9 @@ func (p *Parser) chainOperand(start ast.ChainOperand) (ast.ChainOperand, error) 
 			}
 			p.advance() // skip "]"
 			tip = ast.IndirectIndexExpression{
-				Target: tip,
-				Index:  index,
+				Target:     tip,
+				Index:      index,
+				ChainDepth: depth,
 			}
 		case token.LeftSquare:
 			var err error

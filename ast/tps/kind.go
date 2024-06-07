@@ -1,12 +1,12 @@
 package tps
 
-// Kind indicates type specifier kind
+// Kind indicates type specifier kind.
 type Kind uint32
 
 const (
-	// Zero value of Kind. Should not be used explicitly
+	// Zero value of Kind. Should not be used explicitly.
 	//
-	// Mostly a trick to detect places where Kind is left unspecified
+	// Mostly a trick to detect places where Kind is left unspecified.
 	empty Kind = iota
 
 	Name
@@ -17,8 +17,10 @@ const (
 	Chunk
 	Union
 	Enum
+	Bag
 	Instance
 	Function
+	Tuple
 )
 
 var text = [...]string{
@@ -32,8 +34,10 @@ var text = [...]string{
 	Chunk:        "chunk",
 	Union:        "union",
 	Enum:         "enum",
+	Bag:          "bag",
 	Instance:     "instance",
 	Function:     "function",
+	Tuple:        "tuple",
 }
 
 func (k Kind) String() string {
