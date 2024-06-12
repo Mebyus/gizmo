@@ -124,8 +124,11 @@ var text = [...]string{
 	Indirx:   "indirect_index",
 	Instance: "instance",
 
-	SymbolCall:    "symbol_call",
-	SymbolAddress: "symbol_address",
+	Member:             "member",
+	SymbolCall:         "symbol_call",
+	SymbolAddress:      "symbol_address",
+	MemberCall:         "member_call",
+	ReceiverMemberCall: "rvm_call",
 
 	Integer: "integer",
 	String:  "string",

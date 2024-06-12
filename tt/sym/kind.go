@@ -65,3 +65,7 @@ var text = [...]string{
 func (k Kind) String() string {
 	return text[k]
 }
+
+func (k Kind) Addressable() bool {
+	return k == Let || k == Var || k == Param
+}

@@ -20,7 +20,7 @@ func (m *Merger) runPhaseTwo() error {
 	if err != nil {
 		return err
 	}
-	err = m.scanTypes()
+	err = m.shallowScanTypes()
 	if err != nil {
 		return err
 	}

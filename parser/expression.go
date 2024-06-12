@@ -449,6 +449,15 @@ func (p *Parser) receiverStartOperand() (ast.Operand, error) {
 	return p.chainOperand(rv)
 }
 
+func isChainOperandToken(kind token.Kind) bool {
+	switch kind {
+	case token.LeftParentheses, token.Period, token.LeftSquare, token.Indirect, token.Address:
+		return true
+	default:
+		return false
+	}
+}
+
 // SymbolExpression, SelectorExpression, IndexExpression, CallExpression or InstanceExpression
 func (p *Parser) identifierStartOperand() (ast.Operand, error) {
 	idn := p.idn()
@@ -465,24 +474,60 @@ func (p *Parser) identifierStartOperand() (ast.Operand, error) {
 			Arguments: args,
 		}
 
-		switch p.tok.Kind {
-		case token.LeftParentheses, token.Period, token.LeftSquare, token.Indirect, token.Address:
+		if isChainOperandToken(p.tok.Kind) {
 			return p.chainOperand(expr)
-		default:
-			return expr, nil
 		}
+		return expr, nil
 	case token.Address:
 		p.advance() // skip ".&"
 
 		expr := ast.SymbolAddressExpression{Target: idn}
 
-		switch p.tok.Kind {
-		case token.LeftParentheses, token.Period, token.LeftSquare, token.Indirect, token.Address:
+		if isChainOperandToken(p.tok.Kind) {
 			return p.chainOperand(expr)
-		default:
-			return expr, nil
 		}
-	case token.Period, token.LeftSquare, token.Indirect:
+		return expr, nil
+	case token.Period:
+		p.advance() // skip "."
+
+		if p.tok.Kind != token.Identifier {
+			return nil, p.unexpected(p.tok)
+		}
+
+		member := p.idn()
+		p.advance() // skip member identifier
+
+		switch p.tok.Kind {
+		case token.LeftParentheses:
+			pos := p.pos()
+
+			args, err := p.callArguments()
+			if err != nil {
+				return nil, err
+			}
+
+			expr := ast.MemberCallExpression{
+				Pos:       pos,
+				Target:    idn,
+				Member:    member,
+				Arguments: args,
+			}
+			if isChainOperandToken(p.tok.Kind) {
+				return p.chainOperand(expr)
+			}
+			return expr, nil
+		case token.Period, token.LeftSquare, token.Indirect, token.Address:
+			return p.chainOperand(ast.MemberExpression{
+				Target: idn,
+				Member: member,
+			})
+		default:
+			return ast.MemberExpression{
+				Target: idn,
+				Member: member,
+			}, nil
+		}
+	case token.LeftSquare, token.Indirect:
 		return p.chainOperand(ast.ChainStart{Identifier: idn})
 	default:
 		return ast.SymbolExpression{Identifier: idn}, nil

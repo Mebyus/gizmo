@@ -50,6 +50,8 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 	// 	// g.SelectorExpression(expr.(ast.SelectorExpression))
 	case exn.SymbolAddress:
 		return s.scanSymbolAddressExpression(ctx, expr.(ast.SymbolAddressExpression))
+	case exn.MemberCall:
+		return s.scanMemberCallExpression(ctx, expr.(ast.MemberCallExpression))
 	// case exn.Cast:
 	// 	// g.CastExpression(expr.(ast.CastExpression))
 	// case exn.Instance:
@@ -67,12 +69,58 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 	}
 }
 
+func (s *Scope) scanMemberCallExpression(ctx *Context, expr ast.MemberCallExpression) (Expression, error) {
+	name := expr.Target.Lit
+	pos := expr.Target.Pos
+	symbol := s.Lookup(name, pos.Num)
+	if symbol == nil {
+		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
+	}
+
+	if symbol.Scope.Kind == scp.Unit && symbol.Kind != sym.Import {
+		ctx.ref.Add(symbol)
+	}
+
+	if symbol.Kind == sym.Import {
+		// call to imported function
+		panic("not implemented")
+	}
+
+	if symbol.Kind == sym.Type {
+		// call to function namespaced within type
+		panic("not implemented")
+	}
+
+	if !(symbol.Kind == sym.Let || symbol.Kind == sym.Param || symbol.Kind == sym.Var) {
+		return nil, fmt.Errorf("%s: %s symbol \"%s\" is not selectable", pos.String(), symbol.Kind.String(), name)
+	}
+
+	switch symbol.Type.Base.Kind {
+	case typ.Struct:
+	case typ.Pointer:
+		refType := symbol.Type.Base.Def.(PtrTypeDef).RefType
+		if refType.Base.Kind != typ.Struct {
+			return nil, fmt.Errorf("%s: symbol \"%s\" is a pointer to %s type which cannot have members", pos.String(),
+				name, refType.Base.Kind)
+		}
+	default:
+		return nil, fmt.Errorf("%s: symbol \"%s\" is of %s type which cannot have members", pos.String(),
+			name, symbol.Type.Base.Kind.String())
+	}
+
+	return nil, nil
+}
+
 func (s *Scope) scanSymbolAddressExpression(ctx *Context, expr ast.SymbolAddressExpression) (*SymbolAddressExpression, error) {
 	name := expr.Target.Lit
 	pos := expr.Target.Pos
 	symbol := s.Lookup(name, pos.Num)
 	if symbol == nil {
 		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
+	}
+
+	if !symbol.Kind.Addressable() {
+		return nil, fmt.Errorf("%s: symbol \"%s\" (%s) is not addressable", pos.String(), name, symbol.Kind.String())
 	}
 
 	if symbol.Scope.Kind == scp.Unit {

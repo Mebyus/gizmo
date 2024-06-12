@@ -173,7 +173,7 @@ func (c *TypeContext) push(kind TypeLinkKind) TypeLinkKind {
 	return k
 }
 
-func (m *Merger) scanTypes() error {
+func (m *Merger) shallowScanTypes() error {
 	// TODO: graph based scanning
 	for _, s := range m.types {
 		def := s.Def.(*TempTypeDef)
@@ -205,6 +205,8 @@ func (m *Merger) shallowScanType(ctx *TypeContext, def *TempTypeDef) (*Type, err
 		err = m.shallowScanStructType(ctx, def.top.Spec.(ast.StructType), def.methods)
 	case tps.Enum:
 		// TODO: implement enum scan
+	case tps.Bag:
+		// TODO: implement bag scan
 	default:
 		panic(fmt.Sprintf("unexpected %s type specifier", kind.String()))
 	}
@@ -230,8 +232,29 @@ func (m *Merger) shallowScanStructType(ctx *TypeContext, spec ast.StructType, me
 	}
 
 	for _, method := range methods {
-		_ = method
+		err := m.shallowScanMethod(ctx, method)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
+}
+
+func (m *Merger) shallowScanMethod(ctx *TypeContext, method ast.Method) error {
+	name := method.Name.Lit
+	pos := method.Name.Pos
+
+	r := ctx.members.Find(name)
+	if r != nil {
+		return fmt.Errorf("%s: field with name \"%s\" is already present in struct", pos.String(), name)
+	}
+
+	ctx.members.Add(Member{
+		Pos:  pos,
+		Name: name,
+		Kind: MemberMethod,
+	})
 
 	return nil
 }

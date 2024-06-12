@@ -114,6 +114,7 @@ func loadFiles(dir string) ([]*source.File, error) {
 	if len(files) == 0 {
 		return nil, fmt.Errorf("directory \"%s\" does not contain gizmo source files", dir)
 	}
+	source.SortAndOrder(files)
 
 	return files, nil
 }

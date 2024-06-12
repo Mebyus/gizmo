@@ -254,6 +254,9 @@ type Member struct {
 
 	Type *Type
 
+	// Always nil for field members.
+	Def *MethodDef
+
 	Kind MemberKind
 }
 
@@ -284,4 +287,10 @@ func (l *MembersList) Find(name string) *Member {
 func (l *MembersList) Add(member Member) {
 	l.index[member.Name] = len(l.Members)
 	l.Members = append(l.Members, member)
+}
+
+type StructTypeDef struct {
+	nodeTypeDef
+
+	Members MembersList
 }

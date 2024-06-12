@@ -12,6 +12,9 @@ type Context struct {
 	// return type of a function or method, equals nil if it returns nothing or never.
 	ret *Type
 
+	// receiver type of a method, equals nil for regular functions
+	rv *Type
+
 	// true for function or method that does not return.
 	never bool
 }

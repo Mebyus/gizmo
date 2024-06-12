@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 )
 
@@ -82,6 +83,11 @@ type File struct {
 
 	// For quick equality comparison
 	Hash uint64
+
+	// Ordering information given to a group of source files for consistent
+	// processing results between different compiler runs. Such group is formed
+	// when processing files inside a unit directory. Ordering starts from 0.
+	Num uint32
 
 	Kind Kind
 }
@@ -209,5 +215,25 @@ func Load(path string) (*File, error) {
 			}
 			return nil, err
 		}
+	}
+}
+
+// SortAndOrder sorts given slice of files and assigns File.Num order number
+// to each element according to resulting order of elements after sorting is done.
+func SortAndOrder(files []*File) {
+	if len(files) == 0 {
+		panic("invalid argument: <nil>")
+	}
+
+	if len(files) == 1 {
+		return
+	}
+
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].Name < files[j].Name
+	})
+
+	for i := 0; i < len(files); i += 1 {
+		files[i].Num = uint32(i)
 	}
 }
