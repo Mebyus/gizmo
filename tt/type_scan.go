@@ -174,6 +174,7 @@ func (c *TypeContext) push(kind TypeLinkKind) TypeLinkKind {
 }
 
 func (m *Merger) shallowScanTypes() error {
+	g := NewTypeGraphBuilder(len(m.types))
 	// TODO: graph based scanning
 	for _, s := range m.types {
 		def := s.Def.(*TempTypeDef)
@@ -187,8 +188,13 @@ func (m *Merger) shallowScanTypes() error {
 			return fmt.Errorf("%s: symbol \"%s\" directly references itself", s.Pos.String(), s.Name)
 		}
 
+		g.Add(s, ctx.links.Elems())
+
 		s.Def = t
 	}
+
+	g.Scan()
+
 	return nil
 }
 

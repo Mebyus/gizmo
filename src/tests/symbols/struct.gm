@@ -13,3 +13,11 @@ fn [Counter] inc() => int {
 fn use_counter(c: *Counter) => int {
     return c.inc();
 }
+
+type A struct {
+    b: *B,
+}
+
+type B struct {
+    a: *A,
+}
