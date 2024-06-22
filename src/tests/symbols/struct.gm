@@ -5,8 +5,8 @@ type Counter struct {
 }
 
 fn [Counter] inc() => int {
-    let c: int = rv.c;
-    rv.c += 1;
+    let c: int = g.c;
+    g.c += 1;
     return c;
 }
 

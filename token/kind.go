@@ -120,7 +120,7 @@ const (
 	True
 	False
 
-	Receiver
+	Receiver // method receiver, consists of one letter "g"
 
 	LabelNext // @.next
 	LabelEnd  // @.end

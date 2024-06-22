@@ -84,6 +84,23 @@ func (lx *Lexer) label() (tok token.Token) {
 func (lx *Lexer) lexName() (tok token.Token) {
 	tok.Pos = lx.pos
 
+	if !isAlphanum(lx.next) {
+		// word is 1 character long
+		c := lx.c
+		lx.advance() // skip character
+
+		if c == 'g' {
+			tok.Kind = token.Receiver
+		} else if c == '_' {
+			tok.Kind = token.Underscore
+		} else {
+			tok.Kind = token.Identifier
+			tok.Lit = toString(c)
+		}
+		return
+	}
+
+	// word is at least 2 characters long
 	lx.start()
 	lx.skipWord()
 	lit, ok := lx.take()

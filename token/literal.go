@@ -97,7 +97,7 @@ var Literal = [...]string{
 	True:  "true",
 	False: "false",
 
-	Receiver: "rv",
+	Receiver: "g",
 
 	LabelNext: "@.next",
 	LabelEnd:  "@.end",

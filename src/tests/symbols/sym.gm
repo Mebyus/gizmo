@@ -15,11 +15,11 @@ type Result enum u32 {
 }
 
 fn [Result] is_ok() => bool {
-    return rv == Result.Ok;
+    return g == Result.Ok;
 }
 
 fn [Result] is_err() => bool {
-    return rv == Result.Error;
+    return g == Result.Error;
 }
 
 fn add(a: u32, b: u32) => u32 {
