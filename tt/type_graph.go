@@ -55,10 +55,75 @@ type TypeGraphBuilder struct {
 	Stray []TypeGraphStrayNode
 	Nodes []TypeGraphNode
 
-	Roots []int
+	Roots     []int
+	Pinnacles []int
 
 	// Symbol map. Maps symbol to its node index.
 	sm map[*Symbol]int
+
+	// keeps track on number of steps happened during traversal
+	step int
+
+	stack TypeGraphStack
+
+	// Stores discovery step of visited nodes.
+	//
+	// Equals 0 for nodes which are not yet visited.
+	disc []int
+
+	// Earliest visited node (the node with minimum
+	// discovery time) that can be reached from
+	// subtree rooted with current node.
+	low []int
+}
+
+type TypeGraphStack struct {
+	// used to check whether or not node is present the stack (by node index)
+	m []bool
+
+	// stack elements, each element is a node index
+	s []int
+}
+
+func (s *TypeGraphStack) Init(size int) {
+	s.m = make([]bool, size)
+	s.s = make([]int, 0, size/2) // prealloc some space, to reduce number of reallocations
+}
+
+func (s *TypeGraphStack) Has(i int) bool {
+	return s.m[i]
+}
+
+func (s *TypeGraphStack) Push(i int) {
+	s.s = append(s.s, i)
+
+	// mark added element as present in stack
+	s.m[i] = true
+}
+
+// Pop removes element stored on top of the stack and returns it
+// to the caller.
+func (s *TypeGraphStack) Pop() int {
+	i := s.Top()
+
+	// shrink stack by one element, but keep underlying space
+	// for future use
+	s.s = s.s[:s.tip()]
+
+	// mark removed element as no longer present in stack
+	s.m[i] = false
+
+	return i
+}
+
+// Top returns element stored on top of the stack. Does not alter
+// stack state.
+func (s *TypeGraphStack) Top() int {
+	return s.s[s.tip()]
+}
+
+func (s *TypeGraphStack) tip() int {
+	return len(s.s) - 1
 }
 
 func NewTypeGraphBuilder(size int) *TypeGraphBuilder {
@@ -93,12 +158,6 @@ func (g *TypeGraphBuilder) Scan() {
 		anc := g.mapAncestors(i)
 		g.Nodes[i].Anc = anc
 
-		if len(anc) == 0 {
-			// found root node
-			// TODO: maybe it's not needed here due to later remapping
-			g.Roots = append(g.Roots, i)
-		}
-
 		for _, l := range anc {
 			g.Nodes[l.Index].Des = append(g.Nodes[l.Index].Des, TypeGraphLink{
 				Index: i,
@@ -128,6 +187,84 @@ func (g *TypeGraphBuilder) Scan() {
 		}
 	}
 
+	if c == 0 {
+		// all nodes are stray nodes
+		return
+	}
+	if c == 1 {
+		panic("graph with connected nodes should have at least 2 nodes")
+	}
+
+	nodes := make([]TypeGraphNode, 0, c)
+	var roots []int
+	var pinnacles []int
+	// sm := make(map[*Symbol]int, c)
+
+	for i := 0; i < len(g.Nodes); i += 1 {
+		if stray[i] {
+			continue
+		}
+
+		node := g.Nodes[i]
+		j := remap[i] // node's new index
+		anc := remapLinks(stray, remap, node.Anc)
+		des := remapLinks(stray, remap, node.Des)
+
+		if len(anc) == 0 {
+			roots = append(roots, j)
+		}
+		if len(des) == 0 {
+			pinnacles = append(pinnacles, j)
+		}
+
+		nodes = append(nodes, TypeGraphNode{
+			Anc:      anc,
+			Des:      des,
+			Index:    j,
+			Sym:      g.Nodes[i].Sym,
+			SelfLoop: g.Nodes[i].SelfLoop,
+		})
+	}
+
+	if len(roots) == 0 || len(pinnacles) == 0 {
+		fmt.Println("detected cluster inside graph")
+	}
+
+	// TODO: remove debug print
+	for _, n := range nodes {
+		var anc []string
+		for _, l := range n.Anc {
+			s := nodes[l.Index].Sym.Name
+			if l.Kind == linkIndirect {
+				s = "*" + s
+			}
+
+			anc = append(anc, s)
+		}
+
+		fmt.Printf("%s: %v\n", n.Sym.Name, anc)
+	}
+
+	g.Nodes = nodes
+	g.Roots = roots
+	g.Pinnacles = pinnacles
+	g.sm = nil
+
+	g.Traverse()
+}
+
+func remapLinks(filter []bool, remap []int, links []TypeGraphLink) []TypeGraphLink {
+	var s []TypeGraphLink
+	for _, l := range links {
+		if filter[l.Index] {
+			continue
+		}
+		s = append(s, TypeGraphLink{
+			Index: remap[l.Index],
+			Kind:  l.Kind,
+		})
+	}
+	return s
 }
 
 func (g *TypeGraphBuilder) mapAncestors(node int) []TypeGraphLink {
@@ -178,4 +315,74 @@ func (g *TypeGraphBuilder) mapAncestors(node int) []TypeGraphLink {
 		}
 	}
 	return anc
+}
+
+// Traverse implements Tarjan’s algorithm for searching Strongly Connected Components
+// inside directed graph.
+func (g *TypeGraphBuilder) Traverse() {
+	g.disc = make([]int, len(g.Nodes))
+	g.low = make([]int, len(g.Nodes))
+
+	g.stack.Init(len(g.Nodes))
+
+	for _, i := range g.Roots {
+		// TODO: find a way to separate
+		// isolated components from each other
+		// while traversing the graph
+		g.traverse(i)
+	}
+
+	// TODO: rank nodes
+	// In order to do that we need to start from
+	// roots and rank-by-rank eliminate connections
+	// from descendant's ancestors
+	//
+	// after each such step there will be a new set of
+	// "roots" with no ancestors, if that is not the case,
+	// then we encountered one of the clusters
+	//
+	// we can check list of nodes inside this cluster
+	// from what we obtained in the previous step,
+	// clusters are ranked as a whole
+}
+
+// recursive depth-first traverse
+func (g *TypeGraphBuilder) traverse(n int) {
+	g.step += 1
+	g.disc[n] = g.step
+	g.low[n] = g.step
+	g.stack.Push(n)
+
+	for _, l := range g.Nodes[n].Des {
+		i := l.Index
+
+		if g.disc[i] == 0 {
+			// if node is not yet visited, traverse its subtree
+			g.traverse(i)
+
+			// after subtree traversal current node
+			// should have the lowest low discovery step
+			// of all its descendant nodes
+			g.low[n] = min(g.low[n], g.low[i])
+		} else if g.stack.Has(i) {
+			// this node is already present in stack,
+			// thus forming a cycle, we must update
+			// low discovery step of subtree start
+			g.low[n] = min(g.low[n], g.disc[i])
+		}
+	}
+
+	if g.low[n] == g.disc[n] {
+		// we found head node of the cluster,
+		// pop the stack until reaching head
+
+		var list []int
+		i := g.stack.Pop()
+		list = append(list, i)
+		for i != n {
+			i = g.stack.Pop()
+			list = append(list, i)
+		}
+		fmt.Printf("cluster (%d): %v\n", g.low[n], list)
+	}
 }

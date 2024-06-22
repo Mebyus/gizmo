@@ -15,9 +15,23 @@ fn use_counter(c: *Counter) => int {
 }
 
 type A struct {
-    b: *B,
+    b: B,
+    b2: *B,
+    s: str,
+    c: []C,
 }
 
-type B struct {
-    a: *A,
+type B uint
+
+type C struct {
+    s: str,
+    b: []*B,
+    s2: [*]u8,
+    // a: *A,
+}
+
+type D int
+
+type E struct {
+    d: D,
 }

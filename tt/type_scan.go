@@ -194,8 +194,9 @@ func (m *Merger) shallowScanTypes() error {
 	}
 
 	g.Scan()
+	return fmt.Errorf("remove this error after finishing type graph")
 
-	return nil
+	// return nil
 }
 
 // performs preliminary top-level type definition scan in order to obtain data
@@ -207,6 +208,8 @@ func (m *Merger) shallowScanType(ctx *TypeContext, def *TempTypeDef) (*Type, err
 	var err error
 	// TODO: mechanism for other types dependency shallow scanning and hoisting
 	switch kind {
+	case tps.Name:
+		err = m.shallowScanNamedType(ctx, def.top.Spec.(ast.TypeName))
 	case tps.Struct:
 		err = m.shallowScanStructType(ctx, def.top.Spec.(ast.StructType), def.methods)
 	case tps.Enum:
