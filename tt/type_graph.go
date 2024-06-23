@@ -30,9 +30,26 @@ type TypeGraphNode struct {
 	// These nodes correspond to symbols which use this node's symbol.
 	Des []TypeGraphLink
 
+	// List of adjacent node indices. This list is obtained by turning
+	// digraph (directed graph) into ugraph (undirected graph). In other
+	// words this is a list of node indices merged from ancestors and
+	// descendants.
+	Adj []int
+
 	// Graph roots have rank of zero. Each descent step increases rank by one.
 	// Thus all non-root nodes have positive rank value.
 	Rank int
+
+	// Component number. Each distinct number marks connected isolated component
+	// within a graph. By definition nodes from different components do not
+	// have connections between them. More formally:
+	//
+	//	if node A belongs to c1 (component 1) and node B belongs to c2 then
+	//	by definition there is no edge A -> B or B -> A in this graph
+	//
+	// Components separate all graph nodes into equivalence classes with no
+	// intersections between them.
+	Comp int
 
 	// Node index inside graph's list of nodes.
 	Index int
@@ -54,12 +71,29 @@ type TypeGraphStrayNode struct {
 type TypeGraphBuilder struct {
 	Stray []TypeGraphStrayNode
 	Nodes []TypeGraphNode
+	Comps []TypeGraphComponent
 
 	Roots     []int
 	Pinnacles []int
 
 	// Symbol map. Maps symbol to its node index.
 	sm map[*Symbol]int
+
+	/* Internal state for components discovery */
+
+	// Counter for assigning component number to nodes.
+	comp int
+
+	// True for already visited node during BFS.
+	// vis []bool
+
+	// List of node indices for current BFS scan.
+	wave []int
+
+	// List of node indices for next BFS scan.
+	next []int
+
+	/* Internal state for clusters discovery */
 
 	// keeps track on number of steps happened during traversal
 	step int
@@ -131,6 +165,7 @@ func NewTypeGraphBuilder(size int) *TypeGraphBuilder {
 		Nodes: make([]TypeGraphNode, 0, size),
 
 		sm: make(map[*Symbol]int, size),
+		// vis: make([]bool, size),
 	}
 }
 
@@ -153,6 +188,112 @@ func (g *TypeGraphBuilder) Add(s *Symbol, links []TypeLink) {
 	})
 }
 
+// MergeInts merges two sorted (in ascending order) slices into
+// a single sorted slice with unique values. Each given slice must
+// contain only unique values, but each value could be present in
+// both slices. If one of the given slices is empty then other is returned
+// as a result, thus avoiding unnecessary copying. The result is intended
+// to be read-only.
+//
+//	[1, 2, 3, 4] + [2, 3, 5]  => [1, 2, 3, 4, 5]
+//	[1, 1, 3] + [2]           => incorrect input: first slice contains duplicates
+func MergeInts(a, b []int) []int {
+	if len(a) == 0 && len(b) == 0 {
+		return nil
+	}
+	if len(a) == 0 {
+		return b
+	}
+	if len(b) == 0 {
+		return a
+	}
+
+	s := make([]int, 0, max(len(a), len(b)))
+
+	i := 0
+	j := 0
+
+	for i < len(a) && j < len(b) {
+		if a[i] < b[j] {
+			s = append(s, a[i])
+			i += 1
+		} else if a[i] > b[j] {
+			s = append(s, b[j])
+			j += 1
+		} else {
+			// a[i] == b[j]
+			s = append(s, a[i])
+			i += 1
+			j += 1
+		}
+	}
+
+	for i < len(a) {
+		s = append(s, a[i])
+		i += 1
+	}
+
+	for j < len(b) {
+		s = append(s, b[j])
+		j += 1
+	}
+
+	return s
+}
+
+func linksToIndices(links []TypeGraphLink) []int {
+	if len(links) == 0 {
+		return nil
+	}
+	s := make([]int, 0, len(links))
+	for _, l := range links {
+		s = append(s, l.Index)
+	}
+	return s
+}
+
+func mergeLinks(a, b []TypeGraphLink) []int {
+	return MergeInts(linksToIndices(a), linksToIndices(b))
+}
+
+// split graph into connected components
+func (g *TypeGraphBuilder) split() {
+	for i := 0; i < len(g.Nodes); i += 1 {
+		if g.Nodes[i].Comp == 0 {
+			// this node was not yet visited
+			g.comp += 1
+			g.bfs(i)
+		}
+
+		// TODO: remove debug print
+		n := g.Nodes[i]
+		fmt.Printf("%s: comp=%v\n", n.Sym.Name, n.Comp)
+	}
+}
+
+func (g *TypeGraphBuilder) bfs(n int) {
+	g.wave = append(g.wave, n)
+	for {
+		for _, i := range g.wave {
+			g.Nodes[i].Comp = g.comp
+			adj := g.Nodes[i].Adj
+			for _, j := range adj {
+				if g.Nodes[j].Comp == 0 {
+					g.next = append(g.next, j)
+				}
+			}
+		}
+
+		if len(g.next) == 0 {
+			return
+		}
+
+		g.wave, g.next = g.next, g.wave
+		g.next = g.next[:0]
+
+	}
+}
+
 func (g *TypeGraphBuilder) Scan() {
 	for i := 0; i < len(g.Nodes); i += 1 {
 		anc := g.mapAncestors(i)
@@ -165,6 +306,22 @@ func (g *TypeGraphBuilder) Scan() {
 			})
 		}
 	}
+
+	for i := 0; i < len(g.Nodes); i += 1 {
+		n := g.Nodes[i]
+		adj := mergeLinks(n.Anc, n.Des)
+		g.Nodes[i].Adj = adj
+
+		if len(adj) == 0 {
+			g.comp += 1
+			g.Nodes[i].Comp = g.comp
+
+			// later we will use Node.Comp != 0 for checking
+			// if a node was already visited during components BFS
+		}
+	}
+
+	g.split()
 
 	// find stray nodes and remap the graph
 	stray := make([]bool, len(g.Nodes)) // true for stray node's index
@@ -329,6 +486,17 @@ func (g *TypeGraphBuilder) Traverse() {
 		// TODO: find a way to separate
 		// isolated components from each other
 		// while traversing the graph
+		//
+		// possibly we can return component's "generation"
+		// number from traverse method
+		//
+		// if returned number is 0 then that means we did not
+		// find connections with previous generaions and
+		// should assign a new one on method exit
+		//
+		// at recursion start (in this scope) we should increment
+		// next assigned generation number if returned value is 0
+		// meaning we discovered new generation
 		g.traverse(i)
 	}
 
@@ -385,4 +553,7 @@ func (g *TypeGraphBuilder) traverse(n int) {
 		}
 		fmt.Printf("cluster (%d): %v\n", g.low[n], list)
 	}
+}
+
+type TypeGraphComponent struct {
 }
