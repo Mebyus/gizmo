@@ -71,10 +71,15 @@ type TypeGraphStrayNode struct {
 type TypeGraphBuilder struct {
 	Stray []TypeGraphStrayNode
 	Nodes []TypeGraphNode
+
+	// Stores all non-trivial (more than 1 node) components inside the graph.
 	Comps []TypeGraphComponent
 
 	Roots     []int
 	Pinnacles []int
+
+	// List of isolated node indices.
+	Isolated []int
 
 	// Symbol map. Maps symbol to its node index.
 	sm map[*Symbol]int
@@ -83,6 +88,9 @@ type TypeGraphBuilder struct {
 
 	// Counter for assigning component number to nodes.
 	comp int
+
+	// Maximum number of vertices among components.
+	maxCompSize int
 
 	// True for already visited node during BFS.
 	// vis []bool
@@ -93,6 +101,11 @@ type TypeGraphBuilder struct {
 	// List of node indices for next BFS scan.
 	next []int
 
+	// maps node index to component vertex index,
+	// note that each component has its own indexing
+	// for vertices
+	remap []int
+
 	/* Internal state for clusters discovery */
 
 	// keeps track on number of steps happened during traversal
@@ -100,28 +113,33 @@ type TypeGraphBuilder struct {
 
 	stack TypeGraphStack
 
-	// Stores discovery step of visited nodes.
+	// Stores discovery step number of visited nodes.
 	//
 	// Equals 0 for nodes which are not yet visited.
 	disc []int
 
 	// Earliest visited node (the node with minimum
-	// discovery time) that can be reached from
+	// discovery step number) that can be reached from
 	// subtree rooted with current node.
 	low []int
 }
 
 type TypeGraphStack struct {
-	// used to check whether or not node is present the stack (by node index)
-	m []bool
-
 	// stack elements, each element is a node index
 	s []int
+
+	// used to check whether or not node is present the stack (by node index)
+	m []bool
 }
 
 func (s *TypeGraphStack) Init(size int) {
 	s.m = make([]bool, size)
 	s.s = make([]int, 0, size/2) // prealloc some space, to reduce number of reallocations
+}
+
+func (s *TypeGraphStack) Reset() {
+	s.s = s.s[:0]
+	clear(s.m)
 }
 
 func (s *TypeGraphStack) Has(i int) bool {
@@ -259,6 +277,34 @@ func mergeLinks(a, b []TypeGraphLink) []int {
 // split graph into connected components
 func (g *TypeGraphBuilder) split() {
 	for i := 0; i < len(g.Nodes); i += 1 {
+		// during first pass we construct adjacent links
+		// for all nodes
+
+		n := g.Nodes[i]
+		adj := mergeLinks(n.Anc, n.Des)
+		g.Nodes[i].Adj = adj
+
+		// mark isolated nodes as separate component
+		if len(adj) == 0 {
+			g.comp += 1
+			g.Nodes[i].Comp = g.comp
+			g.Isolated = append(g.Isolated, i)
+
+			// later we will use Node.Comp == 0 for checking
+			// if a node was not yet visited during components BFS
+		}
+	}
+
+	// g.comp denotes total number of created components,
+	// hence here it represents number of isolated nodes
+	if g.comp >= len(g.Nodes) {
+		// all nodes are isolated
+		// we do not need second pass with BFS
+		return
+	}
+
+	g.remap = make([]int, len(g.Nodes))
+	for i := 0; i < len(g.Nodes); i += 1 {
 		if g.Nodes[i].Comp == 0 {
 			// this node was not yet visited
 			g.comp += 1
@@ -267,24 +313,65 @@ func (g *TypeGraphBuilder) split() {
 
 		// TODO: remove debug print
 		n := g.Nodes[i]
-		fmt.Printf("%s: comp=%v\n", n.Sym.Name, n.Comp)
+		fmt.Printf("%s (%d): comp=%v\n", n.Sym.Name, i, n.Comp)
 	}
 }
 
 func (g *TypeGraphBuilder) bfs(n int) {
+	// create new component and store its index
+	k := len(g.Comps)
+	g.Comps = append(g.Comps, TypeGraphComponent{Num: g.comp})
+	c := &g.Comps[k]
+
+	// reset the slice from previous BFS, but keep
+	// underlying memory
+	g.wave = g.wave[:0]
 	g.wave = append(g.wave, n)
+	g.Nodes[n].Comp = g.comp
 	for {
 		for _, i := range g.wave {
-			g.Nodes[i].Comp = g.comp
+			l := len(c.V)
+			if len(g.Nodes[i].Anc) == 0 {
+				c.Roots = append(c.Roots, l)
+			}
+			if len(g.Nodes[i].Des) == 0 {
+				c.Pinnacles = append(c.Pinnacles, l)
+			}
+			g.remap[i] = l
+			c.V = append(c.V, TypeGraphVertex{Index: i})
+
 			adj := g.Nodes[i].Adj
 			for _, j := range adj {
 				if g.Nodes[j].Comp == 0 {
+					g.Nodes[j].Comp = g.comp
 					g.next = append(g.next, j)
 				}
 			}
 		}
 
 		if len(g.next) == 0 {
+			// we gathered all vertices that belong to current component
+			// do vertex descendants remap before exiting
+
+			for p := 0; p < len(c.V); p += 1 {
+				i := c.V[p].Index
+				var des []int
+				if len(g.Nodes[i].Des) != 0 {
+					des = make([]int, 0, len(g.Nodes[i].Des))
+					for _, j := range g.Nodes[i].Des {
+						des = append(des, g.remap[j.Index])
+					}
+				}
+				c.V[p].Des = des
+
+				// TODO: remove debug print
+				fmt.Printf("vertex %d-%d (%d): %v\n", p, c.Num, i, des)
+			}
+
+			if len(c.V) > g.maxCompSize {
+				g.maxCompSize = len(c.V)
+			}
+
 			return
 		}
 
@@ -304,20 +391,6 @@ func (g *TypeGraphBuilder) Scan() {
 				Index: i,
 				Kind:  l.Kind,
 			})
-		}
-	}
-
-	for i := 0; i < len(g.Nodes); i += 1 {
-		n := g.Nodes[i]
-		adj := mergeLinks(n.Anc, n.Des)
-		g.Nodes[i].Adj = adj
-
-		if len(adj) == 0 {
-			g.comp += 1
-			g.Nodes[i].Comp = g.comp
-
-			// later we will use Node.Comp != 0 for checking
-			// if a node was already visited during components BFS
 		}
 	}
 
@@ -555,5 +628,65 @@ func (g *TypeGraphBuilder) traverse(n int) {
 	}
 }
 
+type TypeGraphVertex struct {
+	// list of indices inside V
+	Des []int
+
+	Rank int
+
+	// original node index
+	Index int
+}
+
 type TypeGraphComponent struct {
+	V []TypeGraphVertex
+
+	// list of indices inside V
+	Roots []int
+
+	// list of indices inside V
+	Pinnacles []int
+
+	// component number
+	Num int
+}
+
+// Keeps track of internal state for clusters discovery
+// inside graph component.
+type TypeGraphComponentWalker struct {
+	stack TypeGraphStack
+
+	// Stores discovery step number of visited vertices.
+	//
+	// Equals 0 for vertices which are not yet visited.
+	disc []int
+
+	// Earliest visited vertex (the vertex with minimum
+	// discovery step number) that can be reached from
+	// subtree rooted with current vertex.
+	low []int
+
+	// component currently being processed
+	c *TypeGraphComponent
+
+	// keeps track on number of steps happened during traversal
+	step int
+}
+
+func (w *TypeGraphComponentWalker) Init(size int, c *TypeGraphComponent) {
+	w.disc = make([]int, size)
+	w.low = make([]int, size)
+
+	w.stack.Init(size)
+
+	w.c = c
+}
+
+func (w *TypeGraphComponentWalker) Reset(c *TypeGraphComponent) {
+	w.step = 0
+	clear(w.disc)
+	clear(w.low)
+	w.stack.Reset()
+
+	w.c = c
 }
