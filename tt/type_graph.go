@@ -342,17 +342,9 @@ func (g *TypeGraphBuilder) bfs(n int) {
 
 			for p := 0; p < len(c.V); p += 1 {
 				i := c.V[p].Index
-				var des []int
-				if len(g.Nodes[i].Des) != 0 {
-					des = make([]int, 0, len(g.Nodes[i].Des))
-					for _, j := range g.Nodes[i].Des {
-						des = append(des, g.remap[j.Index])
-					}
-				}
-				c.V[p].Des = des
 
-				// TODO: remove debug print
-				fmt.Printf("vertex %d-%d (%d): %v\n", p, c.Num, i, des)
+				c.V[p].Anc = remapLinks(g.remap, g.Nodes[i].Anc)
+				c.V[p].Des = remapLinks(g.remap, g.Nodes[i].Des)
 			}
 
 			if len(c.V) > g.maxCompSize {
@@ -383,6 +375,36 @@ func (g *TypeGraphBuilder) Scan() {
 
 	g.split()
 	g.discoverClusters()
+	// TODO: scan clusters for direct-indirect correctness
+	g.rank()
+}
+
+func (g *TypeGraphBuilder) rank() {
+	var r TypeGraphRanker
+
+	for k := 0; k < len(g.Comps); k += 1 {
+		c := &g.Comps[k]
+		if c.isTwoLevelNoCluster() {
+			for _, i := range c.Pinnacles {
+				c.V[i].Rank = 1
+			}
+			c.Cohorts = [][]int{c.Roots, c.Pinnacles}
+			continue
+		}
+
+		if len(c.Clusters) != 0 {
+			panic("recursive cluster types not implemented")
+		}
+
+		r.Rank(c)
+
+		// TODO: remove debug print
+		fmt.Printf("component %d has %d cohorts\n", c.Num, len(c.Cohorts))
+		for n, cc := range c.Cohorts {
+			fmt.Printf("rank %-2d: %v\n", n, cc)
+		}
+		fmt.Println()
+	}
 }
 
 func (g *TypeGraphBuilder) discoverClusters() {
@@ -423,16 +445,13 @@ func (g *TypeGraphBuilder) discoverClusters() {
 	}
 }
 
-func remapLinks(filter []bool, remap []int, links []TypeGraphLink) []TypeGraphLink {
-	var s []TypeGraphLink
+func remapLinks(remap []int, links []TypeGraphLink) []int {
+	if len(links) == 0 {
+		return nil
+	}
+	s := make([]int, 0, len(links))
 	for _, l := range links {
-		if filter[l.Index] {
-			continue
-		}
-		s = append(s, TypeGraphLink{
-			Index: remap[l.Index],
-			Kind:  l.Kind,
-		})
+		s = append(s, remap[l.Index])
 	}
 	return s
 }
@@ -510,19 +529,6 @@ func (w *TypeGraphComponentWalker) Walk() {
 			return
 		}
 	}
-
-	// TODO: rank nodes
-	// In order to do that we need to start from
-	// roots and rank-by-rank eliminate connections
-	// from descendant's ancestors
-	//
-	// after each such step there will be a new set of
-	// "roots" with no ancestors, if that is not the case,
-	// then we encountered one of the clusters
-	//
-	// we can check list of nodes inside this cluster
-	// from what we obtained in the previous step,
-	// clusters are ranked as a whole
 }
 
 // recursive depth-first walk
@@ -571,13 +577,17 @@ func (w *TypeGraphComponentWalker) walk(v int) {
 			w.c.V[i].Cluster = num
 			list = append(list, i)
 		}
+		sort.Ints(list)
 		w.c.Clusters = append(w.c.Clusters, list)
 		fmt.Printf("cluster (%d): %v\n", w.low[v], list)
 	}
 }
 
 type TypeGraphVertex struct {
-	// list of indices inside V
+	// list of ancestor indices inside V
+	Anc []int
+
+	// list of descendant indices inside V
 	Des []int
 
 	Rank int
@@ -602,6 +612,8 @@ type TypeGraphComponent struct {
 	// each element in this slice is a list of non-trivial vertices
 	// which belong to the same cluster
 	Clusters [][]int
+
+	Cohorts [][]int
 
 	// component number
 	Num int
@@ -649,4 +661,93 @@ func (w *TypeGraphComponentWalker) Reset(c *TypeGraphComponent) {
 	w.stack.Reset()
 
 	w.c = c
+}
+
+type TypeGraphRanker struct {
+	// Indicates how many ancestors are still unranked for a vertex with
+	// particular index, directly corresponding to index in this slice.
+	// If vertex was already ranked corresponding left value will be 0
+	left []int
+
+	// list of vertex indices which will be ranked
+	// during current iteration
+	wave []int
+
+	// buffer for preparing next wave
+	next []int
+
+	c *TypeGraphComponent
+}
+
+func (r *TypeGraphRanker) Rank(c *TypeGraphComponent) {
+	r.c = c
+	r.left = r.left[:0]
+	for i := 0; i < len(c.V); i += 1 {
+		r.left = append(r.left, len(c.V[i].Anc))
+	}
+	r.wave = r.wave[:0]
+	r.next = r.next[:0]
+
+	r.wave = append(r.wave, c.Roots...)
+
+	// components that are being ranked by this method
+	// have at least 3 cohorts
+	c.Cohorts = make([][]int, 0, 3)
+	c.Cohorts = append(c.Cohorts, c.Roots)
+
+	r.rank()
+}
+
+func (r *TypeGraphRanker) swap() {
+	r.wave, r.next = r.next, r.wave
+	r.next = r.next[:0]
+}
+
+// add node with specified graph index to cohort of the specified rank
+func (r *TypeGraphRanker) add(node int, rank int) {
+	for j := len(r.c.Cohorts); j <= rank; j++ {
+		// allocate place for storing slices of graph indices
+		// for cohorts with rank not initialized previously
+		r.c.Cohorts = append(r.c.Cohorts, nil)
+	}
+
+	r.c.Cohorts[rank] = append(r.c.Cohorts[rank], node)
+}
+
+func (r *TypeGraphRanker) rank() {
+	for len(r.wave) != 0 {
+		for _, i := range r.wave {
+			waiters := r.c.V[i].Des
+			if len(waiters) == 0 {
+				continue
+			}
+
+			// rank that will be passed to waiters
+			rank := r.c.V[i].Rank + 1
+
+			for _, j := range waiters {
+				r.left[j] -= 1
+
+				if rank > r.c.V[j].Rank {
+					// select highest rank from all nodes inside the wave
+					r.c.V[j].Rank = rank
+				}
+
+				// check if waiter node has finished ranking
+				if r.left[j] == 0 {
+					r.add(j, r.c.V[j].Rank)
+
+					// next wave is constructed from nodes that finished
+					// ranking during this wave
+					r.next = append(r.next, j)
+				}
+			}
+		}
+
+		r.swap()
+	}
+
+	for _, cohort := range r.c.Cohorts[1:] {
+		sort.Ints(cohort)
+	}
 }

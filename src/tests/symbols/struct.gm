@@ -36,10 +36,16 @@ type E struct {
     d: D,
 }
 
-type F struct {
-    gg: *G,  
+type K struct {
+    // k: K,
+    e: E,
+    d: D,
 }
 
-type G struct {
-    f: *F,
-}
+// type F struct {
+//     gg: *G,  
+// }
+
+// type G struct {
+//     f: *F,
+// }
