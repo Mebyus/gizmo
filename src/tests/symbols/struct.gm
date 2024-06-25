@@ -35,3 +35,11 @@ type D int
 type E struct {
     d: D,
 }
+
+type F struct {
+    gg: *G,  
+}
+
+type G struct {
+    f: *F,
+}

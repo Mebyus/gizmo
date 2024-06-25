@@ -105,23 +105,6 @@ type TypeGraphBuilder struct {
 	// note that each component has its own indexing
 	// for vertices
 	remap []int
-
-	/* Internal state for clusters discovery */
-
-	// keeps track on number of steps happened during traversal
-	step int
-
-	stack TypeGraphStack
-
-	// Stores discovery step number of visited nodes.
-	//
-	// Equals 0 for nodes which are not yet visited.
-	disc []int
-
-	// Earliest visited node (the node with minimum
-	// discovery step number) that can be reached from
-	// subtree rooted with current node.
-	low []int
 }
 
 type TypeGraphStack struct {
@@ -353,6 +336,10 @@ func (g *TypeGraphBuilder) bfs(n int) {
 			// we gathered all vertices that belong to current component
 			// do vertex descendants remap before exiting
 
+			if len(c.V) < 2 {
+				panic("connected component must have at least 2 vertices")
+			}
+
 			for p := 0; p < len(c.V); p += 1 {
 				i := c.V[p].Index
 				var des []int
@@ -395,92 +382,45 @@ func (g *TypeGraphBuilder) Scan() {
 	}
 
 	g.split()
+	g.discoverClusters()
+}
 
-	// find stray nodes and remap the graph
-	stray := make([]bool, len(g.Nodes)) // true for stray node's index
-	remap := make([]int, len(g.Nodes))  // maps old node indices to new ones (after prunning is done)
-	c := 0                              // how many non-stray nodes were discovered
-	for i := 0; i < len(g.Nodes); i += 1 {
-		node := g.Nodes[i]
-
-		if len(node.Anc) == 0 && len(node.Des) == 0 {
-			stray[i] = true
-			g.Stray = append(g.Stray, TypeGraphStrayNode{
-				Sym:      node.Sym,
-				SelfLoop: node.SelfLoop,
-			})
-			// TODO: remove this debug print
-			fmt.Printf("%s: stray type symbol \"%s\"\n", node.Sym.Pos.String(), node.Sym.Name)
-		} else {
-			remap[i] = c
-			c += 1
-		}
-	}
-
-	if c == 0 {
-		// all nodes are stray nodes
+func (g *TypeGraphBuilder) discoverClusters() {
+	if len(g.Comps) == 0 {
 		return
 	}
-	if c == 1 {
-		panic("graph with connected nodes should have at least 2 nodes")
+
+	if g.maxCompSize < 2 {
+		panic("connected components are present, but max component size is less than 2 vertices, which is impossible")
 	}
 
-	nodes := make([]TypeGraphNode, 0, c)
-	var roots []int
-	var pinnacles []int
-	// sm := make(map[*Symbol]int, c)
+	var w TypeGraphComponentWalker
 
-	for i := 0; i < len(g.Nodes); i += 1 {
-		if stray[i] {
+	var k int
+
+	// search for first component with possible clusters
+	// to properly initialize walker
+	for k < len(g.Comps) {
+		c := &g.Comps[k]
+		if c.isTwoLevelNoCluster() {
+			k += 1
 			continue
 		}
 
-		node := g.Nodes[i]
-		j := remap[i] // node's new index
-		anc := remapLinks(stray, remap, node.Anc)
-		des := remapLinks(stray, remap, node.Des)
-
-		if len(anc) == 0 {
-			roots = append(roots, j)
-		}
-		if len(des) == 0 {
-			pinnacles = append(pinnacles, j)
-		}
-
-		nodes = append(nodes, TypeGraphNode{
-			Anc:      anc,
-			Des:      des,
-			Index:    j,
-			Sym:      g.Nodes[i].Sym,
-			SelfLoop: g.Nodes[i].SelfLoop,
-		})
+		w.Init(g.maxCompSize, c)
+		w.Walk()
+		k += 1
+		break
 	}
 
-	if len(roots) == 0 || len(pinnacles) == 0 {
-		fmt.Println("detected cluster inside graph")
-	}
-
-	// TODO: remove debug print
-	for _, n := range nodes {
-		var anc []string
-		for _, l := range n.Anc {
-			s := nodes[l.Index].Sym.Name
-			if l.Kind == linkIndirect {
-				s = "*" + s
-			}
-
-			anc = append(anc, s)
+	for k < len(g.Comps) {
+		c := &g.Comps[k]
+		if !c.isTwoLevelNoCluster() {
+			w.Reset(c)
+			w.Walk()
 		}
-
-		fmt.Printf("%s: %v\n", n.Sym.Name, anc)
+		k += 1
 	}
-
-	g.Nodes = nodes
-	g.Roots = roots
-	g.Pinnacles = pinnacles
-	g.sm = nil
-
-	g.Traverse()
 }
 
 func remapLinks(filter []bool, remap []int, links []TypeGraphLink) []TypeGraphLink {
@@ -547,30 +487,28 @@ func (g *TypeGraphBuilder) mapAncestors(node int) []TypeGraphLink {
 	return anc
 }
 
-// Traverse implements Tarjan’s algorithm for searching Strongly Connected Components
+// Walk implements Tarjan’s algorithm for searching Strongly Connected Components
 // inside directed graph.
-func (g *TypeGraphBuilder) Traverse() {
-	g.disc = make([]int, len(g.Nodes))
-	g.low = make([]int, len(g.Nodes))
+func (w *TypeGraphComponentWalker) Walk() {
+	for _, i := range w.c.Roots {
+		w.walk(i)
+	}
 
-	g.stack.Init(len(g.Nodes))
+	if w.step >= len(w.c.V) {
+		// all vertices have been discovered
+		return
+	}
 
-	for _, i := range g.Roots {
-		// TODO: find a way to separate
-		// isolated components from each other
-		// while traversing the graph
-		//
-		// possibly we can return component's "generation"
-		// number from traverse method
-		//
-		// if returned number is 0 then that means we did not
-		// find connections with previous generaions and
-		// should assign a new one on method exit
-		//
-		// at recursion start (in this scope) we should increment
-		// next assigned generation number if returned value is 0
-		// meaning we discovered new generation
-		g.traverse(i)
+	// we need additional scan due to root cluster(s)
+	// inside the component
+	for i := 0; i < len(w.c.V); i += 1 {
+		if w.disc[i] == 0 {
+			w.walk(i)
+		}
+		if w.step >= len(w.c.V) {
+			// all vertices have been discovered
+			return
+		}
 	}
 
 	// TODO: rank nodes
@@ -587,44 +525,54 @@ func (g *TypeGraphBuilder) Traverse() {
 	// clusters are ranked as a whole
 }
 
-// recursive depth-first traverse
-func (g *TypeGraphBuilder) traverse(n int) {
-	g.step += 1
-	g.disc[n] = g.step
-	g.low[n] = g.step
-	g.stack.Push(n)
+// recursive depth-first walk
+func (w *TypeGraphComponentWalker) walk(v int) {
+	w.step += 1
+	w.disc[v] = w.step
+	w.low[v] = w.step
+	w.stack.Push(v)
 
-	for _, l := range g.Nodes[n].Des {
-		i := l.Index
+	for _, i := range w.c.V[v].Des {
+		if w.disc[i] == 0 {
+			// if vertex is not yet visited, traverse its subtree
+			w.walk(i)
 
-		if g.disc[i] == 0 {
-			// if node is not yet visited, traverse its subtree
-			g.traverse(i)
-
-			// after subtree traversal current node
+			// after subtree traversal current vertex
 			// should have the lowest low discovery step
-			// of all its descendant nodes
-			g.low[n] = min(g.low[n], g.low[i])
-		} else if g.stack.Has(i) {
-			// this node is already present in stack,
+			// of all its descendant vertices
+			w.low[v] = min(w.low[v], w.low[i])
+		} else if w.stack.Has(i) {
+			// this vertex is already present in stack,
 			// thus forming a cycle, we must update
 			// low discovery step of subtree start
-			g.low[n] = min(g.low[n], g.disc[i])
+			w.low[v] = min(w.low[v], w.disc[i])
 		}
 	}
 
-	if g.low[n] == g.disc[n] {
-		// we found head node of the cluster,
+	if w.low[v] == w.disc[v] {
+		// we found head vertex of the cluster,
 		// pop the stack until reaching head
 
-		var list []int
-		i := g.stack.Pop()
+		i := w.stack.Pop()
+		if i == v {
+			// do not keep track of trivial clusters (that contains one vertex)
+			return
+		}
+
+		// cluster number of newly discovered cluster
+		num := len(w.c.Clusters) + 1
+		w.c.V[i].Cluster = num
+
+		// cluster has at least 2 vertices by definition
+		list := make([]int, 0, 2)
 		list = append(list, i)
-		for i != n {
-			i = g.stack.Pop()
+		for i != v {
+			i = w.stack.Pop()
+			w.c.V[i].Cluster = num
 			list = append(list, i)
 		}
-		fmt.Printf("cluster (%d): %v\n", g.low[n], list)
+		w.c.Clusters = append(w.c.Clusters, list)
+		fmt.Printf("cluster (%d): %v\n", w.low[v], list)
 	}
 }
 
@@ -636,6 +584,10 @@ type TypeGraphVertex struct {
 
 	// original node index
 	Index int
+
+	// Cluster number in which this vertex resides.
+	// Equals 0 if vertex does not belong to cluster.
+	Cluster int
 }
 
 type TypeGraphComponent struct {
@@ -647,8 +599,17 @@ type TypeGraphComponent struct {
 	// list of indices inside V
 	Pinnacles []int
 
+	// each element in this slice is a list of non-trivial vertices
+	// which belong to the same cluster
+	Clusters [][]int
+
 	// component number
 	Num int
+}
+
+func (c *TypeGraphComponent) isTwoLevelNoCluster() bool {
+	// component has 2 levels and no cycles
+	return len(c.V) == len(c.Roots)+len(c.Pinnacles)
 }
 
 // Keeps track of internal state for clusters discovery
@@ -676,7 +637,6 @@ type TypeGraphComponentWalker struct {
 func (w *TypeGraphComponentWalker) Init(size int, c *TypeGraphComponent) {
 	w.disc = make([]int, size)
 	w.low = make([]int, size)
-
 	w.stack.Init(size)
 
 	w.c = c
