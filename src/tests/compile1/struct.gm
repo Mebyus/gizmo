@@ -1,0 +1,4 @@
+type Foo struct {
+    sum:   int,
+    input: int,
+}

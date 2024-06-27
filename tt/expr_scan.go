@@ -97,6 +97,7 @@ func (s *Scope) scanMemberCallExpression(ctx *Context, expr ast.MemberCallExpres
 
 	switch symbol.Type.Base.Kind {
 	case typ.Struct:
+		// TODO: implement this
 	case typ.Pointer:
 		refType := symbol.Type.Base.Def.(PtrTypeDef).RefType
 		if refType.Base.Kind != typ.Struct {

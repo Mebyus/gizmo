@@ -175,7 +175,7 @@ func (c *TypeContext) push(kind TypeLinkKind) TypeLinkKind {
 
 func (m *Merger) shallowScanTypes() error {
 	g := NewTypeGraphBuilder(len(m.types))
-	// TODO: graph based scanning
+
 	for _, s := range m.types {
 		def := s.Def.(*TempTypeDef)
 		ctx := NewTypeContext()
@@ -193,10 +193,31 @@ func (m *Merger) shallowScanTypes() error {
 		s.Def = t
 	}
 
-	g.Scan()
-	return fmt.Errorf("remove this error after finishing type graph")
+	graph := g.Scan()
 
-	// return nil
+	// TODO: remove debug print
+	fmt.Println("list of isolated types")
+	for _, i := range graph.Isolated {
+		n := graph.Nodes[i]
+		fmt.Printf("%s\n", n.Sym.Name)
+	}
+	fmt.Println()
+	fmt.Println("list of component types")
+	for k := 0; k < len(g.Comps); k += 1 {
+		c := &g.Comps[k]
+		fmt.Printf("component %d\n", k)
+		for rank, cohort := range c.Cohorts {
+			fmt.Printf("cohort %d\n", rank)
+			for _, i := range cohort {
+				n := graph.Nodes[c.V[i].Index]
+				fmt.Printf("%s\n", n.Sym.Name)
+			}
+			fmt.Println()
+		}
+		fmt.Println()
+	}
+
+	return nil
 }
 
 // performs preliminary top-level type definition scan in order to obtain data

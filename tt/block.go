@@ -96,7 +96,7 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	case stm.For:
 		// g.ForStatement(statement.(ast.ForStatement))
 	case stm.ForCond:
-		// g.ForConditionStatement(statement.(ast.ForConditionStatement))
+		return b.addForCond(ctx, statement.(ast.ForConditionStatement))
 	case stm.Match:
 		// g.MatchStatement(statement.(ast.MatchStatement))
 	case stm.Jump:
@@ -110,6 +110,31 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	default:
 		panic(fmt.Sprintf("not implemented for %s statement", statement.Kind().String()))
 	}
+	return nil
+}
+
+func (b *Block) addForCond(ctx *Context, stmt ast.ForConditionStatement) error {
+	if stmt.Condition == nil {
+		panic("nil condition in for statement")
+	}
+	condition, err := b.Scope.Scan(ctx, stmt.Condition)
+	if err != nil {
+		return err
+	}
+
+	node := &WhileStatement{
+		Pos:       stmt.Pos,
+		Condition: condition,
+		Body:      Block{Pos: stmt.Body.Pos},
+	}
+	node.Body.Scope = NewScope(scp.Loop, b.Scope, &node.Body.Pos)
+
+	err = node.Body.Fill(ctx, stmt.Body.Statements)
+	if err != nil {
+		return err
+	}
+
+	b.addNode(node)
 	return nil
 }
 

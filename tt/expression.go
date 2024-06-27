@@ -319,3 +319,31 @@ func (e *ParenthesizedExpression) Pin() source.Pos {
 func (e *ParenthesizedExpression) Type() *Type {
 	return e.Inner.Type()
 }
+
+type MemberExpression struct {
+	nodeChainOperand
+
+	Pos source.Pos
+
+	Target *Symbol
+	Member *Member
+}
+
+// Explicit interface implementation check
+var _ ChainOperand = &MemberExpression{}
+
+func (*MemberExpression) Kind() exn.Kind {
+	return exn.Member
+}
+
+func (e *MemberExpression) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *MemberExpression) Depth() uint32 {
+	return 1
+}
+
+func (e *MemberExpression) Type() *Type {
+	return e.Member.Type
+}

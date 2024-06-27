@@ -163,3 +163,24 @@ func (*SimpleIfStatement) Kind() stm.Kind {
 func (s *SimpleIfStatement) Pin() source.Pos {
 	return s.Pos
 }
+
+type WhileStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	// Always not nil.
+	Condition Expression
+
+	Body Block
+}
+
+var _ Statement = &WhileStatement{}
+
+func (*WhileStatement) Kind() stm.Kind {
+	return stm.ForCond
+}
+
+func (s *WhileStatement) Pin() source.Pos {
+	return s.Pos
+}

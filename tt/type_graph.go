@@ -36,10 +36,6 @@ type TypeGraphNode struct {
 	// descendants.
 	Adj []int
 
-	// Graph roots have rank of zero. Each descent step increases rank by one.
-	// Thus all non-root nodes have positive rank value.
-	Rank int
-
 	// Component number. Each distinct number marks connected isolated component
 	// within a graph. By definition nodes from different components do not
 	// have connections between them. More formally:
@@ -50,9 +46,6 @@ type TypeGraphNode struct {
 	// Components separate all graph nodes into equivalence classes with no
 	// intersections between them.
 	Comp int
-
-	// Node index inside graph's list of nodes.
-	Index int
 
 	// Symbol which defines named type attached to this node.
 	// Contains payload information which does not affect graph structure.
@@ -68,15 +61,21 @@ type TypeGraphStrayNode struct {
 	SelfLoop bool
 }
 
-type TypeGraphBuilder struct {
-	Stray []TypeGraphStrayNode
+type TypeGraph struct {
 	Nodes []TypeGraphNode
 
 	// Stores all non-trivial (more than 1 node) components inside the graph.
 	Comps []TypeGraphComponent
 
-	Roots     []int
-	Pinnacles []int
+	// List of isolated node indices.
+	Isolated []int
+}
+
+type TypeGraphBuilder struct {
+	Nodes []TypeGraphNode
+
+	// Stores all non-trivial (more than 1 node) components inside the graph.
+	Comps []TypeGraphComponent
 
 	// List of isolated node indices.
 	Isolated []int
@@ -91,9 +90,6 @@ type TypeGraphBuilder struct {
 
 	// Maximum number of vertices among components.
 	maxCompSize int
-
-	// True for already visited node during BFS.
-	// vis []bool
 
 	// List of node indices for current BFS scan.
 	wave []int
@@ -184,7 +180,6 @@ func (g *TypeGraphBuilder) Add(s *Symbol, links []TypeLink) {
 	g.sm[s] = index
 	g.Nodes = append(g.Nodes, TypeGraphNode{
 		Links: links,
-		Index: index,
 		Sym:   s,
 	})
 }
@@ -293,10 +288,6 @@ func (g *TypeGraphBuilder) split() {
 			g.comp += 1
 			g.bfs(i)
 		}
-
-		// TODO: remove debug print
-		n := g.Nodes[i]
-		fmt.Printf("%s (%d): comp=%v\n", n.Sym.Name, i, n.Comp)
 	}
 }
 
@@ -360,7 +351,7 @@ func (g *TypeGraphBuilder) bfs(n int) {
 	}
 }
 
-func (g *TypeGraphBuilder) Scan() {
+func (g *TypeGraphBuilder) Scan() *TypeGraph {
 	for i := 0; i < len(g.Nodes); i += 1 {
 		anc := g.mapAncestors(i)
 		g.Nodes[i].Anc = anc
@@ -377,6 +368,12 @@ func (g *TypeGraphBuilder) Scan() {
 	g.discoverClusters()
 	// TODO: scan clusters for direct-indirect correctness
 	g.rank()
+
+	return &TypeGraph{
+		Nodes:    g.Nodes,
+		Comps:    g.Comps,
+		Isolated: g.Isolated,
+	}
 }
 
 func (g *TypeGraphBuilder) rank() {
@@ -397,13 +394,6 @@ func (g *TypeGraphBuilder) rank() {
 		}
 
 		r.Rank(c)
-
-		// TODO: remove debug print
-		fmt.Printf("component %d has %d cohorts\n", c.Num, len(c.Cohorts))
-		for n, cc := range c.Cohorts {
-			fmt.Printf("rank %-2d: %v\n", n, cc)
-		}
-		fmt.Println()
 	}
 }
 
@@ -590,6 +580,8 @@ type TypeGraphVertex struct {
 	// list of descendant indices inside V
 	Des []int
 
+	// Graph roots have rank of zero. Each descent step increases rank by one.
+	// Thus all non-root nodes have positive rank value.
 	Rank int
 
 	// original node index
