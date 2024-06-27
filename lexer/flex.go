@@ -1,6 +1,9 @@
 package lexer
 
-import "github.com/mebyus/gizmo/token"
+import (
+	"github.com/mebyus/gizmo/char"
+	"github.com/mebyus/gizmo/token"
+)
 
 func (lx *Lexer) Flex() token.Token {
 	tok := lx.flex()
@@ -35,7 +38,7 @@ func (lx *Lexer) lineComment() (tok token.Token) {
 	lx.advance() // skip '/'
 
 	// skip until actual comment starts
-	for !lx.eof && lx.c != '\n' && isWhitespace(lx.c) {
+	for !lx.eof && lx.c != '\n' && char.IsWhitespace(lx.c) {
 		lx.advance()
 	}
 

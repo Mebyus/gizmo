@@ -1,6 +1,9 @@
 package lexer
 
-import "github.com/mebyus/gizmo/token"
+import (
+	"github.com/mebyus/gizmo/char"
+	"github.com/mebyus/gizmo/token"
+)
 
 func (lx *Lexer) Lex() token.Token {
 	tok := lx.lex()
@@ -22,11 +25,11 @@ func (lx *Lexer) lex() token.Token {
 }
 
 func (lx *Lexer) codeToken() token.Token {
-	if isLetterOrUnderscore(lx.c) {
+	if char.IsLetterOrUnderscore(lx.c) {
 		return lx.lexName()
 	}
 
-	if isDecimalDigit(lx.c) {
+	if char.IsDecDigit(lx.c) {
 		return lx.lexNumber()
 	}
 
@@ -84,7 +87,7 @@ func (lx *Lexer) label() (tok token.Token) {
 func (lx *Lexer) lexName() (tok token.Token) {
 	tok.Pos = lx.pos
 
-	if !isAlphanum(lx.next) {
+	if !char.IsAlphanum(lx.next) {
 		// word is 1 character long
 		c := lx.c
 		lx.advance() // skip character
@@ -95,7 +98,7 @@ func (lx *Lexer) lexName() (tok token.Token) {
 			tok.Kind = token.Underscore
 		} else {
 			tok.Kind = token.Identifier
-			tok.Lit = toString(c)
+			tok.Lit = char.ToString(c)
 		}
 		return
 	}
@@ -129,7 +132,7 @@ func (lx *Lexer) lexBinaryNumber() (tok token.Token) {
 	lx.start()
 	lx.skipBinaryDigits()
 
-	if isAlphanum(lx.c) {
+	if char.IsAlphanum(lx.c) {
 		lx.skipWord()
 		lit, ok := lx.take()
 		if ok {
@@ -161,7 +164,7 @@ func (lx *Lexer) lexBinaryNumber() (tok token.Token) {
 		return
 	}
 
-	tok.Val = parseBinaryDigits(lx.view())
+	tok.Val = char.ParseBinDigits(lx.view())
 	return
 }
 
@@ -174,7 +177,7 @@ func (lx *Lexer) lexOctalNumber() (tok token.Token) {
 	lx.start()
 	lx.skipOctalDigits()
 
-	if isAlphanum(lx.c) {
+	if char.IsAlphanum(lx.c) {
 		lx.skipWord()
 		lit, ok := lx.take()
 		if ok {
@@ -206,7 +209,7 @@ func (lx *Lexer) lexOctalNumber() (tok token.Token) {
 		return
 	}
 
-	tok.Val = parseOctalDigits(lx.view())
+	tok.Val = char.ParseOctDigits(lx.view())
 	return
 }
 
@@ -215,7 +218,7 @@ func (lx *Lexer) lexDecimalNumber() (tok token.Token) {
 
 	lx.start()
 	scannedOnePeriod := false
-	for !lx.eof && isDecimalDigitOrPeriod(lx.c) {
+	for !lx.eof && char.IsDecDigitOrPeriod(lx.c) {
 		lx.advance()
 		if lx.c == '.' {
 			if scannedOnePeriod {
@@ -237,7 +240,7 @@ func (lx *Lexer) lexDecimalNumber() (tok token.Token) {
 		return
 	}
 
-	if isAlphanum(lx.c) {
+	if char.IsAlphanum(lx.c) {
 		lx.skipWord()
 		lit, ok := lx.take()
 		if ok {
@@ -253,7 +256,7 @@ func (lx *Lexer) lexDecimalNumber() (tok token.Token) {
 		// decimal integer
 		// TODO: handle numbers which do not fit into 64 bits
 		tok.Kind = token.DecimalInteger
-		tok.Val = parseDecimalDigits(lx.view())
+		tok.Val = char.ParseDecDigits(lx.view())
 		return
 	}
 
@@ -271,7 +274,7 @@ func (lx *Lexer) lexHexadecimalNumber() (tok token.Token) {
 	lx.start()
 	lx.skipHexadecimalDigits()
 
-	if isAlphanum(lx.c) {
+	if char.IsAlphanum(lx.c) {
 		lx.skipWord()
 		lit, ok := lx.take()
 		if ok {
@@ -303,7 +306,7 @@ func (lx *Lexer) lexHexadecimalNumber() (tok token.Token) {
 		return
 	}
 
-	tok.Val = parseHexadecimalDigits(lx.view())
+	tok.Val = char.ParseHexDigits(lx.view())
 	return
 }
 
@@ -328,7 +331,7 @@ func (s *Lexer) lexNumber() (tok token.Token) {
 		return s.lexDecimalNumber()
 	}
 
-	if isAlphanum(s.next) {
+	if char.IsAlphanum(s.next) {
 		return s.illegalWord(token.MalformedDecimalInteger)
 	}
 
@@ -552,7 +555,7 @@ func (lx *Lexer) illegalWord(code uint64) (tok token.Token) {
 func (lx *Lexer) illegalByteToken() (tok token.Token) {
 	tok.Pos = lx.pos
 	tok.Kind = token.Illegal
-	tok.Lit = toString(byte(lx.c))
+	tok.Lit = char.ToString(byte(lx.c))
 	lx.advance()
 	return
 }

@@ -1,5 +1,7 @@
 package lexer
 
+import "github.com/mebyus/gizmo/char"
+
 const (
 	maxTokenByteLength = 1 << 10
 )
@@ -14,7 +16,7 @@ func (lx *Lexer) advance() {
 	if lx.c == '\n' {
 		lx.pos.Line += 1
 		lx.pos.Col = 0
-	} else if isCodePointStart(lx.c) {
+	} else if char.IsCodePointStart(lx.c) {
 		lx.pos.Col += 1
 	}
 
@@ -68,7 +70,7 @@ func (lx *Lexer) trimWhitespaceSuffixTake() (string, bool) {
 	if len(view) == 0 {
 		return "", true
 	}
-	if !isWhitespace(lastByte(view)) {
+	if !char.IsWhitespace(lastByte(view)) {
 		if len(view) > maxTokenByteLength {
 			return "", false
 		}
@@ -83,7 +85,7 @@ func (lx *Lexer) trimWhitespaceSuffixTake() (string, bool) {
 		i -= 1
 		c := view[i]
 
-		if !isWhitespace(c) {
+		if !char.IsWhitespace(c) {
 			length := i + 1
 			if length > maxTokenByteLength {
 				return "", false
@@ -107,7 +109,7 @@ func (lx *Lexer) len() int {
 }
 
 func (lx *Lexer) skipWhitespace() {
-	for isWhitespace(lx.c) {
+	for char.IsWhitespace(lx.c) {
 		lx.advance()
 	}
 }
@@ -122,25 +124,25 @@ func (lx *Lexer) skipLine() {
 }
 
 func (lx *Lexer) skipWord() {
-	for isAlphanum(lx.c) {
+	for char.IsAlphanum(lx.c) {
 		lx.advance()
 	}
 }
 
 func (lx *Lexer) skipBinaryDigits() {
-	for isBinaryDigit(lx.c) {
+	for char.IsBinDigit(lx.c) {
 		lx.advance()
 	}
 }
 
 func (lx *Lexer) skipOctalDigits() {
-	for isOctalDigit(lx.c) {
+	for char.IsOctDigit(lx.c) {
 		lx.advance()
 	}
 }
 
 func (lx *Lexer) skipHexadecimalDigits() {
-	for isHexadecimalDigit(lx.c) {
+	for char.IsHexDigit(lx.c) {
 		lx.advance()
 	}
 }

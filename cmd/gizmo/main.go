@@ -14,6 +14,7 @@ import (
 	"github.com/mebyus/gizmo/cmd/gizmo/tree"
 	"github.com/mebyus/gizmo/cmd/gizmo/ubev"
 	"github.com/mebyus/gizmo/cmd/gizmo/unit"
+	"github.com/mebyus/gizmo/cmd/gizmo/vm"
 )
 
 func main() {
@@ -44,6 +45,7 @@ var root = &butler.Lackey{
 		atom.Atom,
 		unit.Unit,
 		format.Format,
+		vm.VM,
 	},
 }
 
