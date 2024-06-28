@@ -15,6 +15,8 @@ const (
 	LeftSquare
 	RightSquare
 
+	Function
+
 	Register
 	Mnemonic
 
@@ -111,7 +113,7 @@ func (lx *Lexer) Lex() *Token {
 		return lx.create(EOF)
 	}
 
-	if lx.c == '@' && lx.next == '.' {
+	if lx.c == '.' {
 		return lx.label()
 	}
 
@@ -119,11 +121,11 @@ func (lx *Lexer) Lex() *Token {
 }
 
 func (lx *Lexer) label() *Token {
-
+	return &Token{}
 }
 
 func (lx *Lexer) other() *Token {
-
+	return &Token{}
 }
 
 func (lx *Lexer) advance() {

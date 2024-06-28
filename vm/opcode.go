@@ -127,6 +127,9 @@ var Size = [...]uint8{
 	// OP
 	Nop: 1,
 
+	// OP
+	Halt: 1,
+
 	// OP + DR
 	ClearReg: 1 + 1,
 

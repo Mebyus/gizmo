@@ -3,6 +3,7 @@ package vm
 import (
 	"encoding/binary"
 	"fmt"
+	"io"
 )
 
 type Machine struct {
@@ -14,6 +15,10 @@ type Machine struct {
 
 	// Frame pointer. Index in stack memory.
 	fp uint64
+
+	// Syscall register.
+	// Select syscall number or receive result code.
+	sn uint64
 
 	// Comparison flags.
 	cf uint64
@@ -47,9 +52,9 @@ type Machine struct {
 }
 
 type Prog struct {
-	text   []byte
-	data   []byte
-	global []byte
+	Text   []byte
+	Data   []byte
+	Global []byte
 }
 
 type Config struct {
@@ -63,9 +68,9 @@ func (m *Machine) Init(cfg *Config) {
 }
 
 func (m *Machine) Exec(prog *Prog) *Exit {
-	m.text = prog.text
-	m.data = prog.data
-	m.global = prog.global
+	m.text = prog.Text
+	m.data = prog.Data
+	m.global = prog.Global
 
 	// reset vm state
 	m.halt = false
@@ -180,6 +185,24 @@ type Exit struct {
 
 	// True for normal exit. Occurs via explicit halt instruction.
 	Normal bool
+}
+
+func (e *Exit) Render(w io.Writer) error {
+	s := e.String()
+	_, err := io.WriteString(w, s)
+	if err != nil {
+		return err
+	}
+	_, err = io.WriteString(w, "\n")
+	return err
+}
+
+func (e *Exit) String() string {
+	if e.Normal {
+		return fmt.Sprintf("vm: normal exit (at 0x%x) with status %d", e.IP, e.Status)
+	}
+
+	return fmt.Sprintf("vm: abnormal exit (at 0x%x) with runtime error: %v", e.IP, e.Error)
 }
 
 func (m *Machine) exit() *Exit {

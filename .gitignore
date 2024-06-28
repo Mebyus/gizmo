@@ -9,6 +9,7 @@
 /*.cc
 /*.asm
 /*.c
+/*.kus
 
 *.gen.cc
 *.o
@@ -24,6 +25,7 @@
 *.lock
 *.tmp
 *.temp
+*.kub
 
 *.png
 *.jpeg
