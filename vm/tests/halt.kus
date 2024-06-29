@@ -1,6 +1,8 @@
+def EXIT_STATUS 0x6
+
 fn start:
 		load	r0, 0x10	; this value of r1 is overwritten later
-		load	r1, 0x6
+		load	r1, EXIT_STATUS
 		load	r0, r1
 
 	.exit:

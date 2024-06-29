@@ -12,6 +12,15 @@ const (
 	// Call builtin procedure.
 	SysCall Opcode = 0x0002
 
+	// Trap causes immediate abnormal program exit.
+	// This instruction is much like halt, but intented
+	// to be placed as a trap for code which must not be executed
+	// thus causing runtime error.
+	//
+	// Most notable usecase for this is to detect illegal
+	// control flow execution of unreachable code.
+	Trap Opcode = 0x0003
+
 	// Set register value to zero.
 	ClearReg Opcode = 0x0008
 
@@ -129,6 +138,12 @@ var Size = [...]uint8{
 
 	// OP
 	Halt: 1,
+
+	// OP
+	SysCall: 1,
+
+	// OP
+	Trap: 1,
 
 	// OP + DR
 	ClearReg: 1 + 1,

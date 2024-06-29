@@ -1,6 +1,12 @@
 package vm
 
-import "strconv"
+import (
+	"io"
+	"strconv"
+	"time"
+
+	"github.com/mebyus/gizmo/char"
+)
 
 type TokKind uint8
 
@@ -20,6 +26,7 @@ const (
 	Register
 	Mnemonic
 
+	Illegal
 	Label
 	HexInteger
 	Identifier
@@ -67,57 +74,94 @@ func (t *Token) Pos() string {
 	return strconv.FormatUint(uint64(t.Line+1), 10) + ":" + strconv.FormatUint(uint64(t.Col+1), 10)
 }
 
+func ListTokens(w io.Writer, lx *Lexer) error {
+	for {
+		tok := lx.Lex()
+		err := RenderToken(w, tok)
+		if err != nil {
+			return err
+		}
+		err = putNewline(w)
+		if err != nil {
+			return err
+		}
+		if tok.Kind == EOF {
+			return nil
+		}
+		// TODO: remove this debug sleep
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+func RenderToken(w io.Writer, tok *Token) error {
+	_, err := io.WriteString(w, tok.Pos())
+	return err
+}
+
+func putNewline(w io.Writer) error {
+	_, err := io.WriteString(w, "\n")
+	return err
+}
+
 type Lexer struct {
-	// Source text which is scanned by lexer.
-	src []byte
+	char.Chopper
+}
 
-	// Mark index
-	//
-	// Mark is used to slice input text for token literals
-	mark int
-
-	// next byte read index
-	i int
-
-	// scanning index of source text (c = src[s])
-	s int
-
-	line uint32
-	col  uint32
-
-	// Byte that was previously at scan position
-	prev byte
-
-	// Byte at current scan position
-	//
-	// This is a cached value. Look into advance() method
-	// for details about how this caching algorithm works
-	c byte
-
-	// Next byte that will be placed at scan position
-	//
-	// This is a cached value from previous read
-	next byte
-
-	// True if lexer reached end of input (by scan index)
-	eof bool
+func NewLexer(text []byte) *Lexer {
+	lx := Lexer{}
+	lx.Init(text)
+	return &lx
 }
 
 func (lx *Lexer) Lex() *Token {
-	if lx.eof {
+	if lx.EOF {
 		return lx.create(EOF)
 	}
 
-	lx.skipWhitespace()
-	if lx.eof {
+	lx.SkipWhitespace()
+	if lx.EOF {
 		return lx.create(EOF)
 	}
 
-	if lx.c == '.' {
+	if char.IsLetter(lx.C) {
+		return lx.word()
+	}
+
+	if lx.C == '.' {
 		return lx.label()
 	}
 
 	return lx.other()
+}
+
+// start new token at current position
+func (lx *Lexer) tok() *Token {
+	return &Token{
+		Line: lx.Line,
+		Col:  lx.Col,
+	}
+}
+
+func (lx *Lexer) word() *Token {
+	tok := lx.tok()
+
+	lx.Start()
+	lx.SkipWord()
+
+	lit, ok := lx.Take()
+	if !ok {
+		panic("not implemented")
+	}
+	me, ok := meWord[lit]
+	if ok {
+		tok.Kind = Mnemonic
+		tok.Val = uint64(me)
+		return tok
+	}
+
+	tok.Kind = Identifier
+	tok.Lit = lit
+	return tok
 }
 
 func (lx *Lexer) label() *Token {
@@ -128,27 +172,8 @@ func (lx *Lexer) other() *Token {
 	return &Token{}
 }
 
-func (lx *Lexer) advance() {
-
-}
-
-func (lx *Lexer) skipWhitespace() {
-
-}
-
-func (lx *Lexer) skipLine() {
-	for !lx.eof && lx.c != '\n' {
-		lx.advance()
-	}
-	if lx.c == '\n' {
-		lx.advance()
-	}
-}
-
 func (lx *Lexer) create(kind TokKind) *Token {
-	return &Token{
-		Line: lx.line,
-		Col:  lx.col,
-		Kind: kind,
-	}
+	tok := lx.tok()
+	tok.Kind = kind
+	return tok
 }

@@ -7,24 +7,24 @@ import (
 
 func (lx *Lexer) Flex() token.Token {
 	tok := lx.flex()
-	lx.pos.Num += 1
+	lx.num += 1
 	return tok
 }
 
 func (lx *Lexer) flex() token.Token {
-	if lx.eof {
+	if lx.EOF {
 		return lx.create(token.EOF)
 	}
 
-	lx.skipWhitespace()
-	if lx.eof {
+	lx.SkipWhitespace()
+	if lx.EOF {
 		return lx.create(token.EOF)
 	}
 
-	if lx.c == '/' && lx.next == '/' {
+	if lx.C == '/' && lx.Next == '/' {
 		return lx.lineComment()
 	}
-	if lx.c == '/' && lx.next == '*' {
+	if lx.C == '/' && lx.Next == '*' {
 		return lx.blockComment()
 	}
 
@@ -32,32 +32,32 @@ func (lx *Lexer) flex() token.Token {
 }
 
 func (lx *Lexer) lineComment() (tok token.Token) {
-	tok.Pos = lx.pos
+	tok.Pos = lx.pos()
 
-	lx.advance() // skip '/'
-	lx.advance() // skip '/'
+	lx.Advance() // skip '/'
+	lx.Advance() // skip '/'
 
 	// skip until actual comment starts
-	for !lx.eof && lx.c != '\n' && char.IsWhitespace(lx.c) {
-		lx.advance()
+	for !lx.EOF && lx.C != '\n' && char.IsWhitespace(lx.C) {
+		lx.Advance()
 	}
 
-	if lx.eof {
+	if lx.EOF {
 		tok.Kind = token.LineComment
 		return
 	}
-	if lx.c == '\n' {
-		lx.skipWhitespace()
+	if lx.C == '\n' {
+		lx.SkipWhitespace()
 		tok.Kind = token.LineComment
 		return
 	}
 
-	lx.start()
-	for !lx.eof && lx.c != '\n' {
-		lx.advance()
+	lx.Start()
+	for !lx.EOF && lx.C != '\n' {
+		lx.Advance()
 	}
 
-	lit, ok := lx.trimWhitespaceSuffixTake()
+	lit, ok := lx.TrimWhitespaceSuffixTake()
 	if !ok {
 		tok.SetIllegalError(token.LengthOverflow)
 		return
@@ -65,35 +65,35 @@ func (lx *Lexer) lineComment() (tok token.Token) {
 	tok.Lit = lit
 	tok.Kind = token.LineComment
 
-	if lx.eof {
+	if lx.EOF {
 		return
 	}
 
-	lx.skipWhitespace()
+	lx.SkipWhitespace()
 	return
 }
 
 func (lx *Lexer) blockComment() (tok token.Token) {
-	tok.Pos = lx.pos
+	tok.Pos = lx.pos()
 
-	lx.advance() // skip '/'
-	lx.advance() // skip '*'
+	lx.Advance() // skip '/'
+	lx.Advance() // skip '*'
 
-	lx.start()
-	for !lx.eof && !(lx.c == '*' && lx.next == '/') {
-		lx.advance()
+	lx.Start()
+	for !lx.EOF && !(lx.C == '*' && lx.Next == '/') {
+		lx.Advance()
 	}
 
-	if lx.eof {
+	if lx.EOF {
 		tok.SetIllegalError(token.MalformedBlockComment)
 		return
 	}
 
 	tok.Kind = token.BlockComment
-	tok.Lit = string(lx.view())
+	tok.Lit = string(lx.View())
 
-	lx.advance() // skip '*'
-	lx.advance() // skip '/'
+	lx.Advance() // skip '*'
+	lx.Advance() // skip '/'
 
 	return
 }

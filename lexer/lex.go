@@ -2,22 +2,33 @@ package lexer
 
 import (
 	"github.com/mebyus/gizmo/char"
+	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/token"
 )
 
 func (lx *Lexer) Lex() token.Token {
 	tok := lx.lex()
-	lx.pos.Num += 1
+	lx.num += 1
 	return tok
 }
 
+func (lx *Lexer) pos() source.Pos {
+	return source.Pos{
+		File: lx.file,
+		Ofs:  uint32(lx.Pos),
+		Num:  lx.num,
+		Line: lx.Line,
+		Col:  lx.Col,
+	}
+}
+
 func (lx *Lexer) lex() token.Token {
-	if lx.eof {
+	if lx.EOF {
 		return lx.create(token.EOF)
 	}
 
 	lx.skipWhitespaceAndComments()
-	if lx.eof {
+	if lx.EOF {
 		return lx.create(token.EOF)
 	}
 
@@ -25,23 +36,23 @@ func (lx *Lexer) lex() token.Token {
 }
 
 func (lx *Lexer) codeToken() token.Token {
-	if char.IsLetterOrUnderscore(lx.c) {
+	if char.IsLetterOrUnderscore(lx.C) {
 		return lx.lexName()
 	}
 
-	if char.IsDecDigit(lx.c) {
+	if char.IsDecDigit(lx.C) {
 		return lx.lexNumber()
 	}
 
-	if lx.c == '"' {
+	if lx.C == '"' {
 		return lx.lexStringLiteral()
 	}
 
-	if lx.c == '\'' {
+	if lx.C == '\'' {
 		return lx.runeLiteral()
 	}
 
-	if lx.c == '@' && lx.next == '.' {
+	if lx.C == '@' && lx.Next == '.' {
 		return lx.label()
 	}
 
@@ -50,23 +61,23 @@ func (lx *Lexer) codeToken() token.Token {
 
 // Create token (without literal) of specified kind at current lexer position
 //
-// Does not advance lexer scan position
+// Does not Advance lexer scan position
 func (lx *Lexer) create(k token.Kind) token.Token {
 	return token.Token{
 		Kind: k,
-		Pos:  lx.pos,
+		Pos:  lx.pos(),
 	}
 }
 
 func (lx *Lexer) label() (tok token.Token) {
-	tok.Pos = lx.pos
+	tok.Pos = lx.pos()
 
-	lx.advance() // skip '@'
-	lx.advance() // skip '.'
+	lx.Advance() // skip '@'
+	lx.Advance() // skip '.'
 
-	lx.start()
-	lx.skipWord()
-	lit, ok := lx.take()
+	lx.Start()
+	lx.SkipWord()
+	lit, ok := lx.Take()
 	if !ok {
 		tok.SetIllegalError(token.LengthOverflow)
 		return
@@ -85,12 +96,12 @@ func (lx *Lexer) label() (tok token.Token) {
 }
 
 func (lx *Lexer) lexName() (tok token.Token) {
-	tok.Pos = lx.pos
+	tok.Pos = lx.pos()
 
-	if !char.IsAlphanum(lx.next) {
+	if !char.IsAlphanum(lx.Next) {
 		// word is 1 character long
-		c := lx.c
-		lx.advance() // skip character
+		c := lx.C
+		lx.Advance() // skip character
 
 		if c == 'g' {
 			tok.Kind = token.Receiver
@@ -104,9 +115,9 @@ func (lx *Lexer) lexName() (tok token.Token) {
 	}
 
 	// word is at least 2 characters long
-	lx.start()
-	lx.skipWord()
-	lit, ok := lx.take()
+	lx.Start()
+	lx.SkipWord()
+	lit, ok := lx.Take()
 	if !ok {
 		tok.SetIllegalError(token.LengthOverflow)
 		return
@@ -124,17 +135,17 @@ func (lx *Lexer) lexName() (tok token.Token) {
 }
 
 func (lx *Lexer) lexBinaryNumber() (tok token.Token) {
-	tok.Pos = lx.pos
+	tok.Pos = lx.pos()
 
-	lx.advance() // skip '0'
-	lx.advance() // skip 'b'
+	lx.Advance() // skip '0'
+	lx.Advance() // skip 'b'
 
-	lx.start()
-	lx.skipBinaryDigits()
+	lx.Start()
+	lx.SkipBinDigits()
 
-	if char.IsAlphanum(lx.c) {
-		lx.skipWord()
-		lit, ok := lx.take()
+	if char.IsAlphanum(lx.C) {
+		lx.SkipWord()
+		lit, ok := lx.Take()
 		if ok {
 			tok.SetIllegalError(token.MalformedBinaryInteger)
 			tok.Lit = lit
@@ -144,19 +155,19 @@ func (lx *Lexer) lexBinaryNumber() (tok token.Token) {
 		return
 	}
 
-	if lx.isLengthOverflow() {
+	if lx.IsLengthOverflow() {
 		tok.SetIllegalError(token.LengthOverflow)
 		return
 	}
-	if lx.len() == 0 {
+	if lx.Len() == 0 {
 		tok.SetIllegalError(token.MalformedBinaryInteger)
 		tok.Lit = "0b"
 		return
 	}
 
 	tok.Kind = token.BinaryInteger
-	if lx.len() > 64 {
-		lit, ok := lx.take()
+	if lx.Len() > 64 {
+		lit, ok := lx.Take()
 		if !ok {
 			panic("unreachable due to previous checks")
 		}
@@ -164,22 +175,22 @@ func (lx *Lexer) lexBinaryNumber() (tok token.Token) {
 		return
 	}
 
-	tok.Val = char.ParseBinDigits(lx.view())
+	tok.Val = char.ParseBinDigits(lx.View())
 	return
 }
 
 func (lx *Lexer) lexOctalNumber() (tok token.Token) {
-	tok.Pos = lx.pos
+	tok.Pos = lx.pos()
 
-	lx.advance() // skip '0' byte
-	lx.advance() // skip 'o' byte
+	lx.Advance() // skip '0' byte
+	lx.Advance() // skip 'o' byte
 
-	lx.start()
-	lx.skipOctalDigits()
+	lx.Start()
+	lx.SkipOctDigits()
 
-	if char.IsAlphanum(lx.c) {
-		lx.skipWord()
-		lit, ok := lx.take()
+	if char.IsAlphanum(lx.C) {
+		lx.SkipWord()
+		lit, ok := lx.Take()
 		if ok {
 			tok.SetIllegalError(token.MalformedOctalInteger)
 			tok.Lit = lit
@@ -189,19 +200,19 @@ func (lx *Lexer) lexOctalNumber() (tok token.Token) {
 		return
 	}
 
-	if lx.isLengthOverflow() {
+	if lx.IsLengthOverflow() {
 		tok.SetIllegalError(token.LengthOverflow)
 		return
 	}
-	if lx.len() == 0 {
+	if lx.Len() == 0 {
 		tok.SetIllegalError(token.MalformedOctalInteger)
 		tok.Lit = "0o"
 		return
 	}
 
 	tok.Kind = token.OctalInteger
-	if lx.len() > 21 {
-		lit, ok := lx.take()
+	if lx.Len() > 21 {
+		lit, ok := lx.Take()
 		if !ok {
 			panic("unreachable due to previous checks")
 		}
@@ -209,18 +220,18 @@ func (lx *Lexer) lexOctalNumber() (tok token.Token) {
 		return
 	}
 
-	tok.Val = char.ParseOctDigits(lx.view())
+	tok.Val = char.ParseOctDigits(lx.View())
 	return
 }
 
 func (lx *Lexer) lexDecimalNumber() (tok token.Token) {
-	tok.Pos = lx.pos
+	tok.Pos = lx.pos()
 
-	lx.start()
+	lx.Start()
 	scannedOnePeriod := false
-	for !lx.eof && char.IsDecDigitOrPeriod(lx.c) {
-		lx.advance()
-		if lx.c == '.' {
+	for !lx.EOF && char.IsDecDigitOrPeriod(lx.C) {
+		lx.Advance()
+		if lx.C == '.' {
 			if scannedOnePeriod {
 				break
 			} else {
@@ -229,20 +240,20 @@ func (lx *Lexer) lexDecimalNumber() (tok token.Token) {
 		}
 	}
 
-	if lx.isLengthOverflow() {
+	if lx.IsLengthOverflow() {
 		tok.SetIllegalError(token.LengthOverflow)
 		return
 	}
 
-	if lx.prev == '.' {
+	if lx.Prev == '.' {
 		tok.SetIllegalError(token.MalformedDecimalInteger)
-		tok.Lit, _ = lx.take()
+		tok.Lit, _ = lx.Take()
 		return
 	}
 
-	if char.IsAlphanum(lx.c) {
-		lx.skipWord()
-		lit, ok := lx.take()
+	if char.IsAlphanum(lx.C) {
+		lx.SkipWord()
+		lit, ok := lx.Take()
 		if ok {
 			tok.SetIllegalError(token.MalformedDecimalInteger)
 			tok.Lit = lit
@@ -256,27 +267,27 @@ func (lx *Lexer) lexDecimalNumber() (tok token.Token) {
 		// decimal integer
 		// TODO: handle numbers which do not fit into 64 bits
 		tok.Kind = token.DecimalInteger
-		tok.Val = char.ParseDecDigits(lx.view())
+		tok.Val = char.ParseDecDigits(lx.View())
 		return
 	}
 
 	tok.Kind = token.DecimalFloat
-	tok.Lit, _ = lx.take()
+	tok.Lit, _ = lx.Take()
 	return
 }
 
 func (lx *Lexer) lexHexadecimalNumber() (tok token.Token) {
-	tok.Pos = lx.pos
+	tok.Pos = lx.pos()
 
-	lx.advance() // skip '0' byte
-	lx.advance() // skip 'x' byte
+	lx.Advance() // skip '0' byte
+	lx.Advance() // skip 'x' byte
 
-	lx.start()
-	lx.skipHexadecimalDigits()
+	lx.Start()
+	lx.SkipHexDigits()
 
-	if char.IsAlphanum(lx.c) {
-		lx.skipWord()
-		lit, ok := lx.take()
+	if char.IsAlphanum(lx.C) {
+		lx.SkipWord()
+		lit, ok := lx.Take()
 		if ok {
 			tok.SetIllegalError(token.MalformedHexadecimalInteger)
 			tok.Lit = lit
@@ -286,19 +297,19 @@ func (lx *Lexer) lexHexadecimalNumber() (tok token.Token) {
 		return
 	}
 
-	if lx.isLengthOverflow() {
+	if lx.IsLengthOverflow() {
 		tok.SetIllegalError(token.LengthOverflow)
 		return
 	}
-	if lx.len() == 0 {
+	if lx.Len() == 0 {
 		tok.SetIllegalError(token.MalformedHexadecimalInteger)
 		tok.Lit = "0x"
 		return
 	}
 
 	tok.Kind = token.HexadecimalInteger
-	if lx.len() > 16 {
-		lit, ok := lx.take()
+	if lx.Len() > 16 {
+		lit, ok := lx.Take()
 		if !ok {
 			panic("unreachable due to previous checks")
 		}
@@ -306,69 +317,69 @@ func (lx *Lexer) lexHexadecimalNumber() (tok token.Token) {
 		return
 	}
 
-	tok.Val = char.ParseHexDigits(lx.view())
+	tok.Val = char.ParseHexDigits(lx.View())
 	return
 }
 
-func (s *Lexer) lexNumber() (tok token.Token) {
-	if s.c != '0' {
-		return s.lexDecimalNumber()
+func (lx *Lexer) lexNumber() (tok token.Token) {
+	if lx.C != '0' {
+		return lx.lexDecimalNumber()
 	}
 
-	if s.next == 'b' {
-		return s.lexBinaryNumber()
+	if lx.Next == 'b' {
+		return lx.lexBinaryNumber()
 	}
 
-	if s.next == 'o' {
-		return s.lexOctalNumber()
+	if lx.Next == 'o' {
+		return lx.lexOctalNumber()
 	}
 
-	if s.next == 'x' {
-		return s.lexHexadecimalNumber()
+	if lx.Next == 'x' {
+		return lx.lexHexadecimalNumber()
 	}
 
-	if s.next == '.' {
-		return s.lexDecimalNumber()
+	if lx.Next == '.' {
+		return lx.lexDecimalNumber()
 	}
 
-	if char.IsAlphanum(s.next) {
-		return s.illegalWord(token.MalformedDecimalInteger)
+	if char.IsAlphanum(lx.Next) {
+		return lx.illegalWord(token.MalformedDecimalInteger)
 	}
 
 	tok = token.Token{
 		Kind: token.DecimalInteger,
-		Pos:  s.pos,
+		Pos:  lx.pos(),
 		Val:  0,
 	}
-	s.advance()
+	lx.Advance()
 	return
 }
 
 func (lx *Lexer) lexStringLiteral() (tok token.Token) {
-	tok.Pos = lx.pos
+	tok.Pos = lx.pos()
 
-	lx.advance() // skip '"'
+	lx.Advance() // skip '"'
 
-	if lx.c == '"' {
+	if lx.C == '"' {
 		// common case of empty string literal
-		lx.advance()
+		lx.Advance()
 		tok.Kind = token.String
 		return
 	}
 
-	lx.start()
-	for !lx.eof && lx.c != '"' && lx.c != '\n' {
-		if lx.c == '\\' && lx.next == '"' {
+	lx.Start()
+	for !lx.EOF && lx.C != '"' && lx.C != '\n' {
+		if lx.C == '\\' && lx.Next == '"' {
 			// do not stop if we encounter escape sequence
-			lx.advance() // skip "\"
-			lx.advance() // skip quote
+			lx.Advance() // skip "\"
+			lx.Advance() // skip quote
 		} else {
-			lx.advance()
+			lx.Advance()
 		}
 	}
 
-	if lx.c != '"' {
-		lit, ok := lx.take()
+	if lx.C != '"' {
+		lit, ok := lx.Take()
 		if ok {
 			tok.SetIllegalError(token.MalformedString)
 			tok.Lit = lit
@@ -378,13 +389,13 @@ func (lx *Lexer) lexStringLiteral() (tok token.Token) {
 		return
 	}
 
-	lit, ok := lx.take()
+	lit, ok := lx.Take()
 	if !ok {
 		tok.SetIllegalError(token.LengthOverflow)
 		return
 	}
 
-	lx.advance() // skip quote
+	lx.Advance() // skip quote
 
 	size, ok := token.ScanStringByteSize(lit)
 	if !ok {
@@ -400,10 +411,10 @@ func (lx *Lexer) lexStringLiteral() (tok token.Token) {
 
 func (lx *Lexer) skipWhitespaceAndComments() {
 	for {
-		lx.skipWhitespace()
-		if lx.c == '/' && lx.next == '/' {
+		lx.SkipWhitespace()
+		if lx.C == '/' && lx.Next == '/' {
 			lx.skipLineComment()
-		} else if lx.c == '/' && lx.next == '*' {
+		} else if lx.C == '/' && lx.Next == '*' {
 			lx.skipMultilineComment()
 		} else {
 			return
@@ -412,37 +423,37 @@ func (lx *Lexer) skipWhitespaceAndComments() {
 }
 
 func (lx *Lexer) skipLineComment() {
-	lx.advance() // skip '/'
-	lx.advance() // skip '/'
-	lx.skipLine()
+	lx.Advance() // skip '/'
+	lx.Advance() // skip '/'
+	lx.SkipLine()
 }
 
 func (lx *Lexer) skipMultilineComment() {
-	lx.advance() // skip '/'
-	lx.advance() // skip '*'
+	lx.Advance() // skip '/'
+	lx.Advance() // skip '*'
 
-	for !lx.eof && !(lx.c == '*' && lx.next == '/') {
-		lx.advance()
+	for !lx.EOF && !(lx.C == '*' && lx.Next == '/') {
+		lx.Advance()
 	}
 
-	if lx.eof {
+	if lx.EOF {
 		return
 	}
 
-	lx.advance() // skip '*'
-	lx.advance() // skip '/'
+	lx.Advance() // skip '*'
+	lx.Advance() // skip '/'
 }
 
 func (lx *Lexer) runeLiteral() (tok token.Token) {
-	tok.Pos = lx.pos
+	tok.Pos = lx.pos()
 
-	lx.advance() // skip "'"
+	lx.Advance() // skip "'"
 
-	lx.start()
-	if lx.c == '\\' {
+	lx.Start()
+	if lx.C == '\\' {
 		// handle escape sequence
 		var val uint64
-		switch lx.next {
+		switch lx.Next {
 		case '\\':
 			val = '\\'
 		case 'n':
@@ -454,57 +465,57 @@ func (lx *Lexer) runeLiteral() (tok token.Token) {
 		case '\'':
 			val = '\''
 		default:
-			lx.advance() // skip "\"
-			lx.advance() // skip unknown escape rune
+			lx.Advance() // skip "\"
+			lx.Advance() // skip unknown escape rune
 
 			tok.SetIllegalError(token.MalformedRune)
-			tok.Lit, _ = lx.take()
-			if lx.c == '\'' {
-				lx.advance()
+			tok.Lit, _ = lx.Take()
+			if lx.C == '\'' {
+				lx.Advance()
 			}
 			return
 		}
 
-		lx.advance() // skip "\"
-		lx.advance() // skip escape rune
-		if lx.c != '\'' {
+		lx.Advance() // skip "\"
+		lx.Advance() // skip escape rune
+		if lx.C != '\'' {
 			tok.SetIllegalError(token.MalformedRune)
-			tok.Lit, _ = lx.take()
+			tok.Lit, _ = lx.Take()
 			return
 		}
-		lx.advance() // skip "'"
+		lx.Advance() // skip "'"
 
 		tok.Kind = token.Rune
 		tok.Val = val
 		return
 	}
 
-	if lx.next == '\'' {
+	if lx.Next == '\'' {
 		// common case of ascii rune
-		tok.Val = uint64(lx.c)
+		tok.Val = uint64(lx.C)
 		tok.Kind = token.Rune
-		lx.advance()
-		lx.advance()
+		lx.Advance()
+		lx.Advance()
 		return
 	}
 
 	// handle non-ascii runes
-	for !lx.eof && lx.c != '\'' && lx.c != '\n' {
-		lx.advance()
+	for !lx.EOF && lx.C != '\'' && lx.C != '\n' {
+		lx.Advance()
 	}
 
-	lit, ok := lx.take()
+	lit, ok := lx.Take()
 	if !ok {
 		tok.SetIllegalError(token.LengthOverflow)
 		return
 	}
 
-	if lx.c != '\'' {
+	if lx.C != '\'' {
 		tok.SetIllegalError(token.MalformedRune)
 		tok.Lit = lit
 		return
 	}
-	lx.advance() // skip "'"
+	lx.Advance() // skip "'"
 
 	tok.Kind = token.Rune
 	tok.Lit = lit // TODO: parse rune val
@@ -512,36 +523,36 @@ func (lx *Lexer) runeLiteral() (tok token.Token) {
 }
 
 func (s *Lexer) scanGreaterStart() (tok token.Token) {
-	if s.next == '=' {
+	if s.Next == '=' {
 		tok = s.create(token.GreaterOrEqual)
-		s.advance()
-		s.advance()
+		s.Advance()
+		s.Advance()
 	} else {
 		tok = s.create(token.RightAngle)
-		s.advance()
+		s.Advance()
 	}
 	return
 }
 
 func (lx *Lexer) oneByteToken(k token.Kind) token.Token {
 	tok := lx.create(k)
-	lx.advance()
+	lx.Advance()
 	return tok
 }
 
 func (lx *Lexer) twoBytesToken(k token.Kind) token.Token {
 	tok := lx.create(k)
-	lx.advance()
-	lx.advance()
+	lx.Advance()
+	lx.Advance()
 	return tok
 }
 
 func (lx *Lexer) illegalWord(code uint64) (tok token.Token) {
-	tok.Pos = lx.pos
+	tok.Pos = lx.pos()
 
-	lx.start()
-	lx.skipWord()
-	lit, ok := lx.take()
+	lx.Start()
+	lx.SkipWord()
+	lit, ok := lx.Take()
 	if !ok {
 		tok.SetIllegalError(token.LengthOverflow)
 		return
@@ -553,16 +564,16 @@ func (lx *Lexer) illegalWord(code uint64) (tok token.Token) {
 }
 
 func (lx *Lexer) illegalByteToken() (tok token.Token) {
-	tok.Pos = lx.pos
+	tok.Pos = lx.pos()
 	tok.Kind = token.Illegal
-	tok.Lit = char.ToString(byte(lx.c))
-	lx.advance()
+	tok.Lit = char.ToString(byte(lx.C))
+	lx.Advance()
 	return
 }
 
 // scanOther scans next operator, punctucator or illegal byte Token
 func (lx *Lexer) lexOther() token.Token {
-	switch lx.c {
+	switch lx.C {
 	case '(':
 		return lx.oneByteToken(token.LeftParentheses)
 	case ')':
@@ -572,40 +583,40 @@ func (lx *Lexer) lexOther() token.Token {
 	case '}':
 		return lx.oneByteToken(token.RightCurly)
 	case '[':
-		if lx.next == ']' {
+		if lx.Next == ']' {
 			return lx.twoBytesToken(token.Chunk)
 		}
-		if lx.next == '_' {
-			pos := lx.pos
-			lx.advance() // skip "["
-			if lx.next != ']' {
-				lx.advance() // skip "_"
+		if lx.Next == '_' {
+			pos := lx.pos()
+			lx.Advance() // skip "["
+			if lx.Next != ']' {
+				lx.Advance() // skip "_"
 				return token.Token{
 					Pos:  pos,
 					Kind: token.Illegal,
 					Lit:  "[_",
 				}
 			}
-			lx.advance() // skip "_"
-			lx.advance() // skip "]"
+			lx.Advance() // skip "_"
+			lx.Advance() // skip "]"
 			return token.Token{
 				Pos:  pos,
 				Kind: token.AutoLen,
 			}
 		}
-		if lx.next == '*' {
-			pos := lx.pos
-			lx.advance() // skip "["
-			if lx.next != ']' {
-				lx.advance() // skip "*"
+		if lx.Next == '*' {
+			pos := lx.pos()
+			lx.Advance() // skip "["
+			if lx.Next != ']' {
+				lx.Advance() // skip "*"
 				return token.Token{
 					Pos:  pos,
 					Kind: token.Illegal,
 					Lit:  "[*",
 				}
 			}
-			lx.advance() // skip "*"
-			lx.advance() // skip "]"
+			lx.Advance() // skip "*"
+			lx.Advance() // skip "]"
 			return token.Token{
 				Pos:  pos,
 				Kind: token.ArrayPointer,
@@ -615,7 +626,7 @@ func (lx *Lexer) lexOther() token.Token {
 	case ']':
 		return lx.oneByteToken(token.RightSquare)
 	case '<':
-		switch lx.next {
+		switch lx.Next {
 		case '=':
 			return lx.twoBytesToken(token.LessOrEqual)
 		case '<':
@@ -628,19 +639,19 @@ func (lx *Lexer) lexOther() token.Token {
 	case '>':
 		return lx.scanGreaterStart()
 	case '+':
-		if lx.next == '=' {
+		if lx.Next == '=' {
 			return lx.twoBytesToken(token.AddAssign)
 		}
 		return lx.oneByteToken(token.Plus)
 	case '-':
-		if lx.next == '=' {
+		if lx.Next == '=' {
 			return lx.twoBytesToken(token.SubtractAssign)
 		}
 		return lx.oneByteToken(token.Minus)
 	case ',':
 		return lx.oneByteToken(token.Comma)
 	case '=':
-		switch lx.next {
+		switch lx.Next {
 		case '=':
 			return lx.twoBytesToken(token.Equal)
 		case '>':
@@ -649,17 +660,17 @@ func (lx *Lexer) lexOther() token.Token {
 			return lx.oneByteToken(token.Assign)
 		}
 	case ':':
-		if lx.next == '=' {
+		if lx.Next == '=' {
 			return lx.twoBytesToken(token.ShortAssign)
 		}
-		if lx.next == ':' {
+		if lx.Next == ':' {
 			return lx.twoBytesToken(token.DoubleColon)
 		}
 		return lx.oneByteToken(token.Colon)
 	case ';':
 		return lx.oneByteToken(token.Semicolon)
 	case '.':
-		switch lx.next {
+		switch lx.Next {
 		case '&':
 			return lx.twoBytesToken(token.Address)
 		case '@':
@@ -680,14 +691,14 @@ func (lx *Lexer) lexOther() token.Token {
 	case '*':
 		return lx.oneByteToken(token.Asterisk)
 	case '&':
-		if lx.next == '&' {
+		if lx.Next == '&' {
 			return lx.twoBytesToken(token.LogicalAnd)
 		}
 		return lx.oneByteToken(token.Ampersand)
 	case '/':
 		return lx.oneByteToken(token.Slash)
 	case '!':
-		if lx.next == '=' {
+		if lx.Next == '=' {
 			return lx.twoBytesToken(token.NotEqual)
 		}
 		return lx.oneByteToken(token.Not)
@@ -696,12 +707,12 @@ func (lx *Lexer) lexOther() token.Token {
 	case '^':
 		return lx.oneByteToken(token.Caret)
 	case '|':
-		if lx.next == '|' {
+		if lx.Next == '|' {
 			return lx.twoBytesToken(token.LogicalOr)
 		}
 		return lx.oneByteToken(token.Pipe)
 	case '#':
-		if lx.next == '[' {
+		if lx.Next == '[' {
 			return lx.twoBytesToken(token.PropStart)
 		}
 		return lx.illegalByteToken()

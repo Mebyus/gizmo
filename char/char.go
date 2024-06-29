@@ -63,6 +63,12 @@ func DecDigitToNumber(d byte) uint8 {
 	return d - '0'
 }
 
+// ParseBinDigits interprets ASCII digit characters as
+// digits of binary number and returns the number.
+//
+// Does not validate the input.
+// Input slice must satisfy 1 <= len(s) <= 64.
+// As a special case returns zero for nil or empty input slice.
 func ParseBinDigits(s []byte) uint64 {
 	var v uint64
 	for _, d := range s {

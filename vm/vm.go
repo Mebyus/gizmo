@@ -113,6 +113,9 @@ func (m *Machine) step() {
 	case Halt:
 		m.halt = true
 		return
+	case Trap:
+		m.stop(fmt.Errorf("execution reached trap"))
+		return
 	case LoadValReg:
 		err = m.loadValReg()
 	case LoadRegReg:
