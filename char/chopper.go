@@ -152,6 +152,12 @@ func (c *Chopper) SkipWord() {
 	}
 }
 
+func (c *Chopper) SkipDecDigits() {
+	for IsDecDigit(c.C) {
+		c.Advance()
+	}
+}
+
 func (c *Chopper) SkipBinDigits() {
 	for IsBinDigit(c.C) {
 		c.Advance()
@@ -169,7 +175,6 @@ func (c *Chopper) SkipHexDigits() {
 		c.Advance()
 	}
 }
-
 
 func LastByte(s []byte) byte {
 	return s[len(s)-1]

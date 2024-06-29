@@ -41,7 +41,7 @@ func (lx *Lexer) codeToken() token.Token {
 	}
 
 	if char.IsDecDigit(lx.C) {
-		return lx.lexNumber()
+		return lx.number()
 	}
 
 	if lx.C == '"' {
@@ -134,7 +134,7 @@ func (lx *Lexer) lexName() (tok token.Token) {
 	return
 }
 
-func (lx *Lexer) lexBinaryNumber() (tok token.Token) {
+func (lx *Lexer) binNumber() (tok token.Token) {
 	tok.Pos = lx.pos()
 
 	lx.Advance() // skip '0'
@@ -179,7 +179,7 @@ func (lx *Lexer) lexBinaryNumber() (tok token.Token) {
 	return
 }
 
-func (lx *Lexer) lexOctalNumber() (tok token.Token) {
+func (lx *Lexer) octNumber() (tok token.Token) {
 	tok.Pos = lx.pos()
 
 	lx.Advance() // skip '0' byte
@@ -224,7 +224,7 @@ func (lx *Lexer) lexOctalNumber() (tok token.Token) {
 	return
 }
 
-func (lx *Lexer) lexDecimalNumber() (tok token.Token) {
+func (lx *Lexer) decNumber() (tok token.Token) {
 	tok.Pos = lx.pos()
 
 	lx.Start()
@@ -276,11 +276,11 @@ func (lx *Lexer) lexDecimalNumber() (tok token.Token) {
 	return
 }
 
-func (lx *Lexer) lexHexadecimalNumber() (tok token.Token) {
+func (lx *Lexer) hexNumber() (tok token.Token) {
 	tok.Pos = lx.pos()
 
-	lx.Advance() // skip '0' byte
-	lx.Advance() // skip 'x' byte
+	lx.Advance() // skip "0"
+	lx.Advance() // skip "x"
 
 	lx.Start()
 	lx.SkipHexDigits()
@@ -321,25 +321,25 @@ func (lx *Lexer) lexHexadecimalNumber() (tok token.Token) {
 	return
 }
 
-func (lx *Lexer) lexNumber() (tok token.Token) {
+func (lx *Lexer) number() (tok token.Token) {
 	if lx.C != '0' {
-		return lx.lexDecimalNumber()
+		return lx.decNumber()
 	}
 
 	if lx.Next == 'b' {
-		return lx.lexBinaryNumber()
+		return lx.binNumber()
 	}
 
 	if lx.Next == 'o' {
-		return lx.lexOctalNumber()
+		return lx.octNumber()
 	}
 
 	if lx.Next == 'x' {
-		return lx.lexHexadecimalNumber()
+		return lx.hexNumber()
 	}
 
 	if lx.Next == '.' {
-		return lx.lexDecimalNumber()
+		return lx.decNumber()
 	}
 
 	if char.IsAlphanum(lx.Next) {
