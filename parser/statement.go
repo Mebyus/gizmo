@@ -566,7 +566,8 @@ func (p *Parser) continueExpressionStatement(operand ast.Operand) (ast.Expressio
 	kind := expr.Kind()
 	if kind != exn.Call {
 		return ast.ExpressionStatement{},
-			fmt.Errorf("standalone expression (%s) in statement must be call expression: %s", expr.Pin(), kind.String())
+			fmt.Errorf("%s: standalone expression in statement must be call expression: %s",
+				expr.Pin().String(), kind.String())
 	}
 
 	if p.tok.Kind != token.Semicolon {

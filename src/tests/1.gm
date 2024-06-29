@@ -1,12 +1,8 @@
-namespace coven {}
-
 fn default_namespace_function() {
 
 }
 
 const default_namespace_const: str = " default_const ";
-
-namespace coven::os {
 
 fn do_something()
 
@@ -85,8 +81,8 @@ var hello: str = "Hello, world!";
 var two: u32 = (1 + 1) - 0 * 2 * (0 + 1 - 0x0 * 7 - 8 + 0o11);
 
 fn print_hello() {
-    os::stdout.print(hello);
-    os::stdout.flush();
+    stdout.print(hello);
+    stdout.flush();
 }
 
 /* 
@@ -98,7 +94,7 @@ fn print_hello() {
 #[ export = true ]
 #[ link.name = "coven_stdout_write" ]
 fn stdout_write(c: []u8) {
-    os::stdout.write(c);
+    stdout.write(c);
 }
 
 fn return_the_same_chunk(c: []Pos) => []Pos {
@@ -127,10 +123,10 @@ fn for_loop_with_condition() {
 
 fn if_with_always_true() => bool {
     if true {
-        os::stdout.print("true branch");
+        stdout.print("true branch");
     } else {
         // unreachable
-        os::stdout.print("false branch");
+        stdout.print("false branch");
     }
 
     return false;
@@ -186,8 +182,6 @@ fn loop_jumps() {
             jump @.end;
         }
     }
-}
-
 }
 
 fn add_numbers(T: type, x: T, y: T) => T {

@@ -187,7 +187,7 @@ func (lx *Lexer) Lex() *Token {
 		return lx.create(EOF)
 	}
 
-	lx.SkipWhitespace()
+	lx.SkipWhitespaceAndComments()
 	if lx.EOF {
 		return lx.create(EOF)
 	}

@@ -27,7 +27,7 @@ func (lx *Lexer) lex() token.Token {
 		return lx.create(token.EOF)
 	}
 
-	lx.skipWhitespaceAndComments()
+	lx.SkipWhitespaceAndComments()
 	if lx.EOF {
 		return lx.create(token.EOF)
 	}
@@ -407,41 +407,6 @@ func (lx *Lexer) lexStringLiteral() (tok token.Token) {
 	tok.Kind = token.String
 	tok.Val = size
 	return
-}
-
-func (lx *Lexer) skipWhitespaceAndComments() {
-	for {
-		lx.SkipWhitespace()
-		if lx.C == '/' && lx.Next == '/' {
-			lx.skipLineComment()
-		} else if lx.C == '/' && lx.Next == '*' {
-			lx.skipMultilineComment()
-		} else {
-			return
-		}
-	}
-}
-
-func (lx *Lexer) skipLineComment() {
-	lx.Advance() // skip '/'
-	lx.Advance() // skip '/'
-	lx.SkipLine()
-}
-
-func (lx *Lexer) skipMultilineComment() {
-	lx.Advance() // skip '/'
-	lx.Advance() // skip '*'
-
-	for !lx.EOF && !(lx.C == '*' && lx.Next == '/') {
-		lx.Advance()
-	}
-
-	if lx.EOF {
-		return
-	}
-
-	lx.Advance() // skip '*'
-	lx.Advance() // skip '/'
 }
 
 func (lx *Lexer) runeLiteral() (tok token.Token) {

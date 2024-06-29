@@ -211,3 +211,38 @@ func (c *Chopper) TrimWhitespaceSuffixTake() (string, bool) {
 		}
 	}
 }
+
+func (c *Chopper) SkipWhitespaceAndComments() {
+	for {
+		c.SkipWhitespace()
+		if c.C == '/' && c.Next == '/' {
+			c.SkipLineComment()
+		} else if c.C == '/' && c.Next == '*' {
+			c.SkipBlockComment()
+		} else {
+			return
+		}
+	}
+}
+
+func (c *Chopper) SkipLineComment() {
+	c.Advance() // skip '/'
+	c.Advance() // skip '/'
+	c.SkipLine()
+}
+
+func (c *Chopper) SkipBlockComment() {
+	c.Advance() // skip '/'
+	c.Advance() // skip '*'
+
+	for !c.EOF && !(c.C == '*' && c.Next == '/') {
+		c.Advance()
+	}
+
+	if c.EOF {
+		return
+	}
+
+	c.Advance() // skip '*'
+	c.Advance() // skip '/'
+}

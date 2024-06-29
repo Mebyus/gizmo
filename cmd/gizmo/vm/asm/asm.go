@@ -26,18 +26,21 @@ func execute(r *butler.Lackey, files []string) error {
 }
 
 func asm(path string) error {
-	prog := vm.Prog{
-		Text: []byte{
-			byte(vm.Nop),
-			byte(vm.LoadValReg), 0, 3, 0, 0, 0, 0, 0, 0, 0,
-			byte(vm.Halt),
-		},
+	unit, err := vm.ParseFile(path)
+	if err != nil {
+		return err
 	}
-	f, err := os.Create(path)
+
+	prog, err := vm.Assemble(unit)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create("test.kub")
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	return vm.Encode(f, &prog)
+	return vm.Encode(f, prog)
 }

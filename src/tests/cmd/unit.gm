@@ -1,7 +1,0 @@
-unit main {
-    files = [
-        "main.gm",
-    ];
-
-    default_namespace = "coven";
-}

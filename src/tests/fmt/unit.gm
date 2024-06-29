@@ -1,9 +1,0 @@
-unit math {
-    imports = [
-        // "tests/math",
-    ];
-
-    files = [
-        "fn_types.gm",
-    ];
-}
