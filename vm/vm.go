@@ -116,10 +116,16 @@ func (m *Machine) step() {
 	case Trap:
 		m.stop(fmt.Errorf("execution reached trap"))
 		return
+	case SysCall:
+		err = m.syscall()
 	case LoadValReg:
 		err = m.loadValReg()
 	case LoadRegReg:
 		err = m.loadRegReg()
+	case AddRegReg:
+		err = m.addRegReg()
+	case JumpAddr:
+		err = m.jumpAddr()
 	default:
 		// unknown opcodes should be handled via size check
 		panic(fmt.Sprintf("unhandled instruction 0x%02X", op))
@@ -141,7 +147,7 @@ func (m *Machine) stop(err error) {
 }
 
 // get n bytes of current instruction data (opcode not included)
-func (m *Machine) instd(n uint64) []byte {
+func (m *Machine) id(n uint64) []byte {
 	ip := m.ip
 	return m.text[ip+1 : ip+1+n]
 }
@@ -171,6 +177,10 @@ func (m *Machine) unsafeSet(r uint8, v uint64) {
 
 func val64(buf []byte) uint64 {
 	return binary.LittleEndian.Uint64(buf)
+}
+
+func val32(buf []byte) uint32 {
+	return binary.LittleEndian.Uint32(buf)
 }
 
 // Exit describes vm exit state after program execution.

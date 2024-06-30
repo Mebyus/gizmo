@@ -76,6 +76,7 @@ const (
 	MeLoad
 	MeStore
 	MeAdd
+	MeJump
 )
 
 var meText = [...]string{
@@ -87,6 +88,7 @@ var meText = [...]string{
 	MeLoad:    "load",
 	MeStore:   "store",
 	MeAdd:     "add",
+	MeJump:    "jump",
 }
 
 var meWord = map[string]int{
@@ -98,6 +100,7 @@ var meWord = map[string]int{
 	"load":    MeLoad,
 	"store":   MeStore,
 	"add":     MeAdd,
+	"jump":    MeJump,
 }
 
 type Token struct {

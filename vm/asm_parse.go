@@ -13,6 +13,7 @@ type ProgUnit struct {
 
 type ProgDef struct {
 	Name string
+	Val  uint64
 }
 
 type ProgFunc struct {
@@ -20,10 +21,23 @@ type ProgFunc struct {
 	Labels []ProgLabel
 
 	Name string
+
+	// Text (code) size of this function when encoded in binary.
+	// Aligned by 16.
+	TextSize uint32
+
+	// Offset of text (code) of this function when encoded in binary
+	// relative to start of the program binary text section.
+	// Aligned by 16.
+	TextOffset uint32
 }
 
 type ProgLabel struct {
 	Name string
+
+	// Offset of instruction under this label. Counted from
+	// start of the function.
+	Offset uint32
 
 	// Corresponds to instruction index inside the function.
 	Index uint32
@@ -50,6 +64,9 @@ type Parser struct {
 	next *Token
 
 	lx *Lexer
+
+	// current text offset
+	toff uint32
 }
 
 func ParseFile(path string) (*ProgUnit, error) {
@@ -118,11 +135,12 @@ func (p *Parser) def() error {
 		return fmt.Errorf("%s: unexpected %s token instead of value in define construct",
 			p.tok.Pos(), p.tok.Kind.String())
 	}
+	val := p.tok.Val
 	p.advance() // skip value token
-	// TODO: store value in ProgDef struct
 
 	p.unit.Defs = append(p.unit.Defs, ProgDef{
 		Name: name,
+		Val:  val,
 	})
 	return nil
 }
@@ -143,44 +161,45 @@ func (p *Parser) fn() error {
 	}
 	p.advance() // ":"
 
-	insts, labels, err := p.body()
+	f := ProgFunc{
+		Name:       name,
+		TextOffset: p.toff,
+	}
+	err := p.body(&f)
 	if err != nil {
 		return err
 	}
-	if len(insts) == 0 {
+	if len(f.Inst) == 0 {
 		return fmt.Errorf("function \"%s\" has no body", name)
 	}
+	f.TextSize = AlignSizeBy16(f.TextSize)
+	p.toff += f.TextSize
 
-	p.unit.Funcs = append(p.unit.Funcs, ProgFunc{
-		Name: name,
-
-		Inst:   insts,
-		Labels: labels,
-	})
+	p.unit.Funcs = append(p.unit.Funcs, f)
 	return nil
 }
 
-func (p *Parser) body() ([]ProgInst, []ProgLabel, error) {
-	var insts []ProgInst
-	var labels []ProgLabel
+func (p *Parser) body(f *ProgFunc) error {
 	for {
 		switch p.tok.Kind {
 		case Mnemonic:
 			var s ProgInst
 			err := p.inst(&s)
 			if err != nil {
-				return nil, nil, err
+				return err
 			}
-			insts = append(insts, s)
+			f.Inst = append(f.Inst, s)
+			f.TextSize += uint32(Size[s.Op])
 		case Label:
 			label, err := p.label()
 			if err != nil {
-				return nil, nil, err
+				return err
 			}
-			label.Index = uint32(len(insts))
-			labels = append(labels, label)
+			label.Index = uint32(len(f.Inst))
+			label.Offset = f.TextSize
+			f.Labels = append(f.Labels, label)
 		default:
-			return insts, labels, nil
+			return nil
 		}
 	}
 }
@@ -193,6 +212,8 @@ func (p *Parser) inst(s *ProgInst) error {
 	switch me {
 	case MeLoad:
 		err = p.load(s)
+	case MeJump:
+		err = p.jump(s)
 	case MeNop:
 		s.Op = Nop
 	case MeHalt:
@@ -206,6 +227,27 @@ func (p *Parser) inst(s *ProgInst) error {
 			p.tok.Pos(), meText[me])
 	}
 	return err
+}
+
+func (p *Parser) jump(s *ProgInst) error {
+	switch p.tok.Kind {
+	case Register: // TODO: handle syntax [r3]
+		panic("not implemented")
+	case Label:
+		p.jumpLabel(s)
+	default:
+		return fmt.Errorf("%s: unexpected %s token instead of destination operand in jump instruction",
+			p.tok.Pos(), p.tok.Kind.String())
+	}
+	return nil
+}
+
+func (p *Parser) jumpLabel(s *ProgInst) {
+	name := p.tok.Lit
+	p.advance() // skip label name
+
+	s.Op = JumpAddr
+	s.DefName = name
 }
 
 func (p *Parser) load(s *ProgInst) error {

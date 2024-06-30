@@ -95,6 +95,9 @@ const (
 	// Compare value stored in register with value stored in register.
 	CompRegReg Opcode = 0x0032
 
+	// Jump to constant address.
+	JumpAddr Opcode = 0x0040
+
 	// Push constant value to stack.
 	PushVal Opcode = 0x0070
 
@@ -130,6 +133,7 @@ const (
 //	OP - 1 byte  - opcode
 //	SR - 1 byte  - source register index
 //	DR - 1 byte  - destination register index
+//	TA - 4 bytes - text address (for jumps)
 //	CV - 8 bytes - constant value
 //	CA - 8 bytes - constant address in memory
 var Size = [...]uint8{
@@ -151,15 +155,18 @@ var Size = [...]uint8{
 	// OP + DR + CV
 	LoadValReg: 1 + 1 + 8,
 
-	// OP + SR + DR,
+	// OP + DR + SR,
 	LoadRegReg: 1 + 1 + 1,
 
 	// OP + DR + CA,
 	LoadAddrReg: 1 + 1 + 8,
 
-	// OP + SR + DR,
+	// OP + DR + SR,
 	AddRegReg: 1 + 1 + 1,
 
 	// OP + DR + CV
 	AddValReg: 1 + 1 + 8,
+
+	// OP + TA
+	JumpAddr: 1 + 4,
 }

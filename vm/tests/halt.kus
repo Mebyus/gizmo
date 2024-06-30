@@ -7,10 +7,14 @@ Test block comment
 */
 
 fn start:
+	.l1:
 		load	r0, 0x10	     // this value of r1 is overwritten later
 		load	r1, EXIT_STATUS
+		load	r1, 0x20
 		load	r0, r1
+		nop
+		syscall
+		jump 	.l1
 
 	.exit:
-		nop
 		halt

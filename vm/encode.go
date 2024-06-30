@@ -1,7 +1,6 @@
 package vm
 
 import (
-	"encoding/binary"
 	"io"
 )
 
@@ -15,11 +14,9 @@ func Encode(w io.Writer, prog *Prog) error {
 }
 
 type Encoder struct {
-	buf []byte
+	Buffer
 
 	prog *Prog
-
-	pos int
 }
 
 func (e *Encoder) encode(prog *Prog) {
@@ -30,9 +27,9 @@ func (e *Encoder) encode(prog *Prog) {
 	e.textHeader()
 	e.dataHeader()
 	e.globalHeader()
-	e.bytes(prog.Text)
-	e.bytes(prog.Data)
-	e.bytes(prog.Global)
+	e.Append(prog.Text)
+	e.Append(prog.Data)
+	e.Append(prog.Global)
 }
 
 // header size = magic + version + text header + data header + global header +
@@ -40,15 +37,15 @@ const headerSize = 4 + 2 + (8 + 4) + (8 + 4) + (8 + 4)
 
 func (e *Encoder) alloc() {
 	size := headerSize + len(e.prog.Text) + len(e.prog.Data) + len(e.prog.Global)
-	e.buf = make([]byte, size)
+	e.Init(size)
 }
 
 func (e *Encoder) magic() {
-	e.pos += copy(e.buf, magic[:])
+	e.Append(magic[:])
 }
 
 func (e *Encoder) version() {
-	e.u16(0)
+	e.Val16(0)
 }
 
 func (e *Encoder) textHeader() {
@@ -79,38 +76,6 @@ func (e *Encoder) globalHeader() {
 }
 
 func (e *Encoder) header(offset uint64, size uint32) {
-	e.u64(offset)
-	e.u32(size)
-}
-
-func (e *Encoder) bytes(b []byte) {
-	e.pos += copy(e.buf[e.pos:], b)
-}
-
-func (e *Encoder) u8(v uint8) {
-	e.buf[e.pos] = v
-	e.pos += 1
-}
-
-func (e *Encoder) u16(v uint16) {
-	b := e.buf[e.pos : e.pos+2]
-	b[0] = byte(v)
-	b[1] = byte(v >> 8)
-	e.pos += 2
-}
-
-func (e *Encoder) u32(v uint32) {
-	b := e.buf[e.pos : e.pos+4]
-	binary.LittleEndian.PutUint32(b, v)
-	e.pos += 4
-}
-
-func (e *Encoder) u64(v uint64) {
-	b := e.buf[e.pos : e.pos+8]
-	binary.LittleEndian.PutUint64(b, v)
-	e.pos += 8
-}
-
-func (e *Encoder) Bytes() []byte {
-	return e.buf
+	e.Val64(offset)
+	e.Val32(size)
 }
