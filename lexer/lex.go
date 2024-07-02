@@ -36,6 +36,8 @@ func (lx *Lexer) lex() token.Token {
 }
 
 func (lx *Lexer) codeToken() token.Token {
+	lx.NonBlank = true
+
 	if char.IsLetterOrUnderscore(lx.C) {
 		return lx.word()
 	}

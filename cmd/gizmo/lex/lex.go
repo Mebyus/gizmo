@@ -33,5 +33,10 @@ func lex(filename string) error {
 	if err != nil {
 		return err
 	}
+	stats := lx.Stats()
+	fmt.Println()
+	fmt.Printf("sloc:   %d\n", stats.HardLines)
+	fmt.Printf("lines:  %d\n", stats.Lines)
+	fmt.Printf("tokens: %d\n", stats.Tokens)
 	return nil
 }

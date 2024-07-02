@@ -32,6 +32,9 @@ type Chopper struct {
 	// It should only be changed via Init() and Advance() methods.
 	Col uint32
 
+	// Number of significant lines in text.
+	HardLines uint32
+
 	// Byte that was previously at scan position.
 	Prev byte
 
@@ -48,6 +51,23 @@ type Chopper struct {
 
 	// True if chopper reached end of input (by scan index).
 	EOF bool
+
+	// True if current line contains hard tokens.
+	// False if line contains only whitespace and comments.
+	NonBlank bool
+}
+
+// Stats describes various "accounting" properties of
+// processed text.
+type Stats struct {
+	// Number of lines in text.
+	Lines uint32
+
+	// Number of hard lines in text.
+	HardLines uint32
+
+	// Number of hard tokens in text.
+	Tokens uint32
 }
 
 // Advance forward chopper scan position by one byte
@@ -61,6 +81,10 @@ func (c *Chopper) Advance() {
 	if c.C == '\n' {
 		c.Line += 1
 		c.Col = 0
+		if c.NonBlank {
+			c.HardLines += 1
+			c.NonBlank = false
+		}
 	} else if IsCodePointStart(c.C) {
 		c.Col += 1
 	}
@@ -72,6 +96,10 @@ func (c *Chopper) Advance() {
 	if c.i >= len(c.text) {
 		c.Next = 0
 		c.EOF = c.Pos >= len(c.text)
+		if c.EOF && c.NonBlank {
+			c.HardLines += 1
+			c.NonBlank = false
+		}
 		return
 	}
 

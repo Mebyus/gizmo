@@ -11,7 +11,9 @@ type Lexer struct {
 	char.Chopper
 
 	file *source.File
-	num  uint32
+
+	// current token number
+	num uint32
 }
 
 func FromBytes(b []byte) *Lexer {
@@ -44,4 +46,12 @@ func FromReader(r io.Reader) (*Lexer, error) {
 		return nil, err
 	}
 	return FromBytes(b), nil
+}
+
+func (lx *Lexer) Stats() *char.Stats {
+	return &char.Stats{
+		Lines:     lx.Line + 1, // counter if zero-based
+		HardLines: lx.HardLines,
+		Tokens:    lx.num - 1, // exclude EOF token
+	}
 }
