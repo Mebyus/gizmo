@@ -35,6 +35,9 @@ const (
 	// Load constant value to register.
 	LoadValReg Opcode = 0x0010
 
+	// Load constant value to system register.
+	LoadValSysReg Opcode = 0x001A
+
 	// Load register value to another register.
 	LoadRegReg Opcode = 0x0011
 
@@ -133,6 +136,7 @@ const (
 //	OP - 1 byte  - opcode
 //	SR - 1 byte  - source register index
 //	DR - 1 byte  - destination register index
+//	MR - 1 byte  - system register index
 //	TA - 4 bytes - text address (for jumps)
 //	CV - 8 bytes - constant value
 //	CA - 8 bytes - constant address in memory
@@ -154,6 +158,9 @@ var Size = [...]uint8{
 
 	// OP + DR + CV
 	LoadValReg: 1 + 1 + 8,
+
+	// OP + CV
+	LoadValSysReg: 1 + 4,
 
 	// OP + DR + SR,
 	LoadRegReg: 1 + 1 + 1,

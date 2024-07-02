@@ -37,7 +37,7 @@ func (lx *Lexer) lex() token.Token {
 
 func (lx *Lexer) codeToken() token.Token {
 	if char.IsLetterOrUnderscore(lx.C) {
-		return lx.lexName()
+		return lx.word()
 	}
 
 	if char.IsDecDigit(lx.C) {
@@ -45,7 +45,7 @@ func (lx *Lexer) codeToken() token.Token {
 	}
 
 	if lx.C == '"' {
-		return lx.lexStringLiteral()
+		return lx.stringLiteral()
 	}
 
 	if lx.C == '\'' {
@@ -56,7 +56,7 @@ func (lx *Lexer) codeToken() token.Token {
 		return lx.label()
 	}
 
-	return lx.lexOther()
+	return lx.other()
 }
 
 // Create token (without literal) of specified kind at current lexer position
@@ -95,7 +95,7 @@ func (lx *Lexer) label() (tok token.Token) {
 	return
 }
 
-func (lx *Lexer) lexName() (tok token.Token) {
+func (lx *Lexer) word() (tok token.Token) {
 	tok.Pos = lx.pos()
 
 	if !char.IsAlphanum(lx.Next) {
@@ -355,7 +355,7 @@ func (lx *Lexer) number() (tok token.Token) {
 	return
 }
 
-func (lx *Lexer) lexStringLiteral() (tok token.Token) {
+func (lx *Lexer) stringLiteral() (tok token.Token) {
 	tok.Pos = lx.pos()
 
 	lx.Advance() // skip '"'
@@ -537,7 +537,7 @@ func (lx *Lexer) illegalByteToken() (tok token.Token) {
 }
 
 // scanOther scans next operator, punctucator or illegal byte Token
-func (lx *Lexer) lexOther() token.Token {
+func (lx *Lexer) other() token.Token {
 	switch lx.C {
 	case '(':
 		return lx.oneByteToken(token.LeftParentheses)

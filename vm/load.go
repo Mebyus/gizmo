@@ -20,3 +20,9 @@ func (m *Machine) loadRegReg() error {
 	m.set(dr, v)
 	return nil
 }
+
+func (m *Machine) loadValSysReg() {
+	d := m.id(4)
+	v := val32(d)
+	m.sc = uint64(v)
+}

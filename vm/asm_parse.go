@@ -9,11 +9,20 @@ import (
 type ProgUnit struct {
 	Defs  []ProgDef
 	Funcs []ProgFunc
+	Lets  []ProgLet
 }
 
 type ProgDef struct {
 	Name string
 	Val  uint64
+}
+
+type ProgLet struct {
+	Name string
+	Str  string
+
+	Offset uint32
+	Size   uint32
 }
 
 type ProgFunc struct {
@@ -46,7 +55,7 @@ type ProgLabel struct {
 // ProgInst single instruction inside assembler program.
 type ProgInst struct {
 	// optional constant usage
-	DefName string
+	Aux string
 
 	// usually it's destination operand
 	Operand1 uint64
@@ -55,6 +64,9 @@ type ProgInst struct {
 	Operand2 uint64
 
 	Op Opcode
+
+	// operand is a property of specified name
+	Prop bool
 }
 
 type Parser struct {
@@ -67,6 +79,9 @@ type Parser struct {
 
 	// current text offset
 	toff uint32
+
+	// current data offset
+	doff uint32
 }
 
 func ParseFile(path string) (*ProgUnit, error) {
@@ -96,6 +111,8 @@ func (p *Parser) parse() error {
 
 		var err error
 		switch p.tok.Kind {
+		case Let:
+			err = p.let()
 		case Def:
 			err = p.def()
 		case Fn:
@@ -119,6 +136,43 @@ func (p *Parser) init(lx *Lexer) {
 func (p *Parser) advance() {
 	p.tok = p.next
 	p.next = p.lx.Lex()
+}
+
+func (p *Parser) let() error {
+	p.advance() // skip "let"
+
+	if p.tok.Kind != Identifier {
+		return fmt.Errorf("%s: unexpected %s token instead of name identifier in let construct",
+			p.tok.Pos(), p.tok.Kind.String())
+	}
+	name := p.tok.Lit
+	p.advance() // skip name identifier
+
+	if p.tok.Kind != Colon {
+		return fmt.Errorf("%s: unexpected %s token instead of \":\" in let construct",
+			p.tok.Pos(), p.tok.Kind.String())
+	}
+	p.advance() // ":"
+
+	if p.tok.Kind != String {
+		return fmt.Errorf("%s: unexpected %s token instead of string literal in let construct",
+			p.tok.Pos(), p.tok.Kind.String())
+	}
+	lit := p.tok.Lit
+	p.advance() // skip string literal
+	// TODO: handle escapes
+	size := uint32(len(lit))
+	offset := p.doff
+	p.doff += size + 1 // put zero byte at the end of string
+
+	p.unit.Lets = append(p.unit.Lets, ProgLet{
+		Name:   name,
+		Offset: offset,
+		Size:   size,
+		Str:    lit,
+	})
+
+	return nil
 }
 
 func (p *Parser) def() error {
@@ -247,10 +301,41 @@ func (p *Parser) jumpLabel(s *ProgInst) {
 	p.advance() // skip label name
 
 	s.Op = JumpAddr
-	s.DefName = name
+	s.Aux = name
+}
+
+func (p *Parser) loadSysReg(s *ProgInst) error {
+	if p.tok.Val != SysRegSC {
+		return fmt.Errorf("%s: only \"sc\" system register can be used as load destination operand", p.tok.Pos())
+	}
+	p.advance() // skip register
+
+	if p.tok.Kind != Comma {
+		return fmt.Errorf("%s: unexpected %s token instead of \",\" in load instruction",
+			p.tok.Pos(), p.tok.Kind.String())
+	}
+	p.advance() // skip ","
+
+	switch p.tok.Kind {
+	case Identifier:
+		s.Op = LoadValSysReg
+		s.Aux = p.tok.Lit
+	case HexInteger:
+		s.Op = LoadValSysReg
+		s.Operand2 = p.tok.Val
+	default:
+		return fmt.Errorf("%s: unexpected %s token instead of source operand in load instruction",
+			p.tok.Pos(), p.tok.Kind.String())
+	}
+	p.advance() // skip source operand token
+
+	return nil
 }
 
 func (p *Parser) load(s *ProgInst) error {
+	if p.tok.Kind == SysReg {
+		return p.loadSysReg(s)
+	}
 	if p.tok.Kind != Register {
 		return fmt.Errorf("%s: unexpected %s token instead of register in load instruction",
 			p.tok.Pos(), p.tok.Kind.String())
@@ -270,7 +355,20 @@ func (p *Parser) load(s *ProgInst) error {
 		s.Operand2 = p.tok.Val
 	case Identifier:
 		s.Op = LoadValReg
-		s.DefName = p.tok.Lit
+		s.Aux = p.tok.Lit
+		if p.next.Kind == Period {
+			p.advance() // skip name
+			p.advance() // skip "."
+
+			if p.tok.Kind != Property {
+				return fmt.Errorf("%s: unexpected %s token instead of property in source operand",
+					p.tok.Pos(), p.tok.Kind.String())
+			}
+			s.Prop = true
+			s.Operand2 = p.tok.Val
+			p.advance() // skip property
+			return nil
+		}
 	case HexInteger:
 		s.Op = LoadValReg
 		s.Operand2 = p.tok.Val

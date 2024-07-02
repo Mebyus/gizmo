@@ -9,12 +9,14 @@ func Assemble(unit *ProgUnit) (*Prog, error) {
 
 type Assembler struct {
 	text Buffer
+	data Buffer
 
 	// local to currently processed function
 	labels map[string]*ProgLabel
 
 	funcs map[string]*ProgFunc
 	defs  map[string]*ProgDef
+	lets  map[string]*ProgLet
 
 	unit *ProgUnit
 
@@ -42,6 +44,30 @@ func (a *Assembler) index() error {
 		return err
 	}
 	return a.indexFuncs()
+}
+
+func (a *Assembler) indexLets() error {
+	if len(a.unit.Lets) == 0 {
+		return nil
+	}
+
+	// total size of program data
+	var size uint32
+
+	a.lets = make(map[string]*ProgLet, len(a.unit.Lets))
+	for i := range len(a.unit.Lets) {
+		l := &a.unit.Lets[i]
+		_, ok := a.lets[l.Name]
+		if ok {
+			return fmt.Errorf("name \"%s\" has multiple definitions", l.Name)
+		}
+
+		a.lets[l.Name] = l
+		size += l.Size + 1
+	}
+
+	a.data.Init(int(AlignBy16(uint64(size))))
+	return nil
 }
 
 func (a *Assembler) indexDefs() error {
@@ -72,7 +98,7 @@ func (a *Assembler) indexFuncs() error {
 	// total size of program text
 	var size uint32
 
-	a.funcs = make(map[string]*ProgFunc, len(a.unit.Defs))
+	a.funcs = make(map[string]*ProgFunc, len(a.unit.Funcs))
 	for i := range len(a.unit.Funcs) {
 		f := &a.unit.Funcs[i]
 		_, ok := a.funcs[f.Name]
@@ -135,18 +161,28 @@ func (a *Assembler) fn(f *ProgFunc) error {
 		var err error
 		switch i.Op {
 		case LoadValReg:
-			if i.DefName == "" {
+			if i.Aux == "" {
 				a.loadLitValReg(uint8(i.Operand1), i.Operand2)
 			} else {
-				err = a.loadDefValReg(uint8(i.Operand1), i.DefName)
+				if i.Prop {
+					err = a.loadDefValReg(uint8(i.Operand1), i.Aux)
+				} else {
+					panic("not implemented")
+				}
 			}
 		case LoadRegReg:
 			a.loadRegReg(uint8(i.Operand1), uint8(i.Operand2))
+		case LoadValSysReg:
+			if i.Aux == "" {
+				panic("not implemented")
+			} else {
+				err = a.loadDefValSysReg(i.Aux)
+			}
 		case JumpAddr:
-			if i.DefName == "" {
+			if i.Aux == "" {
 				panic("empty label name")
 			}
-			err = a.jumpLabelAddr(i.DefName)
+			err = a.jumpLabelAddr(i.Aux)
 		case Halt:
 			a.opcode(Halt)
 		case Trap:
@@ -179,12 +215,40 @@ func (a *Assembler) jumpLabelAddr(name string) error {
 	return nil
 }
 
+func (a *Assembler) loadDefValSysReg(name string) error {
+	def, ok := a.defs[name]
+	if !ok {
+		return fmt.Errorf("constant \"%s\" is not defined", name)
+	}
+
+	a.opcode(LoadValSysReg)
+	a.text.Val32(uint32(def.Val))
+	return nil
+}
+
 func (a *Assembler) loadDefValReg(dr uint8, name string) error {
 	def, ok := a.defs[name]
 	if !ok {
 		return fmt.Errorf("constant \"%s\" is not defined", name)
 	}
 	a.loadLitValReg(dr, def.Val)
+	return nil
+}
+
+func (a *Assembler) loadLetValReg(dr uint8, name string, prop uint64) error {
+	let, ok := a.lets[name]
+	if !ok {
+		return fmt.Errorf("data \"%s\" is not defined", name)
+	}
+
+	switch prop {
+	case PropPtr:
+		_ = let.Offset
+	case PropLen:
+		_ = let.Size
+	default:
+		panic(fmt.Errorf("unexpected property %d", prop))
+	}
 	return nil
 }
 

@@ -176,6 +176,16 @@ func (c *Chopper) SkipHexDigits() {
 	}
 }
 
+func (c *Chopper) SkipString() {
+	for !c.EOF && c.C != '"' && c.C != '\n' {
+		if c.C == '\\' && c.Next == '"' {
+			// do not stop if we encounter escape sequence
+			c.Advance() // skip "\"
+		}
+		c.Advance()
+	}
+}
+
 func LastByte(s []byte) byte {
 	return s[len(s)-1]
 }

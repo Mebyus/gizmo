@@ -17,23 +17,53 @@ const (
 
 	Comma
 	Colon
-	Semicolon
+	Period
 	LeftSquare
 	RightSquare
 
 	Fn
 	Def
+	Let
 
 	noStaticLiteral
 
+	SysReg
 	Register
 	Mnemonic
+	Property
 
 	Illegal
 	Label
 	HexInteger
 	Identifier
+	String
 )
+
+const (
+	SysRegIP = 0
+	SysRegSP = 1
+	SysRegFP = 2
+	SysRegSC = 3
+	SysRegCF = 4
+)
+
+var sysRegText = [...]string{
+	SysRegIP: "ip",
+	SysRegSP: "sp",
+	SysRegFP: "fp",
+	SysRegSC: "sc",
+	SysRegCF: "cf",
+}
+
+const (
+	PropPtr = 0
+	PropLen = 1
+)
+
+var propText = [...]string{
+	PropPtr: "ptr",
+	PropLen: "len",
+}
 
 func (k TokKind) hasStaticLiteral() bool {
 	return k < noStaticLiteral
@@ -46,20 +76,24 @@ var tokKindLiteral = [...]string{
 
 	Comma:       ",",
 	Colon:       ":",
-	Semicolon:   ";",
+	Period:      ".",
 	LeftSquare:  "[",
 	RightSquare: "]",
 
 	Fn:  "fn",
 	Def: "def",
+	Let: "let",
 
+	SysReg:   "REG.SYS",
 	Register: "REG",
 	Mnemonic: "ME",
+	Property: "PROP",
 
 	Illegal:    "ILG",
 	Label:      "LABEL",
 	HexInteger: "INT.HEX",
 	Identifier: "IDN",
+	String:     "STR",
 }
 
 func (k TokKind) String() string {
@@ -131,16 +165,22 @@ func (t Token) Literal() string {
 	}
 
 	switch t.Kind {
+	case SysReg:
+		return sysRegText[t.Val]
 	case Register:
 		return "r" + strconv.FormatUint(t.Val, 10)
+	case Property:
+		return propText[t.Val]
 	case Mnemonic:
 		return meText[t.Val]
 	case HexInteger:
 		return "0x" + strconv.FormatUint(t.Val, 16)
 	case Identifier:
 		return t.Lit
+	case String:
+		return "\"" + t.Lit + "\""
 	case Label:
-		return "." + t.Lit
+		return "@." + t.Lit
 	case Illegal:
 		return "."
 	default:
@@ -195,8 +235,8 @@ func (lx *Lexer) Lex() *Token {
 		return lx.create(EOF)
 	}
 
-	if lx.C == ';' {
-		return lx.semiSkipLine()
+	if lx.C == '"' {
+		return lx.stringLiteral()
 	}
 
 	if lx.C == 'r' && char.IsDecDigit(lx.Next) {
@@ -211,7 +251,7 @@ func (lx *Lexer) Lex() *Token {
 		return lx.hexNumber()
 	}
 
-	if lx.C == '.' && char.IsLetter(lx.Next) {
+	if lx.C == '@' && lx.Next == '.' {
 		return lx.label()
 	}
 
@@ -226,13 +266,30 @@ func (lx *Lexer) tok() *Token {
 	}
 }
 
-func (lx *Lexer) semiSkipLine() *Token {
+func (lx *Lexer) stringLiteral() *Token {
 	tok := lx.tok()
 
-	lx.Advance() // skip ";"
-	lx.SkipLine()
+	lx.Advance() // skip '"'
 
-	tok.Kind = Semicolon
+	if lx.C == '"' {
+		// common case of empty string literal
+		lx.Advance()
+		tok.Kind = String
+		return tok
+	}
+
+	lx.Start()
+	lx.SkipString()
+	lit, ok := lx.Take()
+	if !ok {
+		panic("not implemented")
+	}
+
+	// TODO: handle EOF edgecases
+	lx.Advance() // skip quote
+
+	tok.Kind = String
+	tok.Lit = lit
 	return tok
 }
 
@@ -281,6 +338,37 @@ func (lx *Lexer) word() *Token {
 	case "def":
 		tok.Kind = Def
 		return tok
+	case "let":
+		tok.Kind = Let
+		return tok
+	case "ptr":
+		tok.Kind = Property
+		tok.Val = PropPtr
+		return tok
+	case "len":
+		tok.Kind = Property
+		tok.Val = PropLen
+		return tok
+	case "ip":
+		tok.Kind = SysReg
+		tok.Val = SysRegIP
+		return tok
+	case "sp":
+		tok.Kind = SysReg
+		tok.Val = SysRegSP
+		return tok
+	case "fp":
+		tok.Kind = SysReg
+		tok.Val = SysRegFP
+		return tok
+	case "sc":
+		tok.Kind = SysReg
+		tok.Val = SysRegSC
+		return tok
+	case "cf":
+		tok.Kind = SysReg
+		tok.Val = SysRegCF
+		return tok
 	}
 
 	me, ok := meWord[lit]
@@ -298,6 +386,7 @@ func (lx *Lexer) word() *Token {
 func (lx *Lexer) label() *Token {
 	tok := lx.tok()
 
+	lx.Advance() // skip "@"
 	lx.Advance() // skip "."
 
 	lx.Start()
@@ -319,6 +408,8 @@ func (lx *Lexer) other() *Token {
 		return lx.oneByteToken(LeftSquare)
 	case ']':
 		return lx.oneByteToken(RightSquare)
+	case '.':
+		return lx.oneByteToken(Period)
 	case ',':
 		return lx.oneByteToken(Comma)
 	case ':':

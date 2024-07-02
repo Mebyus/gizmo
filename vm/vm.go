@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"time"
 )
 
 type Machine struct {
@@ -18,10 +19,13 @@ type Machine struct {
 
 	// Syscall register.
 	// Select syscall number or receive result code.
-	sn uint64
+	sc uint64
 
 	// Comparison flags.
 	cf uint64
+
+	// Number of executed instructions.
+	clock uint64
 
 	// General-purpose registers.
 	r [64]uint64
@@ -77,12 +81,16 @@ func (m *Machine) Exec(prog *Prog) *Exit {
 	m.ip = 0
 	m.sp = 0
 	m.fp = 0
+	m.clock = 0
+
+	start := time.Now()
 
 	for !m.halt {
 		m.step()
+		m.clock += 1
 	}
 
-	return m.exit()
+	return m.exit(time.Since(start))
 }
 
 func (m *Machine) step() {
@@ -122,6 +130,8 @@ func (m *Machine) step() {
 		err = m.loadValReg()
 	case LoadRegReg:
 		err = m.loadRegReg()
+	case LoadValSysReg:
+		m.loadValSysReg()
 	case AddRegReg:
 		err = m.addRegReg()
 	case JumpAddr:
@@ -175,6 +185,52 @@ func (m *Machine) unsafeSet(r uint8, v uint64) {
 	m.r[r] = v
 }
 
+// Segment names
+const (
+	SegText   = 0b000
+	SegData   = 0b001
+	SegGlobal = 0b010
+	SegStack  = 0b100
+	SegHeap   = 0b101
+)
+
+// gives a portion of memory specified by pointer and number of bytes
+func (m *Machine) memslice(ptr uint64, n uint64) ([]byte, error) {
+	if n == 0 {
+		return nil, fmt.Errorf("empty slice")
+	}
+
+	// three most significant bits in pointer
+	// encode the memory segment
+	segment := ptr >> 61
+	var b []byte
+	switch segment {
+	case SegText:
+		b = m.text
+	case SegData:
+		b = m.data
+	case SegGlobal:
+		b = m.global
+	case SegStack:
+		b = m.stack
+	case SegHeap:
+		b = m.heap
+	default:
+		return nil, fmt.Errorf("unknown segment in pointer: %03b", segment)
+	}
+
+	const mask uint64 = 0x1f_ff_ff_ff_ff_ff_ff_ff
+	offset := ptr & mask
+	if offset >= uint64(len(b)) {
+		return nil, fmt.Errorf("offset 0x%x is out of %03b segment range", offset, segment)
+	}
+	end := offset + n
+	if end > uint64(len(b)) {
+		return nil, fmt.Errorf("end 0x%x is out of %03b segment range", end, segment)
+	}
+	return b[offset:end], nil
+}
+
 func val64(buf []byte) uint64 {
 	return binary.LittleEndian.Uint64(buf)
 }
@@ -189,6 +245,9 @@ type Exit struct {
 	// Runtime error for abnormal exit.
 	Error error
 
+	// Real execution time.
+	Time time.Duration
+
 	// Value of instruction pointer register.
 	IP uint64
 
@@ -196,18 +255,35 @@ type Exit struct {
 	// upon program exit. Valid only for normal exit.
 	Status uint64
 
+	// Number of executed instructions.
+	Clock uint64
+
 	// True for normal exit. Occurs via explicit halt instruction.
 	Normal bool
 }
 
 func (e *Exit) Render(w io.Writer) error {
+	_, err := io.WriteString(w, fmt.Sprintf("vm.time:  %s\n", e.Time.String()))
+	if err != nil {
+		return err
+	}
+
+	_, err = io.WriteString(w, fmt.Sprintf("vm.clock: %d\n", e.Clock))
+	if err != nil {
+		return err
+	}
+
 	s := e.String()
-	_, err := io.WriteString(w, s)
+	_, err = io.WriteString(w, s)
 	if err != nil {
 		return err
 	}
 	_, err = io.WriteString(w, "\n")
-	return err
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (e *Exit) String() string {
@@ -218,8 +294,12 @@ func (e *Exit) String() string {
 	return fmt.Sprintf("vm: abnormal exit (at 0x%x) with runtime error: %v", e.IP, e.Error)
 }
 
-func (m *Machine) exit() *Exit {
-	e := &Exit{IP: m.ip}
+func (m *Machine) exit(dur time.Duration) *Exit {
+	e := &Exit{
+		Time:  dur,
+		IP:    m.ip,
+		Clock: m.clock,
+	}
 
 	if m.err != nil {
 		e.Error = m.err
@@ -227,6 +307,6 @@ func (m *Machine) exit() *Exit {
 	}
 
 	e.Normal = true
-	e.Status = m.r[0]
+	e.Status = m.sc
 	return e
 }
