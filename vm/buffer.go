@@ -15,9 +15,17 @@ func (g *Buffer) Bytes() []byte {
 	return g.buf[:g.pos]
 }
 
-func (g *Buffer) Append(b []byte) {
+func (g *Buffer) Add(b []byte) {
 	n := copy(g.buf[g.pos:], b)
 	if n != len(b) {
+		panic("buffer size is too small")
+	}
+	g.pos += n
+}
+
+func (g *Buffer) AddStr(s string) {
+	n := copy(g.buf[g.pos:], s)
+	if n != len(s) {
 		panic("buffer size is too small")
 	}
 	g.pos += n

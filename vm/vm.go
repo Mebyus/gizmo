@@ -134,8 +134,14 @@ func (m *Machine) step() {
 		m.loadValSysReg()
 	case AddRegReg:
 		err = m.addRegReg()
+	case IncReg:
+		err = m.incReg()
+	case TestRegVal:
+		err = m.testRegVal()
 	case JumpAddr:
 		err = m.jumpAddr()
+	case JumpAddrNotZero:
+		err = m.jumpAddrNotZero()
 	default:
 		// unknown opcodes should be handled via size check
 		panic(fmt.Sprintf("unhandled instruction 0x%02X", op))

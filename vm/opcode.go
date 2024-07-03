@@ -4,7 +4,7 @@ type Opcode uint8
 
 const (
 	// Reserved empty instruction. Does nop (no operation).
-	Nop Opcode = 0x0000
+	Nop Opcode = 0x0004
 
 	// Halts program execution.
 	Halt Opcode = 0x0001
@@ -19,7 +19,7 @@ const (
 	//
 	// Most notable usecase for this is to detect illegal
 	// control flow execution of unreachable code.
-	Trap Opcode = 0x0003
+	Trap Opcode = 0x0000
 
 	// Set register value to zero.
 	ClearReg Opcode = 0x0008
@@ -77,6 +77,9 @@ const (
 	// Result is stored in destination register.
 	AddValReg Opcode = 0x0021
 
+	// Add one to value stored in register.
+	IncReg Opcode = 0x0022
+
 	// Subtract constant value from value stored in register.
 	// Result is stored in destination register.
 	SubRegVal Opcode = 0x0028
@@ -90,16 +93,19 @@ const (
 	SubRegReg Opcode = 0x002A
 
 	// Compare constant value with value stored in register.
-	CompValReg Opcode = 0x0030
+	TestValReg Opcode = 0x0030
 
 	// Compare value stored in register with constant value.
-	CompRegVal Opcode = 0x0031
+	TestRegVal Opcode = 0x0031
 
 	// Compare value stored in register with value stored in register.
 	CompRegReg Opcode = 0x0032
 
 	// Jump to constant address.
 	JumpAddr Opcode = 0x0040
+
+	// Jump to constant address if comparison flags register indicates not zero.
+	JumpAddrNotZero = 0x0041
 
 	// Push constant value to stack.
 	PushVal Opcode = 0x0070
@@ -174,6 +180,18 @@ var Size = [...]uint8{
 	// OP + DR + CV
 	AddValReg: 1 + 1 + 8,
 
+	// OP + DR
+	IncReg: 1 + 1,
+
+	// OP + SR + CV
+	TestValReg: 1 + 1 + 8,
+
+	// OP + SR + CV
+	TestRegVal: 1 + 1 + 8,
+
 	// OP + TA
 	JumpAddr: 1 + 4,
+
+	// OP + TA
+	JumpAddrNotZero: 1 + 4,
 }

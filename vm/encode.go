@@ -27,9 +27,9 @@ func (e *Encoder) encode(prog *Prog) {
 	e.textHeader()
 	e.dataHeader()
 	e.globalHeader()
-	e.Append(prog.Text)
-	e.Append(prog.Data)
-	e.Append(prog.Global)
+	e.Add(prog.Text)
+	e.Add(prog.Data)
+	e.Add(prog.Global)
 }
 
 // header size = magic + version + text header + data header + global header +
@@ -41,7 +41,7 @@ func (e *Encoder) alloc() {
 }
 
 func (e *Encoder) magic() {
-	e.Append(magic[:])
+	e.Add(magic[:])
 }
 
 func (e *Encoder) version() {

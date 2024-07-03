@@ -1,7 +1,7 @@
 def EXIT_STATUS 	0x6
 def SYSCALL_WRITE	0x1
 
-let msg: "hello, world!"
+let msg: "hello, world!\n"
 
 /*
 
@@ -9,19 +9,20 @@ Test block comment
 
 */
 
+def LOOP_NUMBER		0x200
+
 fn start:
-	@.l1:
-		load	r0, 	0x10	     // this value of r1 is overwritten later
-		load	r1, 	EXIT_STATUS
-		load	r1, 	0x20
-		load	r0, 	r1
-		nop
+		clear	r3		// loop counter
+
+	@.loop:
 		load	sc,		SYSCALL_WRITE	// select syscall number
 		load	r0,		0x1 			// select stdin
 		load	r1, 	msg.ptr
 		load	r2, 	msg.len
 		syscall
-		jump 	@.l1
+		inc		r3
+		test	r3,		LOOP_NUMBER
+		jump 	?.nz,	@.loop
 
 	@.exit:
 		load	sc,		EXIT_STATUS

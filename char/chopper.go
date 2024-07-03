@@ -68,6 +68,9 @@ type Stats struct {
 
 	// Number of hard tokens in text.
 	Tokens uint32
+
+	// Number of bytes in text.
+	Size uint32
 }
 
 // Advance forward chopper scan position by one byte

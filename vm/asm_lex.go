@@ -31,6 +31,7 @@ const (
 	Register
 	Mnemonic
 	Property
+	Flag
 
 	Illegal
 	Label
@@ -65,6 +66,16 @@ var propText = [...]string{
 	PropLen: "len",
 }
 
+const (
+	FlagZero    = 0
+	FlagNotZero = 1
+)
+
+var flagText = [...]string{
+	FlagZero:    "z",
+	FlagNotZero: "nz",
+}
+
 func (k TokKind) hasStaticLiteral() bool {
 	return k < noStaticLiteral
 }
@@ -88,6 +99,7 @@ var tokKindLiteral = [...]string{
 	Register: "REG",
 	Mnemonic: "ME",
 	Property: "PROP",
+	Flag:     "FLAG",
 
 	Illegal:    "ILG",
 	Label:      "LABEL",
@@ -111,6 +123,8 @@ const (
 	MeStore
 	MeAdd
 	MeJump
+	MeTest
+	MeInc
 )
 
 var meText = [...]string{
@@ -123,6 +137,8 @@ var meText = [...]string{
 	MeStore:   "store",
 	MeAdd:     "add",
 	MeJump:    "jump",
+	MeTest:    "test",
+	MeInc:     "inc",
 }
 
 var meWord = map[string]int{
@@ -135,6 +151,8 @@ var meWord = map[string]int{
 	"store":   MeStore,
 	"add":     MeAdd,
 	"jump":    MeJump,
+	"test":    MeTest,
+	"inc":     MeInc,
 }
 
 type Token struct {
@@ -173,6 +191,8 @@ func (t Token) Literal() string {
 		return propText[t.Val]
 	case Mnemonic:
 		return meText[t.Val]
+	case Flag:
+		return "?." + flagText[t.Val]
 	case HexInteger:
 		return "0x" + strconv.FormatUint(t.Val, 16)
 	case Identifier:
@@ -249,6 +269,10 @@ func (lx *Lexer) Lex() *Token {
 
 	if lx.C == '0' && lx.Next == 'x' {
 		return lx.hexNumber()
+	}
+
+	if lx.C == '?' && lx.Next == '.' {
+		return lx.flag()
 	}
 
 	if lx.C == '@' && lx.Next == '.' {
@@ -380,6 +404,34 @@ func (lx *Lexer) word() *Token {
 
 	tok.Kind = Identifier
 	tok.Lit = lit
+	return tok
+}
+
+func (lx *Lexer) flag() *Token {
+	tok := lx.tok()
+
+	lx.Advance() // skip "?"
+	lx.Advance() // skip "."
+
+	lx.Start()
+	lx.SkipWord()
+
+	lit, ok := lx.Take()
+	if !ok {
+		panic("not implemented")
+	}
+
+	switch lit {
+	case "z":
+		tok.Val = FlagZero
+	case "nz":
+		tok.Val = FlagNotZero
+	default:
+		tok.Kind = Illegal
+		return tok
+	}
+
+	tok.Kind = Flag
 	return tok
 }
 

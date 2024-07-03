@@ -29,14 +29,21 @@ func lex(filename string) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("***   tokens   ***\n")
+	fmt.Printf("=============================================\n")
 	err = lexer.List(os.Stdout, lx)
 	if err != nil {
 		return err
 	}
+	fmt.Printf("=============================================\n")
+
 	stats := lx.Stats()
-	fmt.Println()
-	fmt.Printf("sloc:   %d\n", stats.HardLines)
-	fmt.Printf("lines:  %d\n", stats.Lines)
-	fmt.Printf("tokens: %d\n", stats.Tokens)
+	fmt.Printf("\n***   stats   ***\n")
+	fmt.Printf("=================\n")
+	fmt.Printf("size:     %d\n", stats.Size)
+	fmt.Printf("sloc:     %d\n", stats.HardLines)
+	fmt.Printf("lines:    %d\n", stats.Lines)
+	fmt.Printf("tokens:   %d\n", stats.Tokens)
 	return nil
 }

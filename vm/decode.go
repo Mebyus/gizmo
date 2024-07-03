@@ -27,7 +27,15 @@ func Decode(r io.Reader) (*Prog, error) {
 	}
 	text := b[textOffset : textOffset+uint64(textLen)]
 
+	dataOffset := binary.LittleEndian.Uint64(b[18:26])
+	dataLen := binary.LittleEndian.Uint32(b[26:34])
+	if uint64(len(b)) < dataOffset+uint64(dataLen) {
+		return nil, fmt.Errorf("not enough bytes to read program data")
+	}
+	data := b[dataOffset : dataOffset+uint64(dataLen)]
+
 	return &Prog{
 		Text: text,
+		Data: data,
 	}, nil
 }

@@ -52,21 +52,50 @@ type ProgLabel struct {
 	Index uint32
 }
 
+// Operand represents an instruction operand of any kind:
+//   - register           // r3
+//   - integer constant   // 0x14
+//   - identifier usage   // DEFINED_INTEGER
+//   - identifier propety // message.len
+//   - label              // @.loop1
+type Operand interface {
+	Operand()
+}
+
+// Just register index as a distinct type.
+type RegisterOperand uint8
+
+func (RegisterOperand) Operand() {}
+
+type IntegerOperand uint64
+
+func (IntegerOperand) Operand() {}
+
+type IdentifierOperand string
+
+func (IdentifierOperand) Operand() {}
+
+type PropertyOperand struct {
+	Identifier string
+
+	// Property index.
+	Property uint64
+}
+
+func (PropertyOperand) Operand() {}
+
+type LabelOperand string
+
+func (LabelOperand) Operand() {}
+
 // ProgInst single instruction inside assembler program.
 type ProgInst struct {
-	// optional constant usage
-	Aux string
-
-	// usually it's destination operand
-	Operand1 uint64
-
-	// usually it's source operand
-	Operand2 uint64
+	// Ordering is left-to-right as in source text.
+	// Elements can be nil, if instruction does not have
+	// corresponding operand.
+	Operand [2]Operand
 
 	Op Opcode
-
-	// operand is a property of specified name
-	Prop bool
 }
 
 type Parser struct {
@@ -301,7 +330,7 @@ func (p *Parser) jumpLabel(s *ProgInst) {
 	p.advance() // skip label name
 
 	s.Op = JumpAddr
-	s.Aux = name
+	s.Operand[0] = LabelOperand(name)
 }
 
 func (p *Parser) loadSysReg(s *ProgInst) error {
@@ -319,10 +348,10 @@ func (p *Parser) loadSysReg(s *ProgInst) error {
 	switch p.tok.Kind {
 	case Identifier:
 		s.Op = LoadValSysReg
-		s.Aux = p.tok.Lit
+		s.Operand[1] = IdentifierOperand(p.tok.Lit)
 	case HexInteger:
 		s.Op = LoadValSysReg
-		s.Operand2 = p.tok.Val
+		s.Operand[1] = IntegerOperand(p.tok.Val)
 	default:
 		return fmt.Errorf("%s: unexpected %s token instead of source operand in load instruction",
 			p.tok.Pos(), p.tok.Kind.String())
@@ -340,7 +369,7 @@ func (p *Parser) load(s *ProgInst) error {
 		return fmt.Errorf("%s: unexpected %s token instead of register in load instruction",
 			p.tok.Pos(), p.tok.Kind.String())
 	}
-	s.Operand1 = p.tok.Val
+	s.Operand[0] = RegisterOperand(p.tok.Val)
 	p.advance() // skip destination register
 
 	if p.tok.Kind != Comma {
@@ -352,10 +381,10 @@ func (p *Parser) load(s *ProgInst) error {
 	switch p.tok.Kind {
 	case Register:
 		s.Op = LoadRegReg
-		s.Operand2 = p.tok.Val
+		s.Operand[1] = RegisterOperand(p.tok.Val)
 	case Identifier:
 		s.Op = LoadValReg
-		s.Aux = p.tok.Lit
+		name := p.tok.Lit
 		if p.next.Kind == Period {
 			p.advance() // skip name
 			p.advance() // skip "."
@@ -364,14 +393,18 @@ func (p *Parser) load(s *ProgInst) error {
 				return fmt.Errorf("%s: unexpected %s token instead of property in source operand",
 					p.tok.Pos(), p.tok.Kind.String())
 			}
-			s.Prop = true
-			s.Operand2 = p.tok.Val
+			s.Operand[1] = PropertyOperand{
+				Identifier: name,
+				Property:   p.tok.Val,
+			}
 			p.advance() // skip property
 			return nil
+		} else {
+			s.Operand[1] = IdentifierOperand(name)
 		}
 	case HexInteger:
 		s.Op = LoadValReg
-		s.Operand2 = p.tok.Val
+		s.Operand[1] = IntegerOperand(p.tok.Val)
 	default:
 		return fmt.Errorf("%s: unexpected %s token instead of source operand in load instruction",
 			p.tok.Pos(), p.tok.Kind.String())

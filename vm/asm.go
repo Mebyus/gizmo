@@ -35,11 +35,16 @@ func (a *Assembler) Assemble() (*Prog, error) {
 	}
 	return &Prog{
 		Text: a.text.Bytes(),
+		Data: a.data.Bytes(),
 	}, nil
 }
 
 func (a *Assembler) index() error {
 	err := a.indexDefs()
+	if err != nil {
+		return err
+	}
+	err = a.indexLets()
 	if err != nil {
 		return err
 	}
@@ -115,6 +120,12 @@ func (a *Assembler) indexFuncs() error {
 }
 
 func (a *Assembler) assemble() error {
+	for i := range len(a.unit.Lets) {
+		l := &a.unit.Lets[i]
+		a.let(l)
+	}
+	a.data.Align16()
+
 	// TODO: add align padding between functions
 	// and change opcode 0 to trap
 
@@ -149,6 +160,11 @@ func (a *Assembler) indexLabels(f *ProgFunc) error {
 	return nil
 }
 
+func (a *Assembler) let(l *ProgLet) {
+	a.data.AddStr(l.Str)
+	a.data.Val8(0) // terminating zero in byte array
+}
+
 func (a *Assembler) fn(f *ProgFunc) error {
 	err := a.indexLabels(f)
 	if err != nil {
@@ -158,47 +174,66 @@ func (a *Assembler) fn(f *ProgFunc) error {
 	for j := range len(f.Inst) {
 		i := &f.Inst[j]
 
-		var err error
-		switch i.Op {
-		case LoadValReg:
-			if i.Aux == "" {
-				a.loadLitValReg(uint8(i.Operand1), i.Operand2)
-			} else {
-				if i.Prop {
-					err = a.loadDefValReg(uint8(i.Operand1), i.Aux)
-				} else {
-					panic("not implemented")
-				}
-			}
-		case LoadRegReg:
-			a.loadRegReg(uint8(i.Operand1), uint8(i.Operand2))
-		case LoadValSysReg:
-			if i.Aux == "" {
-				panic("not implemented")
-			} else {
-				err = a.loadDefValSysReg(i.Aux)
-			}
-		case JumpAddr:
-			if i.Aux == "" {
-				panic("empty label name")
-			}
-			err = a.jumpLabelAddr(i.Aux)
-		case Halt:
-			a.opcode(Halt)
-		case Trap:
-			a.opcode(Trap)
-		case Nop:
-			a.opcode(Nop)
-		case SysCall:
-			a.opcode(SysCall)
-		default:
-			panic(fmt.Sprintf("opcode 0x%x not implemented", i.Op))
-		}
+		err = a.instruction(i)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (a *Assembler) instruction(i *ProgInst) error {
+	var err error
+	switch i.Op {
+	case LoadValReg:
+		reg := uint8(i.Operand[0].(RegisterOperand))
+
+		switch o := i.Operand[1].(type) {
+		case nil:
+			panic("nil operand")
+		case IntegerOperand:
+			a.loadLitValReg(reg, uint64(o))
+		case IdentifierOperand:
+			err = a.loadDefValReg(reg, string(o))
+		case PropertyOperand:
+			err = a.loadLetValReg(reg, o.Identifier, o.Property)
+		default:
+			panic(fmt.Sprintf("unexpected operand type: %#v (%T)", o, o))
+		}
+	case LoadRegReg:
+		dr := uint8(i.Operand[0].(RegisterOperand))
+		sr := uint8(i.Operand[1].(RegisterOperand))
+
+		a.loadRegReg(dr, sr)
+	case LoadValSysReg:
+		switch o := i.Operand[1].(type) {
+		case IntegerOperand:
+			a.loadLitValSysReg(uint64(o))
+		case IdentifierOperand:
+			err = a.loadDefValSysReg(string(o))
+		default:
+			panic(fmt.Sprintf("unexpected operand type: %#v (%T)", o, o))
+		}
+	case JumpAddr:
+		switch o := i.Operand[0].(type) {
+		case LabelOperand:
+			err = a.jumpLabelAddr(string(o))
+		default:
+			panic(fmt.Sprintf("unexpected operand type: %#v (%T)", o, o))
+		}
+	case Halt:
+		a.opcode(Halt)
+	case Trap:
+		a.opcode(Trap)
+	case Nop:
+		a.opcode(Nop)
+	case SysCall:
+		a.opcode(SysCall)
+	default:
+		panic(fmt.Sprintf("opcode 0x%x not implemented", i.Op))
+	}
+
+	return err
 }
 
 func (a *Assembler) jumpLabelAddr(name string) error {
@@ -215,14 +250,18 @@ func (a *Assembler) jumpLabelAddr(name string) error {
 	return nil
 }
 
+func (a *Assembler) loadLitValSysReg(v uint64) {
+	a.opcode(LoadValSysReg)
+	a.text.Val32(uint32(v))
+}
+
 func (a *Assembler) loadDefValSysReg(name string) error {
 	def, ok := a.defs[name]
 	if !ok {
 		return fmt.Errorf("constant \"%s\" is not defined", name)
 	}
 
-	a.opcode(LoadValSysReg)
-	a.text.Val32(uint32(def.Val))
+	a.loadLitValSysReg(def.Val)
 	return nil
 }
 
@@ -241,14 +280,17 @@ func (a *Assembler) loadLetValReg(dr uint8, name string, prop uint64) error {
 		return fmt.Errorf("data \"%s\" is not defined", name)
 	}
 
+	var v uint64
 	switch prop {
 	case PropPtr:
-		_ = let.Offset
+		v = (SegData << 61) | uint64(let.Offset)
 	case PropLen:
-		_ = let.Size
+		v = uint64(let.Size)
 	default:
 		panic(fmt.Errorf("unexpected property %d", prop))
 	}
+
+	a.loadLitValReg(dr, v)
 	return nil
 }
 
