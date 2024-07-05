@@ -185,6 +185,9 @@ func (a *Assembler) fn(f *ProgFunc) error {
 func (a *Assembler) instruction(i *ProgInst) error {
 	var err error
 	switch i.Op {
+	case ClearReg:
+		reg := uint8(i.Operand[0].(RegisterOperand))
+		a.clearReg(reg)
 	case LoadValReg:
 		reg := uint8(i.Operand[0].(RegisterOperand))
 
@@ -214,6 +217,19 @@ func (a *Assembler) instruction(i *ProgInst) error {
 		default:
 			panic(fmt.Sprintf("unexpected operand type: %#v (%T)", o, o))
 		}
+	case IncReg:
+		reg := uint8(i.Operand[0].(RegisterOperand))
+		a.incReg(reg)
+	case TestRegVal:
+		reg := uint8(i.Operand[0].(RegisterOperand))
+		switch o := i.Operand[1].(type) {
+		case IdentifierOperand:
+			err = a.testRegDefVal(reg, string(o))
+		case IntegerOperand:
+			panic("not implemented")
+		default:
+			panic(fmt.Sprintf("unexpected operand type: %#v (%T)", o, o))
+		}
 	case JumpAddr:
 		switch o := i.Operand[0].(type) {
 		case LabelOperand:
@@ -221,6 +237,10 @@ func (a *Assembler) instruction(i *ProgInst) error {
 		default:
 			panic(fmt.Sprintf("unexpected operand type: %#v (%T)", o, o))
 		}
+	case JumpFlagAddr:
+		flag := uint8(i.Operand[0].(FlagOperand))
+		name := string(i.Operand[1].(LabelOperand))
+		err = a.jumpFlagLabelAddr(flag, name)
 	case Halt:
 		a.opcode(Halt)
 	case Trap:
@@ -236,10 +256,50 @@ func (a *Assembler) instruction(i *ProgInst) error {
 	return err
 }
 
+func (a *Assembler) testRegDefVal(r uint8, name string) error {
+	def, ok := a.defs[name]
+	if !ok {
+		return fmt.Errorf("constant \"%s\" is not defined", name)
+	}
+
+	a.testRegVal(r, def.Val)
+	return nil
+}
+
+func (a *Assembler) testRegVal(r uint8, v uint64) {
+	a.opcode(TestRegVal)
+	a.reg(r)
+	a.text.Val64(v)
+}
+
+func (a *Assembler) incReg(r uint8) {
+	a.opcode(IncReg)
+	a.reg(r)
+}
+
+func (a *Assembler) clearReg(r uint8) {
+	a.opcode(ClearReg)
+	a.reg(r)
+}
+
+func (a *Assembler) jumpFlagLabelAddr(flag uint8, name string) error {
+	label, ok := a.labels[name]
+	if !ok {
+		return fmt.Errorf("label \"@.%s\" is not defined", name)
+	}
+
+	addr := a.foff + label.Offset
+	// TODO: add panic-check to validate address
+	// is in range of program text
+
+	a.jumpFlagAddr(flag, addr)
+	return nil
+}
+
 func (a *Assembler) jumpLabelAddr(name string) error {
 	label, ok := a.labels[name]
 	if !ok {
-		return fmt.Errorf("label \".%s\" is not defined", name)
+		return fmt.Errorf("label \"@.%s\" is not defined", name)
 	}
 
 	addr := a.foff + label.Offset
@@ -292,6 +352,12 @@ func (a *Assembler) loadLetValReg(dr uint8, name string, prop uint64) error {
 
 	a.loadLitValReg(dr, v)
 	return nil
+}
+
+func (a *Assembler) jumpFlagAddr(flag uint8, addr uint32) {
+	a.opcode(JumpFlagAddr)
+	a.text.Val8(flag)
+	a.text.Val32(addr)
 }
 
 func (a *Assembler) jumpAddr(addr uint32) {

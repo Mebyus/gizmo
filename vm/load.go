@@ -17,12 +17,17 @@ func (m *Machine) loadRegReg() error {
 		return err
 	}
 
-	m.set(dr, v)
-	return nil
+	return m.set(dr, v)
 }
 
 func (m *Machine) loadValSysReg() {
 	d := m.id(4)
 	v := val32(d)
 	m.sc = uint64(v)
+}
+
+func (m *Machine) clearReg() error {
+	d := m.id(1)
+	r := d[0]
+	return m.set(r, 0)
 }

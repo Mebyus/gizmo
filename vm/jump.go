@@ -17,19 +17,32 @@ func (m *Machine) jumpAddr() error {
 	return m.jmp(a)
 }
 
-func (m *Machine) jumpAddrNotZero() error {
-	d := m.id(4)
-	a := val32(d)
+func (m *Machine) jumpFlagAddr() error {
+	d := m.id(5)
+	f := d[0]
+	a := val32(d[1:])
 
-	if m.zeroFlag() {
+	ok, err := m.flag(f)
+	if err != nil {
+		return err
+	}
+	if !ok {
 		// no jump
 		return nil
 	}
 	return m.jmp(a)
 }
 
-func (m *Machine) zeroFlag() bool {
-	return m.cf&1 == 1
+func (m *Machine) flag(f uint8) (ok bool, err error) {
+	switch f {
+	case FlagZero:
+		ok = m.cf&1 == 1
+	case FlagNotZero:
+		ok = m.cf&1 == 0
+	default:
+		return false, fmt.Errorf("unknown flag: %d", f)
+	}
+	return ok, nil
 }
 
 func (m *Machine) testRegVal() error {

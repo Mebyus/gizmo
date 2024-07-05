@@ -96,6 +96,13 @@ const (
 	TestValReg Opcode = 0x0030
 
 	// Compare value stored in register with constant value.
+	//
+	// TODO: (?) add instruction for testing register against zero (constant).
+	// As follows:
+	//	test	r1
+	//
+	// Equivalent to:
+	//	test	r1,	0x0
 	TestRegVal Opcode = 0x0031
 
 	// Compare value stored in register with value stored in register.
@@ -104,8 +111,8 @@ const (
 	// Jump to constant address.
 	JumpAddr Opcode = 0x0040
 
-	// Jump to constant address if comparison flags register indicates not zero.
-	JumpAddrNotZero = 0x0041
+	// Jump to constant address based on the state of comparison flags register.
+	JumpFlagAddr = 0x0041
 
 	// Push constant value to stack.
 	PushVal Opcode = 0x0070
@@ -143,9 +150,14 @@ const (
 //	SR - 1 byte  - source register index
 //	DR - 1 byte  - destination register index
 //	MR - 1 byte  - system register index
+//	FS - 1 byte  - flag selector (for jumps)
 //	TA - 4 bytes - text address (for jumps)
 //	CV - 8 bytes - constant value
 //	CA - 8 bytes - constant address in memory
+//
+// TODO: encode system registers with one most significant bit set.
+// With such scheme regular (general-purpose) registers will always be
+// represented as 00bb_bbbb and system registers as 1000_0bbb
 var Size = [...]uint8{
 	// OP
 	Nop: 1,
@@ -192,6 +204,6 @@ var Size = [...]uint8{
 	// OP + TA
 	JumpAddr: 1 + 4,
 
-	// OP + TA
-	JumpAddrNotZero: 1 + 4,
+	// OP + FS + TA
+	JumpFlagAddr: 1 + 1 + 4,
 }

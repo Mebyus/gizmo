@@ -33,6 +33,7 @@ func (e *Encoder) encode(prog *Prog) {
 }
 
 // header size = magic + version + text header + data header + global header +
+// TODO: align header by 16
 const headerSize = 4 + 2 + (8 + 4) + (8 + 4) + (8 + 4)
 
 func (e *Encoder) alloc() {

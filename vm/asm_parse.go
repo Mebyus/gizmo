@@ -3,6 +3,8 @@ package vm
 import (
 	"fmt"
 	"os"
+
+	"github.com/mebyus/gizmo/char"
 )
 
 // ProgUnit represents parsed assembly program.
@@ -87,6 +89,10 @@ func (PropertyOperand) Operand() {}
 type LabelOperand string
 
 func (LabelOperand) Operand() {}
+
+type FlagOperand uint8
+
+func (FlagOperand) Operand() {}
 
 // ProgInst single instruction inside assembler program.
 type ProgInst struct {
@@ -187,7 +193,7 @@ func (p *Parser) let() error {
 		return fmt.Errorf("%s: unexpected %s token instead of string literal in let construct",
 			p.tok.Pos(), p.tok.Kind.String())
 	}
-	lit := p.tok.Lit
+	lit := char.Unescape(p.tok.Lit)
 	p.advance() // skip string literal
 	// TODO: handle escapes
 	size := uint32(len(lit))
@@ -297,6 +303,12 @@ func (p *Parser) inst(s *ProgInst) error {
 		err = p.load(s)
 	case MeJump:
 		err = p.jump(s)
+	case MeClear:
+		err = p.clear(s)
+	case MeInc:
+		err = p.inc(s)
+	case MeTest:
+		err = p.test(s)
 	case MeNop:
 		s.Op = Nop
 	case MeHalt:
@@ -312,16 +324,107 @@ func (p *Parser) inst(s *ProgInst) error {
 	return err
 }
 
+func (p *Parser) test(s *ProgInst) error {
+	op := p.tok
+	p.advance() // skip operand
+
+	switch op.Kind {
+	case Register:
+		s.Operand[0] = RegisterOperand(op.Val)
+		return p.testRegStart(s)
+	default:
+		panic(fmt.Sprintf("not implemented for %s", op.Kind.String()))
+	}
+}
+
+func (p *Parser) testRegStart(s *ProgInst) error {
+	if p.tok.Kind != Comma {
+		panic("not implemented")
+	}
+
+	p.advance() // skip ","
+
+	switch p.tok.Kind {
+	case Register:
+		panic("not implemented")
+	case Identifier:
+		s.Op = TestRegVal
+		s.Operand[1] = IdentifierOperand(p.tok.Lit)
+	case HexInteger:
+		s.Op = TestRegVal
+		s.Operand[1] = IntegerOperand(p.tok.Val)
+	default:
+		return fmt.Errorf("%s: unexpected %s token instead of operand in test instruction",
+			p.tok.Pos(), p.tok.Kind.String())
+	}
+	p.advance() // skip operand
+
+	return nil
+}
+
+func (p *Parser) inc(s *ProgInst) error {
+	if p.tok.Kind != Register {
+		return fmt.Errorf("%s: unexpected %s token instead of register operand in clear instruction",
+			p.tok.Pos(), p.tok.Kind.String())
+	}
+
+	s.Op = IncReg
+	s.Operand[0] = RegisterOperand(p.tok.Val)
+	p.advance() // skip register operand
+	return nil
+}
+
+func (p *Parser) clear(s *ProgInst) error {
+	switch p.tok.Kind {
+	case Register:
+		s.Op = ClearReg
+		s.Operand[0] = RegisterOperand(p.tok.Val)
+	default:
+		return fmt.Errorf("%s: unexpected %s token instead of operand in clear instruction",
+			p.tok.Pos(), p.tok.Kind.String())
+	}
+	p.advance() // skip operand
+
+	return nil
+}
+
 func (p *Parser) jump(s *ProgInst) error {
 	switch p.tok.Kind {
 	case Register: // TODO: handle syntax [r3]
 		panic("not implemented")
 	case Label:
 		p.jumpLabel(s)
+	case Flag:
+		return p.jumpFlag(s)
 	default:
 		return fmt.Errorf("%s: unexpected %s token instead of destination operand in jump instruction",
 			p.tok.Pos(), p.tok.Kind.String())
 	}
+	return nil
+}
+
+func (p *Parser) jumpFlag(s *ProgInst) error {
+	flag := p.tok.Val
+	p.advance() // skip flag
+
+	s.Op = JumpFlagAddr
+	s.Operand[0] = FlagOperand(flag)
+
+	if p.tok.Kind != Comma {
+		return fmt.Errorf("%s: unexpected %s token instead of \",\" in jump instruction",
+			p.tok.Pos(), p.tok.Kind.String())
+	}
+	p.advance() // skip ","
+
+	switch p.tok.Kind {
+	case Label:
+		s.Operand[1] = LabelOperand(p.tok.Lit)
+	default:
+		return fmt.Errorf("%s: unexpected %s token instead of destination operand in jump instruction",
+			p.tok.Pos(), p.tok.Kind.String())
+	}
+	p.advance() // skip destination operand
+
 	return nil
 }
 
