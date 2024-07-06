@@ -10,6 +10,7 @@
 /*.asm
 /*.c
 /*.kus
+/*.go
 
 *.gen.cc
 *.o

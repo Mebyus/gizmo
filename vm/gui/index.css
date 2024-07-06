@@ -1,0 +1,26 @@
+* {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+    font-family: 'Fira Code', monospace;
+    font-size: 1rem;
+    text-align: center;
+    /* line-height: 1.5; */
+
+    /* debug */
+    /* border: 1px solid red; */
+}
+
+html {
+    font-size: 120%;
+    color: azure;
+    background-color: #1b1b1b;
+}
+
+button {
+    padding: 0.5rem 1rem;
+
+    color: #fff;
+    background-color: #5b6dcd;
+}
