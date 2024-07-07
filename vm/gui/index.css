@@ -24,3 +24,11 @@ button {
     color: #fff;
     background-color: #5b6dcd;
 }
+
+.register {
+    display: flex;
+}
+
+.byte {
+    padding: 0 0.2rem;
+}

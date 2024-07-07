@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -80,36 +81,52 @@ type RenderStateExit struct {
 
 // All registers are rendered as fixed width hex integers.
 type RenderStateRegisters struct {
-	IP string `json:"ip"`
+	IP RenderStateRegister `json:"ip"`
 
 	// Always contains 64 elemetns.
-	R []string `json:"r"`
+	R []RenderStateRegister `json:"r"`
 }
 
-func formatRegister(v uint64) string {
-	return fmt.Sprintf("%016x", v)
+type RenderStateRegister [8]string
+
+func formatByte(b byte) string {
+	if b < 0x10 {
+		return "0" + strconv.FormatUint(uint64(b), 16)
+	}
+	return strconv.FormatUint(uint64(b), 16)
 }
 
-func formatRegisters(vv []uint64) []string {
+func formatRegister(r *RenderStateRegister, v uint64) {
+	for i := 0; i < 8; i += 1 {
+		b := byte(v)
+		r[7-i] = formatByte(b)
+		v = v >> 8
+	}
+}
+
+func formatRegisters(vv []uint64) []RenderStateRegister {
 	if len(vv) == 0 {
 		return nil
 	}
 
-	ss := make([]string, 0, len(vv))
-	for _, v := range vv {
-		ss = append(ss, formatRegister(v))
+	ss := make([]RenderStateRegister, len(vv))
+	for i, v := range vv {
+		r := &ss[i]
+		formatRegister(r, v)
 	}
 	return ss
 }
 
+func (s *DebugServer) state() *RenderStateObject {
+	var obj RenderStateObject
+	obj.Registers.R = formatRegisters(s.vm.r[:])
+	formatRegister(&obj.Registers.IP, s.vm.ip)
+	return &obj
+}
+
 func (s *DebugServer) renderState(w http.ResponseWriter) {
 	encoder := json.NewEncoder(w)
-	err := encoder.Encode(&RenderStateObject{
-		Registers: RenderStateRegisters{
-			IP: formatRegister(s.vm.ip),
-			R:  formatRegisters(s.vm.r[:]),
-		},
-	})
+	err := encoder.Encode(s.state())
 	if err != nil {
 		fmt.Printf("encode state error: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
