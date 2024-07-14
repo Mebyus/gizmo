@@ -29,6 +29,15 @@ button {
     display: flex;
 }
 
+.register-label {
+    padding: 0 1rem;
+}
+
+.register-bytes {
+    display: flex;
+    border: 1px solid wheat;
+}
+
 .byte {
     padding: 0 0.2rem;
 }

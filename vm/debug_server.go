@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -19,13 +20,21 @@ type DebugServer struct {
 	dir string
 }
 
-func NewDebugServer(addr string, dir string) *DebugServer {
+func NewDebugServer(addr string, dir string, prog *Prog) *DebugServer {
 	s := &DebugServer{
 		hs: http.Server{
 			Addr: addr,
 		},
 		dir: dir,
 	}
+	s.vm.Init(&Config{
+		StackSize:    1 << 24,
+		InitHeapSize: 0,
+	})
+	s.vm.text = prog.Text
+	s.vm.data = prog.Data
+	s.vm.global = prog.Global
+
 	s.hs.Handler = s
 	return s
 }
@@ -87,21 +96,10 @@ type RenderStateRegisters struct {
 	R []RenderStateRegister `json:"r"`
 }
 
-type RenderStateRegister [8]string
+type RenderStateRegister [8]byte
 
-func formatByte(b byte) string {
-	if b < 0x10 {
-		return "0" + strconv.FormatUint(uint64(b), 16)
-	}
-	return strconv.FormatUint(uint64(b), 16)
-}
-
-func formatRegister(r *RenderStateRegister, v uint64) {
-	for i := 0; i < 8; i += 1 {
-		b := byte(v)
-		r[7-i] = formatByte(b)
-		v = v >> 8
-	}
+func (r *RenderStateRegister) Put(v uint64) {
+	binary.LittleEndian.PutUint64((*r)[:], v)
 }
 
 func formatRegisters(vv []uint64) []RenderStateRegister {
@@ -112,7 +110,7 @@ func formatRegisters(vv []uint64) []RenderStateRegister {
 	ss := make([]RenderStateRegister, len(vv))
 	for i, v := range vv {
 		r := &ss[i]
-		formatRegister(r, v)
+		r.Put(v)
 	}
 	return ss
 }
@@ -120,8 +118,30 @@ func formatRegisters(vv []uint64) []RenderStateRegister {
 func (s *DebugServer) state() *RenderStateObject {
 	var obj RenderStateObject
 	obj.Registers.R = formatRegisters(s.vm.r[:])
-	formatRegister(&obj.Registers.IP, s.vm.ip)
+	obj.Registers.IP.Put(s.vm.ip)
+
+	if s.vm.halt {
+		var errorText string
+		if s.vm.err != nil {
+			errorText = s.vm.err.Error()
+		}
+
+		obj.Exit = &RenderStateExit{
+			Error:  errorText,
+			Status: strconv.FormatUint(s.vm.sc, 10),
+		}
+	}
+
 	return &obj
+}
+
+func (s *DebugServer) step() {
+	if s.vm.halt {
+		return
+	}
+
+	s.vm.step()
+	s.vm.clock += 1
 }
 
 func (s *DebugServer) renderState(w http.ResponseWriter) {
@@ -136,11 +156,12 @@ func (s *DebugServer) renderState(w http.ResponseWriter) {
 }
 
 func (s *DebugServer) renderStep(w http.ResponseWriter) {
-
+	s.step()
+	s.renderState(w)
 }
 
 func (s *DebugServer) ListenAndServe() error {
 	fmt.Printf("serving web ui from %s\n", s.dir)
-	fmt.Printf("open your browser at %s\n", s.hs.Addr)
+	fmt.Printf("open your browser at http://%s\n", s.hs.Addr)
 	return s.hs.ListenAndServe()
 }

@@ -2,6 +2,7 @@ package gui
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/mebyus/gizmo/butler"
 	"github.com/mebyus/gizmo/vm"
@@ -25,8 +26,19 @@ func execute(r *butler.Lackey, files []string) error {
 }
 
 func serve(path string) error {
-	s := vm.NewDebugServer("localhost:4067", "vm/gui")
-	err := s.ListenAndServe()
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	prog, err := vm.Decode(f)
+	if err != nil {
+		return err
+	}
+
+	s := vm.NewDebugServer("localhost:4067", "vm/gui", prog)
+	err = s.ListenAndServe()
 	if err != nil {
 		fmt.Printf("serve error: %v\n", err)
 	}
