@@ -24,6 +24,10 @@ func (m *Merger) runPhaseTwo() error {
 	if err != nil {
 		return err
 	}
+	err = m.bindTypes()
+	if err != nil {
+		return err
+	}
 	err = m.scanConstants()
 	if err != nil {
 		return err

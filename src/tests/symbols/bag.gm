@@ -1,4 +1,6 @@
+/*
 type ReadCloser bag {
     read(buf: []u8) => (n: int, err: error),
     close() => error,
 }
+*/

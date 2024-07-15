@@ -43,6 +43,8 @@ type Merger struct {
 	types []*Symbol
 
 	Warns []Warn
+
+	graph *TypeGraph
 }
 
 func New(ctx UnitContext) *Merger {

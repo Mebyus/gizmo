@@ -8,6 +8,8 @@ import {
     math => "math"
 }
 
+/*
+
 type Result enum u32 {
     Ok      = 0,
     Error   = 1,
@@ -21,6 +23,8 @@ fn [Result] is_ok() => bool {
 fn [Result] is_err() => bool {
     return g == Result.Error;
 }
+
+*/
 
 fn add(a: u32, b: u32) => u32 {
     let c: u32 = a + b;

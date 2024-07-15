@@ -7,7 +7,6 @@ import (
 	"github.com/mebyus/gizmo/ast/tps"
 	"github.com/mebyus/gizmo/tt/scp"
 	"github.com/mebyus/gizmo/tt/sym"
-	"github.com/mebyus/gizmo/tt/typ"
 )
 
 // TypeLinkKind describes how one type uses another in its definition.
@@ -179,7 +178,7 @@ func (m *Merger) shallowScanTypes() error {
 	for _, s := range m.types {
 		def := s.Def.(*TempTypeDef)
 		ctx := NewTypeContext()
-		t, err := m.shallowScanType(ctx, def)
+		err := m.shallowScanType(ctx, def)
 		if err != nil {
 			return err
 		}
@@ -189,41 +188,15 @@ func (m *Merger) shallowScanTypes() error {
 		}
 
 		g.Add(s, ctx.links.Elems())
-
-		s.Def = t
 	}
 
-	graph := g.Scan()
-
-	// TODO: remove debug print
-	fmt.Println("list of isolated types")
-	for _, i := range graph.Isolated {
-		n := graph.Nodes[i]
-		fmt.Printf("%s\n", n.Sym.Name)
-	}
-	fmt.Println()
-	fmt.Println("list of component types")
-	for k := 0; k < len(g.Comps); k += 1 {
-		c := &g.Comps[k]
-		fmt.Printf("component %d\n", k)
-		for rank, cohort := range c.Cohorts {
-			fmt.Printf("cohort %d\n", rank)
-			for _, i := range cohort {
-				n := graph.Nodes[c.V[i].Index]
-				fmt.Printf("%s\n", n.Sym.Name)
-			}
-			fmt.Println()
-		}
-		fmt.Println()
-	}
-
+	m.graph = g.Scan()
 	return nil
 }
 
 // performs preliminary top-level type definition scan in order to obtain data
 // necessary for constructing dependency graph between the named types
-func (m *Merger) shallowScanType(ctx *TypeContext, def *TempTypeDef) (*Type, error) {
-	name := def.top.Name.Lit
+func (m *Merger) shallowScanType(ctx *TypeContext, def *TempTypeDef) error {
 	kind := def.top.Spec.Kind()
 
 	var err error
@@ -241,14 +214,7 @@ func (m *Merger) shallowScanType(ctx *TypeContext, def *TempTypeDef) (*Type, err
 		panic(fmt.Sprintf("unexpected %s type specifier", kind.String()))
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
-	return &Type{
-		Kind: typ.Named,
-		Name: name,
-	}, nil
+	return err
 }
 
 func (m *Merger) shallowScanStructType(ctx *TypeContext, spec ast.StructType, methods []ast.Method) error {

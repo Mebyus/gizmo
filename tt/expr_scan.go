@@ -97,19 +97,18 @@ func (s *Scope) scanMemberCallExpression(ctx *Context, expr ast.MemberCallExpres
 
 	switch symbol.Type.Base.Kind {
 	case typ.Struct:
-		// TODO: implement this
+		panic("not implemented")
 	case typ.Pointer:
 		refType := symbol.Type.Base.Def.(PtrTypeDef).RefType
 		if refType.Base.Kind != typ.Struct {
 			return nil, fmt.Errorf("%s: symbol \"%s\" is a pointer to %s type which cannot have members", pos.String(),
 				name, refType.Base.Kind)
 		}
+		panic("not implemented")
 	default:
 		return nil, fmt.Errorf("%s: symbol \"%s\" is of %s type which cannot have members", pos.String(),
 			name, symbol.Type.Base.Kind.String())
 	}
-
-	return nil, nil
 }
 
 func (s *Scope) scanSymbolAddressExpression(ctx *Context, expr ast.SymbolAddressExpression) (*SymbolAddressExpression, error) {

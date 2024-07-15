@@ -64,6 +64,8 @@ func newStaticType(kind typ.Kind) *Type {
 }
 
 var (
+	Trivial = newStaticType(typ.Trivial)
+
 	StaticInteger = newStaticType(typ.StaticInteger)
 	StaticFloat   = newStaticType(typ.StaticFloat)
 	StaticString  = newStaticType(typ.StaticString)
@@ -79,8 +81,14 @@ func (s *Scope) addStaticTypes() {
 	s.Types.tm[StaticNil.Stable()] = StaticNil
 }
 
+func (s *Scope) addTrivialType() {
+	// s.Types.tm[]
+}
+
 func NewGlobalScope() *Scope {
 	s := NewScope(scp.Global, nil, nil)
+
+	s.addTrivialType()
 
 	s.addStaticTypes()
 

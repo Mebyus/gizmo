@@ -3,6 +3,7 @@ package tt
 import (
 	"encoding/binary"
 	"fmt"
+	"hash"
 	"hash/fnv"
 
 	"github.com/mebyus/gizmo/source"
@@ -74,6 +75,9 @@ type Type struct {
 
 	// True for types that are language builtins.
 	Builtin bool
+
+	// True for types which definition references itself.
+	Recursive bool
 }
 
 // Stable is a unique identifier of a type inside a program. Via this identifier
@@ -121,6 +125,13 @@ func HashName(name string) uint64 {
 	return h.Sum64()
 }
 
+func HashRecursiveName(name string) uint64 {
+	h := fnv.New64a()
+	h.Write([]byte{0})
+	h.Write([]byte(name))
+	return h.Sum64()
+}
+
 func (t *Type) Hash() uint64 {
 	if t.hash != 0 {
 		return t.hash
@@ -142,9 +153,18 @@ func (t *Type) computeHash() uint64 {
 
 	switch t.Kind {
 	case typ.Named:
+		if t.Recursive {
+			return HashRecursiveName(t.Name)
+		}
+		// TODO: we probably should panic here, since
+		// named types are not meant to be looked up by hash
 		return HashName(t.Name)
 	case typ.Pointer:
 		return HashPointerType(t.Def.(PtrTypeDef).RefType)
+	case typ.Chunk:
+		return HashChunkType(t.Def.(ChunkTypeDef).ElemType)
+	case typ.Struct:
+		return HashStructType(t)
 	case typ.StaticInteger:
 		return uint64(typ.StaticInteger)
 	case typ.StaticBoolean:
@@ -164,6 +184,16 @@ func putUint64(buf []byte, x uint64) {
 	binary.LittleEndian.PutUint64(buf, x)
 }
 
+func HashChunkType(elem *Type) uint64 {
+	var buf [10]byte
+
+	h := fnv.New64a()
+	buf[0] = byte(typ.Chunk)
+	putUint64(buf[2:], elem.Hash())
+	h.Write(buf[:])
+	return h.Sum64()
+}
+
 func HashPointerType(ref *Type) uint64 {
 	var buf [10]byte
 
@@ -172,6 +202,27 @@ func HashPointerType(ref *Type) uint64 {
 	putUint64(buf[2:], ref.Hash())
 	h.Write(buf[:])
 	return h.Sum64()
+}
+
+func HashStructType(t *Type) uint64 {
+	members := t.Def.(StructTypeDef).Members.Members
+
+	h := fnv.New64a()
+	var buf [1]byte
+	buf[0] = byte(typ.Struct)
+	h.Write(buf[:])
+	for i := 0; i < len(members); i += 1 {
+		m := &members[i]
+		hashStructField(h, m)
+	}
+	return h.Sum64()
+}
+
+func hashStructField(h hash.Hash64, m *Member) {
+	var buf [10]byte
+	putUint64(buf[1:], m.Type.Hash())
+	h.Write(buf[:])
+	h.Write([]byte(m.Name))
 }
 
 type TypeDef interface {
@@ -198,10 +249,34 @@ type PtrTypeDef struct {
 	RefType *Type
 }
 
+type ChunkTypeDef struct {
+	nodeTypeDef
+
+	ElemType *Type
+}
+
 func newPointerType(ref *Type) *Type {
 	t := &Type{
 		Kind: typ.Pointer,
 		Def:  PtrTypeDef{RefType: ref},
+	}
+	t.Base = t
+	return t
+}
+
+func newChunkType(elem *Type) *Type {
+	t := &Type{
+		Kind: typ.Chunk,
+		Def:  ChunkTypeDef{ElemType: elem},
+	}
+	t.Base = t
+	return t
+}
+
+func newStructType(members MembersList) *Type {
+	t := &Type{
+		Kind: typ.Struct,
+		Def:  StructTypeDef{Members: members},
 	}
 	t.Base = t
 	return t

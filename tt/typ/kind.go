@@ -9,6 +9,15 @@ const (
 	// Mostly a trick to detect places where Kind is left unspecified
 	empty Kind = iota
 
+	// Trivial type has no size or properties. It is formed by language
+	// constructs such as:
+	//
+	//	struct {} // empty struct
+	//	[0]int    // array with zero size
+	//
+	// There is always only one trivial type.
+	Trivial
+
 	// Type for static integers (literals, constants and expressions).
 	// Includes positive, negative and zero integers.
 	//

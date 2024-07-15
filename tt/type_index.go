@@ -9,6 +9,12 @@ import (
 	"github.com/mebyus/gizmo/tt/typ"
 )
 
+// TypeIndex is a helper managment object which is used to lookup and create
+// a type by its type specifier.
+//
+// If type with given type specifier already exists, then existed type is returned,
+// without creating a new one. If type index fails to find an existing type, then
+// a new one will be created, stored for later lookups and returned.
 type TypeIndex struct {
 	// Scope which is used for resolving symbols when performing
 	// type specifier lookups.
@@ -20,6 +26,7 @@ type TypeIndex struct {
 
 func (x *TypeIndex) Lookup(spec ast.TypeSpecifier) (*Type, error) {
 	if spec == nil {
+		// handle never and void return "types"
 		return nil, nil
 	}
 
@@ -32,6 +39,10 @@ func (x *TypeIndex) lookup(spec ast.TypeSpecifier) (*Type, error) {
 		return x.lookupNamed(spec.(ast.TypeName).Name)
 	case tps.Pointer:
 		return x.lookupPointer(spec.(ast.PointerType).RefType)
+	case tps.Struct:
+		return x.lookupStruct(spec.(ast.StructType))
+	case tps.Chunk:
+		return x.lookupChunk(spec.(ast.ChunkType).ElemType)
 	default:
 		panic(fmt.Sprintf("not implemented for %s", spec.Kind().String()))
 	}
@@ -41,6 +52,12 @@ func (x *TypeIndex) storePointer(ref *Type) *Type {
 	return x.store(newPointerType(ref))
 }
 
+func (x *TypeIndex) storeChunk(elem *Type) *Type {
+	return x.store(newChunkType(elem))
+}
+
+// store saves a given type if it is not yet known to index
+// or returns and old one with the same stable hash.
 func (x *TypeIndex) store(a *Type) *Type {
 	stable := a.Stable()
 	t := x.tm[stable]
@@ -49,6 +66,39 @@ func (x *TypeIndex) store(a *Type) *Type {
 		t = a
 	}
 	return t
+}
+
+func (x *TypeIndex) lookupChunk(spec ast.TypeSpecifier) (*Type, error) {
+	elem, err := x.lookup(spec)
+	if err != nil {
+		return nil, err
+	}
+	return x.storeChunk(elem), nil
+}
+
+func (x *TypeIndex) lookupStruct(spec ast.StructType) (*Type, error) {
+	if len(spec.Fields) == 0 {
+		return Trivial, nil
+	}
+
+	var members MembersList
+	members.Init(len(spec.Fields))
+
+	for _, f := range spec.Fields {
+		t, err := x.lookup(f.Type)
+		if err != nil {
+			return nil, err
+		}
+
+		members.Add(Member{
+			Pos:  f.Name.Pos,
+			Name: f.Name.Lit,
+			Kind: MemberField,
+			Type: t,
+		})
+	}
+
+	return x.store(newStructType(members)), nil
 }
 
 func (x *TypeIndex) lookupPointer(spec ast.TypeSpecifier) (*Type, error) {

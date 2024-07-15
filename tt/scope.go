@@ -23,13 +23,11 @@ type Scope struct {
 	// Next levels may vary based on source code that defines the scope.
 	Parent *Scope
 
+	// Types which are visible inside this scope.
 	Types *TypeIndex
 
 	// Symbol map. Maps name to its local symbol.
 	sm map[string]*Symbol
-
-	// Types which are visible inside this Scope
-	// Types *Tindex
 
 	// Local position of scope inclusion point in parent scope.
 	// Determined by Pos of scope block start. Irrelevant for
