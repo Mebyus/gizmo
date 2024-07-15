@@ -23,6 +23,20 @@ button {
 
     color: #fff;
     background-color: #5b6dcd;
+
+    transition: all 250ms;
+}
+
+button:hover {
+    color: aquamarine;
+    background-color: #666fa7;
+    cursor: pointer;
+}
+
+button:active {
+    color: beige;
+    background-color: #377a6f;
+    cursor: pointer;
 }
 
 .register {

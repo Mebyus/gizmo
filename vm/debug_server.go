@@ -91,6 +91,7 @@ type RenderStateExit struct {
 // All registers are rendered as fixed width hex integers.
 type RenderStateRegisters struct {
 	IP RenderStateRegister `json:"ip"`
+	CF RenderStateRegister `json:"cf"`
 
 	// Always contains 64 elemetns.
 	R []RenderStateRegister `json:"r"`
@@ -119,6 +120,7 @@ func (s *DebugServer) state() *RenderStateObject {
 	var obj RenderStateObject
 	obj.Registers.R = formatRegisters(s.vm.r[:])
 	obj.Registers.IP.Put(s.vm.ip)
+	obj.Registers.CF.Put(s.vm.cf)
 
 	if s.vm.halt {
 		var errorText string

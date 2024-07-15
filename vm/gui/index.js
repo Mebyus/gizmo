@@ -1,21 +1,37 @@
 function main() {
     let step = document.getElementById("step");
-
-    let ip = new Register("ip");
-    let r0 = new Register("r0");
-    let r1 = new Register("r1");
-    let r2 = new Register("r2");
-    let r3 = new Register("r3");
+    let panel = new RegistersPanel();
 
     step.addEventListener("click", () => {
         vmStep().then((state) => {
-            ip.changeValue(state.regs.ip);
-            r0.changeValue(state.regs.r[0]);
-            r1.changeValue(state.regs.r[1]);
-            r2.changeValue(state.regs.r[2]);
-            r3.changeValue(state.regs.r[3]);
+            panel.changeValues(state.regs);
         });
     });
+}
+
+// number of general-purpose registers
+const REG_NUM = 4;
+
+class RegistersPanel {
+    constructor() {
+        this.ip = new Register("ip");
+        this.cf = new Register("cf");
+
+        let r = [];
+        for (let i = 0; i < REG_NUM; i += 1) {
+            r.push(new Register("r" + i.toString()));
+        }
+        this.r = r;
+    }
+
+    changeValues(regs) {
+        this.ip.changeValue(regs.ip);
+        this.cf.changeValue(regs.cf);
+
+        for (let i = 0; i < REG_NUM; i += 1) {
+            this.r[i].changeValue(regs.r[i])
+        }
+    }
 }
 
 /**
