@@ -346,3 +346,20 @@ func (DeferStatement) Kind() stm.Kind {
 func (s DeferStatement) Pin() source.Pos {
 	return s.Pos
 }
+
+type SymbolCallStatement struct {
+	nodeStatement
+
+	Callee    Identifier
+	Arguments []Expression
+}
+
+var _ Statement = SymbolCallStatement{}
+
+func (SymbolCallStatement) Kind() stm.Kind {
+	return stm.SymbolCall
+}
+
+func (s SymbolCallStatement) Pin() source.Pos {
+	return s.Callee.Pos
+}

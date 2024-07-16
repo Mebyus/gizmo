@@ -210,7 +210,7 @@ func HashPointerType(ref *Type) uint64 {
 }
 
 func HashStructType(t *Type) uint64 {
-	members := t.Def.(StructTypeDef).Members.Members
+	members := t.Def.(*StructTypeDef).Members.Members
 
 	h := fnv.New64a()
 	var buf [1]byte
@@ -281,7 +281,7 @@ func newChunkType(elem *Type) *Type {
 func newStructType(members MembersList) *Type {
 	t := &Type{
 		Kind: typ.Struct,
-		Def:  StructTypeDef{Members: members},
+		Def:  &StructTypeDef{Members: members},
 	}
 	t.Base = t
 	return t

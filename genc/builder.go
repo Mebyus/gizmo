@@ -56,7 +56,7 @@ func (g *Builder) Type(s *tt.Symbol, t *tt.Type) {
 	case typ.Trivial:
 		g.puts("struct {}")
 	case typ.Struct:
-		g.StructType(t.Base.Def.(tt.StructTypeDef))
+		g.StructType(t.Base.Def.(*tt.StructTypeDef))
 	default:
 		panic(fmt.Sprintf("%s types not implemented", t.Base.Kind.String()))
 	}
@@ -91,7 +91,7 @@ func (g *Builder) structField(member *tt.Member) {
 	g.semi()
 }
 
-func (g *Builder) StructType(def tt.StructTypeDef) {
+func (g *Builder) StructType(def *tt.StructTypeDef) {
 	g.puts("struct")
 	g.space()
 	g.structFields(def.Members.Members)
@@ -238,12 +238,19 @@ func (g *Builder) Statement(node tt.Statement) {
 		g.varStatement(node.(*tt.VarStatement))
 	case stm.SymbolAssign:
 		g.symbolAssignStatement(node.(*tt.SymbolAssignStatement))
+	case stm.SymbolCall:
+		g.symbolCallStatement(node.(*tt.SymbolCallStatement))
 	default:
 		panic(fmt.Sprintf("%s statement not implemented", node.Kind().String()))
 	}
 
 	g.semi()
 	g.nl()
+}
+
+func (g *Builder) symbolCallStatement(node *tt.SymbolCallStatement) {
+	g.SymbolName(node.Callee)
+	g.CallArgs(node.Arguments)
 }
 
 func (g *Builder) symbolAssignStatement(node *tt.SymbolAssignStatement) {

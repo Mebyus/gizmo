@@ -40,6 +40,11 @@ const (
 	//	x.@ = 10 + a;
 	IndirectAssign
 
+	// Example:
+	//
+	//	call_func(arg1, arg2);
+	SymbolCall
+
 	// If without else and else-if clauses.
 	SimpleIf
 )
@@ -66,6 +71,7 @@ var text = [...]string{
 	DeferBlock: "defer_block",
 
 	SymbolAssign:   "symbol_assign",
+	SymbolCall:     "symbol_call",
 	IndirectAssign: "indirect_assign",
 
 	SimpleIf: "simple_if",

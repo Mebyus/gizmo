@@ -3,6 +3,6 @@ type Adder struct {
     b2: i32,
 }
 
-fn take_adder(a: *Adder) {
-    
+fn take_adder(a: Adder) {
+    change_and_return(a.b2);
 }

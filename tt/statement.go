@@ -184,3 +184,22 @@ func (*WhileStatement) Kind() stm.Kind {
 func (s *WhileStatement) Pin() source.Pos {
 	return s.Pos
 }
+
+type SymbolCallStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	Arguments []Expression
+	Callee    *Symbol
+}
+
+var _ Statement = &SymbolCallStatement{}
+
+func (*SymbolCallStatement) Kind() stm.Kind {
+	return stm.SymbolCall
+}
+
+func (s *SymbolCallStatement) Pin() source.Pos {
+	return s.Pos
+}

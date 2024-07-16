@@ -73,43 +73,80 @@ func (b *Block) fill(ctx *Context, statements []ast.Statement) error {
 
 func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	switch statement.Kind() {
-	case stm.Block:
-		// g.BlockStatement(statement.(ast.BlockStatement))
+	// case stm.Block:
+	// g.BlockStatement(statement.(ast.BlockStatement))
 	case stm.Return:
 		return b.addReturn(ctx, statement.(ast.ReturnStatement))
-	case stm.Const:
-		// g.ConstStatement(statement.(ast.ConstStatement))
+	// case stm.Const:
+	// g.ConstStatement(statement.(ast.ConstStatement))
 	case stm.Var:
 		return b.addVar(ctx, statement.(ast.VarStatement))
 	case stm.If:
 		return b.addIf(ctx, statement.(ast.IfStatement))
-	case stm.Expr:
-		// g.ExpressionStatement(statement.(ast.ExpressionStatement))
+	// case stm.Expr:
+	// g.ExpressionStatement(statement.(ast.ExpressionStatement))
+	case stm.SymbolCall:
+		return b.addSymbolCall(ctx, statement.(ast.SymbolCallStatement))
 	case stm.SymbolAssign:
 		return b.addSymbolAssign(ctx, statement.(ast.SymbolAssignStatement))
 	case stm.IndirectAssign:
 		return b.addIndirectAssign(ctx, statement.(ast.IndirectAssignStatement))
-	case stm.Assign:
-		// return b.addAssign(ctx, statement.(ast.AssignStatement))
-	case stm.AddAssign:
-		// g.AddAssignStatement(statement.(ast.AddAssignStatement))
-	case stm.For:
-		// g.ForStatement(statement.(ast.ForStatement))
+	// case stm.Assign:
+	// return b.addAssign(ctx, statement.(ast.AssignStatement))
+	// case stm.AddAssign:
+	// g.AddAssignStatement(statement.(ast.AddAssignStatement))
+	// case stm.For:
+	// g.ForStatement(statement.(ast.ForStatement))
 	case stm.ForCond:
 		return b.addForCond(ctx, statement.(ast.ForConditionStatement))
-	case stm.Match:
-		// g.MatchStatement(statement.(ast.MatchStatement))
-	case stm.Jump:
-		// g.JumpStatement(statement.(ast.JumpStatement))
-	case stm.ForEach:
-		// g.ForEachStatement(statement.(ast.ForEachStatement))
+	// case stm.Match:
+	// g.MatchStatement(statement.(ast.MatchStatement))
+	// case stm.Jump:
+	// g.JumpStatement(statement.(ast.JumpStatement))
+	// case stm.ForEach:
+	// g.ForEachStatement(statement.(ast.ForEachStatement))
 	case stm.Let:
 		return b.addLet(ctx, statement.(ast.LetStatement))
-	case stm.Defer:
-		//
+	// case stm.Defer:
+	//
 	default:
 		panic(fmt.Sprintf("not implemented for %s statement", statement.Kind().String()))
 	}
+}
+
+func (b *Block) addSymbolCall(ctx *Context, stmt ast.SymbolCallStatement) error {
+	name := stmt.Callee.Lit
+	pos := stmt.Callee.Pos
+	s := b.Scope.Lookup(name, pos.Num)
+	if s == nil {
+		return fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
+	}
+	if s.Scope.Kind == scp.Unit {
+		ctx.ref.Add(s)
+	}
+	if s.Kind != sym.Fn {
+		return fmt.Errorf("%s: call to symbol \"%s\", which is not a function", pos.String(), name)
+	}
+
+	def := s.Def.(*FnDef)
+	if len(stmt.Arguments) < len(def.Params) {
+		return fmt.Errorf("%s: not enough arguments (got %d) to call \"%s\" function (want %d)",
+			pos.String(), len(stmt.Arguments), name, len(def.Params))
+	}
+	if len(stmt.Arguments) > len(def.Params) {
+		return fmt.Errorf("%s: too many arguments (got %d) in function \"%s\" call (want %d)",
+			pos.String(), len(stmt.Arguments), name, len(def.Params))
+	}
+	args, err := b.Scope.scanCallArgs(ctx, def.Params, stmt.Arguments)
+	if err != nil {
+		return err
+	}
+
+	b.addNode(&SymbolCallStatement{
+		Pos:       pos,
+		Callee:    s,
+		Arguments: args,
+	})
 	return nil
 }
 

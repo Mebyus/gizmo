@@ -52,6 +52,8 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 		return s.scanSymbolAddressExpression(ctx, expr.(ast.SymbolAddressExpression))
 	case exn.MemberCall:
 		return s.scanMemberCallExpression(ctx, expr.(ast.MemberCallExpression))
+	case exn.Member:
+		return s.scanMemberExpression(ctx, expr.(ast.MemberExpression))
 	// case exn.Cast:
 	// 	// g.CastExpression(expr.(ast.CastExpression))
 	// case exn.Instance:
@@ -67,6 +69,36 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 	default:
 		panic(fmt.Sprintf("not implemented for %s expression", expr.Kind().String()))
 	}
+}
+
+func (s *Scope) scanMemberExpression(ctx *Context, expr ast.MemberExpression) (*MemberExpression, error) {
+	name := expr.Target.Lit
+	pos := expr.Target.Pos
+	symbol := s.Lookup(name, pos.Num)
+	if symbol == nil {
+		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
+	}
+	if symbol.Scope.Kind == scp.Unit {
+		ctx.ref.Add(symbol)
+	}
+
+	if symbol.Type.Base.Kind != typ.Struct {
+		return nil, fmt.Errorf("%s: symbol \"%s\" is of %s type and does not have members",
+			pos.String(), name, s.Kind.String())
+	}
+	mname := expr.Member.Lit
+	mpos := expr.Member.Pos
+	member := symbol.Type.Base.Def.(*StructTypeDef).Members.Find(mname)
+	if member == nil {
+		return nil, fmt.Errorf("%s: symbol \"%s\" does not have \"%s\" member",
+			mpos.String(), name, mname)
+	}
+
+	return &MemberExpression{
+		Pos:    pos,
+		Target: symbol,
+		Member: member,
+	}, nil
 }
 
 func (s *Scope) scanMemberCallExpression(ctx *Context, expr ast.MemberCallExpression) (Expression, error) {

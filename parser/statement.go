@@ -425,6 +425,26 @@ func (p *Parser) ifClause() (clause ast.IfClause, err error) {
 
 // ExpressionStatement or AssignStatement
 func (p *Parser) otherStatement() (ast.Statement, error) {
+	if p.tok.Kind == token.Identifier && p.next.Kind == token.LeftParentheses {
+		name := p.idn()
+		p.advance() // skip identifier
+
+		args, err := p.callArguments()
+		if err != nil {
+			return nil, err
+		}
+
+		if p.tok.Kind != token.Semicolon {
+			panic("chain after call not implemented")
+		}
+		p.advance() // skip ";"
+
+		return ast.SymbolCallStatement{
+			Callee:    name,
+			Arguments: args,
+		}, nil
+	}
+
 	if p.tok.Kind != token.Identifier && p.tok.Kind != token.Receiver {
 		return nil, p.unexpected(p.tok)
 	}
@@ -461,7 +481,7 @@ func (p *Parser) otherStatement() (ast.Statement, error) {
 		}
 	} else if p.tok.Kind == token.Receiver {
 		pos := p.pos()
-		p.advance() // skip "rv"
+		p.advance() // skip "g"
 
 		if p.tok.Kind == token.Assign {
 			return nil, fmt.Errorf("%s: receiver cannot be assigned to", p.tok.Kind.String())

@@ -26,9 +26,17 @@ func (g *Builder) expr(expr tt.Expression) {
 		g.BinaryExpression(expr.(*tt.BinaryExpression))
 	case exn.SymbolCall:
 		g.SymbolCallExpression(expr.(*tt.SymbolCallExpression))
+	case exn.Member:
+		g.MemberExpression(expr.(*tt.MemberExpression))
 	default:
 		panic(fmt.Sprintf("%s expression not implemented", expr.Kind().String()))
 	}
+}
+
+func (g *Builder) MemberExpression(expr *tt.MemberExpression) {
+	g.SymbolName(expr.Target)
+	g.puts(".")
+	g.puts(expr.Member.Name)
 }
 
 func (g *Builder) Integer(expr tt.Integer) {
