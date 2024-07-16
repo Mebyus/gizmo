@@ -1,0 +1,8 @@
+type Adder struct {
+    arg: u64,
+    b2: i32,
+}
+
+fn take_adder(a: *Adder) {
+    
+}

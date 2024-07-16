@@ -39,12 +39,62 @@ func (g *Builder) Gen(u *tt.Unit) {
 			g.FnDef(s, s.Def.(*tt.FnDef))
 		case sym.Const:
 			g.Const(s, s.Def.(*tt.ConstDef))
+		case sym.Type:
+			g.Type(s, s.Def.(*tt.Type))
 		default:
 			panic(fmt.Sprintf("not implemented for %s symbols", s.Kind.String()))
 		}
 
 		g.nl()
 	}
+}
+
+func (g *Builder) Type(s *tt.Symbol, t *tt.Type) {
+	g.puts("typedef")
+	g.space()
+	switch t.Base.Kind {
+	case typ.Trivial:
+		g.puts("struct {}")
+	case typ.Struct:
+		g.StructType(t.Base.Def.(tt.StructTypeDef))
+	default:
+		panic(fmt.Sprintf("%s types not implemented", t.Base.Kind.String()))
+	}
+	g.space()
+	g.SymbolName(s)
+	g.semi()
+	g.nl()
+}
+
+func (g *Builder) structFields(members []tt.Member) {
+	if len(members) == 0 {
+		g.puts("{}")
+		return
+	}
+
+	g.puts("{")
+	g.nl()
+	g.inc()
+	for i := 0; i < len(members); i += 1 {
+		g.indent()
+		g.structField(&members[i])
+		g.nl()
+	}
+	g.dec()
+	g.puts("}")
+}
+
+func (g *Builder) structField(member *tt.Member) {
+	g.TypeSpec(member.Type)
+	g.space()
+	g.puts(member.Name)
+	g.semi()
+}
+
+func (g *Builder) StructType(def tt.StructTypeDef) {
+	g.puts("struct")
+	g.space()
+	g.structFields(def.Members.Members)
 }
 
 func (g *Builder) Const(s *tt.Symbol, def *tt.ConstDef) {
@@ -110,6 +160,13 @@ func (g *Builder) getTypeSpec(t *tt.Type) string {
 		}
 
 	}
+	if t.Kind == typ.Named {
+		return g.getSymbolName(t.Def.(tt.NamedTypeDef).Symbol)
+	}
+	if t.Kind == typ.Pointer {
+		return g.getTypeSpec(t.Def.(tt.PtrTypeDef).RefType) + "*"
+	}
+
 	panic(fmt.Sprintf("%s types not implemented", t.Kind))
 }
 
@@ -143,21 +200,30 @@ func (g *Builder) FnParam(p *tt.Symbol) {
 	g.SymbolName(p)
 }
 
-func (g *Builder) FnDef(s *tt.Symbol, def *tt.FnDef) {
-	g.TypeSpec(def.Result)
-	g.nl()
-	g.SymbolName(s)
-	g.FnParams(def.Params)
+func (g *Builder) Block(block *tt.Block) {
+	if len(block.Nodes) == 0 {
+		g.puts("{}")
+		return
+	}
 
-	g.puts(" {")
+	g.puts("{")
 	g.nl()
 	g.inc()
-	for _, node := range def.Body.Nodes {
+	for _, node := range block.Nodes {
 		g.Statement(node)
 	}
 	g.dec()
 	g.puts("}")
 	g.nl()
+}
+
+func (g *Builder) FnDef(s *tt.Symbol, def *tt.FnDef) {
+	g.TypeSpec(def.Result)
+	g.nl()
+	g.SymbolName(s)
+	g.FnParams(def.Params)
+	g.space()
+	g.Block(&def.Body)
 }
 
 func (g *Builder) Statement(node tt.Statement) {

@@ -22,8 +22,7 @@ func (m *Merger) bindTypes() error {
 		if n.SelfLoop {
 			m.bindRecursiveType(s)
 		} else {
-			def := s.Def.(*TempTypeDef)
-			s.Def = m.bindType(def)
+			s.Def = m.bindType(s)
 		}
 	}
 
@@ -54,6 +53,7 @@ func (m *Merger) bindRecursiveType(s *Symbol) {
 
 		Name: name,
 		Kind: typ.Named,
+		Def:  NamedTypeDef{Symbol: s},
 	}
 	s.Def = t
 
@@ -65,7 +65,8 @@ func (m *Merger) bindRecursiveType(s *Symbol) {
 	t.Base = base.Base
 }
 
-func (m *Merger) bindType(def *TempTypeDef) *Type {
+func (m *Merger) bindType(s *Symbol) *Type {
+	def := s.Def.(*TempTypeDef)
 	name := def.top.Name.Lit
 	base, err := m.unit.Scope.Types.lookup(def.top.Spec)
 	if err != nil {
@@ -77,5 +78,6 @@ func (m *Merger) bindType(def *TempTypeDef) *Type {
 		Name: name,
 		Base: base.Base,
 		Kind: typ.Named,
+		Def:  NamedTypeDef{Symbol: s},
 	}
 }

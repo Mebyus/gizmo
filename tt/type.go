@@ -26,6 +26,9 @@ type Type struct {
 	//
 	// On the other hand []i32 is just a chunk of sized
 	// i32 numbers with no specific name for that type.
+	//
+	// TODO: we can possibly change this to *Symbol, which
+	// already contains type name.
 	Name string
 
 	// Type definition.
@@ -374,4 +377,11 @@ type StructTypeDef struct {
 	nodeTypeDef
 
 	Members MembersList
+}
+
+type NamedTypeDef struct {
+	nodeTypeDef
+
+	// Symbol which was used to define a named type.
+	Symbol *Symbol
 }

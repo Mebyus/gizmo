@@ -236,6 +236,7 @@ var text = [...]string{
 	StaticString:  "static_string",
 	StaticBoolean: "static_boolean",
 	StaticNil:     "static_nil",
+	Trivial:       "triv",
 	Named:         "named",
 	Struct:        "struct",
 	Tuple:         "tuple",
