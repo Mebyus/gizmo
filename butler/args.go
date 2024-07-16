@@ -42,6 +42,8 @@ type Param struct {
 	Name string
 
 	Kind ParamKind
+
+	Required bool
 }
 
 func (p *Param) Bind(val string) error {
@@ -99,6 +101,9 @@ func Parse(params Params, args []string) ([]string, error) {
 	}
 
 	for _, p := range m {
+		if p.Required && p.Def == nil && p.val == nil {
+			return nil, fmt.Errorf("param {%s} is required", p.Name)
+		}
 		err := params.Apply(p)
 		if err != nil {
 			return nil, fmt.Errorf("apply param {%s} value {%v}: %w", p.Name, p.val, err)

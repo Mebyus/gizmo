@@ -243,6 +243,10 @@ func (b *Block) addSymbolAssign(ctx *Context, stmt ast.SymbolAssignStatement) er
 	if s == nil {
 		return fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
 	}
+	if s.Kind != sym.Var {
+		return fmt.Errorf("%s: cannot assign to %s symbol \"%s\"",
+			pos.String(), s.Kind.String(), name)
+	}
 	if s.Scope.Kind == scp.Unit {
 		ctx.ref.Add(s)
 	}

@@ -1,5 +1,7 @@
 package tt
 
+// TODO: rename package to tgr - Type Graph Representation
+
 import (
 	"encoding/binary"
 	"fmt"

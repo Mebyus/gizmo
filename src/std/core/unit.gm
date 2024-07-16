@@ -1,5 +1,0 @@
-unit main {
-    files = [
-        "prelude.cc",
-    ];
-}

@@ -15,7 +15,7 @@ func NewNoder(tokens []token.Token) *Noder {
 	return &Noder{tokens: tokens}
 }
 
-func (g *Noder) Nodes(atom ast.Atom) []Node {
+func (g *Noder) Nodes(atom *ast.Atom) []Node {
 	for _, top := range atom.Nodes {
 		g.TopLevel(top)
 		g.blank()

@@ -8,7 +8,7 @@ import (
 	"github.com/mebyus/gizmo/source"
 )
 
-func Gen(w io.Writer, cfg *Config, atom ast.Atom) error {
+func Gen(w io.Writer, cfg *Config, atom *ast.Atom) error {
 
 	if cfg == nil {
 		cfg = &Config{

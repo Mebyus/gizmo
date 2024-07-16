@@ -108,43 +108,72 @@ func FromSource(src *source.File) *Parser {
 	return p
 }
 
-func ParseBytes(b []byte) (ast.Atom, error) {
+func ParseBytes(b []byte) (*ast.Atom, error) {
 	p := FromBytes(b)
-	return p.parse()
+	return p.FullParse()
 }
 
-func ParseFile(filename string) (ast.Atom, error) {
+func ParseFile(filename string) (*ast.Atom, error) {
 	p, err := FromFile(filename)
 	if err != nil {
-		return ast.Atom{}, err
+		return nil, err
 	}
-	return p.parse()
+	return p.FullParse()
 }
 
-func ParseSource(src *source.File) (ast.Atom, error) {
+func ParseSource(src *source.File) (*ast.Atom, error) {
 	p := FromSource(src)
-	return p.parse()
+	return p.FullParse()
 }
 
 // Header returns list of all import paths specified in parsed atom.
 // Should be called before calling Parse method. Under the hood this method
-// parses first blocks in atom until it encounteres non-import top-level block
+// parses first blocks in atom until it encounteres non-import top-level block.
 //
-// Resulting slice may be empty or contain non-unique entries
-func (p *Parser) Header() (ast.AtomHeader, error) {
+// Resulting slice may be empty or contain non-unique entries.
+func (p *Parser) Header() (*ast.AtomHeader, error) {
+	err := p.header()
+	if err != nil {
+		return nil, err
+	}
+	return &p.atom.Header, nil
+}
+
+// Parse continues atom parsing from the state where Header method left.
+// Resulting atom tree is complete and also contains info gathered by
+// Header method.
+func (p *Parser) Parse() (*ast.Atom, error) {
+	err := p.parse()
+	if err != nil {
+		return nil, err
+	}
+	return &p.atom, nil
+}
+
+// FullParse combines Header and Parse into one method.
+// This method is mostly a convenience for testing and prototyping.
+func (p *Parser) FullParse() (*ast.Atom, error) {
+	_, err := p.Header()
+	if err != nil {
+		return nil, err
+	}
+	return p.Parse()
+}
+
+func (p *Parser) header() error {
 	var unit *ast.UnitBlock
 	var err error
 	if p.tok.Kind == token.Unit {
 		unit, err = p.unitBlock()
 		if err != nil {
-			return ast.AtomHeader{}, err
+			return err
 		}
 	}
 	p.atom.Header.Unit = unit
 
 	blocks, err := p.imports()
 	if err != nil {
-		return ast.AtomHeader{}, err
+		return err
 	}
 	p.atom.Header.Imports.ImportBlocks = blocks
 
@@ -158,28 +187,20 @@ func (p *Parser) Header() (ast.AtomHeader, error) {
 		}
 	}
 	p.atom.Header.Imports.ImportPaths = paths
-
-	return p.atom.Header, nil
+	return nil
 }
 
-// Parse continues atom parsing from the state where Header method left.
-// Resulting atom tree is complete and also contains info gathered by
-// Header method
-func (p *Parser) Parse() (ast.Atom, error) {
-	return p.parse()
-}
-
-func (p *Parser) parse() (ast.Atom, error) {
+func (p *Parser) parse() error {
 	var nodes []ast.TopLevel
 	for {
 		if p.isEOF() {
 			p.atom.Nodes = nodes
-			return p.atom, nil
+			return nil
 		}
 
 		top, err := p.topLevel()
 		if err != nil {
-			return ast.Atom{}, err
+			return err
 		}
 		nodes = append(nodes, top)
 	}

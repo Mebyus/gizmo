@@ -282,7 +282,7 @@ type SymbolCallExpression struct {
 var _ ChainOperand = &SymbolCallExpression{}
 
 func (*SymbolCallExpression) Kind() exn.Kind {
-	return exn.Call
+	return exn.SymbolCall
 }
 
 func (e *SymbolCallExpression) Pin() source.Pos {

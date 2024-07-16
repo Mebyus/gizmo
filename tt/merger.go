@@ -63,7 +63,7 @@ type UnitContext struct {
 	Global *Scope
 }
 
-func (m *Merger) Add(atom ast.Atom) error {
+func (m *Merger) Add(atom *ast.Atom) error {
 	for _, block := range atom.Header.Imports.ImportBlocks {
 		for _, spec := range block.Specs {
 			err := m.addImport(ast.ImportBind{

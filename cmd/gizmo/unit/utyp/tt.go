@@ -3,7 +3,6 @@ package utyp
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/mebyus/gizmo/butler"
 	"github.com/mebyus/gizmo/er"
@@ -37,19 +36,14 @@ func execute(r *butler.Lackey, units []string) error {
 }
 
 func utyp(unit string) error {
-	files, err := loadFiles(unit)
+	files, err := source.LoadUnitFiles(unit)
 	if err != nil {
 		return err
 	}
 
 	m := tt.New(tt.UnitContext{Global: tt.NewGlobalScope()})
 	for _, file := range files {
-		p := parser.FromSource(file)
-		_, err := p.Header()
-		if err != nil {
-			return err
-		}
-		atom, err := p.Parse()
+		atom, err := parser.ParseSource(file)
 		if err != nil {
 			return err
 		}
@@ -66,55 +60,4 @@ func utyp(unit string) error {
 		fmt.Println(warn)
 	}
 	return nil
-}
-
-const maxFileSize = 1 << 26
-
-func loadFiles(dir string) ([]*source.File, error) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, err
-	}
-	if len(entries) == 0 {
-		return nil, fmt.Errorf("directory \"%s\" is empty", dir)
-	}
-
-	var files []*source.File
-	for _, entry := range entries {
-		if !entry.Type().IsRegular() {
-			continue
-		}
-
-		name := entry.Name()
-		if filepath.Ext(name) != ".gm" {
-			continue
-		}
-
-		info, err := entry.Info()
-		if err != nil {
-			return nil, err
-		}
-
-		if !info.Mode().IsRegular() {
-			continue
-		}
-
-		size := info.Size()
-		if size > maxFileSize {
-			return nil, fmt.Errorf("file \"%s\" is larger than max allowed size", name)
-		}
-
-		path := filepath.Join(dir, name)
-		file, err := source.Load(path)
-		if err != nil {
-			return nil, err
-		}
-		files = append(files, file)
-	}
-	if len(files) == 0 {
-		return nil, fmt.Errorf("directory \"%s\" does not contain gizmo source files", dir)
-	}
-	source.SortAndOrder(files)
-
-	return files, nil
 }

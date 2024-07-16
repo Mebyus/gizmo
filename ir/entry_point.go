@@ -8,7 +8,7 @@ import (
 // CheckEntryPoint returns true if atom contains a function with specified name
 // and signature appropriate to be program entrypoint. Entrypoint can only be found
 // in default namespace block
-func CheckEntryPoint(atom ast.Atom, entry string) bool {
+func CheckEntryPoint(atom *ast.Atom, entry string) bool {
 	for _, node := range atom.Nodes {
 		if node.Kind() != toplvl.Fn {
 			continue
