@@ -93,10 +93,10 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 		return b.addIndirectAssign(ctx, statement.(ast.IndirectAssignStatement))
 	// case stm.Assign:
 	// return b.addAssign(ctx, statement.(ast.AssignStatement))
-	// case stm.AddAssign:
-	// g.AddAssignStatement(statement.(ast.AddAssignStatement))
-	// case stm.For:
-	// g.ForStatement(statement.(ast.ForStatement))
+	case stm.AddAssign:
+		return b.addAddAssign(ctx, statement.(ast.AddAssignStatement))
+	case stm.For:
+		return b.addFor(ctx, statement.(ast.ForStatement))
 	case stm.ForCond:
 		return b.addForCond(ctx, statement.(ast.ForConditionStatement))
 	// case stm.Match:
@@ -112,6 +112,39 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	default:
 		panic(fmt.Sprintf("not implemented for %s statement", statement.Kind().String()))
 	}
+}
+
+func (b *Block) addFor(ctx *Context, stmt ast.ForStatement) error {
+	node := &LoopStatement{
+		Pos:  stmt.Pos,
+		Body: Block{Pos: stmt.Body.Pos},
+	}
+	node.Body.Scope = NewScope(scp.Loop, b.Scope, &node.Body.Pos)
+
+	err := node.Body.Fill(ctx, stmt.Body.Statements)
+	if err != nil {
+		return err
+	}
+
+	b.addNode(node)
+	return nil
+}
+
+func (b *Block) addAddAssign(ctx *Context, stmt ast.AddAssignStatement) error {
+	target, err := b.Scope.scan(ctx, stmt.Target)
+	if err != nil {
+		return err
+	}
+	expr, err := b.Scope.scan(ctx, stmt.Expression)
+	if err != nil {
+		return err
+	}
+
+	b.addNode(&AddAssignStatement{
+		Target: target,
+		Expr:   expr,
+	})
+	return nil
 }
 
 func (b *Block) addSymbolCall(ctx *Context, stmt ast.SymbolCallStatement) error {

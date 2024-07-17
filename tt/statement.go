@@ -143,6 +143,28 @@ func (s *IndirectAssignStatement) Kind() stm.Kind {
 	return stm.IndirectAssign
 }
 
+// x += 10;
+type AddAssignStatement struct {
+	nodeStatement
+
+	// Target of the assignment.
+	Target Expression
+
+	// Assigned expression. Always not nil.
+	Expr Expression
+}
+
+// Explicit interface implementation check
+var _ Statement = &AddAssignStatement{}
+
+func (s *AddAssignStatement) Pin() source.Pos {
+	return s.Target.Pin()
+}
+
+func (s *AddAssignStatement) Kind() stm.Kind {
+	return stm.AddAssign
+}
+
 type SimpleIfStatement struct {
 	nodeStatement
 
@@ -182,6 +204,24 @@ func (*WhileStatement) Kind() stm.Kind {
 }
 
 func (s *WhileStatement) Pin() source.Pos {
+	return s.Pos
+}
+
+type LoopStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	Body Block
+}
+
+var _ Statement = &LoopStatement{}
+
+func (*LoopStatement) Kind() stm.Kind {
+	return stm.For
+}
+
+func (s *LoopStatement) Pin() source.Pos {
 	return s.Pos
 }
 

@@ -10,7 +10,7 @@ import (
 
 func (g *Builder) Expression(expr tt.Expression) {
 	if expr == nil {
-		panic("nit expression")
+		panic("nil expression")
 	}
 
 	g.expr(expr)
@@ -20,17 +20,50 @@ func (g *Builder) expr(expr tt.Expression) {
 	switch expr.Kind() {
 	case exn.Integer:
 		g.Integer(expr.(tt.Integer))
+	case exn.True:
+		g.True()
+	case exn.False:
+		g.False()
 	case exn.Symbol:
 		g.SymbolExpression(expr.(*tt.SymbolExpression))
 	case exn.Binary:
 		g.BinaryExpression(expr.(*tt.BinaryExpression))
+	case exn.Unary:
+		g.UnaryExpression(expr.(*tt.UnaryExpression))
+	case exn.Paren:
+		g.ParenthesizedExpression(expr.(*tt.ParenthesizedExpression))
 	case exn.SymbolCall:
 		g.SymbolCallExpression(expr.(*tt.SymbolCallExpression))
 	case exn.Member:
 		g.MemberExpression(expr.(*tt.MemberExpression))
+	case exn.Start:
+		g.StartExpression(expr.(*tt.ChainStart))
 	default:
 		panic(fmt.Sprintf("%s expression not implemented", expr.Kind().String()))
 	}
+}
+
+func (g *Builder) True() {
+	g.puts("true")
+}
+
+func (g *Builder) False() {
+	g.puts("false")
+}
+
+func (g *Builder) StartExpression(expr *tt.ChainStart) {
+	g.SymbolName(expr.Sym)
+}
+
+func (g *Builder) ParenthesizedExpression(expr *tt.ParenthesizedExpression) {
+	g.puts("(")
+	g.expr(expr.Inner)
+	g.puts(")")
+}
+
+func (g *Builder) UnaryExpression(expr *tt.UnaryExpression) {
+	g.puts(expr.Operator.Kind.String())
+	g.expr(expr.Inner)
 }
 
 func (g *Builder) MemberExpression(expr *tt.MemberExpression) {
