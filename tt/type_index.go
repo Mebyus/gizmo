@@ -43,6 +43,8 @@ func (x *TypeIndex) lookup(spec ast.TypeSpecifier) (*Type, error) {
 		return x.lookupStruct(spec.(ast.StructType))
 	case tps.Chunk:
 		return x.lookupChunk(spec.(ast.ChunkType).ElemType)
+	case tps.Enum:
+		return x.lookupEnum(spec.(ast.EnumType))
 	default:
 		panic(fmt.Sprintf("not implemented for %s", spec.Kind().String()))
 	}
@@ -66,6 +68,11 @@ func (x *TypeIndex) store(a *Type) *Type {
 		t = a
 	}
 	return t
+}
+
+func (x *TypeIndex) lookupEnum(spec ast.EnumType) (*Type, error) {
+	panic("not implemented")
+	return nil, nil
 }
 
 func (x *TypeIndex) lookupChunk(spec ast.TypeSpecifier) (*Type, error) {

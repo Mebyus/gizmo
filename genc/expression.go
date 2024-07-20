@@ -38,6 +38,8 @@ func (g *Builder) expr(expr tt.Expression) {
 		g.MemberExpression(expr.(*tt.MemberExpression))
 	case exn.Start:
 		g.StartExpression(expr.(*tt.ChainStart))
+	case exn.Cast:
+		g.CastExpression(expr.(*tt.CastExpression))
 	default:
 		panic(fmt.Sprintf("%s expression not implemented", expr.Kind().String()))
 	}
@@ -49,6 +51,14 @@ func (g *Builder) True() {
 
 func (g *Builder) False() {
 	g.puts("false")
+}
+
+func (g *Builder) CastExpression(expr *tt.CastExpression) {
+	g.puts("(")
+	g.TypeSpec(expr.DestinationType)
+	g.puts(")(")
+	g.expr(expr.Target)
+	g.puts(")")
 }
 
 func (g *Builder) StartExpression(expr *tt.ChainStart) {

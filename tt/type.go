@@ -385,3 +385,22 @@ type NamedTypeDef struct {
 	// Symbol which was used to define a named type.
 	Symbol *Symbol
 }
+
+type EnumTypeDef struct {
+	nodeTypeDef
+
+	Entries []EnumEntry
+
+	// maps entry name to its index inside Entries slice
+	index map[string]int
+}
+
+type EnumEntry struct {
+	// Where this entry was defined.
+	Pos source.Pos
+
+	Name string
+
+	// Can be nil if entry does not have explicit assigned value
+	Expression Expression
+}

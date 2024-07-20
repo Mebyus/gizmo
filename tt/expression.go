@@ -347,3 +347,29 @@ func (e *MemberExpression) Depth() uint32 {
 func (e *MemberExpression) Type() *Type {
 	return e.Member.Type
 }
+
+type CastExpression struct {
+	nodeOperand
+
+	Pos source.Pos
+
+	Target Expression
+
+	// Type after cast is performed.
+	DestinationType *Type
+}
+
+// Explicit interface implementation check
+var _ Operand = &CastExpression{}
+
+func (*CastExpression) Kind() exn.Kind {
+	return exn.Cast
+}
+
+func (e *CastExpression) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *CastExpression) Type() *Type {
+	return e.DestinationType
+}

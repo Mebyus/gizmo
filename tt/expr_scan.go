@@ -54,8 +54,8 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 		return s.scanMemberCallExpression(ctx, expr.(ast.MemberCallExpression))
 	case exn.Member:
 		return s.scanMemberExpression(ctx, expr.(ast.MemberExpression))
-	// case exn.Cast:
-	// 	// g.CastExpression(expr.(ast.CastExpression))
+	case exn.Cast:
+		return s.scanCastExpression(ctx, expr.(ast.CastExpression))
 	// case exn.Instance:
 	// 	// g.InstanceExpression(expr.(ast.InstanceExpression))
 	// case exn.Index:
@@ -69,6 +69,23 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 	default:
 		panic(fmt.Sprintf("not implemented for %s expression", expr.Kind().String()))
 	}
+}
+
+func (s *Scope) scanCastExpression(ctx *Context, expr ast.CastExpression) (*CastExpression, error) {
+	target, err := s.scan(ctx, expr.Target)
+	if err != nil {
+		return nil, err
+	}
+	t, err := s.Types.lookup(expr.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	return &CastExpression{
+		// Pos: expr.,
+		Target:          target,
+		DestinationType: t,
+	}, nil
 }
 
 func (s *Scope) scanMemberExpression(ctx *Context, expr ast.MemberExpression) (*MemberExpression, error) {
