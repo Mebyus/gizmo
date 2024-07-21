@@ -20,6 +20,7 @@ const (
 
 	// direct substitution of identifier operand
 	Symbol
+	Receiver
 
 	Unary
 	Binary
@@ -31,59 +32,14 @@ const (
 
 	// compound operands
 
-	Select
+	Chain
+	Member
 	Index
 	Call
-	Start
-	Receiver
 	Indirect
 	Address
 	Slice
-
-	// Simplified special case of general select expression,
-	// when the target is an isolated symbol:
-	//
-	//	example_symbol.member
-	//
-	Member
-
-	// Simplified special case of general address expression,
-	// when the target is an isolated symbol:
-	//
-	//	example_symbol.&
-	//
-	SymbolAddress
-
-	// Simplified special case of general indirect expression,
-	// when the target is an isolated symbol:
-	//
-	//	example_symbol.@
-	//
-	SymbolIndirect
-
-	// Simplified special case of general call expression,
-	// when the callee is an isolated symbol:
-	//
-	//	example_symbol(arg1, arg2)
-	//
-	SymbolCall
-
-	// Simplified special case of general call expression,
-	// when the callee is an isolated symbol selector:
-	//
-	//	example_object.call(arg1, arg2)
-	//
-	MemberCall
-
-	// Simplified special case of general call expression,
-	// when the callee is an isolated receiver:
-	//
-	//	rv.call(arg1, arg2)
-	//
-	ReceiverMemberCall
-
-	// Indirect index expression
-	Indirx
+	IndirectIndex
 
 	// Template instance
 	Instance
@@ -113,22 +69,17 @@ var text = [...]string{
 	Cast:     "cast",
 	BitCast:  "bitcast",
 	Paren:    "paren",
-	Select:   "select",
-	Index:    "index",
-	Call:     "call",
-	Start:    "start",
 	Receiver: "receiver",
-	Address:  "address",
-	Slice:    "slice",
-	Indirect: "indirect",
-	Indirx:   "indirect_index",
 	Instance: "instance",
 
-	Member:             "member",
-	SymbolCall:         "symbol_call",
-	SymbolAddress:      "symbol_address",
-	MemberCall:         "member_call",
-	ReceiverMemberCall: "rvm_call",
+	Chain:         "chain",
+	Member:        "member",
+	Indirect:      "indirect",
+	Index:         "index",
+	IndirectIndex: "index.indirect",
+	Address:       "address",
+	Slice:         "slice",
+	Call:          "call",
 
 	Integer: "integer",
 	String:  "string",

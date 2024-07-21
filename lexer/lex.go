@@ -612,7 +612,7 @@ func (lx *Lexer) other() token.Token {
 		return lx.oneByteToken(token.Plus)
 	case '-':
 		if lx.Next == '=' {
-			return lx.twoBytesToken(token.SubtractAssign)
+			return lx.twoBytesToken(token.SubAssign)
 		}
 		return lx.oneByteToken(token.Minus)
 	case ',':
@@ -628,7 +628,7 @@ func (lx *Lexer) other() token.Token {
 		}
 	case ':':
 		if lx.Next == '=' {
-			return lx.twoBytesToken(token.ShortAssign)
+			return lx.twoBytesToken(token.Walrus)
 		}
 		if lx.Next == ':' {
 			return lx.twoBytesToken(token.DoubleColon)

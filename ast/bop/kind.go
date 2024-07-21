@@ -6,7 +6,7 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-// Kind indicates binary operator kind
+// Kind indicates binary operator kind.
 type Kind uint32
 
 const (

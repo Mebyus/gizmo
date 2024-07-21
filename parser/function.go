@@ -32,7 +32,7 @@ func (p *Parser) topLevelFn() (ast.TopLevel, error) {
 			Props:       p.takeProps(),
 		}, nil
 	}
-	body, err := p.block()
+	body, err := p.Block()
 	if err != nil {
 		return nil, err
 	}

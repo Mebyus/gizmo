@@ -54,7 +54,7 @@ func (p *Parser) unitBlock() (*ast.UnitBlock, error) {
 		return nil, p.unexpected(p.tok)
 	}
 
-	block, err := p.block()
+	block, err := p.Block()
 	if err != nil {
 		return nil, err
 	}

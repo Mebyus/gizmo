@@ -58,6 +58,31 @@ func (e SymbolExpression) Pin() source.Pos {
 	return e.Identifier.Pos
 }
 
+// <Receiver> = "rv"
+type Receiver struct {
+	nodeOperand
+
+	Pos source.Pos
+}
+
+var _ Operand = Receiver{}
+
+func (Receiver) Kind() exn.Kind {
+	return exn.Receiver
+}
+
+func (r Receiver) Pin() source.Pos {
+	return r.Pos
+}
+
+func (r Receiver) AsIdentifier() Identifier {
+	return Identifier{Pos: r.Pos}
+}
+
+func (r Receiver) AsChainOperand() ChainOperand {
+	return ChainOperand{Identifier: r.AsIdentifier()}
+}
+
 // <ParenthesizedExpression> = "(" <Expression> ")"
 type ParenthesizedExpression struct {
 	nodeOperand
@@ -114,339 +139,6 @@ func (BinaryExpression) Kind() exn.Kind {
 
 func (e BinaryExpression) Pin() source.Pos {
 	return e.Left.Pin()
-}
-
-// <ChainOperand> = <Receiver> | <ChainStart> | <CallExpression> | <SelectorExpression> | <IndexExpression> | <IndirectExpression>
-type ChainOperand interface {
-	Operand
-
-	ChainOperand()
-
-	// Depth of chain operand. Starts from zero for the first operand in chain.
-	Depth() uint32
-}
-
-type nodeChainOperand struct{ nodeOperand }
-
-func (nodeChainOperand) ChainOperand() {}
-
-// <Receiver> = "rv"
-type Receiver struct {
-	nodeChainOperand
-
-	Pos source.Pos
-}
-
-var _ ChainOperand = Receiver{}
-
-func (Receiver) Kind() exn.Kind {
-	return exn.Receiver
-}
-
-func (r Receiver) Pin() source.Pos {
-	return r.Pos
-}
-
-func (r Receiver) Depth() uint32 {
-	return 0
-}
-
-// <ChainStart> = <Identifier>
-type ChainStart struct {
-	nodeChainOperand
-
-	Identifier Identifier
-}
-
-var _ ChainOperand = ChainStart{}
-
-func (ChainStart) Kind() exn.Kind {
-	return exn.Start
-}
-
-func (s ChainStart) Pin() source.Pos {
-	return s.Identifier.Pos
-}
-
-func (s ChainStart) Depth() uint32 {
-	return 0
-}
-
-// <MemberExpression> = <Target> "." <Member>
-//
-// <Target> = <Identifier>
-//
-// <Member> = <Identifier>
-type MemberExpression struct {
-	nodeChainOperand
-
-	Target Identifier
-	Member Identifier
-}
-
-var _ ChainOperand = MemberExpression{}
-
-func (MemberExpression) Kind() exn.Kind {
-	return exn.Member
-}
-
-func (s MemberExpression) Pin() source.Pos {
-	return s.Member.Pos
-}
-
-func (s MemberExpression) Depth() uint32 {
-	return 1
-}
-
-// <CallExpression> = <CallableExpression> "(" { <Expression> "," } ")"
-type CallExpression struct {
-	nodeChainOperand
-
-	Pos source.Pos
-
-	Callee    ChainOperand
-	Arguments []Expression
-
-	ChainDepth uint32
-}
-
-var _ ChainOperand = CallExpression{}
-
-func (CallExpression) Kind() exn.Kind {
-	return exn.Call
-}
-
-func (e CallExpression) Pin() source.Pos {
-	return e.Pos
-}
-
-func (e CallExpression) Depth() uint32 {
-	return e.ChainDepth
-}
-
-// <SymbolCallExpression> = <Identifier> "(" { <Expression> "," } ")"
-type SymbolCallExpression struct {
-	nodeChainOperand
-
-	Callee    Identifier
-	Arguments []Expression
-}
-
-var _ ChainOperand = SymbolCallExpression{}
-
-func (SymbolCallExpression) Kind() exn.Kind {
-	return exn.SymbolCall
-}
-
-func (e SymbolCallExpression) Pin() source.Pos {
-	return e.Callee.Pos
-}
-
-func (e SymbolCallExpression) Depth() uint32 {
-	return 0
-}
-
-// <MemberCallExpression> = <Target> "." <Member> "(" { <Expression> "," } ")"
-//
-// <Target> = <Identifier>
-//
-// <Member> = <Identifier>
-type MemberCallExpression struct {
-	nodeChainOperand
-
-	Pos source.Pos
-
-	Target    Identifier
-	Member    Identifier
-	Arguments []Expression
-}
-
-var _ ChainOperand = MemberCallExpression{}
-
-func (MemberCallExpression) Kind() exn.Kind {
-	return exn.MemberCall
-}
-
-func (e MemberCallExpression) Pin() source.Pos {
-	return e.Pos
-}
-
-func (e MemberCallExpression) Depth() uint32 {
-	return 1
-}
-
-// <SelectorExpression> = <SelectableExpression> "." <Identifier>
-type SelectorExpression struct {
-	nodeChainOperand
-
-	Target   ChainOperand
-	Selected Identifier
-
-	ChainDepth uint32
-}
-
-var _ ChainOperand = SelectorExpression{}
-
-func (SelectorExpression) Kind() exn.Kind {
-	return exn.Select
-}
-
-func (e SelectorExpression) Pin() source.Pos {
-	return e.Target.Pin()
-}
-
-func (e SelectorExpression) Depth() uint32 {
-	return e.ChainDepth
-}
-
-// <IndexExpression> = <IndexableExpression> "[" <Expression> "]"
-type IndexExpression struct {
-	nodeChainOperand
-
-	Target ChainOperand
-	Index  Expression
-
-	ChainDepth uint32
-}
-
-var _ ChainOperand = IndexExpression{}
-
-func (IndexExpression) Kind() exn.Kind {
-	return exn.Index
-}
-
-func (e IndexExpression) Pin() source.Pos {
-	return e.Target.Pin()
-}
-
-func (e IndexExpression) Depth() uint32 {
-	return e.ChainDepth
-}
-
-// <IndirectExpression> = <ChainOperand> ".@"
-type IndirectExpression struct {
-	nodeChainOperand
-
-	Pos source.Pos
-
-	Target ChainOperand
-
-	ChainDepth uint32
-}
-
-var _ ChainOperand = IndirectExpression{}
-
-func (IndirectExpression) Kind() exn.Kind {
-	return exn.Indirect
-}
-
-func (e IndirectExpression) Pin() source.Pos {
-	return e.Pos
-}
-
-func (e IndirectExpression) Depth() uint32 {
-	return e.ChainDepth
-}
-
-// <AddressExpression> = <ChainOperand> ".&"
-type AddressExpression struct {
-	nodeChainOperand
-
-	Target ChainOperand
-
-	ChainDepth uint32
-}
-
-var _ ChainOperand = AddressExpression{}
-
-func (AddressExpression) Kind() exn.Kind {
-	return exn.Address
-}
-
-func (e AddressExpression) Pin() source.Pos {
-	return e.Target.Pin()
-}
-
-func (e AddressExpression) Depth() uint32 {
-	return e.ChainDepth
-}
-
-// <SymbolAddressExpression> = <Identifier> ".&"
-type SymbolAddressExpression struct {
-	nodeChainOperand
-
-	Target Identifier
-}
-
-var _ ChainOperand = SymbolAddressExpression{}
-
-func (SymbolAddressExpression) Kind() exn.Kind {
-	return exn.SymbolAddress
-}
-
-func (e SymbolAddressExpression) Pin() source.Pos {
-	return e.Target.Pos
-}
-
-func (e SymbolAddressExpression) Depth() uint32 {
-	return 0
-}
-
-// <IndirectIndexExpression> = <Target> ".[" <Index> "]"
-//
-// <Target> = <ChainOperand>
-//
-// <Index> = <Expression>
-type IndirectIndexExpression struct {
-	nodeChainOperand
-
-	Target ChainOperand
-	Index  Expression
-
-	ChainDepth uint32
-}
-
-var _ ChainOperand = IndirectIndexExpression{}
-
-func (IndirectIndexExpression) Kind() exn.Kind {
-	return exn.Indirx
-}
-
-func (e IndirectIndexExpression) Pin() source.Pos {
-	return e.Target.Pin()
-}
-
-func (e IndirectIndexExpression) Depth() uint32 {
-	return e.ChainDepth
-}
-
-// <SliceExpression> = <Target> "[" [ <Start> ] ":" [ <End> ] "]"
-type SliceExpression struct {
-	nodeChainOperand
-
-	Target ChainOperand
-
-	// Part before ":". Can be nil if expression is omitted
-	Start Expression
-
-	// Part after ":". Can be nil if expression is omitted
-	End Expression
-
-	ChainDepth uint32
-}
-
-var _ ChainOperand = SliceExpression{}
-
-func (SliceExpression) Kind() exn.Kind {
-	return exn.Slice
-}
-
-func (e SliceExpression) Pin() source.Pos {
-	return e.Target.Pin()
-}
-
-func (e SliceExpression) Depth() uint32 {
-	return e.ChainDepth
 }
 
 // <CastExpression> = "cast" "[" <Expression> ":" <TypeSpecifier> "]"

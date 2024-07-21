@@ -1,5 +1,11 @@
 package parser
 
+import (
+	"fmt"
+
+	"github.com/mebyus/gizmo/token"
+)
+
 func (p *Parser) advance() {
 	p.tok = p.next
 
@@ -9,6 +15,14 @@ func (p *Parser) advance() {
 		p.next = p.buf.Pop()
 		p.back -= 1
 	}
+}
+
+func (p *Parser) skip(kind token.Kind) {
+	if p.tok.Kind != kind {
+		panic(fmt.Sprintf("%s: expected %s token, got %s",
+			p.tok.Pos.String(), kind.String(), p.tok.Kind.String()))
+	}
+	p.advance()
 }
 
 // same as advance, but stores consumed tokens for optional backtrack later

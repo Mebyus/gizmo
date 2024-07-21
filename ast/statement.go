@@ -168,22 +168,22 @@ func (s IfStatement) Pin() source.Pos {
 	return s.If.Pos
 }
 
-// <ExpressionStatement> = <Expression> ";"
-type ExpressionStatement struct {
+// <CallStatement> = <Expression> ";"
+type CallStatement struct {
 	nodeStatement
 
-	// must be call expression
-	Expression Expression
+	// must be call operand
+	Call ChainOperand
 }
 
-var _ Statement = ExpressionStatement{}
+var _ Statement = CallStatement{}
 
-func (ExpressionStatement) Kind() stm.Kind {
-	return stm.Expr
+func (CallStatement) Kind() stm.Kind {
+	return stm.Call
 }
 
-func (s ExpressionStatement) Pin() source.Pos {
-	return s.Expression.Pin()
+func (s CallStatement) Pin() source.Pos {
+	return s.Call.Pin()
 }
 
 // <ForStatement> = "for" <BlockStatement>
@@ -334,7 +334,8 @@ type DeferStatement struct {
 
 	Pos source.Pos
 
-	Call CallExpression
+	// must be call expression
+	Call ChainOperand
 }
 
 var _ Statement = DeferStatement{}
@@ -345,21 +346,4 @@ func (DeferStatement) Kind() stm.Kind {
 
 func (s DeferStatement) Pin() source.Pos {
 	return s.Pos
-}
-
-type SymbolCallStatement struct {
-	nodeStatement
-
-	Callee    Identifier
-	Arguments []Expression
-}
-
-var _ Statement = SymbolCallStatement{}
-
-func (SymbolCallStatement) Kind() stm.Kind {
-	return stm.SymbolCall
-}
-
-func (s SymbolCallStatement) Pin() source.Pos {
-	return s.Callee.Pos
 }

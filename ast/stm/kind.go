@@ -11,13 +11,12 @@ const (
 
 	Block
 	Assign
-	AddAssign
 	Return
 	Const
 	Let
 	Var
 	If
-	Expr
+	Call
 	For
 	ForCond
 	ForEach
@@ -30,21 +29,6 @@ const (
 	// Defer block statement
 	DeferBlock
 
-	// Example:
-	//
-	//	x = 10 + a;
-	SymbolAssign
-
-	// Example:
-	//
-	//	x.@ = 10 + a;
-	IndirectAssign
-
-	// Example:
-	//
-	//	call_func(arg1, arg2);
-	SymbolCall
-
 	// If without else and else-if clauses.
 	SimpleIf
 )
@@ -52,29 +36,24 @@ const (
 var text = [...]string{
 	empty: "<nil>",
 
-	Block:     "block",
-	Assign:    "assign",
-	AddAssign: "add_assign",
-	Return:    "return",
-	Const:     "const",
-	Let:       "let",
-	Var:       "var",
-	If:        "if",
-	Expr:      "expr",
-	For:       "for",
-	ForCond:   "for_cond",
-	ForEach:   "for_each",
-	Match:     "match",
-	Jump:      "jump",
-	Defer:     "defer",
+	Block:   "block",
+	Assign:  "assign",
+	Return:  "return",
+	Const:   "const",
+	Let:     "let",
+	Var:     "var",
+	If:      "if",
+	Call:    "call",
+	For:     "for",
+	ForCond: "for_cond",
+	ForEach: "for_each",
+	Match:   "match",
+	Jump:    "jump",
+	Defer:   "defer",
 
-	DeferBlock: "defer_block",
+	DeferBlock: "defer.block",
 
-	SymbolAssign:   "symbol_assign",
-	SymbolCall:     "symbol_call",
-	IndirectAssign: "indirect_assign",
-
-	SimpleIf: "simple_if",
+	SimpleIf: "if.simple",
 }
 
 func (k Kind) String() string {

@@ -4,15 +4,16 @@ import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/ast"
+	"github.com/mebyus/gizmo/ast/aop"
 	"github.com/mebyus/gizmo/ast/exn"
 	"github.com/mebyus/gizmo/ast/lbl"
 	"github.com/mebyus/gizmo/token"
 )
 
-func (p *Parser) parseStatement() (statement ast.Statement, err error) {
+func (p *Parser) Statement() (ast.Statement, error) {
 	switch p.tok.Kind {
 	case token.LeftCurly:
-		return p.block()
+		return p.Block()
 	case token.Const:
 		return p.constStatement()
 	case token.Let:
@@ -31,8 +32,12 @@ func (p *Parser) parseStatement() (statement ast.Statement, err error) {
 		return p.jumpStatement()
 	case token.Defer:
 		return p.deferStatement()
+	case token.Receiver:
+		return p.receiverStartStatement()
+	case token.Identifier:
+		return p.identifierStartStatement()
 	default:
-		return p.otherStatement()
+		return nil, p.unexpected(p.tok)
 	}
 }
 
@@ -44,27 +49,21 @@ func (p *Parser) deferStatement() (ast.DeferStatement, error) {
 		return ast.DeferStatement{}, p.unexpected(p.tok)
 	}
 
-	var cop ast.ChainOperand
-	var err error
+	var chain ast.ChainOperand
 	if p.tok.Kind == token.Identifier {
 		identifier := p.idn()
 		p.advance() // skip identifier
-
-		cop, err = p.chainOperand(ast.ChainStart{Identifier: identifier})
-		if err != nil {
-			return ast.DeferStatement{}, err
-		}
+		chain = identifier.AsChainOperand()
 	} else {
-		rvPos := p.pos()
-		p.advance() // skip "rv"
-
-		cop, err = p.chainOperand(ast.Receiver{Pos: rvPos})
-		if err != nil {
-			return ast.DeferStatement{}, err
-		}
+		r := p.receiver()
+		chain = r.AsChainOperand()
 	}
 
-	if cop.Kind() != exn.Call {
+	err := p.chainOperand(&chain)
+	if err != nil {
+		return ast.DeferStatement{}, err
+	}
+	if chain.Last() != exn.Call {
 		return ast.DeferStatement{}, fmt.Errorf("%s: only call statements can be deferred", pos.String())
 	}
 
@@ -75,7 +74,7 @@ func (p *Parser) deferStatement() (ast.DeferStatement, error) {
 
 	return ast.DeferStatement{
 		Pos:  pos,
-		Call: cop.(ast.CallExpression),
+		Call: chain,
 	}, nil
 }
 
@@ -172,7 +171,7 @@ func (p *Parser) matchCase() (ast.MatchCase, error) {
 	}
 	p.advance() // skip "=>"
 
-	block, err := p.block()
+	block, err := p.Block()
 	if err != nil {
 		return ast.MatchCase{}, err
 	}
@@ -191,7 +190,7 @@ func (p *Parser) matchElse() (ast.BlockStatement, error) {
 	}
 	p.advance() // skip "=>"
 
-	block, err := p.block()
+	block, err := p.Block()
 	if err != nil {
 		return ast.BlockStatement{}, err
 	}
@@ -214,7 +213,7 @@ func (p *Parser) forSimpleStatement() (ast.ForStatement, error) {
 
 	p.advance() // skip "for"
 
-	body, err := p.block()
+	body, err := p.Block()
 	if err != nil {
 		return ast.ForStatement{}, err
 	}
@@ -254,7 +253,7 @@ func (p *Parser) forEachStatement() (ast.ForEachStatement, error) {
 	if p.tok.Kind != token.LeftCurly {
 		return ast.ForEachStatement{}, p.unexpected(p.tok)
 	}
-	body, err := p.block()
+	body, err := p.Block()
 	if err != nil {
 		return ast.ForEachStatement{}, err
 	}
@@ -279,7 +278,7 @@ func (p *Parser) forWithConditionStatement() (ast.ForConditionStatement, error) 
 	if p.tok.Kind != token.LeftCurly {
 		return ast.ForConditionStatement{}, p.unexpected(p.tok)
 	}
-	body, err := p.block()
+	body, err := p.Block()
 	if err != nil {
 		return ast.ForConditionStatement{}, err
 	}
@@ -317,43 +316,6 @@ func (p *Parser) returnStatement() (statement ast.ReturnStatement, err error) {
 	return
 }
 
-// func (p *Parser) loop() (ast.Statement, error) {
-// 	if p.next.Kind == token.LeftCurly {
-// 		return p.forEver()
-// 	}
-
-// 	p.advance() // skip "for"
-
-// 	condition, err := p.expr()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	err = p.expect(token.LeftCurly)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	body, err := p.block()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return ast.While{
-// 		Body:      body,
-// 		Condition: condition,
-// 	}, nil
-// }
-
-// func (p *Parser) forEver() (statement ast.ForEver, err error) {
-// 	p.advance() // consume "for"
-// 	body, err := p.block()
-// 	if err != nil {
-// 		return
-// 	}
-// 	statement = ast.ForEver{Body: body}
-// 	return
-// }
-
 func (p *Parser) ifStatement() (statement ast.IfStatement, err error) {
 	ifClause, err := p.ifClause()
 	if err != nil {
@@ -383,7 +345,7 @@ func (p *Parser) ifStatement() (statement ast.IfStatement, err error) {
 			return
 		}
 		var body ast.BlockStatement
-		body, err = p.block()
+		body, err = p.Block()
 		if err != nil {
 			return
 		}
@@ -411,7 +373,7 @@ func (p *Parser) ifClause() (clause ast.IfClause, err error) {
 	if err != nil {
 		return
 	}
-	body, err := p.block()
+	body, err := p.Block()
 	if err != nil {
 		return
 	}
@@ -423,238 +385,70 @@ func (p *Parser) ifClause() (clause ast.IfClause, err error) {
 	}, nil
 }
 
-// ExpressionStatement or AssignStatement
-func (p *Parser) otherStatement() (ast.Statement, error) {
-	if p.tok.Kind == token.Identifier && p.next.Kind == token.LeftParentheses {
-		name := p.idn()
-		p.advance() // skip identifier
+func (p *Parser) receiverStartStatement() (ast.Statement, error) {
+	r := p.receiver()
+	return p.chainStartStatement(r.AsIdentifier())
+}
 
-		args, err := p.callArguments()
-		if err != nil {
-			return nil, err
-		}
+func (p *Parser) identifierStartStatement() (ast.Statement, error) {
+	idn := p.idn()
+	p.advance() // skip identifier
+	return p.chainStartStatement(idn)
+}
 
-		if p.tok.Kind != token.Semicolon {
-			panic("chain after call not implemented")
-		}
-		p.advance() // skip ";"
-
-		return ast.SymbolCallStatement{
-			Callee:    name,
-			Arguments: args,
-		}, nil
-	}
-
-	if p.tok.Kind != token.Identifier && p.tok.Kind != token.Receiver {
-		return nil, p.unexpected(p.tok)
-	}
-
-	if p.tok.Kind == token.Identifier && p.next.Kind == token.Assign {
-		return p.symbolAssignStatement()
-	}
-
-	var err error
-	var target ast.ChainOperand
-
-	if p.tok.Kind == token.Identifier && p.next.Kind == token.Indirect {
-		idn := p.idn()
-		p.advance() // skip identifier
-		p.advance() // skip ".@"
-
-		if p.tok.Kind == token.Assign {
-			return p.indirectAssignStatement(idn)
-		}
-		target, err = p.chainOperand(ast.IndirectExpression{
-			Target:     ast.ChainStart{Identifier: idn},
-			ChainDepth: 1,
-		})
-		if err != nil {
-			return nil, err
-		}
-	} else if p.tok.Kind == token.Identifier {
-		identifier := p.idn()
-		p.advance() // skip identifier
-
-		target, err = p.chainOperand(ast.ChainStart{Identifier: identifier})
-		if err != nil {
-			return nil, err
-		}
-	} else if p.tok.Kind == token.Receiver {
-		pos := p.pos()
-		p.advance() // skip "g"
-
-		if p.tok.Kind == token.Assign {
-			return nil, fmt.Errorf("%s: receiver cannot be assigned to", p.tok.Kind.String())
-		}
-
-		target, err = p.chainOperand(ast.Receiver{Pos: pos})
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		panic(fmt.Sprintf("unexpected token %s at %s", p.tok.Kind.String(), p.tok.Pos.String()))
-	}
-
-	switch p.tok.Kind {
-	case token.Assign, token.AddAssign:
-		// continue parse assign statement
-	default:
-		return p.continueExpressionStatement(target)
-	}
-
-	kind := target.Kind()
-	if kind == exn.Call {
-		return nil, fmt.Errorf("cannot assign to call (%s) result value", target.Pin().String())
-	}
-
-	assignTokenKind := p.tok.Kind
-	p.advance() // skip assign token
-
-	expr, err := p.expr()
+func (p *Parser) chainStartStatement(identifier ast.Identifier) (ast.Statement, error) {
+	chain := identifier.AsChainOperand()
+	err := p.chainOperand(&chain)
 	if err != nil {
 		return nil, err
 	}
-
-	if p.tok.Kind != token.Semicolon {
-		return nil, p.unexpected(p.tok)
+	op, ok := aop.FromToken(p.tok.Kind)
+	if ok {
+		p.advance() // skip assign operator token
+		return p.assignStatement(op, chain)
 	}
-	p.advance() // skip ";"
 
-	switch assignTokenKind {
-	case token.Assign:
-		return ast.AssignStatement{
-			Target:     target,
-			Expression: expr,
-		}, nil
-	case token.AddAssign:
-		return ast.AddAssignStatement{
-			Target:     target,
-			Expression: expr,
-		}, nil
-	default:
-		panic("unexpected assign token: " + assignTokenKind.String())
-	}
+	return p.callStatement(chain)
 }
 
-func (p *Parser) symbolAssignStatement() (ast.SymbolAssignStatement, error) {
-	target := p.idn()
-	p.advance() // skip target identifier
-
-	p.advance() // skip "="
+func (p *Parser) assignStatement(op aop.Kind, target ast.ChainOperand) (ast.AssignStatement, error) {
+	switch target.Last() {
+	case exn.Call, exn.Address, exn.Slice:
+		return ast.AssignStatement{}, fmt.Errorf("%s: cannot assign to %s operand",
+			target.Pin().String(), target.Last().String())
+	}
 
 	expr, err := p.expr()
 	if err != nil {
-		return ast.SymbolAssignStatement{}, err
+		return ast.AssignStatement{}, err
 	}
-
-	if p.tok.Kind != token.Semicolon {
-		return ast.SymbolAssignStatement{}, p.unexpected(p.tok)
+	err = p.expect(token.Semicolon)
+	if err != nil {
+		return ast.AssignStatement{}, err
 	}
 	p.advance() // skip ";"
 
-	return ast.SymbolAssignStatement{
+	return ast.AssignStatement{
+		Operator:   op,
 		Target:     target,
 		Expression: expr,
 	}, nil
 }
 
-func (p *Parser) indirectAssignStatement(target ast.Identifier) (ast.IndirectAssignStatement, error) {
-	p.advance() // skip "="
-
-	expr, err := p.expr()
-	if err != nil {
-		return ast.IndirectAssignStatement{}, err
+func (p *Parser) callStatement(chain ast.ChainOperand) (ast.CallStatement, error) {
+	if chain.Last() != exn.Call {
+		return ast.CallStatement{},
+			fmt.Errorf("%s: standalone expression in statement must be call expression",
+				chain.Pin().String())
 	}
 
 	if p.tok.Kind != token.Semicolon {
-		return ast.IndirectAssignStatement{}, p.unexpected(p.tok)
+		return ast.CallStatement{}, p.unexpected(p.tok)
 	}
-	p.advance() // skip ";"
-
-	return ast.IndirectAssignStatement{
-		Target:     target,
-		Expression: expr,
-	}, nil
-}
-
-func (p *Parser) continueExpressionStatement(operand ast.Operand) (ast.ExpressionStatement, error) {
-	expr, err := p.continueExpressionFromOperand(operand)
-	if err != nil {
-		return ast.ExpressionStatement{}, err
-	}
-
-	kind := expr.Kind()
-	if kind != exn.Call {
-		return ast.ExpressionStatement{},
-			fmt.Errorf("%s: standalone expression in statement must be call expression: %s",
-				expr.Pin().String(), kind.String())
-	}
-
-	if p.tok.Kind != token.Semicolon {
-		return ast.ExpressionStatement{}, p.unexpected(p.tok)
-	}
-
 	p.advance() // consume ";"
-	return ast.ExpressionStatement{Expression: expr}, nil
+
+	return ast.CallStatement{Call: chain}, nil
 }
-
-// func (p *Parser) continueParseMultipleAssignStatement(
-// 	first ast.AssignableExpression) (statement ast.MultipleAssignStatement, err error) {
-
-// 	targets := []ast.AssignableExpression{first}
-// 	for {
-// 		if p.tok.Kind == token.ShortAssign {
-// 			break
-// 		}
-// 		if p.tok.Kind == token.Comma {
-// 			p.advance() // consume ","
-// 		} else {
-// 			err = fmt.Errorf("missing \",\" inside multiple assign statement, got {%v}", p.tok)
-// 			return
-// 		}
-// 		var target ast.AssignableExpression
-// 		target, err = p.expr()
-// 		if err != nil {
-// 			return
-// 		}
-// 		targets = append(targets, target)
-// 	}
-
-// 	operator := p.aop()
-// 	p.advance() // consume assign operator
-
-// 	expressions := []ast.Expression{}
-
-// 	for {
-// 		var expression ast.Expression
-// 		expression, err = p.expr()
-// 		if err != nil {
-// 			return
-// 		}
-// 		expressions = append(expressions, expression)
-// 		if p.tok.Kind == token.Comma {
-// 			p.advance() // consume ","
-// 		} else if p.tok.Kind == token.Semicolon {
-// 			break
-// 		} else {
-// 			err = fmt.Errorf("unexpected token at the end of multiple assignment {%v}", p.tok)
-// 			return
-// 		}
-// 	}
-// 	p.advance() // consume terminator
-
-// 	if len(targets) != len(expressions) {
-// 		err = fmt.Errorf("left and right sides of assignment have different number of expressions: %d and %d at %v",
-// 			len(targets), len(expressions), p.tok.Pos)
-// 		return
-// 	}
-// 	statement = ast.MultipleAssignStatement{
-// 		Targets:     targets,
-// 		Operator:    operator,
-// 		Expressions: expressions,
-// 	}
-// 	return
-// }
 
 func (p *Parser) varStatement() (statement ast.VarStatement, err error) {
 	pos := p.pos()
@@ -806,9 +600,9 @@ func (p *Parser) letStatement() (statement ast.LetStatement, err error) {
 	}, nil
 }
 
-func (p *Parser) block() (block ast.BlockStatement, err error) {
-	block.Pos = p.tok.Pos
-	p.advance() // consume "{"
+func (p *Parser) Block() (block ast.BlockStatement, err error) {
+	block.Pos = p.pos()
+	p.skip(token.LeftCurly)
 	for {
 		if p.tok.Kind == token.RightCurly {
 			p.advance() // consume "}"
@@ -816,7 +610,7 @@ func (p *Parser) block() (block ast.BlockStatement, err error) {
 		}
 
 		var statement ast.Statement
-		statement, err = p.parseStatement()
+		statement, err = p.Statement()
 		if err != nil {
 			return
 		}

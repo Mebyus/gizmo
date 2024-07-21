@@ -36,6 +36,7 @@ func (p Pos) Len() uint32 {
 func (p *Pos) Clear() {
 	p.File = nil
 	p.Ofs = 0
+	p.Num = 0
 	p.Line = 0
 	p.Col = 0
 }

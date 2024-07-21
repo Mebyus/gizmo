@@ -56,7 +56,7 @@ func (p *Parser) method() (ast.TopLevel, error) {
 		return nil, p.unexpected(p.tok)
 	}
 
-	body, err := p.block()
+	body, err := p.Block()
 	if err != nil {
 		return nil, err
 	}

@@ -36,36 +36,21 @@ func (g *Noder) Statement(node ast.Statement) {
 	g.start()
 
 	switch node.Kind() {
-	case stm.SymbolAssign:
-		g.SymbolAssignStatement(node.(ast.SymbolAssignStatement))
 	case stm.Block:
 		g.BlockStatement(node.(ast.BlockStatement))
 	case stm.If:
 		g.IfStatement(node.(ast.IfStatement))
 	case stm.Let:
 		g.LetStatement(node.(ast.LetStatement))
-	case stm.IndirectAssign:
-		g.IndirectAssignStatement(node.(ast.IndirectAssignStatement))
 	case stm.Return:
 		g.ReturnStatement(node.(ast.ReturnStatement))
 	case stm.Var:
 		g.VarStatement(node.(ast.VarStatement))
 	case stm.Defer:
 		g.DeferStatement(node.(ast.DeferStatement))
-	case stm.AddAssign:
-		g.AddAssignStatement(node.(ast.AddAssignStatement))
 	default:
 		panic(fmt.Sprintf("node %s statement not implemented", node.Kind().String()))
 	}
-}
-
-func (g *Noder) AddAssignStatement(node ast.AddAssignStatement) {
-	g.Expression(node.Target)
-	g.ss()
-	g.gen(token.AddAssign)
-	g.ss()
-	g.Expression(node.Expression)
-	g.semi()
 }
 
 func (g *Noder) DeferStatement(node ast.DeferStatement) {
@@ -101,25 +86,6 @@ func (g *Noder) ReturnStatement(node ast.ReturnStatement) {
 		return
 	}
 
-	g.ss()
-	g.Expression(node.Expression)
-	g.semi()
-}
-
-func (g *Noder) IndirectAssignStatement(node ast.IndirectAssignStatement) {
-	g.idn(node.Target)
-	g.gen(token.Indirect)
-	g.ss()
-	g.gen(token.Assign)
-	g.ss()
-	g.Expression(node.Expression)
-	g.semi()
-}
-
-func (g *Noder) SymbolAssignStatement(node ast.SymbolAssignStatement) {
-	g.idn(node.Target)
-	g.ss()
-	g.gen(token.Assign)
 	g.ss()
 	g.Expression(node.Expression)
 	g.semi()

@@ -191,14 +191,7 @@ func (p *Parser) primary() (ast.Expression, error) {
 		}
 		return unary, nil
 	}
-	operand, err := p.tryOperand()
-	if err != nil {
-		return nil, err
-	}
-	if operand != nil {
-		return operand, nil
-	}
-	return nil, p.unexpected(p.tok)
+	return p.operand()
 }
 
 func (p *Parser) unary() (*ast.UnaryExpression, error) {
@@ -224,18 +217,7 @@ func (p *Parser) unary() (*ast.UnaryExpression, error) {
 	return topExp, nil
 }
 
-func (p *Parser) operand() (ast.Expression, error) {
-	operand, err := p.tryOperand()
-	if err != nil {
-		return nil, err
-	}
-	if operand == nil {
-		return nil, p.unexpected(p.tok)
-	}
-	return operand, nil
-}
-
-func (p *Parser) castExpression() (ast.CastExpression, error) {
+func (p *Parser) cast() (ast.CastExpression, error) {
 	p.advance() // skip "cast"
 
 	if p.tok.Kind != token.LeftSquare {
@@ -269,7 +251,7 @@ func (p *Parser) castExpression() (ast.CastExpression, error) {
 	}, nil
 }
 
-func (p *Parser) bitCastExpression() (ast.BitCastExpression, error) {
+func (p *Parser) bitcast() (ast.BitCastExpression, error) {
 	p.advance() // skip "bitcast"
 
 	if p.tok.Kind != token.LeftSquare {
@@ -356,102 +338,117 @@ func (p *Parser) objectLiteral() (ast.ObjectLiteral, error) {
 	}
 }
 
-func (p *Parser) tryOperand() (ast.Operand, error) {
-	if p.tok.Kind == token.Cast {
-		return p.castExpression()
-	}
-	if p.tok.Kind == token.BitCast {
-		return p.bitCastExpression()
-	}
-	if p.tok.Kind == token.LeftCurly {
-		return p.objectLiteral()
-	}
+func (p *Parser) paren() (ast.ParenthesizedExpression, error) {
+	pos := p.pos()
 
-	if p.tok.IsLit() {
+	p.advance() // skip "("
+	expr, err := p.expr()
+	if err != nil {
+		return ast.ParenthesizedExpression{}, err
+	}
+	err = p.expect(token.RightParentheses)
+	if err != nil {
+		return ast.ParenthesizedExpression{}, err
+	}
+	p.advance() // skip ")"
+	return ast.ParenthesizedExpression{
+		Pos:   pos,
+		Inner: expr,
+	}, nil
+}
+
+func (p *Parser) list() (ast.ListLiteral, error) {
+	pos := p.pos()
+	p.advance() // skip "["
+
+	var list ast.ListLiteral
+	for {
+		if p.tok.Kind == token.RightSquare {
+			p.advance() // skip "]"
+			list.Pos = pos
+			return list, nil
+		}
+
+		expr, err := p.expr()
+		if err != nil {
+			return ast.ListLiteral{}, err
+		}
+		list.Elems = append(list.Elems, expr)
+
+		if p.tok.Kind == token.Comma {
+			p.advance() // skip ","
+		} else if p.tok.Kind == token.RightSquare {
+			// will be skipped at next iteration
+		} else {
+			return ast.ListLiteral{}, p.unexpected(p.tok)
+		}
+	}
+}
+
+func (p *Parser) chunkStartOperand() (ast.Operand, error) {
+	pos := p.pos()
+	p.advance() // skip "[]"
+
+	if p.tok.Kind == token.Chunk || p.tok.Kind == token.Identifier {
+		panic("type specifier operands not implemented")
+	}
+	return ast.ListLiteral{Pos: pos}, nil
+}
+
+func (p *Parser) operand() (ast.Operand, error) {
+	if p.tok.Kind.IsLit() {
 		lit := p.basic()
 		p.advance()
 		return lit, nil
 	}
 
-	if p.tok.IsIdent() {
+	switch p.tok.Kind {
+	case token.Cast:
+		return p.cast()
+	case token.BitCast:
+		return p.bitcast()
+	case token.LeftCurly:
+		return p.objectLiteral()
+	case token.Identifier:
 		return p.identifierStartOperand()
-	}
-
-	if p.tok.Kind == token.Receiver {
+	case token.Receiver:
 		return p.receiverStartOperand()
+	case token.LeftParentheses:
+		return p.paren()
+	case token.LeftSquare:
+		return p.list()
+	case token.Chunk:
+		return p.chunkStartOperand()
+	default:
+		return nil, p.unexpected(p.tok)
 	}
-
-	if p.tok.IsLeftPar() {
-		pos := p.pos()
-
-		p.advance() // skip "("
-		expr, err := p.expr()
-		if err != nil {
-			return nil, err
-		}
-		err = p.expect(token.RightParentheses)
-		if err != nil {
-			return nil, err
-		}
-		p.advance() // skip ")"
-		return ast.ParenthesizedExpression{
-			Pos:   pos,
-			Inner: expr,
-		}, nil
-	}
-
-	if p.tok.Kind == token.LeftSquare {
-		p.advance() // skip "["
-		var list ast.ListLiteral
-
-		for {
-			if p.tok.Kind == token.RightSquare {
-				p.advance() // skip "]"
-				return list, nil
-			}
-
-			expr, err := p.expr()
-			if err != nil {
-				return nil, err
-			}
-			list.Elems = append(list.Elems, expr)
-
-			if p.tok.Kind == token.Comma {
-				p.advance() // skip ","
-			} else if p.tok.Kind == token.RightSquare {
-				// will be skipped at next iteration
-			} else {
-				return nil, p.unexpected(p.tok)
-			}
-		}
-	}
-
-	if p.tok.Kind == token.Chunk && p.next.Kind != token.Identifier {
-		p.advance() // skip "[]"
-		return ast.ListLiteral{}, nil
-	}
-
-	return nil, nil
 }
 
 func (p *Parser) receiver() ast.Receiver {
 	pos := p.pos()
-	p.advance() // skip "rv"
+	p.advance() // skip "g"
 	return ast.Receiver{Pos: pos}
 }
 
 func (p *Parser) receiverStartOperand() (ast.Operand, error) {
-	rv := p.receiver()
-	if p.tok.Kind != token.Period {
-		return rv, nil
+	r := p.receiver()
+	if !isChainOperandToken(p.tok.Kind) {
+		return r, nil
 	}
 
-	return p.chainOperand(rv)
+	chain := ast.ChainOperand{Identifier: r.AsIdentifier()}
+	err := p.chainOperand(&chain)
+	if err != nil {
+		return nil, err
+	}
+	return chain, nil
 }
 
 func isChainOperandToken(kind token.Kind) bool {
 	switch kind {
-	case token.LeftParentheses, token.Period, token.LeftSquare, token.Indirect, token.Address:
+	case token.LeftParentheses, token.Period, token.LeftSquare,
+		token.Indirect, token.Address, token.IndirectIndex:
+
 		return true
 	default:
 		return false
@@ -463,162 +460,123 @@ func (p *Parser) identifierStartOperand() (ast.Operand, error) {
 	idn := p.idn()
 	p.advance() // skip identifier
 
-	switch p.tok.Kind {
-	case token.LeftParentheses:
-		args, err := p.callArguments()
-		if err != nil {
-			return nil, err
-		}
-		expr := ast.SymbolCallExpression{
-			Callee:    idn,
-			Arguments: args,
-		}
-
-		if isChainOperandToken(p.tok.Kind) {
-			return p.chainOperand(expr)
-		}
-		return expr, nil
-	case token.Address:
-		p.advance() // skip ".&"
-
-		expr := ast.SymbolAddressExpression{Target: idn}
-
-		if isChainOperandToken(p.tok.Kind) {
-			return p.chainOperand(expr)
-		}
-		return expr, nil
-	case token.Period:
-		p.advance() // skip "."
-
-		if p.tok.Kind != token.Identifier {
-			return nil, p.unexpected(p.tok)
-		}
-
-		member := p.idn()
-		p.advance() // skip member identifier
-
-		switch p.tok.Kind {
-		case token.LeftParentheses:
-			pos := p.pos()
-
-			args, err := p.callArguments()
-			if err != nil {
-				return nil, err
-			}
-
-			expr := ast.MemberCallExpression{
-				Pos:       pos,
-				Target:    idn,
-				Member:    member,
-				Arguments: args,
-			}
-			if isChainOperandToken(p.tok.Kind) {
-				return p.chainOperand(expr)
-			}
-			return expr, nil
-		case token.Period, token.LeftSquare, token.Indirect, token.Address:
-			return p.chainOperand(ast.MemberExpression{
-				Target: idn,
-				Member: member,
-			})
-		default:
-			return ast.MemberExpression{
-				Target: idn,
-				Member: member,
-			}, nil
-		}
-	case token.LeftSquare, token.Indirect:
-		return p.chainOperand(ast.ChainStart{Identifier: idn})
-	default:
+	if !isChainOperandToken(p.tok.Kind) {
 		return ast.SymbolExpression{Identifier: idn}, nil
 	}
+
+	chain := ast.ChainOperand{Identifier: idn}
+	err := p.chainOperand(&chain)
+	if err != nil {
+		return nil, err
+	}
+	return chain, nil
 }
 
-func (p *Parser) chainOperand(start ast.ChainOperand) (ast.ChainOperand, error) {
-	var tip ast.ChainOperand = start
+func (p *Parser) callPart() (ast.CallPart, error) {
+	pos := p.pos()
 
-	depth := tip.Depth()
+	args, err := p.callArguments()
+	if err != nil {
+		return ast.CallPart{}, err
+	}
+
+	return ast.CallPart{
+		Pos:  pos,
+		Args: args,
+	}, nil
+}
+
+func (p *Parser) memberPart() (ast.MemberPart, error) {
+	p.advance() // skip "."
+	err := p.expect(token.Identifier)
+	if err != nil {
+		return ast.MemberPart{}, err
+	}
+	member := p.idn()
+	p.advance() // skip identifier
+
+	return ast.MemberPart{Member: member}, nil
+}
+
+func (p *Parser) indirectPart() ast.IndirectPart {
+	pos := p.pos()
+	p.advance() // skip ".@"
+
+	return ast.IndirectPart{Pos: pos}
+}
+
+func (p *Parser) chainOperand(chain *ast.ChainOperand) error {
+	var parts []ast.ChainPart
+	var prev exn.Kind
 	for {
-		depth += 1
+		var err error
+		var part ast.ChainPart
 
 		switch p.tok.Kind {
 		case token.LeftParentheses:
-			pos := p.pos()
-
-			args, err := p.callArguments()
-			if err != nil {
-				return nil, err
-			}
-			tip = ast.CallExpression{
-				Pos:        pos,
-				Callee:     tip,
-				Arguments:  args,
-				ChainDepth: depth,
-			}
+			part, err = p.callPart()
 		case token.Period:
-			p.advance() // skip "."
-			err := p.expect(token.Identifier)
-			if err != nil {
-				return nil, err
-			}
-			selected := p.idn()
-			p.advance() // skip identifier
-			tip = ast.SelectorExpression{
-				Target:     tip,
-				Selected:   selected,
-				ChainDepth: depth,
-			}
+			part, err = p.memberPart()
 		case token.Indirect:
-			pos := p.pos()
-			p.advance() // skip ".@"
-			tip = ast.IndirectExpression{
-				Pos:        pos,
-				Target:     tip,
-				ChainDepth: depth,
-			}
+			part = p.indirectPart()
 		case token.Address:
-			p.advance() // skip ".&"
-			if tip.Kind() == exn.Call {
-				return nil, fmt.Errorf("cannot take address of a call result %s", tip.Pin().String())
-			}
-			tip = ast.AddressExpression{
-				Target:     tip,
-				ChainDepth: depth,
-			}
+			part, err = p.addressPart(prev)
 		case token.IndirectIndex:
-			p.advance() // skip ".["
-			index, err := p.expr()
-			if err != nil {
-				return nil, err
-			}
-			if p.tok.Kind != token.RightSquare {
-				return nil, p.unexpected(p.tok)
-			}
-			p.advance() // skip "]"
-			tip = ast.IndirectIndexExpression{
-				Target:     tip,
-				Index:      index,
-				ChainDepth: depth,
-			}
+			part, err = p.indirectIndexPart()
 		case token.LeftSquare:
-			var err error
-			tip, err = p.chainLeftSquareStart(tip)
-			if err != nil {
-				return nil, err
-			}
+			part, err = p.leftSquarePart()
 		default:
-			return tip, nil
+			chain.Parts = parts
+			return nil
 		}
+		if err != nil {
+			return err
+		}
+		prev = part.Kind()
+		parts = append(parts, part)
 	}
 }
 
-func (p *Parser) chainLeftSquareStart(tip ast.ChainOperand) (ast.ChainOperand, error) {
+func (p *Parser) addressPart(prev exn.Kind) (ast.AddressPart, error) {
+	pos := p.pos()
+	p.advance() // skip ".&"
+
+	switch prev {
+	case exn.Call, exn.Slice, exn.Address, exn.Indirect:
+		return ast.AddressPart{}, fmt.Errorf("%s: cannot take address of %s expression",
+			pos.String(), prev.String())
+	}
+
+	return ast.AddressPart{Pos: pos}, nil
+}
+
+func (p *Parser) indirectIndexPart() (ast.IndirectIndexPart, error) {
+	pos := p.pos()
+
+	p.advance() // skip ".["
+	index, err := p.expr()
+	if err != nil {
+		return ast.IndirectIndexPart{}, err
+	}
+	if p.tok.Kind != token.RightSquare {
+		return ast.IndirectIndexPart{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip "]"
+	return ast.IndirectIndexPart{
+		Pos:   pos,
+		Index: index,
+	}, nil
+}
+
+func (p *Parser) leftSquarePart() (ast.ChainPart, error) {
+	pos := p.pos()
 	p.advance() // skip "["
+
 	if p.tok.Kind == token.Colon {
 		p.advance() // skip ":"
 		if p.tok.Kind == token.RightSquare {
 			p.advance() // skip "]"
-			return ast.SliceExpression{Target: tip}, nil
+			return ast.SlicePart{Pos: pos}, nil
 		}
 
 		expr, err := p.expr()
@@ -630,9 +588,9 @@ func (p *Parser) chainLeftSquareStart(tip ast.ChainOperand) (ast.ChainOperand, e
 			return nil, err
 		}
 		p.advance() // skip "]"
-		return ast.SliceExpression{
-			Target: tip,
-			End:    expr,
+		return ast.SlicePart{
+			Pos: pos,
+			End: expr,
 		}, nil
 	}
 
@@ -644,9 +602,9 @@ func (p *Parser) chainLeftSquareStart(tip ast.ChainOperand) (ast.ChainOperand, e
 		p.advance() // skip ":"
 		if p.tok.Kind == token.RightSquare {
 			p.advance() // skip "]"
-			return ast.SliceExpression{
-				Target: tip,
-				Start:  expr,
+			return ast.SlicePart{
+				Pos:   pos,
+				Start: expr,
 			}, nil
 		}
 		end, err := p.expr()
@@ -659,10 +617,10 @@ func (p *Parser) chainLeftSquareStart(tip ast.ChainOperand) (ast.ChainOperand, e
 			return nil, err
 		}
 		p.advance() // skip "]"
-		return ast.SliceExpression{
-			Target: tip,
-			Start:  expr,
-			End:    end,
+		return ast.SlicePart{
+			Pos:   pos,
+			Start: expr,
+			End:   end,
 		}, nil
 	}
 
@@ -671,9 +629,9 @@ func (p *Parser) chainLeftSquareStart(tip ast.ChainOperand) (ast.ChainOperand, e
 		return nil, err
 	}
 	p.advance() // skip "]"
-	return ast.IndexExpression{
-		Target: tip,
-		Index:  expr,
+	return ast.IndexPart{
+		Pos:   pos,
+		Index: expr,
 	}, nil
 }
 

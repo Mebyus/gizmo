@@ -45,13 +45,13 @@ const (
 	RightAngle     // >
 	Not            // !
 
-	Assign          // =
-	ShortAssign     // :=
-	AddAssign       // +=
-	SubtractAssign  // -=
-	MultiplyAssign  // *=
-	QuotientAssign  // /=
-	RemainderAssign // %=
+	Assign    // =
+	Walrus    // :=
+	AddAssign // +=
+	SubAssign // -=
+	MulAssign // *=
+	DivAssign // /=
+	RemAssign // %=
 
 	LogicalAnd // &&
 	LogicalOr  // ||
