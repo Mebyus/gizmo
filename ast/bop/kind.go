@@ -112,6 +112,10 @@ func (k Kind) Precedence() int {
 	return precedence[k]
 }
 
+func (k Kind) Power() int {
+	return 6 - k.Precedence()
+}
+
 func FromToken(k token.Kind) Kind {
 	switch k {
 	case token.Equal:

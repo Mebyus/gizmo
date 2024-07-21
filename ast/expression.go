@@ -204,3 +204,7 @@ func BinaryOperatorFromToken(tok token.Token) BinaryOperator {
 func (o BinaryOperator) Precedence() int {
 	return o.Kind.Precedence()
 }
+
+func (o BinaryOperator) Power() int {
+	return o.Kind.Power()
+}

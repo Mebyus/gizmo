@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/exn"
@@ -16,170 +15,42 @@ func ParseExpression(str string) (ast.Expression, error) {
 	return p.expr()
 }
 
+// Parse arbitrary expression (no expression will result in error).
+//
+// Parsing is done via Pratt's recursive descent algorithm variant.
 func (p *Parser) expr() (ast.Expression, error) {
-	operand, err := p.primary()
+	return p.pratt(0)
+}
+
+func (p *Parser) pratt(power int) (ast.Expression, error) {
+	left, err := p.primary()
 	if err != nil {
 		return nil, err
 	}
-	return p.continueExpressionFromOperand(operand)
-}
 
-func (p *Parser) continueExpressionFromOperand(operand ast.Expression) (ast.Expression, error) {
-	if !p.tok.Kind.IsBinaryOperator() {
-		return operand, nil
-	}
-
-	operands := []ast.Expression{operand}
-	var operators []ast.BinaryOperator
 	for p.tok.Kind.IsBinaryOperator() {
-		opr := ast.BinaryOperatorFromToken(p.tok)
+		o := ast.BinaryOperatorFromToken(p.tok)
+		if o.Power() <= power {
+			break
+		}
 		p.advance() // skip binary operator
 
-		expr, err := p.primary()
+		right, err := p.pratt(o.Power())
 		if err != nil {
 			return nil, err
 		}
 
-		operands = append(operands, expr)
-		operators = append(operators, opr)
+		left = bex(o, left, right)
 	}
 
-	// handle common cases with 1, 2 or 3 operators by hand
-	switch len(operators) {
-	case 0:
-		panic("unreachable: slice must contain at least one operator")
-	case 1:
-		return composeBinaryExpressionWithOneOperator(operators, operands), nil
-	case 2:
-		return composeBinaryExpressionWithTwoOperators(operators, operands), nil
-	case 3:
-		return composeBinaryExpressionWithThreeOperators(operators, operands), nil
-	default:
-		return composeBinaryExpression(operators, operands), nil
-	}
+	return left, nil
 }
 
-type positionedOperator struct {
-	op  ast.BinaryOperator
-	pos int
-}
-
-type positionedOperators []positionedOperator
-
-func (p positionedOperators) Len() int {
-	return len(p)
-}
-
-func (p positionedOperators) Less(i, j int) bool {
-	return (p[i].op.Precedence() < p[j].op.Precedence()) ||
-		(p[i].op.Precedence() == p[j].op.Precedence() && p[i].pos < p[j].pos)
-}
-
-func (p positionedOperators) Swap(i, j int) {
-	p[i], p[j] = p[j], p[i]
-}
-
-// sortOperators returns slice of operators sorted in order of execution
-// along with original position information
-func sortOperators(ops []ast.BinaryOperator) positionedOperators {
-	p := make(positionedOperators, 0, len(ops))
-	for i, o := range ops {
-		p = append(p, positionedOperator{op: o, pos: i})
-	}
-	sort.Sort(p)
-	return p
-}
-
-// composeBinaryExpression текущий алгоритм сборки дерева работает за O(n^2) по времени
-//
-// Входные слайсы из операторов и операндов должны удовлетворять условию len(ops) + 1 = len(operands)
-//
-// Слайс операндов будет использован для in-place мутаций и получения итогового выражения
-func composeBinaryExpression(ops []ast.BinaryOperator, nds []ast.Expression) ast.BinaryExpression {
-	p := sortOperators(ops)
-
-	// iterate over each operator in order of execution
-	for i := 0; i < len(p); i++ {
-		o := p[i]
-
-		// collapse adjacent operands
-		lopr := nds[o.pos]
-		ropr := nds[o.pos+1]
-		b := ast.BinaryExpression{
-			Operator: o.op,
-			Left:     lopr,
-			Right:    ropr,
-		}
-		nds[o.pos] = b
-
-		// необходимо сдвинуть все операнды начиная с o.pos+2 влево на 1
-		l := len(nds) - i // текущее количество операндов в срезе, с учетом предыдущих сверток
-		for j := o.pos + 1; j < l-1; j++ {
-			nds[j] = nds[j+1]
-		}
-
-		// теперь нужно сделать поправку позиций операторов, которые находились правее места свертки
-		for j := i + 1; j < len(p); j++ {
-			if p[j].pos > o.pos {
-				p[j].pos--
-			}
-		}
-	}
-
-	return nds[0].(ast.BinaryExpression)
-}
-
-func bex(o ast.BinaryOperator, l, r ast.Expression) ast.BinaryExpression {
+func bex(op ast.BinaryOperator, left, right ast.Expression) ast.BinaryExpression {
 	return ast.BinaryExpression{
-		Operator: o,
-		Left:     l,
-		Right:    r,
-	}
-}
-
-func composeBinaryExpressionWithOneOperator(o []ast.BinaryOperator, n []ast.Expression) ast.BinaryExpression {
-	return bex(o[0], n[0], n[1])
-}
-
-func composeBinaryExpressionWithTwoOperators(o []ast.BinaryOperator, n []ast.Expression) ast.BinaryExpression {
-	if o[0].Precedence() <= o[1].Precedence() {
-		// a + b + c = ((a + b) + c)
-		return bex(o[1], bex(o[0], n[0], n[1]), n[2])
-	}
-
-	// a + b * c = (a + (b * c))
-	return bex(o[0], n[0], bex(o[1], n[1], n[2]))
-}
-
-func composeBinaryExpressionWithThreeOperators(o []ast.BinaryOperator, n []ast.Expression) ast.BinaryExpression {
-	switch {
-
-	case o[0].Precedence() <= o[1].Precedence() && o[1].Precedence() <= o[2].Precedence():
-		// a + b + c + d = (((a + b) + c) + d)
-		return bex(o[2], bex(o[1], bex(o[0], n[0], n[1]), n[2]), n[3])
-
-	case o[0].Precedence() <= o[2].Precedence() && o[2].Precedence() < o[1].Precedence():
-		// a * b + c * d = ((a * b) + (c * d))
-		return bex(o[1], bex(o[0], n[0], n[1]), bex(o[2], n[2], n[3]))
-
-	case o[1].Precedence() < o[0].Precedence() && o[0].Precedence() <= o[2].Precedence():
-		// a + b * c + d = ((a + (b * c)) + d)
-		return bex(o[2], bex(o[0], n[0], bex(o[1], n[1], n[2])), n[3])
-
-	case o[1].Precedence() <= o[2].Precedence() && o[2].Precedence() < o[0].Precedence():
-		// a + b * c * d = (a + ((b * c) * d))
-		return bex(o[0], n[0], bex(o[2], bex(o[1], n[1], n[2]), n[3]))
-
-	case o[2].Precedence() < o[0].Precedence() && o[0].Precedence() <= o[1].Precedence():
-		// a + b + c * d = ((a + b) + (c * d))
-		return bex(o[1], bex(o[0], n[0], n[1]), bex(o[2], n[2], n[3]))
-
-	case o[2].Precedence() < o[1].Precedence() && o[1].Precedence() < o[0].Precedence():
-		// a < b + c * d = (a < (b + (c * d)))
-		return bex(o[0], n[0], bex(o[1], n[1], bex(o[2], n[2], n[3])))
-
-	default:
-		panic("unreachable: switch must cover all cases")
+		Operator: op,
+		Left:     left,
+		Right:    right,
 	}
 }
 

@@ -91,6 +91,10 @@ func gr(left ast.Expression, right ast.Expression) ast.BinaryExpression {
 	return bin(bop.Greater, left, right)
 }
 
+func ls(left ast.Expression, right ast.Expression) ast.BinaryExpression {
+	return bin(bop.Less, left, right)
+}
+
 func leq(left ast.Expression, right ast.Expression) ast.BinaryExpression {
 	return bin(bop.LessOrEqual, left, right)
 }
@@ -263,6 +267,64 @@ func TestParseExpression(t *testing.T) {
 			str:  "g.b",
 			want: chg(mbr("b")),
 		},
+		{
+			name:    "21 unfinished binary expression",
+			str:     "1 +",
+			wantErr: true,
+		},
+		{
+			name: "22 binary expression (3 operands)",
+			str:  "a + b - 3",
+			want: sub(
+				add(sym("a"), sym("b")),
+				dec(3),
+			),
+		},
+		{
+			name: "23 binary expression (3 operands)",
+			str:  "a + b * (3 + 1)",
+			want: add(
+				sym("a"),
+				mul(
+					sym("b"),
+					par(add(dec(3), dec(1))),
+				),
+			),
+		},
+		{
+			name: "24 binary expression (3 operands)",
+			str:  "a * 9 + b",
+			want: add(
+				mul(sym("a"), dec(9)),
+				sym("b"),
+			),
+		},
+		{
+			name: "25 binary expression (4 operands)",
+			str:  "a * b + c * d", //  = (a * b) + (c * d)
+			want: add(
+				mul(sym("a"), sym("b")),
+				mul(sym("c"), sym("d")),
+			),
+		},
+		{
+			name: "26 binary expression (4 operands)",
+			str:  "a < b + c * d", // = a < (b + (c * d))
+			want: ls(
+				sym("a"),
+				add(
+					sym("b"),
+					mul(sym("c"), sym("d")),
+				),
+			),
+		},
+		// TODO: add more test cases
+		// a + b + c * d = ((a + b) + (c * d))
+		// a + b * c * d = (a + ((b * c) * d))
+		// a + b * c + d = ((a + (b * c)) + d)
+		// a + b + c + d = (((a + b) + c) + d)
+		// a + b + c = ((a + b) + c)
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
