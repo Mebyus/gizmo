@@ -23,22 +23,10 @@ func ConvertInnerExpression(expr ast.Expression) Node {
 		return ConvertSubsExpression(expr.(ast.SymbolExpression))
 	case exn.Basic:
 		return ConvertBasicLiteral(expr.(ast.BasicLiteral))
-	case exn.Call:
-		return ConvertCallExpression(expr.(ast.CallExpression))
 	case exn.Paren:
 		return ConvertParenthesizedExpression(expr.(ast.ParenthesizedExpression))
 	default:
 		return Node{Text: fmt.Sprintf("<%s expression not implemented>", expr.Kind().String())}
-	}
-}
-
-func ConvertCallExpression(expr ast.CallExpression) Node {
-	return Node{
-		Text: "call",
-		Nodes: []Node{
-			ConvertCallTarget(expr.Callee),
-			ConvertCallArguments(expr.Arguments),
-		},
 	}
 }
 
@@ -95,17 +83,13 @@ func ConvertBinaryExpression(expr ast.BinaryExpression) Node {
 
 func ConvertChainOperand(operand ast.ChainOperand) Node {
 	switch operand.Kind() {
-	case exn.Start:
-		return ConvertChainStart(operand.(ast.ChainStart))
-	case exn.Call:
-		return ConvertCallExpression(operand.(ast.CallExpression))
+	// case exn.Start:
+	// 	return ConvertChainStart(operand.(ast.ChainStart))
+	// case exn.Call:
+	// 	return ConvertCallExpression(operand.(ast.CallExpression))
 	default:
 		return Node{Text: fmt.Sprintf("<%s operand not implemented>", operand.Kind().String())}
 	}
-}
-
-func ConvertChainStart(start ast.ChainStart) Node {
-	return Node{Text: "idn: " + start.Identifier.String()}
 }
 
 func ConvertParenthesizedExpression(expr ast.ParenthesizedExpression) Node {

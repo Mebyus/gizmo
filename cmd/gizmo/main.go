@@ -12,7 +12,6 @@ import (
 	"github.com/mebyus/gizmo/cmd/gizmo/gen"
 	"github.com/mebyus/gizmo/cmd/gizmo/lex"
 	"github.com/mebyus/gizmo/cmd/gizmo/tree"
-	"github.com/mebyus/gizmo/cmd/gizmo/ubev"
 	"github.com/mebyus/gizmo/cmd/gizmo/unit"
 	"github.com/mebyus/gizmo/cmd/gizmo/vm"
 )
@@ -40,7 +39,6 @@ var root = &butler.Lackey{
 		tree.Tree,
 		gen.Gen,
 		build.Build,
-		ubev.Ubev,
 		clean.Clean,
 		atom.Atom,
 		unit.Unit,

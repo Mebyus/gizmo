@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/mebyus/gizmo/builder/impgraph"
-	"github.com/mebyus/gizmo/interp"
 	"github.com/mebyus/gizmo/parser"
 	"github.com/mebyus/gizmo/source/origin"
 )
@@ -193,11 +192,8 @@ func (g *Builder) FindUnitBuildInfo(p origin.Path) (*DepEntry, error) {
 	if unit.Header.Unit == nil {
 		return nil, fmt.Errorf("file \"%s\" does not contain unit block", src.Path)
 	}
-	result, err := interp.Interpret(unit.Header.Unit)
-	if err != nil {
-		return nil, err
-	}
-	for _, s := range result.Imports {
+	imports := []string{} // TODO: implement imports search from unit
+	for _, s := range imports {
 		cleaned := filepath.Clean(s)
 		if cleaned != s {
 			return nil, fmt.Errorf("import path \"%s\" is badly formatted", s)
@@ -207,17 +203,7 @@ func (g *Builder) FindUnitBuildInfo(p origin.Path) (*DepEntry, error) {
 		}
 	}
 	g.cache.SaveUnitBuildInfo(p, src)
-	return &DepEntry{
-		BuildInfo: UnitBuildInfo{
-			Files:     result.Files,
-			TestFiles: result.TestFiles,
-
-			DefaultNamespace: result.DefaultNamespace,
-		},
-		Imports: origin.Locals(result.Imports),
-		Name:    result.Name,
-		Path:    p,
-	}, nil
+	return &DepEntry{}, nil
 }
 
 func (g *Builder) debug(format string, args ...any) {

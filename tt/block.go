@@ -9,7 +9,6 @@ import (
 	"github.com/mebyus/gizmo/tt/scp"
 	"github.com/mebyus/gizmo/tt/sfp"
 	"github.com/mebyus/gizmo/tt/sym"
-	"github.com/mebyus/gizmo/tt/typ"
 )
 
 type Block struct {
@@ -83,18 +82,10 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 		return b.addVar(ctx, statement.(ast.VarStatement))
 	case stm.If:
 		return b.addIf(ctx, statement.(ast.IfStatement))
-	// case stm.Expr:
-	// g.ExpressionStatement(statement.(ast.ExpressionStatement))
-	case stm.SymbolCall:
-		return b.addSymbolCall(ctx, statement.(ast.SymbolCallStatement))
-	case stm.SymbolAssign:
-		return b.addSymbolAssign(ctx, statement.(ast.SymbolAssignStatement))
-	case stm.IndirectAssign:
-		return b.addIndirectAssign(ctx, statement.(ast.IndirectAssignStatement))
-	// case stm.Assign:
-	// return b.addAssign(ctx, statement.(ast.AssignStatement))
-	case stm.AddAssign:
-		return b.addAddAssign(ctx, statement.(ast.AddAssignStatement))
+	case stm.Call:
+		return b.addCall(ctx, statement.(ast.CallStatement))
+	case stm.Assign:
+		return b.addAssign(ctx, statement.(ast.AssignStatement))
 	case stm.For:
 		return b.addFor(ctx, statement.(ast.ForStatement))
 	case stm.ForCond:
@@ -130,55 +121,31 @@ func (b *Block) addFor(ctx *Context, stmt ast.ForStatement) error {
 	return nil
 }
 
-func (b *Block) addAddAssign(ctx *Context, stmt ast.AddAssignStatement) error {
-	target, err := b.Scope.scan(ctx, stmt.Target)
-	if err != nil {
-		return err
-	}
-	expr, err := b.Scope.scan(ctx, stmt.Expression)
+func (b *Block) addCall(ctx *Context, stmt ast.CallStatement) error {
+	o, err := b.Scope.scanChainOperand(ctx, stmt.Call)
 	if err != nil {
 		return err
 	}
 
-	b.addNode(&AddAssignStatement{
-		Target: target,
-		Expr:   expr,
-	})
-	return nil
-}
+	pos := stmt.Call.Identifier.Pos
 
-func (b *Block) addSymbolCall(ctx *Context, stmt ast.SymbolCallStatement) error {
-	name := stmt.Callee.Lit
-	pos := stmt.Callee.Pos
-	s := b.Scope.Lookup(name, pos.Num)
-	if s == nil {
-		return fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
-	}
-	if s.Scope.Kind == scp.Unit {
-		ctx.ref.Add(s)
-	}
-	if s.Kind != sym.Fn {
-		return fmt.Errorf("%s: call to symbol \"%s\", which is not a function", pos.String(), name)
-	}
+	// def := s.Def.(*FnDef)
+	// if len(stmt.Arguments) < len(def.Params) {
+	// 	return fmt.Errorf("%s: not enough arguments (got %d) to call \"%s\" function (want %d)",
+	// 		pos.String(), len(stmt.Arguments), name, len(def.Params))
+	// }
+	// if len(stmt.Arguments) > len(def.Params) {
+	// 	return fmt.Errorf("%s: too many arguments (got %d) in function \"%s\" call (want %d)",
+	// 		pos.String(), len(stmt.Arguments), name, len(def.Params))
+	// }
+	// args, err := b.Scope.scanCallArgs(ctx, def.Params, stmt.Arguments)
+	// if err != nil {
+	// 	return err
+	// }
 
-	def := s.Def.(*FnDef)
-	if len(stmt.Arguments) < len(def.Params) {
-		return fmt.Errorf("%s: not enough arguments (got %d) to call \"%s\" function (want %d)",
-			pos.String(), len(stmt.Arguments), name, len(def.Params))
-	}
-	if len(stmt.Arguments) > len(def.Params) {
-		return fmt.Errorf("%s: too many arguments (got %d) in function \"%s\" call (want %d)",
-			pos.String(), len(stmt.Arguments), name, len(def.Params))
-	}
-	args, err := b.Scope.scanCallArgs(ctx, def.Params, stmt.Arguments)
-	if err != nil {
-		return err
-	}
-
-	b.addNode(&SymbolCallStatement{
-		Pos:       pos,
-		Callee:    s,
-		Arguments: args,
+	b.addNode(&CallStatement{
+		Pos:  pos,
+		Call: o.(*CallExpression),
 	})
 	return nil
 }
@@ -268,7 +235,7 @@ func (b *Block) addReturn(ctx *Context, stmt ast.ReturnStatement) error {
 	}
 	t := expr.Type()
 	if t == nil {
-		panic(fmt.Sprintf("%s expression has no type", expr.Kind()))
+		panic(fmt.Sprintf("%s: %s expression has no type", expr.Pin().String(), expr.Kind()))
 	}
 
 	b.addNode(&ReturnStatement{
@@ -278,19 +245,38 @@ func (b *Block) addReturn(ctx *Context, stmt ast.ReturnStatement) error {
 	return nil
 }
 
-func (b *Block) addIndirectAssign(ctx *Context, stmt ast.IndirectAssignStatement) error {
-	name := stmt.Target.Lit
-	pos := stmt.Target.Pos
-	s := b.Scope.Lookup(name, pos.Num)
-	if s == nil {
-		return fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
-	}
-	if s.Scope.Kind == scp.Unit {
-		ctx.ref.Add(s)
-	}
+// func (b *Block) addIndirectAssign(ctx *Context, stmt ast.IndirectAssignStatement) error {
+// 	name := stmt.Target.Lit
+// 	pos := stmt.Target.Pos
+// 	s := b.Scope.Lookup(name, pos.Num)
+// 	if s == nil {
+// 		return fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
+// 	}
+// 	if s.Scope.Kind == scp.Unit {
+// 		ctx.ref.Add(s)
+// 	}
 
-	if s.Type.Kind != typ.Pointer {
-		return fmt.Errorf("%s: invalid operation (indirect on non-pointer type)", pos)
+// 	if s.Type.Kind != typ.Pointer {
+// 		return fmt.Errorf("%s: invalid operation (indirect on non-pointer type)", pos)
+// 	}
+
+// 	expr, err := b.Scope.Scan(ctx, stmt.Expression)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	b.addNode(&IndirectAssignStatement{
+// 		Pos:    pos,
+// 		Target: s,
+// 		Expr:   expr,
+// 	})
+// 	return nil
+// }
+
+func (b *Block) addAssign(ctx *Context, stmt ast.AssignStatement) error {
+	o, err := b.Scope.scanChainOperand(ctx, stmt.Target)
+	if err != nil {
+		return err
 	}
 
 	expr, err := b.Scope.Scan(ctx, stmt.Expression)
@@ -298,38 +284,12 @@ func (b *Block) addIndirectAssign(ctx *Context, stmt ast.IndirectAssignStatement
 		return err
 	}
 
-	b.addNode(&IndirectAssignStatement{
-		Pos:    pos,
-		Target: s,
-		Expr:   expr,
-	})
-	return nil
-}
+	// TODO: type check for target + operation + expression
 
-func (b *Block) addSymbolAssign(ctx *Context, stmt ast.SymbolAssignStatement) error {
-	name := stmt.Target.Lit
-	pos := stmt.Target.Pos
-	s := b.Scope.Lookup(name, pos.Num)
-	if s == nil {
-		return fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
-	}
-	if s.Kind != sym.Var {
-		return fmt.Errorf("%s: cannot assign to %s symbol \"%s\"",
-			pos.String(), s.Kind.String(), name)
-	}
-	if s.Scope.Kind == scp.Unit {
-		ctx.ref.Add(s)
-	}
-
-	expr, err := b.Scope.Scan(ctx, stmt.Expression)
-	if err != nil {
-		return err
-	}
-
-	b.addNode(&SymbolAssignStatement{
-		Pos:    pos,
-		Target: s,
-		Expr:   expr,
+	b.addNode(&AssignStatement{
+		Target:    o,
+		Expr:      expr,
+		Operation: stmt.Operator,
 	})
 	return nil
 }

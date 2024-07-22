@@ -16,43 +16,54 @@ func (g *Noder) Expression(expr ast.Expression) {
 		g.ReceiverExpression(expr.(ast.Receiver))
 	case exn.Basic:
 		g.BasicLiteral(expr.(ast.BasicLiteral))
-	case exn.Index:
-		g.IndexExpression(expr.(ast.IndexExpression))
 	case exn.Binary:
 		g.BinaryExpression(expr.(ast.BinaryExpression))
-	case exn.Call:
-		g.CallExpression(expr.(ast.CallExpression))
-	case exn.Address:
-		g.AddressExpression(expr.(ast.AddressExpression))
 	case exn.Paren:
 		g.ParenthesizedExpression(expr.(ast.ParenthesizedExpression))
-	case exn.Indirect:
-		g.IndirectExpression(expr.(ast.IndirectExpression))
-	case exn.Start:
-		g.ChainStart(expr.(ast.ChainStart))
+	case exn.Chain:
+		g.ChainOperand(expr.(ast.ChainOperand))
 	default:
 		panic(fmt.Sprintf("%s expression node not implemented", expr.Kind().String()))
 	}
 }
 
-func (g *Noder) ChainStart(expr ast.ChainStart) {
-	g.idn(expr.Identifier)
+func (g *Noder) ChainOperand(expr ast.ChainOperand) {
+	if expr.Identifier.Lit == "" {
+		g.genpos(token.Receiver, expr.Identifier.Pos)
+	} else {
+		g.idn(expr.Identifier)
+	}
+
+	for _, part := range expr.Parts {
+		g.chainPart(part)
+	}
 }
 
-func (g *Noder) IndirectExpression(expr ast.IndirectExpression) {
-	g.Expression(expr.Target)
+func (g *Noder) chainPart(part ast.ChainPart) {
+	switch part.Kind() {
+	case exn.Call:
+		g.callPart(part.(ast.CallPart))
+	case exn.Address:
+		g.addressPart(part.(ast.AddressPart))
+	case exn.Index:
+		g.indexPart(part.(ast.IndexPart))
+	case exn.Indirect:
+		g.indirectPart(part.(ast.IndirectPart))
+	default:
+		panic(fmt.Sprintf("%s chain part node not implemented", part.Kind().String()))
+	}
+}
+
+func (g *Noder) indirectPart(expr ast.IndirectPart) {
 	g.genpos(token.Indirect, expr.Pos)
 }
 
-func (g *Noder) AddressExpression(expr ast.AddressExpression) {
-	g.Expression(expr.Target)
-	g.gen(token.Address)
+func (g *Noder) addressPart(expr ast.AddressPart) {
+	g.genpos(token.Address, expr.Pos)
 }
 
-func (g *Noder) CallExpression(expr ast.CallExpression) {
-	g.Expression(expr.Callee)
-
-	args := expr.Arguments
+func (g *Noder) callPart(expr ast.CallPart) {
+	args := expr.Args
 	if len(args) == 0 {
 		g.gen(token.LeftParentheses)
 		g.gen(token.RightParentheses)
@@ -77,8 +88,7 @@ func (g *Noder) CallExpression(expr ast.CallExpression) {
 	g.gen(token.RightParentheses)
 }
 
-func (g *Noder) IndexExpression(expr ast.IndexExpression) {
-	g.Expression(expr)
+func (g *Noder) indexPart(expr ast.IndexPart) {
 	g.gen(token.LeftSquare)
 	g.Expression(expr.Index)
 	g.gen(token.RightSquare)

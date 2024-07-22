@@ -18,6 +18,7 @@ func (g *Builder) Expression(expr tt.Expression) {
 
 func (g *Builder) expr(expr tt.Expression) {
 	switch expr.Kind() {
+
 	case exn.Integer:
 		g.Integer(expr.(tt.Integer))
 	case exn.True:
@@ -32,14 +33,11 @@ func (g *Builder) expr(expr tt.Expression) {
 		g.UnaryExpression(expr.(*tt.UnaryExpression))
 	case exn.Paren:
 		g.ParenthesizedExpression(expr.(*tt.ParenthesizedExpression))
-	case exn.SymbolCall:
-		g.SymbolCallExpression(expr.(*tt.SymbolCallExpression))
-	case exn.Member:
-		g.MemberExpression(expr.(*tt.MemberExpression))
-	case exn.Start:
-		g.StartExpression(expr.(*tt.ChainStart))
 	case exn.Cast:
 		g.CastExpression(expr.(*tt.CastExpression))
+	case exn.Chain, exn.Member, exn.Address, exn.Indirect:
+		g.ChainOperand(expr.(tt.ChainOperand))
+
 	default:
 		panic(fmt.Sprintf("%s expression not implemented", expr.Kind().String()))
 	}
@@ -61,7 +59,26 @@ func (g *Builder) CastExpression(expr *tt.CastExpression) {
 	g.puts(")")
 }
 
-func (g *Builder) StartExpression(expr *tt.ChainStart) {
+func (g *Builder) ChainOperand(expr tt.ChainOperand) {
+	switch expr.Kind() {
+	case exn.Chain:
+		g.ChainSymbol(expr.(*tt.ChainSymbol))
+	case exn.Member:
+		g.MemberExpression(expr.(*tt.MemberExpression))
+	case exn.Address:
+		g.AddressExpression(expr.(*tt.AddressExpression))
+	case exn.Indirect:
+		g.IndirectExpression(expr.(*tt.IndirectExpression))
+	default:
+		panic(fmt.Sprintf("%s operand not implemented", expr.Kind().String()))
+	}
+}
+
+func (g *Builder) ChainSymbol(expr *tt.ChainSymbol) {
+	if expr.Sym == nil {
+		g.puts("g")
+		return
+	}
 	g.SymbolName(expr.Sym)
 }
 
@@ -76,8 +93,19 @@ func (g *Builder) UnaryExpression(expr *tt.UnaryExpression) {
 	g.expr(expr.Inner)
 }
 
+func (g *Builder) IndirectExpression(expr *tt.IndirectExpression) {
+	g.puts("*(")
+	g.ChainOperand(expr.Target)
+	g.puts(")")
+}
+
+func (g *Builder) AddressExpression(expr *tt.AddressExpression) {
+	g.puts("&")
+	g.ChainOperand(expr.Target)
+}
+
 func (g *Builder) MemberExpression(expr *tt.MemberExpression) {
-	g.SymbolName(expr.Target)
+	g.ChainOperand(expr.Target)
 	g.puts(".")
 	g.puts(expr.Member.Name)
 }
@@ -101,8 +129,8 @@ func (g *Builder) CallArgs(args []tt.Expression) {
 	g.puts(")")
 }
 
-func (g *Builder) SymbolCallExpression(expr *tt.SymbolCallExpression) {
-	g.SymbolName(expr.Callee)
+func (g *Builder) CallExpression(expr *tt.CallExpression) {
+	g.ChainOperand(expr.Callee)
 	g.CallArgs(expr.Arguments)
 }
 

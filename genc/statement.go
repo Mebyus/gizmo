@@ -17,14 +17,10 @@ func (g *Builder) Statement(node tt.Statement) {
 		g.letStatement(node.(*tt.LetStatement))
 	case stm.Var:
 		g.varStatement(node.(*tt.VarStatement))
-	case stm.SymbolAssign:
-		g.symbolAssignStatement(node.(*tt.SymbolAssignStatement))
-	case stm.SymbolCall:
-		g.symbolCallStatement(node.(*tt.SymbolCallStatement))
-	case stm.AddAssign:
-		// TODO: refactor assignment statements into single type
-		// with operation (assignment) type specified
-		g.addAssignStatement(node.(*tt.AddAssignStatement))
+	case stm.Call:
+		g.callStatement(node.(*tt.CallStatement))
+	case stm.Assign:
+		g.assignStatement(node.(*tt.AssignStatement))
 	case stm.SimpleIf:
 		g.simpleIfStatement(node.(*tt.SimpleIfStatement))
 		return
@@ -47,9 +43,11 @@ func (g *Builder) loopStatement(node *tt.LoopStatement) {
 	g.Block(&node.Body)
 }
 
-func (g *Builder) addAssignStatement(node *tt.AddAssignStatement) {
-	g.Expression(node.Target)
-	g.puts(" += ")
+func (g *Builder) assignStatement(node *tt.AssignStatement) {
+	g.ChainOperand(node.Target)
+	g.space()
+	g.puts(node.Operation.String())
+	g.space()
 	g.Expression(node.Expr)
 }
 
@@ -67,15 +65,8 @@ func (g *Builder) simpleIfStatement(node *tt.SimpleIfStatement) {
 	g.Block(&node.Body)
 }
 
-func (g *Builder) symbolCallStatement(node *tt.SymbolCallStatement) {
-	g.SymbolName(node.Callee)
-	g.CallArgs(node.Arguments)
-}
-
-func (g *Builder) symbolAssignStatement(node *tt.SymbolAssignStatement) {
-	g.SymbolName(node.Target)
-	g.puts(" = ")
-	g.Expression(node.Expr)
+func (g *Builder) callStatement(node *tt.CallStatement) {
+	g.CallExpression(node.Call)
 }
 
 func (g *Builder) varStatement(node *tt.VarStatement) {

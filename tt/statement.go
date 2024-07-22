@@ -1,6 +1,7 @@
 package tt
 
 import (
+	"github.com/mebyus/gizmo/ast/aop"
 	"github.com/mebyus/gizmo/ast/stm"
 	"github.com/mebyus/gizmo/source"
 )
@@ -87,82 +88,27 @@ func (s *ReturnStatement) Kind() stm.Kind {
 	return stm.Return
 }
 
-// SymbolAssignStatement is a simple form of generic assign statement,
-// where target is a symbol (not a complex expression). Example:
-//
-//	x = 10 + a;
-type SymbolAssignStatement struct {
-	nodeStatement
-
-	// Position of assign statement.
-	Pos source.Pos
-
-	// Target of the assignment.
-	Target *Symbol
-
-	// Assigned expression. Always not nil.
-	Expr Expression
-}
-
-// Explicit interface implementation check
-var _ Statement = &SymbolAssignStatement{}
-
-func (s *SymbolAssignStatement) Pin() source.Pos {
-	return s.Pos
-}
-
-func (s *SymbolAssignStatement) Kind() stm.Kind {
-	return stm.SymbolAssign
-}
-
-// IndirectAssignStatement is a simple form of generic assign statement,
-// where target is an indirect on a symbol. Example:
-//
-//	x.@ = 10 + a;
-type IndirectAssignStatement struct {
-	nodeStatement
-
-	// Position of assign statement.
-	Pos source.Pos
-
-	// Target of the assignment.
-	Target *Symbol
-
-	// Assigned expression. Always not nil.
-	Expr Expression
-}
-
-// Explicit interface implementation check
-var _ Statement = &IndirectAssignStatement{}
-
-func (s *IndirectAssignStatement) Pin() source.Pos {
-	return s.Pos
-}
-
-func (s *IndirectAssignStatement) Kind() stm.Kind {
-	return stm.IndirectAssign
-}
-
-// x += 10;
-type AddAssignStatement struct {
+type AssignStatement struct {
 	nodeStatement
 
 	// Target of the assignment.
-	Target Expression
+	Target ChainOperand
 
 	// Assigned expression. Always not nil.
 	Expr Expression
+
+	Operation aop.Kind
 }
 
 // Explicit interface implementation check
-var _ Statement = &AddAssignStatement{}
+var _ Statement = &AssignStatement{}
 
-func (s *AddAssignStatement) Pin() source.Pos {
+func (s *AssignStatement) Pin() source.Pos {
 	return s.Target.Pin()
 }
 
-func (s *AddAssignStatement) Kind() stm.Kind {
-	return stm.AddAssign
+func (s *AssignStatement) Kind() stm.Kind {
+	return stm.Assign
 }
 
 type SimpleIfStatement struct {
@@ -225,21 +171,20 @@ func (s *LoopStatement) Pin() source.Pos {
 	return s.Pos
 }
 
-type SymbolCallStatement struct {
+type CallStatement struct {
 	nodeStatement
 
 	Pos source.Pos
 
-	Arguments []Expression
-	Callee    *Symbol
+	Call *CallExpression
 }
 
-var _ Statement = &SymbolCallStatement{}
+var _ Statement = &CallStatement{}
 
-func (*SymbolCallStatement) Kind() stm.Kind {
-	return stm.SymbolCall
+func (*CallStatement) Kind() stm.Kind {
+	return stm.Call
 }
 
-func (s *SymbolCallStatement) Pin() source.Pos {
+func (s *CallStatement) Pin() source.Pos {
 	return s.Pos
 }
