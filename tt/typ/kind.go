@@ -65,6 +65,8 @@ const (
 	// Most commonly created via language construct:
 	//
 	//	type Name <OtherType>
+	//
+	// TODO: rename this to custom type.
 	Named
 
 	// Types which are defined as structs
@@ -153,6 +155,10 @@ const (
 	// (pointer to a string)
 	Pointer
 
+	// Pointer to continuous region of memory holding
+	// variable number of elements of another type.
+	ArrayPointer
+
 	// Abstract enum Types. Values of this Types can only be obtained via
 	// their enum respective symbols. Furthermore enum Flavors cannot be
 	// cast into integer Flavors
@@ -163,7 +169,29 @@ const (
 	// Specified via language construct:
 	//
 	//	fn (<Args>) <Result>
+	//
+	// This type is a base type for functions, bound methods,
+	// unbound methods, custom types (defined as signatures)
+	// and closures.
+	Signature
+
 	Function
+
+	// Created by usage of language construct:
+	//
+	//	T.add
+	//
+	// Where add is a method on type symbol a.
+	UnboundMethod
+
+	// Created by usage of language construct:
+	//
+	//	a.add
+	//
+	// Where add is a method on value symbol a.
+	BoundMethod
+
+	Closure
 
 	// Types which are obtained via usage of type specifiers. In other
 	// words this category contains Types of Types. For example:
@@ -231,30 +259,32 @@ const (
 var text = [...]string{
 	empty: "<nil>",
 
-	StaticInteger: "static_integer",
-	StaticFloat:   "static_float",
-	StaticString:  "static_string",
-	StaticBoolean: "static_boolean",
-	StaticNil:     "static_nil",
-	Trivial:       "triv",
-	Named:         "named",
-	Struct:        "struct",
-	Tuple:         "tuple",
-	Formation:     "formation",
-	Array:         "array",
-	Pointer:       "pointer",
-	Enum:          "enum",
-	Function:      "function",
-	Spec:          "spec",
-	Proto:         "proto",
-	Blue:          "blue",
-	Chunk:         "chunk",
-	Unsigned:      "unsigned",
-	Signed:        "signed",
-	Float:         "float",
-	String:        "string",
-	Boolean:       "boolean",
-	Nillable:      "nillable",
+	StaticInteger: "static.integer",
+	StaticFloat:   "static.float",
+	StaticString:  "static.string",
+	StaticBoolean: "static.boolean",
+	StaticNil:     "static.nil",
+
+	Trivial:      "triv",
+	Named:        "named",
+	Struct:       "struct",
+	Tuple:        "tuple",
+	Formation:    "formation",
+	Array:        "array",
+	Pointer:      "pointer",
+	ArrayPointer: "pointer.array",
+	Enum:         "enum",
+	Signature:    "function",
+	Spec:         "spec",
+	Proto:        "proto",
+	Blue:         "blue",
+	Chunk:        "chunk",
+	Unsigned:     "unsigned",
+	Signed:       "signed",
+	Float:        "float",
+	String:       "string",
+	Boolean:      "boolean",
+	Nillable:     "nillable",
 }
 
 func (k Kind) String() string {

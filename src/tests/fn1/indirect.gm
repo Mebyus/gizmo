@@ -8,3 +8,7 @@ fn address() => int {
     p.@ = 3;
     return i;
 }
+
+fn indirect_index(p: [*]i32, n: int) => i32 {
+    return p.[n];
+}

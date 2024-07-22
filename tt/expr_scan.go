@@ -117,6 +117,8 @@ func (s *Scope) scanChainPart(ctx *Context, tip ChainOperand, part ast.ChainPart
 		return s.scanMemberPart(ctx, tip, part.(ast.MemberPart))
 	case exn.Call:
 		return s.scanCallPart(ctx, tip, part.(ast.CallPart))
+	case exn.IndirectIndex:
+		return s.scanIndirectIndexPart(ctx, tip, part.(ast.IndirectIndexPart))
 	default:
 		panic(fmt.Sprintf("not implemented for %s expression", part.Kind().String()))
 	}
@@ -130,6 +132,27 @@ func (s *Scope) scanAddressPart(ctx *Context, tip ChainOperand, part ast.Address
 	}, nil
 }
 
+func (s *Scope) scanIndirectIndexPart(ctx *Context, tip ChainOperand, part ast.IndirectIndexPart) (ChainOperand, error) {
+	t := tip.Type()
+	if t.Base.Kind != typ.ArrayPointer {
+		return nil, fmt.Errorf("%s: cannot indirect index %s operand of %s type",
+			part.Pos.String(), tip.Kind().String(), t.Base.Kind.String())
+	}
+	index, err := s.scan(ctx, part.Index)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: check that index is of integer type
+
+	return &IndirectIndexExpression{
+		Pos:    part.Pos,
+		Target: tip,
+		Index:  index,
+		typ:    t.Base.Def.(ArrayPointerTypeDef).RefType,
+	}, nil
+}
+
 func (s *Scope) scanIndirectPart(ctx *Context, tip ChainOperand, part ast.IndirectPart) (ChainOperand, error) {
 	t := tip.Type()
 	if t.Base.Kind != typ.Pointer {
@@ -139,7 +162,7 @@ func (s *Scope) scanIndirectPart(ctx *Context, tip ChainOperand, part ast.Indire
 	return &IndirectExpression{
 		Pos:    part.Pos,
 		Target: tip,
-		typ:    t.Base.Def.(PtrTypeDef).RefType,
+		typ:    t.Base.Def.(PointerTypeDef).RefType,
 	}, nil
 }
 

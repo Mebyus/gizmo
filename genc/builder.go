@@ -165,7 +165,10 @@ func (g *Builder) getTypeSpec(t *tt.Type) string {
 		return g.getSymbolName(t.Def.(tt.NamedTypeDef).Symbol)
 	}
 	if t.Kind == typ.Pointer {
-		return g.getTypeSpec(t.Def.(tt.PtrTypeDef).RefType) + "*"
+		return g.getTypeSpec(t.Def.(tt.PointerTypeDef).RefType) + "*"
+	}
+	if t.Kind == typ.ArrayPointer {
+		return g.getTypeSpec(t.Def.(tt.ArrayPointerTypeDef).RefType) + "*"
 	}
 
 	panic(fmt.Sprintf("%s types not implemented", t.Kind))

@@ -45,6 +45,8 @@ func (x *TypeIndex) lookup(spec ast.TypeSpecifier) (*Type, error) {
 		return x.lookupChunk(spec.(ast.ChunkType).ElemType)
 	case tps.Enum:
 		return x.lookupEnum(spec.(ast.EnumType))
+	case tps.ArrayPointer:
+		return x.lookupArrayPointer(spec.(ast.ArrayPointerType).ElemType)
 	default:
 		panic(fmt.Sprintf("not implemented for %s", spec.Kind().String()))
 	}
@@ -52,6 +54,10 @@ func (x *TypeIndex) lookup(spec ast.TypeSpecifier) (*Type, error) {
 
 func (x *TypeIndex) storePointer(ref *Type) *Type {
 	return x.store(newPointerType(ref))
+}
+
+func (x *TypeIndex) storeArrayPointer(ref *Type) *Type {
+	return x.store(newArrayPointerType(ref))
 }
 
 func (x *TypeIndex) storeChunk(elem *Type) *Type {
@@ -68,6 +74,14 @@ func (x *TypeIndex) store(a *Type) *Type {
 		t = a
 	}
 	return t
+}
+
+func (x *TypeIndex) lookupArrayPointer(spec ast.TypeSpecifier) (*Type, error) {
+	elem, err := x.lookup(spec)
+	if err != nil {
+		return nil, err
+	}
+	return x.storeArrayPointer(elem), nil
 }
 
 func (x *TypeIndex) lookupEnum(spec ast.EnumType) (*Type, error) {

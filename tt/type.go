@@ -165,7 +165,9 @@ func (t *Type) computeHash() uint64 {
 		// named types are not meant to be looked up by hash
 		return HashName(t.Name)
 	case typ.Pointer:
-		return HashPointerType(t.Def.(PtrTypeDef).RefType)
+		return HashPointerType(t.Def.(PointerTypeDef).RefType)
+	case typ.ArrayPointer:
+		return HashArrayPointerType(t.Def.(ArrayPointerTypeDef).RefType)
 	case typ.Chunk:
 		return HashChunkType(t.Def.(ChunkTypeDef).ElemType)
 	case typ.Struct:
@@ -204,6 +206,16 @@ func HashPointerType(ref *Type) uint64 {
 
 	h := fnv.New64a()
 	buf[0] = byte(typ.Pointer)
+	putUint64(buf[2:], ref.Hash())
+	h.Write(buf[:])
+	return h.Sum64()
+}
+
+func HashArrayPointerType(ref *Type) uint64 {
+	var buf [10]byte
+
+	h := fnv.New64a()
+	buf[0] = byte(typ.ArrayPointer)
 	putUint64(buf[2:], ref.Hash())
 	h.Write(buf[:])
 	return h.Sum64()
@@ -248,7 +260,13 @@ type IntTypeDef struct {
 	Size uint32
 }
 
-type PtrTypeDef struct {
+type ArrayPointerTypeDef struct {
+	nodeTypeDef
+
+	RefType *Type
+}
+
+type PointerTypeDef struct {
 	nodeTypeDef
 
 	RefType *Type
@@ -260,10 +278,19 @@ type ChunkTypeDef struct {
 	ElemType *Type
 }
 
+func newArrayPointerType(ref *Type) *Type {
+	t := &Type{
+		Kind: typ.ArrayPointer,
+		Def:  ArrayPointerTypeDef{RefType: ref},
+	}
+	t.Base = t
+	return t
+}
+
 func newPointerType(ref *Type) *Type {
 	t := &Type{
 		Kind: typ.Pointer,
-		Def:  PtrTypeDef{RefType: ref},
+		Def:  PointerTypeDef{RefType: ref},
 	}
 	t.Base = t
 	return t

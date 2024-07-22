@@ -147,3 +147,30 @@ func (e *AddressExpression) Pin() source.Pos {
 func (e *AddressExpression) Type() *Type {
 	return e.typ
 }
+
+type IndirectIndexExpression struct {
+	nodeChain
+
+	Pos source.Pos
+
+	Target ChainOperand
+
+	Index Expression
+
+	typ *Type
+}
+
+// Explicit interface implementation check.
+var _ ChainOperand = &IndirectIndexExpression{}
+
+func (*IndirectIndexExpression) Kind() exn.Kind {
+	return exn.IndirectIndex
+}
+
+func (e *IndirectIndexExpression) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *IndirectIndexExpression) Type() *Type {
+	return e.typ
+}
