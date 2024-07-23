@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/mebyus/gizmo/gencpp"
-	"github.com/mebyus/gizmo/ir"
 	"github.com/mebyus/gizmo/parser"
 	"github.com/mebyus/gizmo/source"
 )
@@ -479,9 +478,7 @@ func (w *Worker) gizmoGenout(buf *bytes.Buffer, task *BuildTask, name string) (s
 
 	var entryPoint string
 	if task.scanMain {
-		if ir.CheckEntryPoint(atom, "main") {
-			entryPoint = "main"
-		}
+		entryPoint = "main"
 	}
 
 	genConfig := gencpp.Config{

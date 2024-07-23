@@ -19,7 +19,7 @@ type ImportBlock struct {
 
 	Origin origin.Origin
 
-	Public bool
+	Pub bool
 }
 
 // <ImportSpec> = <Name> "=>" <ImportString>
@@ -36,9 +36,9 @@ type ImportString struct {
 }
 
 // ImportBind is not produced by parser. It is convenience struct for passing around
-// preprocessed data related to a single import spec
+// preprocessed data related to a single import spec.
 type ImportBind struct {
-	Name   Identifier
-	Path   origin.Path
-	Public bool
+	Name Identifier
+	Path origin.Path
+	Pub  bool
 }

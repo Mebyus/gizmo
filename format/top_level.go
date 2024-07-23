@@ -1,45 +1,23 @@
 package format
 
 import (
-	"fmt"
-
 	"github.com/mebyus/gizmo/ast"
-	"github.com/mebyus/gizmo/ast/toplvl"
 	"github.com/mebyus/gizmo/token"
 )
 
-func (g *Noder) TopLevel(node ast.TopLevel) {
-	switch node.Kind() {
-	case toplvl.Fn:
-		g.TopFn(node.(ast.TopFunctionDefinition))
-	case toplvl.Type:
-		g.TopType(node.(ast.TopType))
-	case toplvl.Const:
-		g.TopConst(node.(ast.TopConst))
-	case toplvl.Declare:
-		g.TopDeclare(node.(ast.TopFunctionDeclaration))
-	case toplvl.Var:
-		g.TopVar(node.(ast.TopVar))
-	case toplvl.Method:
-		g.Method(node.(ast.Method))
-	default:
-		panic(fmt.Sprintf("top-level %s node not implemented", node.Kind().String()))
-	}
-}
-
-func (g *Noder) TopFn(top ast.TopFunctionDefinition) {
-	if top.Public {
+func (g *Noder) TopFn(top ast.TopFun) {
+	if top.Pub {
 		g.pub()
 	}
 
-	g.FunctionDefinition(top.Definition)
+	// g.FunctionDefinition(top.Definition)
 }
 
-func (g *Noder) TopConst(top ast.TopConst) {
+func (g *Noder) TopConst(top ast.TopCon) {
 	// f.ConstInit(top.ConstInit)
 }
 
-func (g *Noder) TopDeclare(top ast.TopFunctionDeclaration) {
+func (g *Noder) TopDeclare(top ast.TopFun) {
 	// f.FunctionDeclaration(top.Declaration)
 }
 
@@ -52,7 +30,7 @@ func (g *Noder) Method(top ast.Method) {
 }
 
 func (g *Noder) TopType(top ast.TopType) {
-	if top.Public {
+	if top.Pub {
 		g.pub()
 	}
 

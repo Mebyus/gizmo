@@ -6,7 +6,7 @@ package ast
 //
 // <Signature> = <FunctionSignature>
 type FunctionDeclaration struct {
-	Signature FunctionSignature
+	Signature Signature
 	Name      Identifier
 }
 
@@ -21,15 +21,15 @@ type FunctionDefinition struct {
 	Body BlockStatement
 }
 
-// <FunctionSignature> = <Parameters> [ "=>" ( <Result> | "never" ) ]
+// <Signature> = <Parameters> [ "=>" ( <Result> | "never" ) ]
 //
 // <Parameters> = "(" { <FieldDefinition> "," } ")"
-type FunctionSignature struct {
+type Signature struct {
 	// Equals nil if there are no parameters in signature
 	Params []FieldDefinition
 
 	// Equals nil if function returns nothing or never returns
-	Result TypeSpecifier
+	Result TypeSpec
 
 	// Equals true if function never returns
 	Never bool
@@ -40,5 +40,5 @@ type FunctionSignature struct {
 // <Name> = <Identifier>
 type FieldDefinition struct {
 	Name Identifier
-	Type TypeSpecifier
+	Type TypeSpec
 }

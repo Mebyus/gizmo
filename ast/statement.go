@@ -65,12 +65,12 @@ func (s ReturnStatement) Pin() source.Pos {
 	return s.Pos
 }
 
-type ConstInit struct {
+type Con struct {
 	Pos source.Pos
 
 	Name Identifier
 
-	Type TypeSpecifier
+	Type TypeSpec
 
 	// Always not nil
 	Expression Expression
@@ -79,7 +79,7 @@ type ConstInit struct {
 type ConstStatement struct {
 	nodeStatement
 
-	ConstInit
+	Con
 }
 
 var _ Statement = ConstStatement{}
@@ -92,12 +92,12 @@ func (s ConstStatement) Pin() source.Pos {
 	return s.Pos
 }
 
-type VarInit struct {
+type Var struct {
 	Pos source.Pos
 
 	Name Identifier
 
-	Type TypeSpecifier
+	Type TypeSpec
 
 	// Equals nil if init expression is dirty
 	Expression Expression
@@ -106,7 +106,7 @@ type VarInit struct {
 type VarStatement struct {
 	nodeStatement
 
-	VarInit
+	Var
 }
 
 var _ Statement = VarStatement{}
@@ -312,7 +312,7 @@ type LetStatement struct {
 
 	Name Identifier
 
-	Type TypeSpecifier
+	Type TypeSpec
 
 	// Always not nil
 	Expression Expression

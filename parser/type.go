@@ -8,14 +8,11 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-func (p *Parser) topLevelType() (ast.TopLevel, error) {
+func (p *Parser) topType(traits ast.Traits) error {
 	p.advance() // skip "type"
 
 	if p.tok.Kind != token.Identifier {
-		return nil, p.unexpected(p.tok)
-	}
-	if p.next.Kind == token.LeftParentheses {
-		return p.topPrototype()
+		return p.unexpected(p.tok)
 	}
 
 	name := p.idn()
@@ -23,104 +20,23 @@ func (p *Parser) topLevelType() (ast.TopLevel, error) {
 
 	spec, err := p.DefTypeSpecifier()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return ast.TopType{
-		Name: name,
-		Spec: spec,
-	}, nil
-}
-
-func (p *Parser) topPrototype() (ast.TopPrototype, error) {
-	name := p.idn()
-	p.advance() // skip name identifier
-
-	if p.tok.Kind != token.LeftParentheses {
-		panic("unexpected token")
-	}
-
-	params, err := p.protoParams()
-	if err != nil {
-		return ast.TopPrototype{}, err
-	}
-
-	if p.tok.Kind != token.Struct {
-		return ast.TopPrototype{}, fmt.Errorf("prototypes of %s are not allowed %s", p.tok.Kind.String(), p.tok.Pos.String())
-	}
-	spec, err := p.structType()
-	if err != nil {
-		return ast.TopPrototype{}, err
-	}
-
-	return ast.TopPrototype{
+	t := ast.TopType{
 		Name:   name,
 		Spec:   spec,
-		Params: params,
-	}, nil
-}
-
-func (p *Parser) protoParams() ([]ast.TypeParam, error) {
-	p.advance() // skip "("
-
-	var params []ast.TypeParam
-	for {
-		if p.tok.Kind == token.RightParentheses {
-			if len(params) == 0 {
-				return nil, fmt.Errorf("no params in prototype %s", p.pos().String())
-			}
-
-			p.advance() // skip ")"
-			return params, nil
-		}
-
-		param, err := p.protoParam()
-		if err != nil {
-			return nil, err
-		}
-		params = append(params, param)
-
-		if p.tok.Kind == token.Comma {
-			p.advance() // skip ","
-		} else if p.tok.Kind == token.RightParentheses {
-			// will be skipped at next iteration
-		} else {
-			return nil, p.unexpected(p.tok)
-		}
+		Traits: traits,
 	}
-}
-
-func (p *Parser) protoParam() (ast.TypeParam, error) {
-	err := p.expect(token.Identifier)
-	if err != nil {
-		return ast.TypeParam{}, err
-	}
-	name := p.idn()
-	p.advance() // skip param name identifier
-
-	err = p.expect(token.Colon)
-	if err != nil {
-		return ast.TypeParam{}, err
-	}
-	p.advance() // skip ":"
-
-	// TODO: design data type to represent constraint
-	if p.tok.Kind != token.Type {
-		return ast.TypeParam{}, p.unexpected(p.tok)
-	}
-	p.advance() // skip "type"
-
-	return ast.TypeParam{
-		Name:       name,
-		Constraint: nil,
-	}, nil
+	p.atom.Types = append(p.atom.Types, t)
+	return nil
 }
 
 // variant of generic type specifier parsing for usage in context
 // of explicit named type definition via construct
 //
 //	type MyType <TypeSpecifier>
-func (p *Parser) DefTypeSpecifier() (ast.TypeSpecifier, error) {
+func (p *Parser) DefTypeSpecifier() (ast.TypeSpec, error) {
 	t, err := p.typeSpecifier()
 	if err != nil {
 		return nil, err
@@ -131,7 +47,7 @@ func (p *Parser) DefTypeSpecifier() (ast.TypeSpecifier, error) {
 	return t, nil
 }
 
-func (p *Parser) typeSpecifier() (ast.TypeSpecifier, error) {
+func (p *Parser) typeSpecifier() (ast.TypeSpec, error) {
 	switch p.tok.Kind {
 	case token.Identifier:
 		return p.typeName()

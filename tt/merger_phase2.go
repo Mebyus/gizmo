@@ -74,7 +74,7 @@ func (m *Merger) bindMethod(method ast.Method) error {
 }
 
 func (m *Merger) scanConstants() error {
-	for _, s := range m.constants {
+	for _, s := range m.cons {
 		def := s.Def.(TempConstDef)
 		c, err := m.scanConst(s, def)
 		if err != nil {
@@ -129,7 +129,7 @@ func (m *Merger) scanConst(s *Symbol, def TempConstDef) (*ConstDef, error) {
 }
 
 func (m *Merger) scanFns() error {
-	for _, s := range m.fns {
+	for _, s := range m.funs {
 		def := s.Def.(TempFnDef)
 		fn, err := m.scanFn(def)
 		if err != nil {

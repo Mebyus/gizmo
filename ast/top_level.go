@@ -5,81 +5,98 @@ import (
 	"github.com/mebyus/gizmo/source"
 )
 
-// <TopLevel> = <Function> | <Method> | <Type> | <Var> | <Const> | <Template>
-type TopLevel interface {
+// Top level node.
+//
+// <Top> = <Fun> | <Method> | <Type> | <Var> | <Con>
+type Top interface {
 	Node
 
 	// dummy discriminator method
-	TopLevel()
+	Top()
 
 	Kind() toplvl.Kind
 }
 
-// Dummy provides quick, easy to use implementation of discriminator TopLevel() method
-//
-// Used for embedding into other (non-dummy) type specifier nodes
-type nodeTopLevel struct{}
+// Provides quick, easy to use implementation of discriminator Top() method.
+// Used for embedding into other (non-dummy) top level nodes.
+type nodeTop struct{}
 
-func (nodeTopLevel) TopLevel() {}
+func (nodeTop) Top() {}
 
-// <TopFunctionDeclaration> = [ "pub" ] "declare" <FunctionDeclaration>
-type TopFunctionDeclaration struct {
-	nodeTopLevel
+// Trait container object for passing around top node
+// attributes and properties.
+type Traits struct {
+	// List of node's properties.
+	Props *[]Prop
 
-	Declaration FunctionDeclaration
-
-	Props []Prop
-
-	Public bool
+	// True for public nodes.
+	Pub bool
 }
 
-var _ TopLevel = TopFunctionDeclaration{}
+// TopDec top level node with function declaration.
+//
+// <TopDec> = [ "pub" ] "fn" <Name> <Signature>
+type TopDec struct {
+	nodeTop
 
-func (TopFunctionDeclaration) Kind() toplvl.Kind {
+	Signature Signature
+
+	Name Identifier
+
+	Traits
+}
+
+var _ Top = TopDec{}
+
+func (TopDec) Kind() toplvl.Kind {
 	return toplvl.Declare
 }
 
-func (t TopFunctionDeclaration) Pin() source.Pos {
-	return t.Declaration.Name.Pos
+func (t TopDec) Pin() source.Pos {
+	return t.Name.Pos
 }
 
-// <TopFunctionDefinition> = [ "pub" ] <FunctionDefinition>
-type TopFunctionDefinition struct {
-	nodeTopLevel
+// TopFun top level node with function definition.
+//
+// <TopFun> = <FunDec> <Body>
+type TopFun struct {
+	nodeTop
 
-	Definition FunctionDefinition
+	Signature Signature
 
-	Props []Prop
+	Name Identifier
 
-	Public bool
+	Body BlockStatement
+
+	Traits
 }
 
-var _ TopLevel = TopFunctionDefinition{}
+var _ Top = TopFun{}
 
-func (TopFunctionDefinition) Kind() toplvl.Kind {
+func (TopFun) Kind() toplvl.Kind {
 	return toplvl.Fn
 }
 
-func (t TopFunctionDefinition) Pin() source.Pos {
-	return t.Definition.Head.Name.Pos
+func (t TopFun) Pin() source.Pos {
+	return t.Name.Pos
 }
 
-// <TopConst> = [ "pub" ] <ConstInit>
-type TopConst struct {
-	nodeTopLevel
+// <TopCon> = [ "pub" ] <Con>
+type TopCon struct {
+	nodeTop
 
-	ConstInit
+	Con
 
-	Public bool
+	Traits
 }
 
-var _ TopLevel = TopConst{}
+var _ Top = TopCon{}
 
-func (TopConst) Kind() toplvl.Kind {
+func (TopCon) Kind() toplvl.Kind {
 	return toplvl.Const
 }
 
-func (t TopConst) Pin() source.Pos {
+func (t TopCon) Pin() source.Pos {
 	return t.Pos
 }
 
@@ -87,16 +104,16 @@ func (t TopConst) Pin() source.Pos {
 //
 // <Name> = <Identifier>
 type TopType struct {
-	nodeTopLevel
+	nodeTop
 
 	Name Identifier
 
-	Spec TypeSpecifier
+	Spec TypeSpec
 
-	Public bool
+	Traits
 }
 
-var _ TopLevel = TopType{}
+var _ Top = TopType{}
 
 func (TopType) Kind() toplvl.Kind {
 	return toplvl.Type
@@ -106,16 +123,16 @@ func (t TopType) Pin() source.Pos {
 	return t.Name.Pos
 }
 
-// <TopVar> = [ "pub" ] <VarInit>
+// <TopVar> = [ "pub" ] <Var>
 type TopVar struct {
-	nodeTopLevel
+	nodeTop
 
-	VarInit
+	Var
 
-	Public bool
+	Traits
 }
 
-var _ TopLevel = TopVar{}
+var _ Top = TopVar{}
 
 func (TopVar) Kind() toplvl.Kind {
 	return toplvl.Var
@@ -125,53 +142,32 @@ func (t TopVar) Pin() source.Pos {
 	return t.Pos
 }
 
-// <TopBlueprint> = [ "pub" ] "fn" <Name> <TypeParams> <FunctionSignature> <Body>
-type TopBlueprint struct {
-	nodeTopLevel
+// <Method> = "fn" "[" <Receiver> "]" <Name> <Signature> <Body>
+//
+// <Receiver> = <TypeSpecifier>
+// <Name> = <Identifier>
+// <Signature> = <FunctionSignature>
+// <Body> = <BlockStatement>
+type Method struct {
+	nodeTop
+
+	Receiver TypeSpec
 
 	Name Identifier
 
-	// Contains at least one element
-	Params []TypeParam
-
-	Signature FunctionSignature
+	Signature Signature
 
 	Body BlockStatement
 
-	Public bool
+	Traits
 }
 
-var _ TopLevel = TopBlueprint{}
+var _ Top = Method{}
 
-func (TopBlueprint) Kind() toplvl.Kind {
-	return toplvl.Blue
+func (Method) Kind() toplvl.Kind {
+	return toplvl.Method
 }
 
-func (t TopBlueprint) Pin() source.Pos {
-	return t.Name.Pos
-}
-
-// <TopPrototype> = [ "pub" ] "type" <Name> <TypeParams> <TypeSpecifier>
-type TopPrototype struct {
-	nodeTopLevel
-
-	Name Identifier
-
-	// Contains at least one element
-	Params []TypeParam
-
-	// Must be struct type
-	Spec TypeSpecifier
-
-	Public bool
-}
-
-var _ TopLevel = TopPrototype{}
-
-func (TopPrototype) Kind() toplvl.Kind {
-	return toplvl.Proto
-}
-
-func (t TopPrototype) Pin() source.Pos {
-	return t.Name.Pos
+func (m Method) Pin() source.Pos {
+	return m.Name.Pos
 }

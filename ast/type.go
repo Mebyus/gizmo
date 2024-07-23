@@ -5,33 +5,31 @@ import (
 	"github.com/mebyus/gizmo/source"
 )
 
-// <TypeSpecifier> = <TypeName> | <TypeLiteral>
-//
-// <TypeName> = <ScopedIdentifier>
-type TypeSpecifier interface {
+// <TypeSpec> = <TypeName> | <TypeLiteral>
+type TypeSpec interface {
 	Node
 
 	// dummy discriminator method
-	TypeSpecifier()
+	TypeSpec()
 
 	Kind() tps.Kind
 }
 
-// Dummy provides quick, easy to use implementation of discriminator TypeSpecifier() method
+// Provides quick, easy to use implementation of discriminator TypeSpec() method
 //
-// Used for embedding into other (non-dummy) type specifier nodes
-type nodeTypeSpecifier struct{}
+// Used for embedding into other (non-dummy) type specifier nodes.
+type nodeTypeSpec struct{}
 
-func (nodeTypeSpecifier) TypeSpecifier() {}
+func (nodeTypeSpec) TypeSpec() {}
 
 type TypeName struct {
-	nodeTypeSpecifier
+	nodeTypeSpec
 
 	Name Identifier
 }
 
 // Explicit interface implementation check
-var _ TypeSpecifier = TypeName{}
+var _ TypeSpec = TypeName{}
 
 func (TypeName) Kind() tps.Kind {
 	return tps.Name
@@ -43,7 +41,7 @@ func (t TypeName) Pin() source.Pos {
 
 // <StructTypeLiteral> = "struct" "{" { <FieldDefinition> "," } "}"
 type StructType struct {
-	nodeTypeSpecifier
+	nodeTypeSpec
 
 	Pos source.Pos
 
@@ -51,7 +49,7 @@ type StructType struct {
 }
 
 // Explicit interface implementation check
-var _ TypeSpecifier = StructType{}
+var _ TypeSpec = StructType{}
 
 func (StructType) Kind() tps.Kind {
 	return tps.Struct
@@ -65,15 +63,15 @@ func (t StructType) Pin() source.Pos {
 //
 // <ReferencedType> = <TypeSpecifier>
 type PointerType struct {
-	nodeTypeSpecifier
+	nodeTypeSpec
 
 	Pos source.Pos
 
-	RefType TypeSpecifier
+	RefType TypeSpec
 }
 
 // Explicit interface implementation check
-var _ TypeSpecifier = PointerType{}
+var _ TypeSpec = PointerType{}
 
 func (PointerType) Kind() tps.Kind {
 	return tps.Pointer
@@ -87,15 +85,15 @@ func (t PointerType) Pin() source.Pos {
 //
 // <ElemType> = <TypeSpecifier>
 type ArrayPointerType struct {
-	nodeTypeSpecifier
+	nodeTypeSpec
 
 	Pos source.Pos
 
-	ElemType TypeSpecifier
+	ElemType TypeSpec
 }
 
 // Explicit interface implementation check
-var _ TypeSpecifier = ArrayPointerType{}
+var _ TypeSpec = ArrayPointerType{}
 
 func (ArrayPointerType) Kind() tps.Kind {
 	return tps.ArrayPointer
@@ -106,15 +104,15 @@ func (t ArrayPointerType) Pin() source.Pos {
 }
 
 type ChunkType struct {
-	nodeTypeSpecifier
+	nodeTypeSpec
 
 	Pos source.Pos
 
-	ElemType TypeSpecifier
+	ElemType TypeSpec
 }
 
 // Explicit interface implementation check
-var _ TypeSpecifier = ChunkType{}
+var _ TypeSpec = ChunkType{}
 
 func (ChunkType) Kind() tps.Kind {
 	return tps.Chunk
@@ -125,17 +123,17 @@ func (t ChunkType) Pin() source.Pos {
 }
 
 type ArrayType struct {
-	nodeTypeSpecifier
+	nodeTypeSpec
 
 	Pos source.Pos
 
-	ElemType TypeSpecifier
+	ElemType TypeSpec
 
 	Size Expression
 }
 
 // Explicit interface implementation check
-var _ TypeSpecifier = ArrayType{}
+var _ TypeSpec = ArrayType{}
 
 func (ArrayType) Kind() tps.Kind {
 	return tps.Array
@@ -146,7 +144,7 @@ func (t ArrayType) Pin() source.Pos {
 }
 
 type EnumType struct {
-	nodeTypeSpecifier
+	nodeTypeSpec
 
 	Pos source.Pos
 
@@ -164,7 +162,7 @@ type EnumEntry struct {
 }
 
 // Explicit interface implementation check
-var _ TypeSpecifier = EnumType{}
+var _ TypeSpec = EnumType{}
 
 func (EnumType) Kind() tps.Kind {
 	return tps.Enum
@@ -176,15 +174,15 @@ func (t EnumType) Pin() source.Pos {
 
 // <FunctionType> = "fn" <FunctionSignature>
 type FunctionType struct {
-	nodeTypeSpecifier
+	nodeTypeSpec
 
 	Pos source.Pos
 
-	Signature FunctionSignature
+	Signature Signature
 }
 
 // Explicit interface implementation check
-var _ TypeSpecifier = FunctionType{}
+var _ TypeSpec = FunctionType{}
 
 func (FunctionType) Kind() tps.Kind {
 	return tps.Function
@@ -196,7 +194,7 @@ func (t FunctionType) Pin() source.Pos {
 
 // <UnionType> = "union" "{" { <FieldDefinition> "," } "}"
 type UnionType struct {
-	nodeTypeSpecifier
+	nodeTypeSpec
 
 	Pos source.Pos
 
@@ -204,7 +202,7 @@ type UnionType struct {
 }
 
 // Explicit interface implementation check
-var _ TypeSpecifier = UnionType{}
+var _ TypeSpec = UnionType{}
 
 func (UnionType) Kind() tps.Kind {
 	return tps.Union
@@ -231,7 +229,7 @@ type BagMethodSpec struct {
 	Params []FieldDefinition
 
 	// Equals nil if function returns nothing or never returns
-	Result TypeSpecifier
+	Result TypeSpec
 
 	Name Identifier
 
@@ -241,7 +239,7 @@ type BagMethodSpec struct {
 
 // <BagType> = <bag> "{" { <BagMethodSpec> "," } "}"
 type BagType struct {
-	nodeTypeSpecifier
+	nodeTypeSpec
 
 	Pos source.Pos
 
@@ -249,7 +247,7 @@ type BagType struct {
 }
 
 // Explicit interface implementation check
-var _ TypeSpecifier = UnionType{}
+var _ TypeSpec = UnionType{}
 
 func (BagType) Kind() tps.Kind {
 	return tps.Bag
@@ -261,7 +259,7 @@ func (t BagType) Pin() source.Pos {
 
 // <TupleType> = "(" { <FieldDefinition> "," } ")"
 type TupleType struct {
-	nodeTypeSpecifier
+	nodeTypeSpec
 
 	Pos source.Pos
 
@@ -269,7 +267,7 @@ type TupleType struct {
 }
 
 // Explicit interface implementation check
-var _ TypeSpecifier = UnionType{}
+var _ TypeSpec = UnionType{}
 
 func (TupleType) Kind() tps.Kind {
 	return tps.Tuple

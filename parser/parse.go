@@ -1,10 +1,7 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/mebyus/gizmo/ast"
-	"github.com/mebyus/gizmo/ast/toplvl"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/token"
 )
@@ -42,7 +39,7 @@ func (p *Parser) expect(k token.Kind) error {
 	return p.unexpected(p.tok)
 }
 
-func (p *Parser) unitBlock() (*ast.UnitBlock, error) {
+func (p *Parser) unit() (*ast.UnitClause, error) {
 	p.advance() // skip "unit"
 	if p.tok.Kind != token.Identifier {
 		return nil, p.unexpected(p.tok)
@@ -50,121 +47,72 @@ func (p *Parser) unitBlock() (*ast.UnitBlock, error) {
 	name := p.idn()
 	p.advance() // skip unit name identifier
 
-	if p.tok.Kind != token.LeftCurly {
-		return nil, p.unexpected(p.tok)
-	}
-
-	block, err := p.Block()
-	if err != nil {
-		return nil, err
-	}
-
-	return &ast.UnitBlock{
-		Name:  name,
-		Block: block,
-	}, nil
+	return &ast.UnitClause{Name: name}, nil
 }
 
-func (p *Parser) topLevel() (ast.TopLevel, error) {
+func (p *Parser) top() error {
 	err := p.gatherProps()
 	if err != nil {
-		return nil, err
+		return err
 	}
+	traits := ast.Traits{Props: p.takeProps()}
 
 	switch p.tok.Kind {
 	case token.Type:
-		return p.topLevelType()
+		return p.topType(traits)
 	case token.Var:
-		return p.topLevelVar()
+		return p.topVar(traits)
 	case token.Fn:
-		return p.topLevelFn()
+		return p.topFun(traits)
 	case token.Const:
-		return p.topLevelConst()
+		return p.topCon(traits)
 	case token.Pub:
-		return p.topLevelPub()
+		traits.Pub = true
+		return p.topPub(traits)
 	default:
-		return nil, p.unexpected(p.tok)
+		return p.unexpected(p.tok)
 	}
 }
 
-func (p *Parser) topLevelVar() (ast.TopVar, error) {
-	statement, err := p.varStatement()
+func (p *Parser) topVar(traits ast.Traits) error {
+	s, err := p.varStatement()
 	if err != nil {
-		return ast.TopVar{}, err
+		return err
 	}
 
-	return ast.TopVar{
-		VarInit: statement.VarInit,
-	}, nil
+	v := ast.TopVar{
+		Var:    s.Var,
+		Traits: traits,
+	}
+	p.atom.Vars = append(p.atom.Vars, v)
+	return nil
 }
 
-func (p *Parser) topLevelConst() (ast.TopConst, error) {
-	statement, err := p.constStatement()
+func (p *Parser) topCon(traits ast.Traits) error {
+	s, err := p.constStatement()
 	if err != nil {
-		return ast.TopConst{}, err
+		return err
 	}
-	return ast.TopConst{
-		ConstInit: statement.ConstInit,
-	}, nil
+
+	c := ast.TopCon{
+		Con:    s.Con,
+		Traits: traits,
+	}
+	p.atom.Cons = append(p.atom.Cons, c)
+	return nil
 }
 
-func (p *Parser) topLevelMethod() (ast.TopLevel, error) {
-	return p.method()
-}
-
-func (p *Parser) topLevelPub() (ast.TopLevel, error) {
+func (p *Parser) topPub(traits ast.Traits) error {
 	p.advance() // skip "pub"
 
 	switch p.tok.Kind {
-	case token.Fn:
-		return p.topLevelPubFn()
 	case token.Type:
-		return p.topLevelPubType()
+		return p.topType(traits)
+	case token.Fn:
+		return p.topFun(traits)
+	case token.Const:
+		return p.topCon(traits)
 	default:
-		return nil, p.unexpected(p.tok)
-	}
-}
-
-func (p *Parser) topLevelPubFn() (ast.TopLevel, error) {
-	fn, err := p.topLevelFn()
-	if err != nil {
-		return nil, err
-	}
-
-	switch fn.Kind() {
-	case toplvl.Fn:
-		f := fn.(ast.TopFunctionDefinition)
-		f.Public = true
-		return f, nil
-	case toplvl.Declare:
-		f := fn.(ast.TopFunctionDeclaration)
-		f.Public = true
-		return f, nil
-	case toplvl.Blue:
-		f := fn.(ast.TopBlueprint)
-		f.Public = true
-		return f, nil
-	default:
-		panic(fmt.Sprintf("unexpected top level %s", fn.Kind().String()))
-	}
-}
-
-func (p *Parser) topLevelPubType() (ast.TopLevel, error) {
-	typ, err := p.topLevelType()
-	if err != nil {
-		return nil, err
-	}
-
-	switch typ.Kind() {
-	case toplvl.Type:
-		t := typ.(ast.TopType)
-		t.Public = true
-		return t, nil
-	case toplvl.Proto:
-		t := typ.(ast.TopPrototype)
-		t.Public = true
-		return t, nil
-	default:
-		panic(fmt.Sprintf("unexpected top level %s", typ.Kind().String()))
+		return p.unexpected(p.tok)
 	}
 }

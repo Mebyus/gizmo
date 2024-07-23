@@ -3,11 +3,10 @@ package gen
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/mebyus/gizmo/butler"
 	"github.com/mebyus/gizmo/genc"
-	"github.com/mebyus/gizmo/parser"
-	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/tt"
 )
 
@@ -50,30 +49,15 @@ func execute(r *butler.Lackey, units []string) error {
 	if len(units) == 0 {
 		return fmt.Errorf("at least one unit must be specified")
 	}
-	return gen(r.Params.(*Config), units[0])
+	return gen(r.Params.(*Config), filepath.Clean(units[0]))
 }
 
 func gen(config *Config, dir string) error {
-	files, err := source.LoadUnitFiles(dir)
+	u, err := tt.UnitFromDir(dir)
 	if err != nil {
 		return err
 	}
-
-	m := tt.New(tt.UnitContext{Global: tt.NewGlobalScope()})
-	for _, file := range files {
-		atom, err := parser.ParseSource(file)
-		if err != nil {
-			return err
-		}
-		err = m.Add(atom)
-		if err != nil {
-			return err
-		}
-	}
-	u, err := m.Merge()
-	if err != nil {
-		return err
-	}
+	fmt.Printf("unit name: %s\n", u.Name)
 
 	f, err := os.Create(config.OutputFile)
 	if err != nil {

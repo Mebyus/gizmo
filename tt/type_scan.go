@@ -278,7 +278,7 @@ func (m *Merger) shallowScanStructField(ctx *TypeContext, field ast.FieldDefinit
 	return nil
 }
 
-func (m *Merger) shallowScanTypeSpecifier(ctx *TypeContext, spec ast.TypeSpecifier) error {
+func (m *Merger) shallowScanTypeSpecifier(ctx *TypeContext, spec ast.TypeSpec) error {
 	switch spec.Kind() {
 	case tps.Name:
 		return m.shallowScanNamedType(ctx, spec.(ast.TypeName))

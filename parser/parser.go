@@ -27,9 +27,6 @@ type Parser struct {
 	// between external methods calls
 	atom ast.Atom
 
-	// tokens saved by advance backup
-	buf CycleTokenBuffer
-
 	// saved properties, will be attached to next object/symbol/field
 	props []ast.Prop
 
@@ -40,37 +37,6 @@ type Parser struct {
 
 	// next token
 	next token.Token
-
-	// how many tokens must be taken from backtrack buffer
-	back uint
-}
-
-type CycleTokenBuffer struct {
-	buf [16]token.Token
-
-	// push index
-	tip uint
-
-	// number of stored elements
-	len uint
-}
-
-func (b *CycleTokenBuffer) Push(tok token.Token) {
-	if b.len >= 16 {
-		panic("full")
-	}
-	b.buf[b.tip] = tok
-	b.tip = (b.tip + 1) & 0xF // (pos + 1) mod 16
-	b.len += 1
-}
-
-func (b *CycleTokenBuffer) Pop() token.Token {
-	if b.len == 0 {
-		panic("empty")
-	}
-	i := (b.tip - b.len) & 0xF // (pos - len) mod 16
-	b.len -= 1
-	return b.buf[i]
 }
 
 func New(lx lexer.Stream) *Parser {
@@ -161,10 +127,10 @@ func (p *Parser) FullParse() (*ast.Atom, error) {
 }
 
 func (p *Parser) header() error {
-	var unit *ast.UnitBlock
+	var unit *ast.UnitClause
 	var err error
 	if p.tok.Kind == token.Unit {
-		unit, err = p.unitBlock()
+		unit, err = p.unit()
 		if err != nil {
 			return err
 		}
@@ -191,17 +157,14 @@ func (p *Parser) header() error {
 }
 
 func (p *Parser) parse() error {
-	var nodes []ast.TopLevel
 	for {
 		if p.isEOF() {
-			p.atom.Nodes = nodes
 			return nil
 		}
 
-		top, err := p.topLevel()
+		err := p.top()
 		if err != nil {
 			return err
 		}
-		nodes = append(nodes, top)
 	}
 }

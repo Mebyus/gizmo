@@ -485,7 +485,7 @@ func (p *Parser) varStatement() (statement ast.VarStatement, err error) {
 		p.advance() // consume ";"
 
 		return ast.VarStatement{
-			VarInit: ast.VarInit{
+			Var: ast.Var{
 				Pos:  pos,
 				Name: name,
 				Type: specifier,
@@ -503,7 +503,7 @@ func (p *Parser) varStatement() (statement ast.VarStatement, err error) {
 	p.advance() // consume ";"
 
 	return ast.VarStatement{
-		VarInit: ast.VarInit{
+		Var: ast.Var{
 			Pos:        pos,
 			Name:       name,
 			Type:       specifier,
@@ -548,7 +548,7 @@ func (p *Parser) constStatement() (statement ast.ConstStatement, err error) {
 	p.advance() // consume ";"
 
 	return ast.ConstStatement{
-		ConstInit: ast.ConstInit{
+		Con: ast.Con{
 			Pos:        pos,
 			Name:       name,
 			Type:       specifier,

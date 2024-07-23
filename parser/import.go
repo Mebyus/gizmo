@@ -23,7 +23,7 @@ func (p *Parser) imports() ([]ast.ImportBlock, error) {
 			if err != nil {
 				return nil, err
 			}
-			block.Public = true
+			block.Pub = true
 			blocks = append(blocks, block)
 		} else {
 			return blocks, nil

@@ -24,7 +24,7 @@ type TypeIndex struct {
 	tm map[Stable]*Type
 }
 
-func (x *TypeIndex) Lookup(spec ast.TypeSpecifier) (*Type, error) {
+func (x *TypeIndex) Lookup(spec ast.TypeSpec) (*Type, error) {
 	if spec == nil {
 		// handle never and void return "types"
 		return nil, nil
@@ -33,7 +33,7 @@ func (x *TypeIndex) Lookup(spec ast.TypeSpecifier) (*Type, error) {
 	return x.lookup(spec)
 }
 
-func (x *TypeIndex) lookup(spec ast.TypeSpecifier) (*Type, error) {
+func (x *TypeIndex) lookup(spec ast.TypeSpec) (*Type, error) {
 	switch spec.Kind() {
 	case tps.Name:
 		return x.lookupNamed(spec.(ast.TypeName).Name)
@@ -76,7 +76,7 @@ func (x *TypeIndex) store(a *Type) *Type {
 	return t
 }
 
-func (x *TypeIndex) lookupArrayPointer(spec ast.TypeSpecifier) (*Type, error) {
+func (x *TypeIndex) lookupArrayPointer(spec ast.TypeSpec) (*Type, error) {
 	elem, err := x.lookup(spec)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (x *TypeIndex) lookupEnum(spec ast.EnumType) (*Type, error) {
 	return nil, nil
 }
 
-func (x *TypeIndex) lookupChunk(spec ast.TypeSpecifier) (*Type, error) {
+func (x *TypeIndex) lookupChunk(spec ast.TypeSpec) (*Type, error) {
 	elem, err := x.lookup(spec)
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func (x *TypeIndex) lookupStruct(spec ast.StructType) (*Type, error) {
 	return x.store(newStructType(members)), nil
 }
 
-func (x *TypeIndex) lookupPointer(spec ast.TypeSpecifier) (*Type, error) {
+func (x *TypeIndex) lookupPointer(spec ast.TypeSpec) (*Type, error) {
 	ref, err := x.lookup(spec)
 	if err != nil {
 		return nil, err

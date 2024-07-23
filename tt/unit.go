@@ -1,5 +1,13 @@
 package tt
 
+import (
+	"fmt"
+	"os"
+
+	"github.com/mebyus/gizmo/parser"
+	"github.com/mebyus/gizmo/source"
+)
+
 type Unit struct {
 	Name string
 
@@ -7,4 +15,71 @@ type Unit struct {
 	//
 	// This field is always not nil and Scope.Kind is always equal to scp.Unit.
 	Scope *Scope
+}
+
+// UnitFromDir scans given directory for source files, processes them as
+// single unit and constructs graph of unit's symbols.
+//
+// Given directory path should be cleaned by the client.
+func UnitFromDir(dir string) (*Unit, error) {
+	files, err := source.LoadUnitFiles(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	var name string
+	parsers := make([]*parser.Parser, 0, len(files))
+	for _, file := range files {
+		p := parser.FromSource(file)
+		h, err := p.Header()
+		if err != nil {
+			return nil, err
+		}
+		if h.Unit != nil {
+			// if file has unit clause, use it to
+			// determine unit name
+
+			n := h.Unit.Name.Lit
+			if name == "" {
+				name = n
+			} else if n != name {
+				return nil, fmt.Errorf("%s: inconsistent unit name \"%s\" (previous was \"%s\")",
+					h.Unit.Name.Pos.String(), n, name)
+			}
+		}
+
+		parsers = append(parsers, p)
+	}
+	if name == "" {
+		// unit does not have files with unit clause
+		// determine unit name by its directory
+
+		stat, err := os.Lstat(dir)
+		if err != nil {
+			return nil, err
+		}
+		if !stat.IsDir() {
+			return nil, fmt.Errorf("%s is not a directory")
+		}
+		name := stat.Name()
+		if name == "" {
+			return nil, fmt.Errorf("os: no directory name")
+		}
+	}
+
+	m := New(UnitContext{
+		Name:   name,
+		Global: NewGlobalScope(),
+	})
+	for _, p := range parsers {
+		atom, err := p.Parse()
+		if err != nil {
+			return nil, err
+		}
+		err = m.Add(atom)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return m.Merge()
 }

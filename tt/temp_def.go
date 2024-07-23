@@ -13,10 +13,10 @@ import (
 type TempFnDef struct {
 	nodeSymDef
 
-	top ast.TopFunctionDefinition
+	top ast.TopFun
 }
 
-func NewTempFnDef(top ast.TopFunctionDefinition) TempFnDef {
+func NewTempFnDef(top ast.TopFun) TempFnDef {
 	return TempFnDef{top: top}
 }
 
@@ -65,9 +65,9 @@ var _ SymDef = &TempTypeDef{}
 type TempConstDef struct {
 	nodeSymDef
 
-	top ast.TopConst
+	top ast.TopCon
 }
 
-func NewTempConstDef(top ast.TopConst) TempConstDef {
+func NewTempConstDef(top ast.TopCon) TempConstDef {
 	return TempConstDef{top: top}
 }

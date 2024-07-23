@@ -7,73 +7,60 @@ import (
 
 // returns receiver name and its type params, if method is not a template
 // second return value will be nil slice
-func (p *Parser) methodReceiver() (ast.Identifier, []ast.Identifier, error) {
+func (p *Parser) methodReceiver() (ast.TypeSpec, error) {
 	if p.tok.Kind != token.LeftSquare {
-		return ast.Identifier{}, nil, p.unexpected(p.tok)
+		return nil, p.unexpected(p.tok)
 	}
 	p.advance() // skip "["
 
-	if p.tok.Kind != token.Identifier {
-		return ast.Identifier{}, nil, p.unexpected(p.tok)
-	}
-	receiver := p.idn()
-	p.advance() // skip receiver name
-
-	if p.tok.Kind == token.RightSquare {
-		// no type params
-		p.advance() // skip "]"
-		return receiver, nil, nil
-	}
-
-	if p.tok.Kind != token.RightSquare {
-		return ast.Identifier{}, nil, p.unexpected(p.tok)
-	}
-	p.advance() // skip "]"
-
-	return receiver, nil, nil
-}
-
-func (p *Parser) method() (ast.TopLevel, error) {
-	p.advance() // skip "fn"
-
-	receiver, params, err := p.methodReceiver()
+	receiver, err := p.typeSpecifier()
 	if err != nil {
 		return nil, err
 	}
 
-	if p.tok.Kind != token.Identifier {
+	if p.tok.Kind != token.RightSquare {
 		return nil, p.unexpected(p.tok)
+	}
+	p.advance() // skip "]"
+
+	return receiver, nil
+}
+
+func (p *Parser) method(traits ast.Traits) error {
+	p.advance() // skip "fn"
+
+	receiver, err := p.methodReceiver()
+	if err != nil {
+		return err
+	}
+
+	if p.tok.Kind != token.Identifier {
+		return p.unexpected(p.tok)
 	}
 	name := p.idn()
 	p.advance() // skip method name
 
 	signature, err := p.functionSignature()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if p.tok.Kind != token.LeftCurly {
-		return nil, p.unexpected(p.tok)
+		return p.unexpected(p.tok)
 	}
 
 	body, err := p.Block()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	if len(params) == 0 {
-		return ast.Method{
-			Receiver:  receiver,
-			Name:      name,
-			Signature: signature,
-			Body:      body,
-		}, nil
-	}
-	return ast.ProtoMethodBlueprint{
-		Receiver: receiver,
-		// TypeParams: params,
+	m := ast.Method{
+		Receiver:  receiver,
 		Name:      name,
 		Signature: signature,
 		Body:      body,
-	}, nil
+		Traits:    traits,
+	}
+	p.atom.Meds = append(p.atom.Meds, m)
+	return nil
 }

@@ -143,8 +143,11 @@ func (p *Parser) propValue() (ast.PropValue, error) {
 	}
 }
 
-func (p *Parser) takeProps() []ast.Prop {
+func (p *Parser) takeProps() *[]ast.Prop {
+	if len(p.props) == 0 {
+		return nil
+	}
 	props := p.props
 	p.props = nil
-	return props
+	return &props
 }

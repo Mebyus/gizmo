@@ -32,6 +32,11 @@ type Symbol struct {
 	// See implementations of SymDef interface for more information.
 	//
 	// This field can be nil for dried symbol. Typical case for this is separate units compilation.
+	//
+	// During indexing and type checking this field may contain
+	// temporary intermidiate values. For example for most symbols
+	// during atoms gathering it is set to symbol index inside the box
+	// of corresponding kind.
 	Def SymDef
 
 	// Always an alphanumerical word. Always not empty.

@@ -146,7 +146,7 @@ type CastExpression struct {
 	nodeOperand
 
 	Target Expression
-	Type   TypeSpecifier
+	Type   TypeSpec
 }
 
 var _ Expression = CastExpression{}
@@ -164,7 +164,7 @@ type BitCastExpression struct {
 	nodeOperand
 
 	Target Expression
-	Type   TypeSpecifier
+	Type   TypeSpec
 }
 
 var _ Expression = BitCastExpression{}

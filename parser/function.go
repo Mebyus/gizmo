@@ -5,62 +5,63 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-func (p *Parser) topLevelFn() (ast.TopLevel, error) {
+func (p *Parser) topFun(traits ast.Traits) error {
 	if p.next.Kind == token.LeftSquare {
-		return p.topLevelMethod()
+		return p.method(traits)
 	}
 
 	p.advance() // consume "fn"
-	if p.tok.Kind != token.Identifier {
-		return nil, p.unexpected(p.tok)
-	}
 
-	declaration := ast.FunctionDeclaration{
-		Name: p.idn(),
+	if p.tok.Kind != token.Identifier {
+		return p.unexpected(p.tok)
 	}
+	name := p.idn()
 	p.advance() // consume function name identifier
 
 	signature, err := p.functionSignature()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	declaration.Signature = signature
 
 	if p.tok.Kind != token.LeftCurly {
-		return ast.TopFunctionDeclaration{
-			Declaration: declaration,
-			Props:       p.takeProps(),
-		}, nil
+		d := ast.TopDec{
+			Signature: signature,
+			Name:      name,
+			Traits:    traits,
+		}
+		p.atom.Decs = append(p.atom.Decs, d)
+		return nil
 	}
+
 	body, err := p.Block()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	definition := ast.FunctionDefinition{
-		Head: declaration,
-		Body: body,
+	f := ast.TopFun{
+		Signature: signature,
+		Name:      name,
+		Body:      body,
+		Traits:    traits,
 	}
-	return ast.TopFunctionDefinition{
-		Definition: definition,
-		Props:      p.takeProps(),
-	}, nil
+	p.atom.Funs = append(p.atom.Funs, f)
+	return nil
 }
 
-func (p *Parser) functionSignature() (ast.FunctionSignature, error) {
+func (p *Parser) functionSignature() (ast.Signature, error) {
 	params, err := p.functionParams()
 	if err != nil {
-		return ast.FunctionSignature{}, err
+		return ast.Signature{}, err
 	}
 
 	if p.tok.Kind != token.RightArrow {
-		return ast.FunctionSignature{Params: params}, nil
+		return ast.Signature{Params: params}, nil
 	}
 
 	p.advance() // skip "=>"
 
 	if p.tok.Kind == token.Never {
 		p.advance() // skip "never"
-		return ast.FunctionSignature{
+		return ast.Signature{
 			Params: params,
 			Never:  true,
 		}, nil
@@ -68,10 +69,10 @@ func (p *Parser) functionSignature() (ast.FunctionSignature, error) {
 
 	result, err := p.typeSpecifier()
 	if err != nil {
-		return ast.FunctionSignature{}, err
+		return ast.Signature{}, err
 	}
 
-	return ast.FunctionSignature{
+	return ast.Signature{
 		Params: params,
 		Result: result,
 	}, nil

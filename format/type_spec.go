@@ -8,7 +8,7 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-func (g *Noder) TypeSpecifier(spec ast.TypeSpecifier) {
+func (g *Noder) TypeSpecifier(spec ast.TypeSpec) {
 	switch spec.Kind() {
 	case tps.Struct:
 		g.StructType(spec.(ast.StructType))

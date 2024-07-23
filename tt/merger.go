@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/ast"
-	"github.com/mebyus/gizmo/ast/toplvl"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/source/origin"
 	"github.com/mebyus/gizmo/tt/sym"
@@ -20,24 +19,19 @@ import (
 //
 // Semantic checks and tree construction is split between this two phases.
 type Merger struct {
+	nodes   NodesBox
+	symbols SymbolsBox
+
 	ctx UnitContext
 
 	// Unit that is currently being built by merger.
 	unit Unit
 
-	// Processing of this nodes is deferred until phase 2, because they do not produce
-	// a top-level symbols but need to be bound with other top-level symbols. May contain
-	// one of the following
-	//
-	//	- method
-	//	- prototype method blueprint
-	symBindNodes []ast.TopLevel
-
 	// list of all top-level function symbols defined in unit
-	fns []*Symbol
+	funs []*Symbol
 
 	// list of all top-level constant symbols defined in unit
-	constants []*Symbol
+	cons []*Symbol
 
 	// list of all top-level type symbols defined in unit
 	types []*Symbol
@@ -47,10 +41,25 @@ type Merger struct {
 	graph *TypeGraph
 }
 
+type NodesBox struct {
+}
+
+type SymbolsBox struct {
+	// list of all top-level function symbols defined in unit
+	funs []*Symbol
+
+	// list of all top-level constant symbols defined in unit
+	cons []*Symbol
+
+	// list of all top-level type symbols defined in unit
+	types []*Symbol
+}
+
 func New(ctx UnitContext) *Merger {
 	return &Merger{
 		ctx: ctx,
 		unit: Unit{
+			Name:  ctx.Name,
 			Scope: NewUnitScope(ctx.Global),
 		},
 	}
@@ -60,15 +69,50 @@ func New(ctx UnitContext) *Merger {
 // about imported units. It also holds build conditions under which unit compilation
 // is performed.
 type UnitContext struct {
+	// Possible name for a unit that is under construction.
+	//
+	// Unit name could be determined by outside means if
+	// all unit atoms do not have unit clause with specified name.
+	Name string
+
 	Global *Scope
 }
 
 func (m *Merger) Add(atom *ast.Atom) error {
-	for _, block := range atom.Header.Imports.ImportBlocks {
+	err := m.addImportBlocks(atom.Header.Imports.ImportBlocks)
+	if err != nil {
+		return err
+	}
+	err = m.addTypes(atom.Types)
+	if err != nil {
+		return err
+	}
+	err = m.addCons(atom.Cons)
+	if err != nil {
+		return err
+	}
+	err = m.addFuns(atom.Funs)
+	if err != nil {
+		return err
+	}
+	err = m.addVars(atom.Vars)
+	if err != nil {
+		return err
+	}
+	err = m.addMeds(atom.Meds)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Merger) addImportBlocks(blocks []ast.ImportBlock) error {
+	for _, block := range blocks {
 		for _, spec := range block.Specs {
 			err := m.addImport(ast.ImportBind{
-				Name:   spec.Name,
-				Public: block.Public,
+				Name: spec.Name,
+				Pub:  block.Pub,
 				Path: origin.Path{
 					Origin: block.Origin,
 					ImpStr: spec.String.Lit,
@@ -79,34 +123,57 @@ func (m *Merger) Add(atom *ast.Atom) error {
 			}
 		}
 	}
+	return nil
+}
 
-	for _, top := range atom.Nodes {
-		var err error
-
-		switch top.Kind() {
-		case toplvl.Fn:
-			err = m.addFn(top.(ast.TopFunctionDefinition))
-		case toplvl.Type:
-			err = m.addType(top.(ast.TopType))
-		case toplvl.Const:
-			err = m.addConst(top.(ast.TopConst))
-		case toplvl.Method, toplvl.Pmb:
-			// defer processing until phase 2
-			m.addPhaseTwoNode(top)
-		default:
-			panic(fmt.Sprintf("top-level %s node not implemented", top.Kind().String()))
-		}
-
+func (m *Merger) addTypes(types []ast.TopType) error {
+	for _, t := range types {
+		err := m.addType(t)
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
-func (m *Merger) addPhaseTwoNode(top ast.TopLevel) {
-	m.symBindNodes = append(m.symBindNodes, top)
+func (m *Merger) addCons(cons []ast.TopCon) error {
+	for _, con := range cons {
+		err := m.addCon(con)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Merger) addFuns(funs []ast.TopFun) error {
+	for _, fun := range funs {
+		err := m.addFun(fun)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Merger) addVars(vars []ast.TopVar) error {
+	for _, v := range vars {
+		err := m.addVar(v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Merger) addMeds(meds []ast.Method) error {
+	for _, med := range meds {
+		err := m.addMed(med)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Merge is called after all unit atoms were added to merger to build type tree of the unit.
@@ -146,15 +213,15 @@ func (m *Merger) addImport(bind ast.ImportBind) error {
 		Kind:   sym.Import,
 		Name:   name,
 		Pos:    pos,
-		Public: bind.Public,
+		Public: bind.Pub,
 	}
 	m.add(s)
 	return nil
 }
 
-func (m *Merger) addFn(top ast.TopFunctionDefinition) error {
-	name := top.Definition.Head.Name.Lit
-	pos := top.Definition.Head.Name.Pos
+func (m *Merger) addFun(top ast.TopFun) error {
+	name := top.Name.Lit
+	pos := top.Name.Pos
 
 	if m.has(name) {
 		return m.errMultDef(name, pos)
@@ -164,11 +231,11 @@ func (m *Merger) addFn(top ast.TopFunctionDefinition) error {
 		Kind:   sym.Fn,
 		Name:   name,
 		Pos:    pos,
-		Public: top.Public,
+		Public: top.Pub,
 		Def:    NewTempFnDef(top),
 	}
 	m.add(s)
-	m.fns = append(m.fns, s)
+	m.funs = append(m.funs, s)
 	return nil
 }
 
@@ -184,7 +251,7 @@ func (m *Merger) addType(top ast.TopType) error {
 		Kind:   sym.Type,
 		Name:   name,
 		Pos:    pos,
-		Public: top.Public,
+		Public: top.Pub,
 		Def:    NewTempTypeDef(top),
 	}
 	m.add(s)
@@ -192,7 +259,7 @@ func (m *Merger) addType(top ast.TopType) error {
 	return nil
 }
 
-func (m *Merger) addConst(top ast.TopConst) error {
+func (m *Merger) addCon(top ast.TopCon) error {
 	name := top.Name.Lit
 	pos := top.Name.Pos
 
@@ -204,10 +271,18 @@ func (m *Merger) addConst(top ast.TopConst) error {
 		Kind:   sym.Const,
 		Name:   name,
 		Pos:    pos,
-		Public: top.Public,
+		Public: top.Pub,
 		Def:    NewTempConstDef(top),
 	}
 	m.add(s)
-	m.constants = append(m.constants, s)
+	m.cons = append(m.cons, s)
+	return nil
+}
+
+func (m *Merger) addVar(v ast.TopVar) error {
+	return nil
+}
+
+func (m *Merger) addMed(med ast.Method) error {
 	return nil
 }
