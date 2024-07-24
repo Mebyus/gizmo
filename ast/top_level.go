@@ -142,7 +142,13 @@ func (t TopVar) Pin() source.Pos {
 	return t.Pos
 }
 
-// <Method> = "fn" "[" <Receiver> "]" <Name> <Signature> <Body>
+// <ReceiverTypeSpec> = [ "*" ] <Identifier>
+type ReceiverTypeSpec struct {
+	Name Identifier
+	Ptr  bool
+}
+
+// <Method> = "fn" "[" <ReceiverTypeSpec> "]" <Name> <Signature> <Body>
 //
 // <Receiver> = <TypeSpecifier>
 // <Name> = <Identifier>
@@ -151,9 +157,9 @@ func (t TopVar) Pin() source.Pos {
 type Method struct {
 	nodeTop
 
-	Receiver TypeSpec
-
 	Name Identifier
+
+	Receiver ReceiverTypeSpec
 
 	Signature Signature
 

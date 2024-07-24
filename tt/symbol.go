@@ -14,6 +14,7 @@ import (
 //   - const - build-time constant, i.e. its value must be known or computable at build-time
 //   - type - defines a new type or prototype
 //   - fn - defines a new function, method, blueprint or prototype blueprint
+//   - method - defines a method, can only be used at unit level
 //   - import - binds other unit to a local name in current unit
 //   - function or prototype parameters
 //
@@ -39,7 +40,15 @@ type Symbol struct {
 	// of corresponding kind.
 	Def SymDef
 
-	// Always an alphanumerical word. Always not empty.
+	// Always not empty.
+	// Always an alphanumerical word for all symbol types except methods.
+	//
+	// For methods this field has special format:
+	//	"receiver.name"
+	//
+	// Since other symbol types cannot have period in their names and
+	// each custom type method names must be unique this
+	// naming scheme cannot have accidental collisions.
 	Name string
 
 	// Always not nil in a completed tree. Can be nil during tree construction.
@@ -97,3 +106,14 @@ type SymDef interface {
 type nodeSymDef struct{}
 
 func (nodeSymDef) SymDef() {}
+
+// Contains index inside NodesBox's slice of nodes of one
+// of the following specific types:
+//   - function
+//   - type
+//   - variable
+//   - constant
+//   - method
+type astIndexSymDef int
+
+func (astIndexSymDef) SymDef() {}

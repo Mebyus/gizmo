@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/ast"
-	"github.com/mebyus/gizmo/ast/toplvl"
 	"github.com/mebyus/gizmo/tt/sym"
 )
 
@@ -15,8 +14,8 @@ import (
 //   - symbol hoisting information inside the unit
 //   - used and defined types indexing
 //   - type checking of various operations
-func (m *Merger) runPhaseTwo() error {
-	err := m.bindNodes()
+func (m *Merger) merge() error {
+	err := m.bindMethods()
 	if err != nil {
 		return err
 	}
@@ -40,43 +39,40 @@ func (m *Merger) runPhaseTwo() error {
 	return nil
 }
 
-func (m *Merger) bindNodes() error {
-	for _, top := range m.symBindNodes {
-		var err error
+// Checks that each method has a custom type receiver defined in unit.
+// Binds each method to its own receiver (based on receiver name).
+func (m *Merger) bindMethods() error {
+	if len(m.nodes.Meds) != len(m.unit.Meds) {
+		panic(fmt.Sprintf("inconsistent number of method nodes (%d) and symbols (%d)",
+			len(m.nodes.Meds), len(m.unit.Meds)))
+	}
 
-		switch top.Kind() {
-		case toplvl.Method:
-			err = m.bindMethod(top.(ast.Method))
-		// case toplvl.Pmb:
-		default:
-			panic(fmt.Sprintf("unexpected top-level %s node", top.Kind().String()))
+	for j := 0; j < len(m.unit.Meds); j += 1 {
+		i := astIndexSymDef(j)
+		med := m.nodes.Med(i)
+
+		rname := med.Receiver.Name.Lit
+		pos := med.Receiver.Name.Pos
+
+		r := m.unit.Scope.sym(rname)
+		if r == nil {
+			return fmt.Errorf("%s: unresolved symbol \"%s\" in method receiver", pos.String(), rname)
+		}
+		if r.Kind != sym.Type {
+			return fmt.Errorf("%s: only custom types can have methods, but \"%s\" is not a type",
+				pos.String(), rname)
 		}
 
-		if err != nil {
-			return err
-		}
+		// method names are guaranteed to be unique for specific receiver due
+		// to earlier scope symbol name check
+		m.nodes.bindMethod(rname, i)
 	}
 	return nil
 }
 
-func (m *Merger) bindMethod(method ast.Method) error {
-	rvName := method.Receiver.Lit
-	rvSym := m.unit.Scope.sym(rvName)
-	if rvSym == nil {
-		return fmt.Errorf("%s: unresolved symbol \"%s\" in method receiver", method.Receiver.Pos.String(), rvName)
-	}
-	if rvSym.Kind != sym.Type {
-		return fmt.Errorf("%s: only types can have methods, but \"%s\" is not a type", method.Receiver.Pos.String(), rvName)
-	}
-
-	err := rvSym.Def.(*TempTypeDef).addMethod(method)
-	return err
-}
-
 func (m *Merger) scanConstants() error {
-	for _, s := range m.cons {
-		def := s.Def.(TempConstDef)
-		c, err := m.scanConst(s, def)
+	for _, s := range m.unit.Cons {
+		c, err := m.scanCon(s)
 		if err != nil {
 			return err
 		}
@@ -93,15 +89,16 @@ func (m *Merger) scanConstants() error {
 	return nil
 }
 
-func (m *Merger) scanConst(s *Symbol, def TempConstDef) (*ConstDef, error) {
+func (m *Merger) scanCon(s *Symbol) (*ConstDef, error) {
 	scope := m.unit.Scope
+	node := m.nodes.Con(s.Def.(astIndexSymDef))
 
-	t, err := scope.Types.Lookup(def.top.Type)
+	t, err := scope.Types.Lookup(node.Type)
 	if err != nil {
 		return nil, err
 	}
 
-	expr := def.top.Expression
+	expr := node.Expression
 	if expr == nil {
 		panic("nil expression in constant definition")
 	}
@@ -129,9 +126,8 @@ func (m *Merger) scanConst(s *Symbol, def TempConstDef) (*ConstDef, error) {
 }
 
 func (m *Merger) scanFns() error {
-	for _, s := range m.funs {
-		def := s.Def.(TempFnDef)
-		fn, err := m.scanFn(def)
+	for _, s := range m.unit.Funs {
+		fn, err := m.scanFun(s)
 		if err != nil {
 			return err
 		}
@@ -140,11 +136,12 @@ func (m *Merger) scanFns() error {
 	return nil
 }
 
-func (m *Merger) scanFn(def TempFnDef) (*FnDef, error) {
+func (m *Merger) scanFun(s *Symbol) (*FunDef, error) {
 	scope := m.unit.Scope
+	node := m.nodes.Fun(s.Def.(astIndexSymDef))
 
 	var params []*Symbol
-	for _, p := range def.top.Definition.Head.Signature.Params {
+	for _, p := range node.Signature.Params {
 		t, err := scope.Types.Lookup(p.Type)
 		if err != nil {
 			return nil, err
@@ -158,15 +155,15 @@ func (m *Merger) scanFn(def TempFnDef) (*FnDef, error) {
 		})
 	}
 
-	pos := def.top.Definition.Body.Pos
-	result, err := scope.Types.Lookup(def.top.Definition.Head.Signature.Result)
+	pos := node.Body.Pos
+	result, err := scope.Types.Lookup(node.Signature.Result)
 	if err != nil {
 		return nil, err
 	}
-	fn := &FnDef{
+	fn := &FunDef{
 		Params: params,
 		Result: result,
-		Never:  def.top.Definition.Head.Signature.Never,
+		Never:  node.Signature.Never,
 		Body:   Block{Pos: pos},
 	}
 	fn.Body.Scope = NewTopScope(m.unit.Scope, &fn.Body.Pos)
@@ -180,7 +177,7 @@ func (m *Merger) scanFn(def TempFnDef) (*FnDef, error) {
 		fn.Body.Scope.Bind(param)
 	}
 
-	err = m.scanFnBody(fn, def.top.Definition.Body.Statements)
+	err = m.scanFunBody(fn, node.Body.Statements)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +185,7 @@ func (m *Merger) scanFn(def TempFnDef) (*FnDef, error) {
 	return fn, nil
 }
 
-func (m *Merger) scanFnBody(def *FnDef, statements []ast.Statement) error {
+func (m *Merger) scanFunBody(def *FunDef, statements []ast.Statement) error {
 	if len(statements) == 0 {
 		if def.Result != nil {
 			return fmt.Errorf("%s: function with return type cannot have empty body", def.Body.Pos.String())
@@ -199,7 +196,7 @@ func (m *Merger) scanFnBody(def *FnDef, statements []ast.Statement) error {
 		return nil
 	}
 
-	ctx := m.newFnCtx(def)
+	ctx := m.newFunCtx(def)
 	err := def.Body.Fill(ctx, statements)
 	if err != nil {
 		return err

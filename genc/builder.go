@@ -35,7 +35,7 @@ func (g *Builder) Gen(u *tt.Unit) {
 	for _, s := range u.Scope.Symbols {
 		switch s.Kind {
 		case sym.Fn:
-			g.FnDef(s, s.Def.(*tt.FnDef))
+			g.FnDef(s, s.Def.(*tt.FunDef))
 		case sym.Const:
 			g.Const(s, s.Def.(*tt.ConstDef))
 		case sym.Type:
@@ -222,7 +222,7 @@ func (g *Builder) Block(block *tt.Block) {
 	g.nl()
 }
 
-func (g *Builder) FnDef(s *tt.Symbol, def *tt.FnDef) {
+func (g *Builder) FnDef(s *tt.Symbol, def *tt.FunDef) {
 	g.TypeSpec(def.Result)
 	g.nl()
 	g.SymbolName(s)

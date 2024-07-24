@@ -151,14 +151,18 @@ type TypeContext struct {
 
 	members MembersList
 
+	// top-level custom type name from which scan started.
+	name string
+
 	// keeps track of current link type kind when descending/ascending
 	// nested type specifiers
 	kind TypeLinkKind
 }
 
-func NewTypeContext() *TypeContext {
+func NewTypeContext(name string) *TypeContext {
 	return &TypeContext{
 		links: NewTypeLinkSet(),
+		name:  name,
 		kind:  linkDirect,
 	}
 }
@@ -173,12 +177,12 @@ func (c *TypeContext) push(kind TypeLinkKind) TypeLinkKind {
 }
 
 func (m *Merger) shallowScanTypes() error {
-	g := NewTypeGraphBuilder(len(m.types))
+	g := NewTypeGraphBuilder(len(m.unit.Types))
 
-	for _, s := range m.types {
-		def := s.Def.(*TempTypeDef)
-		ctx := NewTypeContext()
-		err := m.shallowScanType(ctx, def)
+	for _, s := range m.unit.Types {
+		i := s.Def.(astIndexSymDef)
+		ctx := NewTypeContext(s.Name)
+		err := m.shallowScanType(ctx, i)
 		if err != nil {
 			return err
 		}
@@ -196,16 +200,17 @@ func (m *Merger) shallowScanTypes() error {
 
 // performs preliminary top-level type definition scan in order to obtain data
 // necessary for constructing dependency graph between the named types
-func (m *Merger) shallowScanType(ctx *TypeContext, def *TempTypeDef) error {
-	kind := def.top.Spec.Kind()
+func (m *Merger) shallowScanType(ctx *TypeContext, i astIndexSymDef) error {
+	spec := m.nodes.Type(i).Spec
+	kind := spec.Kind()
 
 	var err error
 	// TODO: mechanism for other types dependency shallow scanning and hoisting
 	switch kind {
 	case tps.Name:
-		err = m.shallowScanNamedType(ctx, def.top.Spec.(ast.TypeName))
+		err = m.shallowScanNamedType(ctx, spec.(ast.TypeName))
 	case tps.Struct:
-		err = m.shallowScanStructType(ctx, def.top.Spec.(ast.StructType), def.methods)
+		err = m.shallowScanStructType(ctx, spec.(ast.StructType))
 	case tps.Enum:
 		// TODO: implement enum scan
 	case tps.Bag:
@@ -217,7 +222,8 @@ func (m *Merger) shallowScanType(ctx *TypeContext, def *TempTypeDef) error {
 	return err
 }
 
-func (m *Merger) shallowScanStructType(ctx *TypeContext, spec ast.StructType, methods []ast.Method) error {
+func (m *Merger) shallowScanStructType(ctx *TypeContext, spec ast.StructType) error {
+	methods := m.nodes.MedsByReceiver[ctx.name]
 	ctx.members.Init(len(spec.Fields) + len(methods))
 
 	for _, field := range spec.Fields {
@@ -227,8 +233,8 @@ func (m *Merger) shallowScanStructType(ctx *TypeContext, spec ast.StructType, me
 		}
 	}
 
-	for _, method := range methods {
-		err := m.shallowScanMethod(ctx, method)
+	for _, i := range methods {
+		err := m.shallowScanMethod(ctx, i)
 		if err != nil {
 			return err
 		}
@@ -237,7 +243,8 @@ func (m *Merger) shallowScanStructType(ctx *TypeContext, spec ast.StructType, me
 	return nil
 }
 
-func (m *Merger) shallowScanMethod(ctx *TypeContext, method ast.Method) error {
+func (m *Merger) shallowScanMethod(ctx *TypeContext, i astIndexSymDef) error {
+	method := m.nodes.Med(i)
 	name := method.Name.Lit
 	pos := method.Name.Pos
 

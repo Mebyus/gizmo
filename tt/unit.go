@@ -9,12 +9,48 @@ import (
 )
 
 type Unit struct {
+	// List of all top-level function symbols defined in unit.
+	Funs []*Symbol
+
+	// List of all top-level constant symbols defined in unit.
+	Cons []*Symbol
+
+	// List of all top-level custom type symbols defined in unit.
+	Types []*Symbol
+
+	// List of all top-level variable symbols defined in unit.
+	Vars []*Symbol
+
+	// List of all method symbols defined in unit.
+	// Methods can only be defined at unit level.
+	Meds []*Symbol
+
 	Name string
 
 	// Scope that holds all top-level symbols from all unit atoms.
 	//
 	// This field is always not nil and Scope.Kind is always equal to scp.Unit.
 	Scope *Scope
+}
+
+func (u *Unit) addFun(s *Symbol) {
+	u.Funs = append(u.Funs, s)
+}
+
+func (u *Unit) addCon(s *Symbol) {
+	u.Cons = append(u.Cons, s)
+}
+
+func (u *Unit) addType(s *Symbol) {
+	u.Types = append(u.Types, s)
+}
+
+func (u *Unit) addVar(s *Symbol) {
+	u.Vars = append(u.Vars, s)
+}
+
+func (u *Unit) addMed(s *Symbol) {
+	u.Meds = append(u.Meds, s)
 }
 
 // UnitFromDir scans given directory for source files, processes them as
@@ -59,9 +95,9 @@ func UnitFromDir(dir string) (*Unit, error) {
 			return nil, err
 		}
 		if !stat.IsDir() {
-			return nil, fmt.Errorf("%s is not a directory")
+			return nil, fmt.Errorf("%s is not a directory", dir)
 		}
-		name := stat.Name()
+		name = stat.Name()
 		if name == "" {
 			return nil, fmt.Errorf("os: no directory name")
 		}

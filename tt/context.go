@@ -19,7 +19,7 @@ type Context struct {
 	never bool
 }
 
-func (m *Merger) newFnCtx(def *FnDef) *Context {
+func (m *Merger) newFunCtx(def *FunDef) *Context {
 	return &Context{
 		m:     m,
 		ref:   NewSymSet(),

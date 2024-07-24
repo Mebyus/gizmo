@@ -1,6 +1,6 @@
 package tt
 
-type FnDef struct {
+type FunDef struct {
 	nodeSymDef
 
 	Body Block
@@ -19,4 +19,4 @@ type FnDef struct {
 }
 
 // Explicit interface implementation check.
-var _ SymDef = &FnDef{}
+var _ SymDef = &FunDef{}

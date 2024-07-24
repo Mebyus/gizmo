@@ -19,22 +19,12 @@ import (
 //
 // Semantic checks and tree construction is split between this two phases.
 type Merger struct {
-	nodes   NodesBox
-	symbols SymbolsBox
-
-	ctx UnitContext
-
 	// Unit that is currently being built by merger.
 	unit Unit
 
-	// list of all top-level function symbols defined in unit
-	funs []*Symbol
+	ctx UnitContext
 
-	// list of all top-level constant symbols defined in unit
-	cons []*Symbol
-
-	// list of all top-level type symbols defined in unit
-	types []*Symbol
+	nodes NodesBox
 
 	Warns []Warn
 
@@ -42,17 +32,69 @@ type Merger struct {
 }
 
 type NodesBox struct {
+	Funs  []ast.TopFun
+	Cons  []ast.TopCon
+	Vars  []ast.TopVar
+	Meds  []ast.Method
+	Types []ast.TopType
+
+	// Maps custom type receiver name to a list of
+	// its method indices inside Meds slice.
+	MedsByReceiver map[string][]astIndexSymDef
 }
 
-type SymbolsBox struct {
-	// list of all top-level function symbols defined in unit
-	funs []*Symbol
+func (n *NodesBox) addType(node ast.TopType) astIndexSymDef {
+	i := len(n.Types)
+	n.Types = append(n.Types, node)
+	return astIndexSymDef(i)
+}
 
-	// list of all top-level constant symbols defined in unit
-	cons []*Symbol
+func (n *NodesBox) addFun(node ast.TopFun) astIndexSymDef {
+	i := len(n.Funs)
+	n.Funs = append(n.Funs, node)
+	return astIndexSymDef(i)
+}
 
-	// list of all top-level type symbols defined in unit
-	types []*Symbol
+func (n *NodesBox) addCon(node ast.TopCon) astIndexSymDef {
+	i := len(n.Cons)
+	n.Cons = append(n.Cons, node)
+	return astIndexSymDef(i)
+}
+
+func (n *NodesBox) addVar(node ast.TopVar) astIndexSymDef {
+	i := len(n.Vars)
+	n.Vars = append(n.Vars, node)
+	return astIndexSymDef(i)
+}
+
+func (n *NodesBox) addMed(node ast.Method) astIndexSymDef {
+	i := len(n.Meds)
+	n.Meds = append(n.Meds, node)
+	return astIndexSymDef(i)
+}
+
+func (n *NodesBox) bindMethod(rname string, i astIndexSymDef) {
+	n.MedsByReceiver[rname] = append(n.MedsByReceiver[rname], i)
+}
+
+func (n *NodesBox) Type(i astIndexSymDef) ast.TopType {
+	return n.Types[i]
+}
+
+func (n *NodesBox) Fun(i astIndexSymDef) ast.TopFun {
+	return n.Funs[i]
+}
+
+func (n *NodesBox) Con(i astIndexSymDef) ast.TopCon {
+	return n.Cons[i]
+}
+
+func (n *NodesBox) Var(i astIndexSymDef) ast.TopVar {
+	return n.Vars[i]
+}
+
+func (n *NodesBox) Med(i astIndexSymDef) ast.Method {
+	return n.Meds[i]
 }
 
 func New(ctx UnitContext) *Merger {
@@ -61,6 +103,9 @@ func New(ctx UnitContext) *Merger {
 		unit: Unit{
 			Name:  ctx.Name,
 			Scope: NewUnitScope(ctx.Global),
+		},
+		nodes: NodesBox{
+			MedsByReceiver: make(map[string][]astIndexSymDef),
 		},
 	}
 }
@@ -178,7 +223,7 @@ func (m *Merger) addMeds(meds []ast.Method) error {
 
 // Merge is called after all unit atoms were added to merger to build type tree of the unit.
 func (m *Merger) Merge() (*Unit, error) {
-	err := m.runPhaseTwo()
+	err := m.merge()
 	if err != nil {
 		return nil, err
 	}
@@ -232,10 +277,10 @@ func (m *Merger) addFun(top ast.TopFun) error {
 		Name:   name,
 		Pos:    pos,
 		Public: top.Pub,
-		Def:    NewTempFnDef(top),
+		Def:    m.nodes.addFun(top),
 	}
 	m.add(s)
-	m.funs = append(m.funs, s)
+	m.unit.addFun(s)
 	return nil
 }
 
@@ -252,10 +297,10 @@ func (m *Merger) addType(top ast.TopType) error {
 		Name:   name,
 		Pos:    pos,
 		Public: top.Pub,
-		Def:    NewTempTypeDef(top),
+		Def:    m.nodes.addType(top),
 	}
 	m.add(s)
-	m.types = append(m.types, s)
+	m.unit.addType(s)
 	return nil
 }
 
@@ -272,17 +317,51 @@ func (m *Merger) addCon(top ast.TopCon) error {
 		Name:   name,
 		Pos:    pos,
 		Public: top.Pub,
-		Def:    NewTempConstDef(top),
+		Def:    m.nodes.addCon(top),
 	}
 	m.add(s)
-	m.cons = append(m.cons, s)
+	m.unit.addCon(s)
 	return nil
 }
 
-func (m *Merger) addVar(v ast.TopVar) error {
+func (m *Merger) addVar(top ast.TopVar) error {
+	name := top.Name.Lit
+	pos := top.Name.Pos
+
+	if m.has(name) {
+		return m.errMultDef(name, pos)
+	}
+
+	s := &Symbol{
+		Kind:   sym.Var,
+		Name:   name,
+		Pos:    pos,
+		Public: top.Pub,
+		Def:    m.nodes.addVar(top),
+	}
+	m.add(s)
+	m.unit.addVar(s)
 	return nil
 }
 
-func (m *Merger) addMed(med ast.Method) error {
+func (m *Merger) addMed(top ast.Method) error {
+	rname := top.Receiver.Name.Lit
+	mname := top.Name.Lit
+	pos := top.Name.Pos
+	name := rname + "." + mname
+
+	if m.has(name) {
+		return m.errMultDef(name, pos)
+	}
+
+	s := &Symbol{
+		Kind:   sym.Method,
+		Name:   name,
+		Pos:    pos,
+		Public: top.Pub,
+		Def:    m.nodes.addMed(top),
+	}
+	m.add(s)
+	m.unit.addMed(s)
 	return nil
 }

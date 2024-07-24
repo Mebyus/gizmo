@@ -7,23 +7,34 @@ import (
 
 // returns receiver name and its type params, if method is not a template
 // second return value will be nil slice
-func (p *Parser) methodReceiver() (ast.TypeSpec, error) {
+func (p *Parser) methodReceiver() (ast.ReceiverTypeSpec, error) {
 	if p.tok.Kind != token.LeftSquare {
-		return nil, p.unexpected(p.tok)
+		return ast.ReceiverTypeSpec{}, p.unexpected(p.tok)
 	}
 	p.advance() // skip "["
 
-	receiver, err := p.typeSpecifier()
-	if err != nil {
-		return nil, err
+	var ptr bool
+
+	if p.tok.Kind == token.Asterisk {
+		p.advance() // skip "*"
+		ptr = true
 	}
 
+	if p.tok.Kind != token.Identifier {
+		return ast.ReceiverTypeSpec{}, p.unexpected(p.tok)
+	}
+	name := p.idn()
+	p.advance() // skip receiver type name
+
 	if p.tok.Kind != token.RightSquare {
-		return nil, p.unexpected(p.tok)
+		return ast.ReceiverTypeSpec{}, p.unexpected(p.tok)
 	}
 	p.advance() // skip "]"
 
-	return receiver, nil
+	return ast.ReceiverTypeSpec{
+		Name: name,
+		Ptr:  ptr,
+	}, nil
 }
 
 func (p *Parser) method(traits ast.Traits) error {

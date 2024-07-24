@@ -66,9 +66,9 @@ func (m *Merger) bindRecursiveType(s *Symbol) {
 }
 
 func (m *Merger) bindType(s *Symbol) *Type {
-	def := s.Def.(*TempTypeDef)
-	name := def.top.Name.Lit
-	base, err := m.unit.Scope.Types.lookup(def.top.Spec)
+	node := m.nodes.Type(s.Def.(astIndexSymDef))
+	name := node.Name.Lit
+	base, err := m.unit.Scope.Types.lookup(node.Spec)
 	if err != nil {
 		// type graph structure must guarantee successful lookup
 		panic(err)
