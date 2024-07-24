@@ -575,11 +575,9 @@ func (lx *Lexer) other() token.Token {
 			pos := lx.pos()
 			lx.Advance() // skip "["
 			if lx.Next != ']' {
-				lx.Advance() // skip "*"
 				return token.Token{
 					Pos:  pos,
-					Kind: token.Illegal,
-					Lit:  "[*",
+					Kind: token.LeftSquare,
 				}
 			}
 			lx.Advance() // skip "*"

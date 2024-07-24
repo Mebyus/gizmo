@@ -103,7 +103,21 @@ func (p *Parser) importSpec() (ast.ImportSpec, error) {
 	}
 	str := ast.ImportString{
 		Pos: p.tok.Pos,
-		Lit: p.tok.Lit,
+		Lit: p.tok.Lit, // TODO: check import string contents here, to report abnormal imports early
+
+		// example of abnormal import strings
+		//	""
+		//	"/"
+		//	" "
+		//	"\n"
+		//	"."
+		//	"a/"
+		//	"/a"
+		//	"a/b/"
+		//	"a//b"
+		//	"../a"
+		//	"a/ /b"
+		//	"a / b"
 	}
 	p.advance() // skip import string
 

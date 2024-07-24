@@ -67,3 +67,18 @@ func (p Path) Hash() uint64 {
 	h.Write([]byte(p.ImpStr))
 	return h.Sum64()
 }
+
+type Set map[Path]struct{}
+
+func NewSet() Set {
+	return make(Set)
+}
+
+func (s Set) Add(p Path) {
+	s[p] = struct{}{}
+}
+
+func (s Set) Has(p Path) bool {
+	_, ok := s[p]
+	return ok
+}

@@ -120,11 +120,34 @@ type UnitContext struct {
 	// all unit atoms do not have unit clause with specified name.
 	Name string
 
+	Resolver Resolver
+
 	Global *Scope
 }
 
+// Resolver gives access to other units by their origin path.
+type Resolver interface {
+	// Returns nil if there is no unit with such path.
+	Resolve(origin.Path) *Unit
+}
+
+// EmptyResolver implements Resolver interface by returning
+// nil for all requested paths.
+type EmptyResolver struct{}
+
+func NewEmptyResolver() EmptyResolver {
+	return EmptyResolver{}
+}
+
+// Explicit interface implementation check.
+var _ Resolver = EmptyResolver{}
+
+func (EmptyResolver) Resolve(origin.Path) *Unit {
+	return nil
+}
+
 func (m *Merger) Add(atom *ast.Atom) error {
-	err := m.addImportBlocks(atom.Header.Imports.ImportBlocks)
+	err := m.addImportBlocks(atom.Header.Imports.Blocks)
 	if err != nil {
 		return err
 	}
@@ -246,6 +269,11 @@ func (m *Merger) errMultDef(name string, pos source.Pos) error {
 }
 
 func (m *Merger) addImport(bind ast.ImportBind) error {
+	u := m.ctx.Resolver.Resolve(bind.Path)
+	if u == nil {
+		panic("impossible due to previous checks")
+	}
+
 	name := bind.Name.Lit
 	pos := bind.Name.Pos
 

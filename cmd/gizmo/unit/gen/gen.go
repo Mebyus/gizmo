@@ -53,7 +53,7 @@ func execute(r *butler.Lackey, units []string) error {
 }
 
 func gen(config *Config, dir string) error {
-	u, err := tt.UnitFromDir(dir)
+	u, err := tt.UnitFromDir(tt.NewEmptyResolver(), dir)
 	if err != nil {
 		return err
 	}

@@ -1,0 +1,5 @@
+unit gentest
+
+import std {
+    alpha => "text/alpha"
+}

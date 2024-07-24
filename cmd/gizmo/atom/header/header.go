@@ -35,7 +35,7 @@ func header(filename string) error {
 		return err
 	}
 
-	for _, path := range h.Imports.ImportPaths {
+	for _, path := range h.Imports.Paths {
 		fmt.Println(path.String())
 	}
 

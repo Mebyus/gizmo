@@ -6,6 +6,7 @@ import (
 
 	"github.com/mebyus/gizmo/parser"
 	"github.com/mebyus/gizmo/source"
+	"github.com/mebyus/gizmo/source/origin"
 )
 
 type Unit struct {
@@ -57,7 +58,7 @@ func (u *Unit) addMed(s *Symbol) {
 // single unit and constructs graph of unit's symbols.
 //
 // Given directory path should be cleaned by the client.
-func UnitFromDir(dir string) (*Unit, error) {
+func UnitFromDir(resolver Resolver, dir string) (*Unit, error) {
 	files, err := source.LoadUnitFiles(dir)
 	if err != nil {
 		return nil, err
@@ -65,6 +66,7 @@ func UnitFromDir(dir string) (*Unit, error) {
 
 	var name string
 	parsers := make([]*parser.Parser, 0, len(files))
+	iset := origin.NewSet()
 	for _, file := range files {
 		p := parser.FromSource(file)
 		h, err := p.Header()
@@ -82,6 +84,17 @@ func UnitFromDir(dir string) (*Unit, error) {
 				return nil, fmt.Errorf("%s: inconsistent unit name \"%s\" (previous was \"%s\")",
 					h.Unit.Name.Pos.String(), n, name)
 			}
+		}
+
+		for _, p := range h.Imports.Paths {
+			u := resolver.Resolve(p)
+			if u == nil {
+				return nil, fmt.Errorf("unable to resolve imported unit \"%s\"", p.String())
+			}
+			if iset.Has(p) {
+				return nil, fmt.Errorf("multiple imports of the same unit \"%s\"", p.String())
+			}
+			iset.Add(p)
 		}
 
 		parsers = append(parsers, p)
@@ -104,8 +117,9 @@ func UnitFromDir(dir string) (*Unit, error) {
 	}
 
 	m := New(UnitContext{
-		Name:   name,
-		Global: NewGlobalScope(),
+		Name:     name,
+		Global:   NewGlobalScope(),
+		Resolver: resolver,
 	})
 	for _, p := range parsers {
 		atom, err := p.Parse()

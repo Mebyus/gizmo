@@ -51,9 +51,9 @@ type AtomHeader struct {
 }
 
 type AtomImports struct {
-	ImportBlocks []ImportBlock
+	Blocks []ImportBlock
 
 	// Preprocessed data from all import blocks.
 	// Builder uses this list to access all imports at once.
-	ImportPaths []origin.Path
+	Paths []origin.Path
 }

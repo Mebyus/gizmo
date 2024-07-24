@@ -5,7 +5,6 @@ import (
 
 	"github.com/mebyus/gizmo/tt"
 	"github.com/mebyus/gizmo/tt/scp"
-	"github.com/mebyus/gizmo/tt/sym"
 	"github.com/mebyus/gizmo/tt/typ"
 )
 
@@ -32,23 +31,25 @@ func (g *Builder) Bytes() []byte {
 func (g *Builder) Gen(u *tt.Unit) {
 	g.prelude()
 
-	for _, s := range u.Scope.Symbols {
-		switch s.Kind {
-		case sym.Fn:
-			g.FnDef(s, s.Def.(*tt.FunDef))
-		case sym.Const:
-			g.Const(s, s.Def.(*tt.ConstDef))
-		case sym.Type:
-			g.Type(s, s.Def.(*tt.Type))
-		default:
-			panic(fmt.Sprintf("not implemented for %s symbols", s.Kind.String()))
-		}
+	for _, s := range u.Types {
+		g.TypeDef(s)
+		g.nl()
+	}
 
+	for _, s := range u.Cons {
+		g.Con(s)
+		g.nl()
+	}
+
+	for _, s := range u.Funs {
+		g.FunDef(s)
 		g.nl()
 	}
 }
 
-func (g *Builder) Type(s *tt.Symbol, t *tt.Type) {
+func (g *Builder) TypeDef(s *tt.Symbol) {
+	t := s.Def.(*tt.Type)
+
 	g.puts("typedef")
 	g.space()
 	switch t.Base.Kind {
@@ -56,6 +57,8 @@ func (g *Builder) Type(s *tt.Symbol, t *tt.Type) {
 		g.puts("struct {}")
 	case typ.Struct:
 		g.StructType(t.Base.Def.(*tt.StructTypeDef))
+	case typ.Signed, typ.Unsigned:
+		g.builtinIntegerType(t.Base)
 	default:
 		panic(fmt.Sprintf("%s types not implemented", t.Base.Kind.String()))
 	}
@@ -96,7 +99,9 @@ func (g *Builder) StructType(def *tt.StructTypeDef) {
 	g.structFields(def.Members.Members)
 }
 
-func (g *Builder) Const(s *tt.Symbol, def *tt.ConstDef) {
+func (g *Builder) Con(s *tt.Symbol) {
+	def := s.Def.(*tt.ConstDef)
+
 	g.puts("const")
 	g.space()
 	g.TypeSpec(s.Type)
@@ -119,6 +124,10 @@ func (g *Builder) SymbolName(s *tt.Symbol) {
 	g.puts(g.getSymbolName(s))
 }
 
+func (g *Builder) builtinIntegerType(t *tt.Type) string {
+	return t.Name
+}
+
 func (g *Builder) getTypeSpec(t *tt.Type) string {
 	if t == nil {
 		return "void"
@@ -126,40 +135,8 @@ func (g *Builder) getTypeSpec(t *tt.Type) string {
 	if t.Kind == typ.Boolean {
 		return "bool"
 	}
-	if t.Kind == typ.Unsigned {
-		size := t.Def.(tt.IntTypeDef).Size
-		switch size {
-		case 1:
-			return "u8"
-		case 2:
-			return "u16"
-		case 4:
-			return "u32"
-		case 8:
-			return "u64"
-		case 16:
-			return "u128"
-		default:
-			panic(fmt.Sprintf("unxpected size %d", size))
-		}
-	}
-	if t.Kind == typ.Signed {
-		size := t.Def.(tt.IntTypeDef).Size
-		switch size {
-		case 1:
-			return "i8"
-		case 2:
-			return "i16"
-		case 4:
-			return "i32"
-		case 8:
-			return "i64"
-		case 16:
-			return "i128"
-		default:
-			panic(fmt.Sprintf("unxpected size %d", size))
-		}
-
+	if t.Kind == typ.Unsigned || t.Kind == typ.Signed {
+		return g.builtinIntegerType(t)
 	}
 	if t.Kind == typ.Named {
 		return g.getSymbolName(t.Def.(tt.NamedTypeDef).Symbol)
@@ -222,7 +199,9 @@ func (g *Builder) Block(block *tt.Block) {
 	g.nl()
 }
 
-func (g *Builder) FnDef(s *tt.Symbol, def *tt.FunDef) {
+func (g *Builder) FunDef(s *tt.Symbol) {
+	def := s.Def.(*tt.FunDef)
+
 	g.TypeSpec(def.Result)
 	g.nl()
 	g.SymbolName(s)

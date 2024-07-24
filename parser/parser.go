@@ -141,7 +141,7 @@ func (p *Parser) header() error {
 	if err != nil {
 		return err
 	}
-	p.atom.Header.Imports.ImportBlocks = blocks
+	p.atom.Header.Imports.Blocks = blocks
 
 	var paths []origin.Path
 	for _, block := range blocks {
@@ -152,7 +152,7 @@ func (p *Parser) header() error {
 			})
 		}
 	}
-	p.atom.Header.Imports.ImportPaths = paths
+	p.atom.Header.Imports.Paths = paths
 	return nil
 }
 
