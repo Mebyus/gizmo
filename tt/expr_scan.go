@@ -5,8 +5,10 @@ import (
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/exn"
+	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/token"
 	"github.com/mebyus/gizmo/tt/scp"
+	"github.com/mebyus/gizmo/tt/sym"
 	"github.com/mebyus/gizmo/tt/typ"
 )
 
@@ -167,11 +169,61 @@ func (s *Scope) scanIndirectPart(ctx *Context, tip ChainOperand, part ast.Indire
 }
 
 func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPart) (ChainOperand, error) {
+	panic("not implemented")
 	return tip, nil
 }
 
+func getSignatureByChainSymbol(c *ChainSymbol) (*Signature, error) {
+	s := c.Sym
+	if s == nil {
+		panic("receiver not implemented")
+	}
+
+	switch s.Kind {
+	case sym.Fn:
+		return &s.Def.(*FunDef).Signature, nil
+	case sym.Type:
+		return nil, fmt.Errorf("%s: cannot call type \"%s\"", c.Pos.String(), s.Name)
+	case sym.Import:
+		return nil, fmt.Errorf("%s: cannot call imported unit \"%s\"", c.Pos.String(), s.Name)
+	case sym.Method:
+		panic(fmt.Sprintf("bad symbol name \"%s\" resolution", s.Name))
+	default:
+		panic(fmt.Sprintf("%s symbols not implemented", s.Kind.String()))
+	}
+}
+
+func getSignature(o ChainOperand) (*Signature, error) {
+	switch o.Kind() {
+	case exn.Chain:
+		return getSignatureByChainSymbol(o.(*ChainSymbol))
+	default:
+		panic(fmt.Sprintf("%s: %s operands not implemented", o.Pin().String(), o.Kind().String()))
+	}
+}
+
 func (s *Scope) scanCallPart(ctx *Context, tip ChainOperand, part ast.CallPart) (ChainOperand, error) {
-	return tip, nil
+	sig, err := getSignature(tip)
+	if err != nil {
+		return nil, err
+	}
+
+	pos := part.Pos
+	params := sig.Params
+	args := part.Args
+
+	aa, err := s.scanCallArgs(ctx, pos, params, args)
+	if err != nil {
+		return nil, err
+	}
+	return &CallExpression{
+		Pos:       pos,
+		Arguments: aa,
+		Callee:    tip,
+
+		typ:   sig.Result,
+		never: sig.Never,
+	}, nil
 }
 
 func (s *Scope) scanCastExpression(ctx *Context, expr ast.CastExpression) (*CastExpression, error) {
@@ -298,73 +350,46 @@ func (s *Scope) scanParenthesizedExpression(ctx *Context, expr ast.Parenthesized
 	}, nil
 }
 
-// func (s *Scope) scanSymbolCallExpression(ctx *Context, expr ast.SymbolCallExpression) (*SymbolCallExpression, error) {
-// 	name := expr.Callee.Lit
-// 	pos := expr.Callee.Pos
-// 	symbol := s.Lookup(name, pos.Num)
-// 	if symbol == nil {
-// 		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
-// 	}
-// 	if symbol.Kind != sym.Fn {
-// 		return nil, fmt.Errorf("%s: call to symbol \"%s\", which is not a function", pos.String(), name)
-// 	}
+func (s *Scope) scanCallArgs(ctx *Context, pos source.Pos, params []*Symbol, args []ast.Expression) ([]Expression, error) {
+	if len(args) < len(params) {
+		return nil, fmt.Errorf("%s: not enough arguments (got %d) to call \"%s\" function (want %d)",
+			pos.String(), len(args), "???", len(params)) // TODO: provide call context to supply a name here
+	}
+	if len(args) > len(params) {
+		return nil, fmt.Errorf("%s: too many arguments (got %d) in function \"%s\" call (want %d)",
+			pos.String(), len(args), "???", len(params))
+	}
 
-// 	def := symbol.Def.(*FnDef)
-// 	if len(expr.Arguments) < len(def.Params) {
-// 		return nil, fmt.Errorf("%s: not enough arguments (got %d) to call \"%s\" function (want %d)",
-// 			pos.String(), len(expr.Arguments), name, len(def.Params))
-// 	}
-// 	if len(expr.Arguments) > len(def.Params) {
-// 		return nil, fmt.Errorf("%s: too many arguments (got %d) in function \"%s\" call (want %d)",
-// 			pos.String(), len(expr.Arguments), name, len(def.Params))
-// 	}
-// 	args, err := s.scanCallArgs(ctx, def.Params, expr.Arguments)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	if symbol.Scope.Kind == scp.Unit {
-// 		ctx.ref.Add(symbol)
-// 	}
-
-// 	return &SymbolCallExpression{
-// 		Pos:       pos,
-// 		Callee:    symbol,
-// 		Arguments: args,
-// 	}, nil
-// }
-
-func (s *Scope) scanCallArgs(ctx *Context, params []*Symbol, exprs []ast.Expression) ([]Expression, error) {
-	if len(exprs) != len(params) {
-		panic("unreachable due to previous conditions")
+	if len(args) != len(params) {
+		panic("unreachable due to previous checks")
 	}
 	n := len(params)
 	if n == 0 {
 		return nil, nil
 	}
 
-	args := make([]Expression, 0, n)
+	aa := make([]Expression, 0, n)
 	for i := 0; i < n; i += 1 {
-		expr := exprs[i]
+		arg := args[i]
 		param := params[i]
 
-		if expr == nil {
+		if arg == nil {
 			panic("empty argument expression")
 		}
 
-		arg, err := s.scan(ctx, expr)
+		a, err := s.scan(ctx, arg)
 		if err != nil {
 			return nil, err
 		}
 
-		err = checkCallArgType(param, arg)
+		err = checkCallArgType(param, a)
 		if err != nil {
-			return nil, fmt.Errorf("%s: mismatched types of call argument and parameter", arg.Pin())
+			return nil, err
 		}
 
-		args = append(args, arg)
+		aa = append(aa, a)
 	}
-	return args, nil
+	return aa, nil
 }
 
 func (s *Scope) scanSymbolExpression(ctx *Context, expr ast.SymbolExpression) (*SymbolExpression, error) {

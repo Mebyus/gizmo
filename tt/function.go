@@ -3,13 +3,22 @@ package tt
 type FunDef struct {
 	nodeSymDef
 
-	Body Block
+	Signature
 
-	// Function parameters, equals nil if function has no parameters.
-	Params []*Symbol
+	Body Block
 
 	// List of top-level unit symbols which are used in function.
 	Refs []*Symbol
+}
+
+// Explicit interface implementation check.
+var _ SymDef = &FunDef{}
+
+// Signature provides information about a call layout
+// (of a function, method, function pointer, etc.).
+type Signature struct {
+	// Function parameters, equals nil if function has no parameters.
+	Params []*Symbol
 
 	// Function return type. Equals nil if function returns nothing or never returns.
 	Result *Type
@@ -17,6 +26,3 @@ type FunDef struct {
 	// Equals true for functions which never return.
 	Never bool
 }
-
-// Explicit interface implementation check.
-var _ SymDef = &FunDef{}

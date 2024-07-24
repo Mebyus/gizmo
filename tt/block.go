@@ -9,6 +9,7 @@ import (
 	"github.com/mebyus/gizmo/tt/scp"
 	"github.com/mebyus/gizmo/tt/sfp"
 	"github.com/mebyus/gizmo/tt/sym"
+	"github.com/mebyus/gizmo/tt/typ"
 )
 
 type Block struct {
@@ -237,12 +238,40 @@ func (b *Block) addReturn(ctx *Context, stmt ast.ReturnStatement) error {
 	if t == nil {
 		panic(fmt.Sprintf("%s: %s expression has no type", expr.Pin().String(), expr.Kind()))
 	}
+	err = checkReturnType(expr.Pin(), ctx.ret, t)
+	if err != nil {
+		return err
+	}
 
 	b.addNode(&ReturnStatement{
 		Pos:  pos,
 		Expr: expr,
 	})
 	return nil
+}
+
+func checkReturnType(pos source.Pos, r, t *Type) error {
+	if t == r {
+		return nil
+	}
+	if t.Kind == typ.StaticBoolean && r.Base.Kind == typ.Boolean {
+		return nil
+	}
+	if t.Kind == typ.StaticInteger && (r.Base.Kind == typ.Unsigned || r.Base.Kind == typ.Signed) {
+		return nil
+	}
+
+	if t.Kind == typ.Signed && r.Kind == typ.Signed {
+		// try to promote integer of less size to a higher one
+		if t.Size < r.Size {
+			return nil
+		}
+		return fmt.Errorf("%s: cannot promote %s to return type %s",
+			pos.String(), t.Symbol.Name, r.Symbol.Name)
+	}
+
+	return fmt.Errorf("%s: mismatched return types (%s and %s)",
+		pos.String(), r.Kind.String(), t.Kind.String())
 }
 
 // func (b *Block) addIndirectAssign(ctx *Context, stmt ast.IndirectAssignStatement) error {

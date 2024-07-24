@@ -161,10 +161,12 @@ func (m *Merger) scanFun(s *Symbol) (*FunDef, error) {
 		return nil, err
 	}
 	fn := &FunDef{
-		Params: params,
-		Result: result,
-		Never:  node.Signature.Never,
-		Body:   Block{Pos: pos},
+		Signature: Signature{
+			Params: params,
+			Result: result,
+			Never:  node.Signature.Never,
+		},
+		Body: Block{Pos: pos},
 	}
 	fn.Body.Scope = NewTopScope(m.unit.Scope, &fn.Body.Pos)
 

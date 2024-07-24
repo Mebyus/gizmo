@@ -35,7 +35,7 @@ func (g *Builder) expr(expr tt.Expression) {
 		g.ParenthesizedExpression(expr.(*tt.ParenthesizedExpression))
 	case exn.Cast:
 		g.CastExpression(expr.(*tt.CastExpression))
-	case exn.Chain, exn.Member, exn.Address, exn.Indirect, exn.IndirectIndex:
+	case exn.Chain, exn.Member, exn.Address, exn.Indirect, exn.IndirectIndex, exn.Call:
 		g.ChainOperand(expr.(tt.ChainOperand))
 
 	default:
@@ -71,6 +71,8 @@ func (g *Builder) ChainOperand(expr tt.ChainOperand) {
 		g.IndirectExpression(expr.(*tt.IndirectExpression))
 	case exn.IndirectIndex:
 		g.IndirectIndexExpression(expr.(*tt.IndirectIndexExpression))
+	case exn.Call:
+		g.CallExpression(expr.(*tt.CallExpression))
 	default:
 		panic(fmt.Sprintf("%s operand not implemented", expr.Kind().String()))
 	}

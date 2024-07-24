@@ -325,7 +325,8 @@ func checkCallArgType(param *Symbol, arg Expression) error {
 	}
 
 	// panic("unhandled case")
-	return fmt.Errorf("%s: mismatched types of call argument and parameter", arg.Pin())
+	return fmt.Errorf("%s: mismatched types of call argument (%s) and parameter (%s)",
+		arg.Pin(), t.Kind, pt.Kind)
 }
 
 type MemberKind uint8

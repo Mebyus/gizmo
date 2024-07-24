@@ -104,8 +104,11 @@ type CallExpression struct {
 
 	Callee ChainOperand
 
-	// Return type of the call..
+	// Return type of the call.
 	typ *Type
+
+	// true for calls that never return.
+	never bool
 }
 
 // Explicit interface implementation check
