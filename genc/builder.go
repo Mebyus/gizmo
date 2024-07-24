@@ -52,20 +52,22 @@ func (g *Builder) TypeDef(s *tt.Symbol) {
 
 	g.puts("typedef")
 	g.space()
-	switch t.Base.Kind {
-	case typ.Trivial:
-		g.puts("struct {}")
-	case typ.Struct:
-		g.StructType(t.Base.Def.(*tt.StructTypeDef))
-	case typ.Signed, typ.Unsigned:
-		g.builtinIntegerType(t.Base)
-	default:
-		panic(fmt.Sprintf("%s types not implemented", t.Base.Kind.String()))
-	}
+	g.typeSpecForDef(t.Base)
 	g.space()
 	g.SymbolName(s)
 	g.semi()
 	g.nl()
+}
+
+func (g *Builder) typeSpecForDef(t *tt.Type) {
+	if t == nil {
+		panic("nil type")
+	}
+	if t.Kind == typ.Struct {
+		g.StructType(t.Base.Def.(*tt.StructTypeDef))
+		return
+	}
+	g.TypeSpec(t)
 }
 
 func (g *Builder) structFields(members []tt.Member) {
@@ -114,6 +116,16 @@ func (g *Builder) Con(s *tt.Symbol) {
 }
 
 func (g *Builder) getSymbolName(s *tt.Symbol) string {
+	if s.Scope.Kind == scp.Global {
+		switch s.Name {
+		case "int":
+			return "i64" // TODO: determine name based on type size
+		case "uint":
+			return "u64"
+		default:
+			return s.Name
+		}
+	}
 	if s.Scope.Kind == scp.Unit {
 		return g.prefix + s.Name
 	}
@@ -124,31 +136,26 @@ func (g *Builder) SymbolName(s *tt.Symbol) {
 	g.puts(g.getSymbolName(s))
 }
 
-func (g *Builder) builtinIntegerType(t *tt.Type) string {
-	return t.Name
-}
-
 func (g *Builder) getTypeSpec(t *tt.Type) string {
 	if t == nil {
 		return "void"
 	}
-	if t.Kind == typ.Boolean {
-		return "bool"
-	}
-	if t.Kind == typ.Unsigned || t.Kind == typ.Signed {
-		return g.builtinIntegerType(t)
-	}
-	if t.Kind == typ.Named {
-		return g.getSymbolName(t.Def.(tt.NamedTypeDef).Symbol)
-	}
-	if t.Kind == typ.Pointer {
-		return g.getTypeSpec(t.Def.(tt.PointerTypeDef).RefType) + "*"
-	}
-	if t.Kind == typ.ArrayPointer {
-		return g.getTypeSpec(t.Def.(tt.ArrayPointerTypeDef).RefType) + "*"
+	if t.Builtin {
+		return g.getSymbolName(t.Symbol)
 	}
 
-	panic(fmt.Sprintf("%s types not implemented", t.Kind))
+	switch t.Kind {
+	case typ.Trivial:
+		return "struct {}"
+	case typ.Named:
+		return g.getSymbolName(t.Symbol)
+	case typ.Pointer:
+		return g.getTypeSpec(t.Def.(tt.PointerTypeDef).RefType) + "*"
+	case typ.ArrayPointer:
+		return g.getTypeSpec(t.Def.(tt.ArrayPointerTypeDef).RefType) + "*"
+	default:
+		panic(fmt.Sprintf("%s types not implemented", t.Base.Kind.String()))
+	}
 }
 
 func (g *Builder) TypeSpec(t *tt.Type) {

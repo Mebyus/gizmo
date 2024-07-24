@@ -47,13 +47,11 @@ func (m *Merger) bindTypes() error {
 
 func (m *Merger) bindRecursiveType(s *Symbol) {
 	node := m.nodes.Type(s.Def.(astIndexSymDef))
-	name := node.Name.Lit
 	t := &Type{
 		Recursive: true,
 
-		Name: name,
-		Kind: typ.Named,
-		Def:  NamedTypeDef{Symbol: s},
+		Symbol: s,
+		Kind:   typ.Named,
 	}
 	s.Def = t
 
@@ -67,7 +65,6 @@ func (m *Merger) bindRecursiveType(s *Symbol) {
 
 func (m *Merger) bindType(s *Symbol) *Type {
 	node := m.nodes.Type(s.Def.(astIndexSymDef))
-	name := node.Name.Lit
 	base, err := m.unit.Scope.Types.lookup(node.Spec)
 	if err != nil {
 		// type graph structure must guarantee successful lookup
@@ -75,9 +72,8 @@ func (m *Merger) bindType(s *Symbol) *Type {
 	}
 
 	return &Type{
-		Name: name,
-		Base: base.Base,
-		Kind: typ.Named,
-		Def:  NamedTypeDef{Symbol: s},
+		Symbol: s,
+		Base:   base.Base,
+		Kind:   typ.Named,
 	}
 }

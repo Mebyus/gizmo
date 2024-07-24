@@ -18,19 +18,6 @@ import (
 type Type struct {
 	nodeSymDef
 
-	// Only named and builtin types have a name.
-	// Example of creating a type with name:
-	//
-	//	// Create a named type from builtin "int" type
-	//	type MyType int
-	//
-	// On the other hand []i32 is just a chunk of sized
-	// i32 numbers with no specific name for that type.
-	//
-	// TODO: we can possibly change this to *Symbol, which
-	// already contains type name.
-	Name string
-
 	// Type definition.
 	//
 	// Meaning and contents of this field heavily depends on the kind of this type.
@@ -45,6 +32,10 @@ type Type struct {
 	//	- String
 	//	- Boolean
 	Def TypeDef
+
+	// Not nil only for custom and builtin types. Contains symbol which names
+	// this type.
+	Symbol *Symbol
 
 	// Each type has a base (even builtin types). Base is a type representing
 	// the raw definition (struct, enum, union, etc.) and memory layout of a type.
@@ -74,6 +65,11 @@ type Type struct {
 	// Not 0 only for user-defined (not builtin) named types. Contains hash id of a Unit
 	// where the type is defined.
 	Unit uint64
+
+	// Byte size of this type's value. May be 0 for some types.
+	// More specifically this field equals the stride between two
+	// consecutive elements of this type inside an array.
+	Size uint32
 
 	// Discriminator for type definition category.
 	Kind typ.Kind
@@ -150,20 +146,20 @@ func (t *Type) Hash() uint64 {
 
 func (t *Type) computeHash() uint64 {
 	if t.Builtin {
-		if t.Name == "" {
+		if t.Symbol.Name == "" {
 			panic("empty name of builtin type")
 		}
-		return HashName(t.Name)
+		return HashName(t.Symbol.Name)
 	}
 
 	switch t.Kind {
 	case typ.Named:
 		if t.Recursive {
-			return HashRecursiveName(t.Name)
+			return HashRecursiveName(t.Symbol.Name)
 		}
 		// TODO: we probably should panic here, since
 		// named types are not meant to be looked up by hash
-		return HashName(t.Name)
+		return HashName(t.Symbol.Name)
 	case typ.Pointer:
 		return HashPointerType(t.Def.(PointerTypeDef).RefType)
 	case typ.ArrayPointer:

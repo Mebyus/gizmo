@@ -6,20 +6,21 @@ import (
 	"github.com/mebyus/gizmo/tt/typ"
 )
 
-func newTypeSymbol(name string, typ *Type) *Symbol {
-	return &Symbol{
+func newTypeSymbol(name string, t *Type) *Symbol {
+	s := &Symbol{
 		Name: name,
 		Kind: sym.Type,
-		Def:  typ,
+		Def:  t,
 		Type: &Type{}, // TODO: make type for other types
 	}
+	t.Symbol = s
+	return s
 }
 
 func (s *Scope) addBuiltinUnsignedType(name string, size uint32) {
 	t := &Type{
-		Name:    name,
 		Kind:    typ.Unsigned,
-		Def:     IntTypeDef{Size: size},
+		Size:    size,
 		Builtin: true,
 	}
 	t.Base = t
@@ -28,9 +29,8 @@ func (s *Scope) addBuiltinUnsignedType(name string, size uint32) {
 
 func (s *Scope) addBuiltinSignedType(name string, size uint32) {
 	t := &Type{
-		Name:    name,
 		Kind:    typ.Signed,
-		Def:     IntTypeDef{Size: size},
+		Size:    size,
 		Builtin: true,
 	}
 	t.Base = t
@@ -39,8 +39,8 @@ func (s *Scope) addBuiltinSignedType(name string, size uint32) {
 
 func (s *Scope) addBuiltinBoolType() {
 	t := &Type{
-		Name:    "bool",
 		Kind:    typ.Boolean,
+		Size:    1,
 		Builtin: true,
 	}
 	t.Base = t
@@ -49,8 +49,8 @@ func (s *Scope) addBuiltinBoolType() {
 
 func (s *Scope) addBuiltinStringType() {
 	t := &Type{
-		Name:    "str",
 		Kind:    typ.String,
+		Size:    16,
 		Builtin: true,
 	}
 	t.Base = t
