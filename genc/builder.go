@@ -41,6 +41,16 @@ func (g *Builder) Gen(u *tt.Unit) {
 		g.nl()
 	}
 
+	g.BlockTitle(u.Name, "function declaraions")
+	g.nl()
+	for _, s := range u.Funs {
+		g.FunDecl(s)
+		g.nl()
+	}
+
+	g.nl()
+	g.BlockTitle(u.Name, "function implementations")
+	g.nl()
 	for _, s := range u.Funs {
 		g.FunDef(s)
 		g.nl()
@@ -167,7 +177,7 @@ func (g *Builder) TypeSpec(t *tt.Type) {
 	g.puts(s)
 }
 
-func (g *Builder) FnParams(params []*tt.Symbol) {
+func (g *Builder) FunParams(params []*tt.Symbol) {
 	if len(params) == 0 {
 		g.puts("()")
 		return
@@ -191,6 +201,7 @@ func (g *Builder) FnParam(p *tt.Symbol) {
 func (g *Builder) Block(block *tt.Block) {
 	if len(block.Nodes) == 0 {
 		g.puts("{}")
+		g.nl()
 		return
 	}
 
@@ -206,15 +217,34 @@ func (g *Builder) Block(block *tt.Block) {
 	g.nl()
 }
 
+func (g *Builder) FunDecl(s *tt.Symbol) {
+	def := s.Def.(*tt.FunDef)
+
+	g.TypeSpec(def.Result)
+	g.space()
+	g.SymbolName(s)
+	g.FunParams(def.Params)
+	g.semi()
+}
+
 func (g *Builder) FunDef(s *tt.Symbol) {
 	def := s.Def.(*tt.FunDef)
 
 	g.TypeSpec(def.Result)
 	g.nl()
 	g.SymbolName(s)
-	g.FnParams(def.Params)
+	g.FunParams(def.Params)
 	g.space()
 	g.Block(&def.Body)
+}
+
+func (g *Builder) BlockTitle(unit string, s string) {
+	g.puts("/* ===== ")
+	g.puts(unit)
+	g.puts(": ")
+	g.puts(s)
+	g.puts(" ===== */")
+	g.nl()
 }
 
 // put string into output buffer

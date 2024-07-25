@@ -31,7 +31,11 @@ func (m *Merger) merge() error {
 	if err != nil {
 		return err
 	}
-	err = m.scanFns()
+	err = m.shallowScanFuns()
+	if err != nil {
+		return err
+	}
+	err = m.scanFuns()
 	if err != nil {
 		return err
 	}
@@ -125,23 +129,23 @@ func (m *Merger) scanCon(s *Symbol) (*ConstDef, error) {
 	}, nil
 }
 
-func (m *Merger) scanFns() error {
+func (m *Merger) shallowScanFuns() error {
 	for _, s := range m.unit.Funs {
-		fn, err := m.scanFun(s)
+		err := m.shallowScanFun(s)
 		if err != nil {
 			return err
 		}
-		s.Def = fn
 	}
 	return nil
 }
 
-func (m *Merger) scanFun(s *Symbol) (*FunDef, error) {
-	scope := m.unit.Scope
-	node := m.nodes.Fun(s.Def.(astIndexSymDef))
+func newParamSymbols(scope *Scope, defs []ast.FieldDefinition) ([]*Symbol, error) {
+	if len(defs) == 0 {
+		return nil, nil
+	}
 
-	var params []*Symbol
-	for _, p := range node.Signature.Params {
+	params := make([]*Symbol, 0, len(defs))
+	for _, p := range defs {
 		t, err := scope.Types.Lookup(p.Type)
 		if err != nil {
 			return nil, err
@@ -154,13 +158,26 @@ func (m *Merger) scanFun(s *Symbol) (*FunDef, error) {
 			Kind: sym.Param,
 		})
 	}
+	return params, nil
+}
+
+// scan function signature, body will be scanned in a separate pass
+func (m *Merger) shallowScanFun(s *Symbol) error {
+	scope := m.unit.Scope
+	node := m.nodes.Fun(s.Def.(astIndexSymDef))
+
+	params, err := newParamSymbols(scope, node.Signature.Params)
+	if err != nil {
+		return err
+	}
 
 	pos := node.Body.Pos
 	result, err := scope.Types.Lookup(node.Signature.Result)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	fn := &FunDef{
+
+	f := &FunDef{
 		Signature: Signature{
 			Params: params,
 			Result: result,
@@ -168,23 +185,35 @@ func (m *Merger) scanFun(s *Symbol) (*FunDef, error) {
 		},
 		Body: Block{Pos: pos},
 	}
-	fn.Body.Scope = NewTopScope(m.unit.Scope, &fn.Body.Pos)
 
+	f.Body.Scope = NewTopScope(m.unit.Scope, &f.Body.Pos)
 	for _, param := range params {
 		name := param.Name
-		s := fn.Body.Scope.sym(name)
+		s := f.Body.Scope.sym(name)
 		if s != nil {
-			return nil, fmt.Errorf("%s: parameter \"%s\" redeclared in this function", pos.String(), name)
+			return fmt.Errorf("%s: parameter \"%s\" redeclared in this function", pos.String(), name)
 		}
-		fn.Body.Scope.Bind(param)
+		f.Body.Scope.Bind(param)
 	}
 
-	err = m.scanFunBody(fn, node.Body.Statements)
-	if err != nil {
-		return nil, err
-	}
+	s.Def = f
+	return nil
+}
 
-	return fn, nil
+func (m *Merger) scanFuns() error {
+	for i, s := range m.unit.Funs {
+		err := m.scanFun(s, astIndexSymDef(i))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Merger) scanFun(s *Symbol, i astIndexSymDef) error {
+	body := m.nodes.Fun(i).Body
+	f := s.Def.(*FunDef)
+	return m.scanFunBody(f, body.Statements)
 }
 
 func (m *Merger) scanFunBody(def *FunDef, statements []ast.Statement) error {

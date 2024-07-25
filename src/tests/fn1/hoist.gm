@@ -1,0 +1,5 @@
+fn one_func() {
+    another_func();
+}
+
+fn another_func() {}
