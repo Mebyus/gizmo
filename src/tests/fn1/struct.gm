@@ -1,8 +1,12 @@
 type Adder struct {
+    b2:  i32,
     arg: u64,
-    b2: i32,
 }
 
 fn take_adder(a: Adder) {
     change_and_return(a.b2);
+}
+
+fn take_adder2(a: *Adder) => u64 {
+    return a.arg;
 }

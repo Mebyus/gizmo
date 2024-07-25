@@ -169,8 +169,54 @@ func (s *Scope) scanIndirectPart(ctx *Context, tip ChainOperand, part ast.Indire
 }
 
 func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPart) (ChainOperand, error) {
-	panic("not implemented")
-	return tip, nil
+	t := tip.Type()
+
+	// TODO: think up a better way to lookup members on types,
+	// perhaps we should add a dedicated Type method for this
+
+	if t.Kind == typ.Named {
+		// TODO: first search here for possible methods
+	}
+
+	pos := part.Member.Pos
+	name := part.Member.Lit
+
+	switch t.Base.Kind {
+	case typ.Struct:
+		def := t.Base.Def.(*StructTypeDef)
+		m := def.Members.Find(name)
+		if m == nil {
+			return nil, fmt.Errorf("%s: type %s no member \"%s\"",
+				pos.String(), t.Base.Kind.String(), name)
+		}
+		return &MemberExpression{
+			Pos:    pos,
+			Target: tip,
+			Member: m,
+		}, nil
+	case typ.Pointer:
+		base := t.Def.(PointerTypeDef).RefType.Base
+		if base.Kind != typ.Struct {
+			return nil, fmt.Errorf("%s: cannot select a member from %s type",
+				pos.String(), t.Base.Kind.String())
+		}
+		def := base.Def.(*StructTypeDef)
+		m := def.Members.Find(name)
+		if m == nil {
+			return nil, fmt.Errorf("%s: type %s no member \"%s\"",
+				pos.String(), t.Base.Kind.String(), name)
+		}
+		return &IndirectMemberExpression{
+			Pos:    pos,
+			Target: tip,
+			Member: m,
+		}, nil
+	case typ.Signed, typ.Unsigned, typ.Boolean, typ.Float:
+		return nil, fmt.Errorf("%s: cannot select a member from %s type",
+			pos.String(), t.Base.Kind.String())
+	default:
+		panic(fmt.Sprintf("%s types not implemented", t.Base.Kind.String()))
+	}
 }
 
 func getSignatureByChainSymbol(c *ChainSymbol) (*Signature, error) {

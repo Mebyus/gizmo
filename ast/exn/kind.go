@@ -40,6 +40,7 @@ const (
 	Address
 	Slice
 	IndirectIndex
+	IndirectMember
 
 	// Template instance
 	Instance
@@ -72,14 +73,15 @@ var text = [...]string{
 	Receiver: "receiver",
 	Instance: "instance",
 
-	Chain:         "chain",
-	Member:        "member",
-	Indirect:      "indirect",
-	Index:         "index",
-	IndirectIndex: "index.indirect",
-	Address:       "address",
-	Slice:         "slice",
-	Call:          "call",
+	Chain:          "chain",
+	Member:         "member",
+	Indirect:       "indirect",
+	Index:          "index",
+	IndirectIndex:  "index.indirect",
+	IndirectMember: "member.indirect",
+	Address:        "address",
+	Slice:          "slice",
+	Call:           "call",
 
 	Integer: "integer",
 	String:  "string",

@@ -95,6 +95,31 @@ func (e *MemberExpression) Type() *Type {
 	return e.Member.Type
 }
 
+type IndirectMemberExpression struct {
+	nodeChain
+
+	Pos source.Pos
+
+	Target ChainOperand
+
+	Member *Member
+}
+
+// Explicit interface implementation check.
+var _ ChainOperand = &IndirectMemberExpression{}
+
+func (*IndirectMemberExpression) Kind() exn.Kind {
+	return exn.IndirectMember
+}
+
+func (e *IndirectMemberExpression) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *IndirectMemberExpression) Type() *Type {
+	return e.Member.Type
+}
+
 type CallExpression struct {
 	nodeChain
 

@@ -70,7 +70,7 @@ func (m *Merger) bindType(s *Symbol) *Type {
 		// type graph structure must guarantee successful lookup
 		panic(err)
 	}
-
+	fmt.Printf("%s: %T\n", s.Name, base.Def)
 	return &Type{
 		Symbol: s,
 		Base:   base.Base,
