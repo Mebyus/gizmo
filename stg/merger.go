@@ -1,4 +1,4 @@
-package tt
+package stg
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/source/origin"
-	"github.com/mebyus/gizmo/tt/sym"
+	"github.com/mebyus/gizmo/stg/sym"
 )
 
 // Merger is a high-level algorithm driver that gathers multiple ASTs of unit's atoms

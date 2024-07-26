@@ -1,4 +1,4 @@
-package tt
+package stg
 
 // Context carries information and objects which are needed to perform
 // statements and expressions transformations (from AST to TT), type checking,

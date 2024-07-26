@@ -1,4 +1,4 @@
-package tt
+package stg
 
 import (
 	"github.com/mebyus/gizmo/ast"

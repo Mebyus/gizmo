@@ -1,4 +1,4 @@
-package tt
+package stg
 
 type ConstDef struct {
 	nodeSymDef

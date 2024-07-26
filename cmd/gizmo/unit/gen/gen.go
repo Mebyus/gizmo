@@ -7,7 +7,7 @@ import (
 
 	"github.com/mebyus/gizmo/butler"
 	"github.com/mebyus/gizmo/genc"
-	"github.com/mebyus/gizmo/tt"
+	"github.com/mebyus/gizmo/stg"
 )
 
 var Gen = &butler.Lackey{
@@ -53,7 +53,7 @@ func execute(r *butler.Lackey, units []string) error {
 }
 
 func gen(config *Config, dir string) error {
-	u, err := tt.UnitFromDir(tt.NewEmptyResolver(), dir)
+	u, err := stg.UnitFromDir(stg.NewEmptyResolver(), dir)
 	if err != nil {
 		return err
 	}

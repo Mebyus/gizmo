@@ -1,4 +1,4 @@
-package tt
+package stg
 
 // TODO: rename package to tgr - Type Graph Representation
 
@@ -9,7 +9,7 @@ import (
 	"hash/fnv"
 
 	"github.com/mebyus/gizmo/source"
-	"github.com/mebyus/gizmo/tt/typ"
+	"github.com/mebyus/gizmo/stg/typ"
 )
 
 // Type represents a value type of symbol, field, expression or subexpression

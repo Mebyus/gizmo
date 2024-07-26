@@ -1,4 +1,4 @@
-package tt
+package stg
 
 type MethodDef struct {
 	Body Block

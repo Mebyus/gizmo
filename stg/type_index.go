@@ -1,12 +1,12 @@
-package tt
+package stg
 
 import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/tps"
-	"github.com/mebyus/gizmo/tt/sym"
-	"github.com/mebyus/gizmo/tt/typ"
+	"github.com/mebyus/gizmo/stg/sym"
+	"github.com/mebyus/gizmo/stg/typ"
 )
 
 // TypeIndex is a helper managment object which is used to lookup and create

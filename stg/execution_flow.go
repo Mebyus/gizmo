@@ -1,6 +1,6 @@
-package tt
+package stg
 
-import "github.com/mebyus/gizmo/tt/sfp"
+import "github.com/mebyus/gizmo/stg/sfp"
 
 type FlowPoint struct {
 	// Index (inside a block) of statement with special flow of execution.

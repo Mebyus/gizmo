@@ -8,7 +8,7 @@ import (
 	"github.com/mebyus/gizmo/er"
 	"github.com/mebyus/gizmo/parser"
 	"github.com/mebyus/gizmo/source"
-	"github.com/mebyus/gizmo/tt"
+	"github.com/mebyus/gizmo/stg"
 )
 
 var Utyp = &butler.Lackey{
@@ -41,7 +41,7 @@ func utyp(unit string) error {
 		return err
 	}
 
-	m := tt.New(tt.UnitContext{Global: tt.NewGlobalScope()})
+	m := stg.New(stg.UnitContext{Global: stg.NewGlobalScope()})
 	for _, file := range files {
 		atom, err := parser.ParseSource(file)
 		if err != nil {

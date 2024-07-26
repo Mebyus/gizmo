@@ -3,9 +3,9 @@ package genc
 import (
 	"fmt"
 
-	"github.com/mebyus/gizmo/tt"
-	"github.com/mebyus/gizmo/tt/scp"
-	"github.com/mebyus/gizmo/tt/typ"
+	"github.com/mebyus/gizmo/stg"
+	"github.com/mebyus/gizmo/stg/scp"
+	"github.com/mebyus/gizmo/stg/typ"
 )
 
 type Builder struct {
@@ -24,14 +24,14 @@ type Builder struct {
 	tprefix string
 
 	// cached type specs
-	specs map[*tt.Type]string
+	specs map[*stg.Type]string
 }
 
 func (g *Builder) Bytes() []byte {
 	return g.buf
 }
 
-func (g *Builder) Gen(u *tt.Unit) {
+func (g *Builder) Gen(u *stg.Unit) {
 	g.prelude()
 
 	for _, s := range u.Types {
@@ -60,8 +60,8 @@ func (g *Builder) Gen(u *tt.Unit) {
 	}
 }
 
-func (g *Builder) TypeDef(s *tt.Symbol) {
-	t := s.Def.(*tt.Type)
+func (g *Builder) TypeDef(s *stg.Symbol) {
+	t := s.Def.(*stg.Type)
 
 	g.puts("typedef")
 	g.space()
@@ -72,18 +72,18 @@ func (g *Builder) TypeDef(s *tt.Symbol) {
 	g.nl()
 }
 
-func (g *Builder) typeSpecForDef(t *tt.Type) {
+func (g *Builder) typeSpecForDef(t *stg.Type) {
 	if t == nil {
 		panic("nil type")
 	}
 	if t.Kind == typ.Struct {
-		g.StructType(t.Base.Def.(*tt.StructTypeDef))
+		g.StructType(t.Base.Def.(*stg.StructTypeDef))
 		return
 	}
 	g.TypeSpec(t)
 }
 
-func (g *Builder) structFields(members []tt.Member) {
+func (g *Builder) structFields(members []stg.Member) {
 	if len(members) == 0 {
 		g.puts("{}")
 		return
@@ -101,21 +101,21 @@ func (g *Builder) structFields(members []tt.Member) {
 	g.puts("}")
 }
 
-func (g *Builder) structField(member *tt.Member) {
+func (g *Builder) structField(member *stg.Member) {
 	g.TypeSpec(member.Type)
 	g.space()
 	g.puts(member.Name)
 	g.semi()
 }
 
-func (g *Builder) StructType(def *tt.StructTypeDef) {
+func (g *Builder) StructType(def *stg.StructTypeDef) {
 	g.puts("struct")
 	g.space()
 	g.structFields(def.Members.Members)
 }
 
-func (g *Builder) Con(s *tt.Symbol) {
-	def := s.Def.(*tt.ConstDef)
+func (g *Builder) Con(s *stg.Symbol) {
+	def := s.Def.(*stg.ConstDef)
 
 	g.puts("const")
 	g.space()
@@ -128,7 +128,7 @@ func (g *Builder) Con(s *tt.Symbol) {
 	g.nl()
 }
 
-func (g *Builder) getSymbolName(s *tt.Symbol) string {
+func (g *Builder) getSymbolName(s *stg.Symbol) string {
 	if s.Scope.Kind == scp.Global {
 		switch s.Name {
 		case "int":
@@ -145,11 +145,11 @@ func (g *Builder) getSymbolName(s *tt.Symbol) string {
 	return s.Name
 }
 
-func (g *Builder) SymbolName(s *tt.Symbol) {
+func (g *Builder) SymbolName(s *stg.Symbol) {
 	g.puts(g.getSymbolName(s))
 }
 
-func (g *Builder) getTypeSpec(t *tt.Type) string {
+func (g *Builder) getTypeSpec(t *stg.Type) string {
 	if t == nil {
 		return "void"
 	}
@@ -163,17 +163,17 @@ func (g *Builder) getTypeSpec(t *tt.Type) string {
 	case typ.Named:
 		return g.getSymbolName(t.Symbol)
 	case typ.Pointer:
-		return g.getTypeSpec(t.Def.(tt.PointerTypeDef).RefType) + "*"
+		return g.getTypeSpec(t.Def.(stg.PointerTypeDef).RefType) + "*"
 	case typ.ArrayPointer:
-		return g.getTypeSpec(t.Def.(tt.ArrayPointerTypeDef).RefType) + "*"
+		return g.getTypeSpec(t.Def.(stg.ArrayPointerTypeDef).RefType) + "*"
 	case typ.Chunk:
-		return g.tprefix + "Chunk" + g.getSymbolName(t.Def.(tt.ChunkTypeDef).ElemType.Symbol)
+		return g.tprefix + "Chunk" + g.getSymbolName(t.Def.(stg.ChunkTypeDef).ElemType.Symbol)
 	default:
 		panic(fmt.Sprintf("%s types not implemented", t.Base.Kind.String()))
 	}
 }
 
-func (g *Builder) TypeSpec(t *tt.Type) {
+func (g *Builder) TypeSpec(t *stg.Type) {
 	s, ok := g.specs[t]
 	if !ok {
 		s = g.getTypeSpec(t)
@@ -182,7 +182,7 @@ func (g *Builder) TypeSpec(t *tt.Type) {
 	g.puts(s)
 }
 
-func (g *Builder) FunParams(params []*tt.Symbol) {
+func (g *Builder) FunParams(params []*stg.Symbol) {
 	if len(params) == 0 {
 		g.puts("()")
 		return
@@ -197,13 +197,13 @@ func (g *Builder) FunParams(params []*tt.Symbol) {
 	g.puts(")")
 }
 
-func (g *Builder) FnParam(p *tt.Symbol) {
+func (g *Builder) FnParam(p *stg.Symbol) {
 	g.TypeSpec(p.Type)
 	g.space()
 	g.SymbolName(p)
 }
 
-func (g *Builder) Block(block *tt.Block) {
+func (g *Builder) Block(block *stg.Block) {
 	if len(block.Nodes) == 0 {
 		g.puts("{}")
 		g.nl()
@@ -222,8 +222,8 @@ func (g *Builder) Block(block *tt.Block) {
 	g.nl()
 }
 
-func (g *Builder) FunDecl(s *tt.Symbol) {
-	def := s.Def.(*tt.FunDef)
+func (g *Builder) FunDecl(s *stg.Symbol) {
+	def := s.Def.(*stg.FunDef)
 
 	g.TypeSpec(def.Result)
 	g.space()
@@ -232,8 +232,8 @@ func (g *Builder) FunDecl(s *tt.Symbol) {
 	g.semi()
 }
 
-func (g *Builder) FunDef(s *tt.Symbol) {
-	def := s.Def.(*tt.FunDef)
+func (g *Builder) FunDef(s *stg.Symbol) {
+	def := s.Def.(*stg.FunDef)
 
 	g.TypeSpec(def.Result)
 	g.nl()

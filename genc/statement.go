@@ -4,31 +4,31 @@ import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/ast/stm"
-	"github.com/mebyus/gizmo/tt"
+	"github.com/mebyus/gizmo/stg"
 )
 
-func (g *Builder) Statement(node tt.Statement) {
+func (g *Builder) Statement(node stg.Statement) {
 	g.indent()
 
 	switch node.Kind() {
 	case stm.Return:
-		g.returnStatement(node.(*tt.ReturnStatement))
+		g.returnStatement(node.(*stg.ReturnStatement))
 	case stm.Let:
-		g.letStatement(node.(*tt.LetStatement))
+		g.letStatement(node.(*stg.LetStatement))
 	case stm.Var:
-		g.varStatement(node.(*tt.VarStatement))
+		g.varStatement(node.(*stg.VarStatement))
 	case stm.Call:
-		g.callStatement(node.(*tt.CallStatement))
+		g.callStatement(node.(*stg.CallStatement))
 	case stm.Assign:
-		g.assignStatement(node.(*tt.AssignStatement))
+		g.assignStatement(node.(*stg.AssignStatement))
 	case stm.SimpleIf:
-		g.simpleIfStatement(node.(*tt.SimpleIfStatement))
+		g.simpleIfStatement(node.(*stg.SimpleIfStatement))
 		return
 	case stm.For:
-		g.loopStatement(node.(*tt.LoopStatement))
+		g.loopStatement(node.(*stg.LoopStatement))
 		return
 	case stm.ForCond:
-		g.whileStatement(node.(*tt.WhileStatement))
+		g.whileStatement(node.(*stg.WhileStatement))
 		return
 	default:
 		panic(fmt.Sprintf("%s statement not implemented", node.Kind().String()))
@@ -38,12 +38,12 @@ func (g *Builder) Statement(node tt.Statement) {
 	g.nl()
 }
 
-func (g *Builder) loopStatement(node *tt.LoopStatement) {
+func (g *Builder) loopStatement(node *stg.LoopStatement) {
 	g.puts("while (true) ")
 	g.Block(&node.Body)
 }
 
-func (g *Builder) assignStatement(node *tt.AssignStatement) {
+func (g *Builder) assignStatement(node *stg.AssignStatement) {
 	g.ChainOperand(node.Target)
 	g.space()
 	g.puts(node.Operation.String())
@@ -51,25 +51,25 @@ func (g *Builder) assignStatement(node *tt.AssignStatement) {
 	g.Expression(node.Expr)
 }
 
-func (g *Builder) whileStatement(node *tt.WhileStatement) {
+func (g *Builder) whileStatement(node *stg.WhileStatement) {
 	g.puts("while (")
 	g.Expression(node.Condition)
 	g.puts(") ")
 	g.Block(&node.Body)
 }
 
-func (g *Builder) simpleIfStatement(node *tt.SimpleIfStatement) {
+func (g *Builder) simpleIfStatement(node *stg.SimpleIfStatement) {
 	g.puts("if (")
 	g.Expression(node.Condition)
 	g.puts(") ")
 	g.Block(&node.Body)
 }
 
-func (g *Builder) callStatement(node *tt.CallStatement) {
+func (g *Builder) callStatement(node *stg.CallStatement) {
 	g.CallExpression(node.Call)
 }
 
-func (g *Builder) varStatement(node *tt.VarStatement) {
+func (g *Builder) varStatement(node *stg.VarStatement) {
 	g.TypeSpec(node.Sym.Type)
 	g.space()
 	g.SymbolName(node.Sym)
@@ -80,7 +80,7 @@ func (g *Builder) varStatement(node *tt.VarStatement) {
 	g.Expression(node.Expr)
 }
 
-func (g *Builder) letStatement(node *tt.LetStatement) {
+func (g *Builder) letStatement(node *stg.LetStatement) {
 	g.TypeSpec(node.Sym.Type)
 	g.space()
 	g.SymbolName(node.Sym)
@@ -88,7 +88,7 @@ func (g *Builder) letStatement(node *tt.LetStatement) {
 	g.Expression(node.Expr)
 }
 
-func (g *Builder) returnStatement(node *tt.ReturnStatement) {
+func (g *Builder) returnStatement(node *stg.ReturnStatement) {
 	g.puts("return")
 	if node.Expr == nil {
 		return

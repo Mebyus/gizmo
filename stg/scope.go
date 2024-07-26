@@ -1,12 +1,12 @@
-package tt
+package stg
 
 import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/source"
-	"github.com/mebyus/gizmo/tt/scp"
-	"github.com/mebyus/gizmo/tt/sym"
-	"github.com/mebyus/gizmo/tt/typ"
+	"github.com/mebyus/gizmo/stg/scp"
+	"github.com/mebyus/gizmo/stg/sym"
+	"github.com/mebyus/gizmo/stg/typ"
 )
 
 type Scope struct {

@@ -1,4 +1,4 @@
-package tt
+package stg
 
 import (
 	"reflect"

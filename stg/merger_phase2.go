@@ -1,10 +1,10 @@
-package tt
+package stg
 
 import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/ast"
-	"github.com/mebyus/gizmo/tt/sym"
+	"github.com/mebyus/gizmo/stg/sym"
 )
 
 // Phase 2 merger indexing coagulates info from AST nodes that were skipped during

@@ -1,9 +1,9 @@
-package tt
+package stg
 
 import (
 	"fmt"
 
-	"github.com/mebyus/gizmo/tt/typ"
+	"github.com/mebyus/gizmo/stg/typ"
 )
 
 // perform second scan of named types present in unit,

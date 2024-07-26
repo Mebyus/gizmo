@@ -1,8 +1,8 @@
-package tt
+package stg
 
 import (
 	"github.com/mebyus/gizmo/source"
-	"github.com/mebyus/gizmo/tt/sym"
+	"github.com/mebyus/gizmo/stg/sym"
 )
 
 // Symbol. Symbols represent objects in source code which we can reference and

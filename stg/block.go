@@ -1,4 +1,4 @@
-package tt
+package stg
 
 import (
 	"fmt"
@@ -6,10 +6,10 @@ import (
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/stm"
 	"github.com/mebyus/gizmo/source"
-	"github.com/mebyus/gizmo/tt/scp"
-	"github.com/mebyus/gizmo/tt/sfp"
-	"github.com/mebyus/gizmo/tt/sym"
-	"github.com/mebyus/gizmo/tt/typ"
+	"github.com/mebyus/gizmo/stg/scp"
+	"github.com/mebyus/gizmo/stg/sfp"
+	"github.com/mebyus/gizmo/stg/sym"
+	"github.com/mebyus/gizmo/stg/typ"
 )
 
 type Block struct {
