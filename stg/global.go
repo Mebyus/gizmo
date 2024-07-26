@@ -2,8 +2,8 @@ package stg
 
 import (
 	"github.com/mebyus/gizmo/enums/smk"
+	"github.com/mebyus/gizmo/enums/tpk"
 	"github.com/mebyus/gizmo/stg/scp"
-	"github.com/mebyus/gizmo/stg/typ"
 )
 
 func newTypeSymbol(name string, t *Type) *Symbol {
@@ -23,7 +23,7 @@ func (s *Scope) addTypeSymbol(name string, t *Type) {
 
 func (s *Scope) addBuiltinBoolType() {
 	t := &Type{
-		Kind:    typ.Boolean,
+		Kind:    tpk.Boolean,
 		Size:    1,
 		Builtin: true,
 	}
@@ -33,7 +33,7 @@ func (s *Scope) addBuiltinBoolType() {
 
 func (s *Scope) addBuiltinStringType() {
 	t := &Type{
-		Kind:    typ.String,
+		Kind:    tpk.String,
 		Size:    16,
 		Builtin: true,
 	}
@@ -41,7 +41,7 @@ func (s *Scope) addBuiltinStringType() {
 	s.BindTypeSymbol(newTypeSymbol("str", t))
 }
 
-func newStaticType(kind typ.Kind) *Type {
+func newStaticType(kind tpk.Kind) *Type {
 	t := &Type{Kind: kind}
 	t.Base = t
 	return t
@@ -49,7 +49,7 @@ func newStaticType(kind typ.Kind) *Type {
 
 func newUnsignedType(size uint32) *Type {
 	t := &Type{
-		Kind:    typ.Unsigned,
+		Kind:    tpk.Unsigned,
 		Size:    size,
 		Builtin: true,
 	}
@@ -59,7 +59,7 @@ func newUnsignedType(size uint32) *Type {
 
 func newSignedType(size uint32) *Type {
 	t := &Type{
-		Kind:    typ.Signed,
+		Kind:    tpk.Signed,
 		Size:    size,
 		Builtin: true,
 	}
@@ -68,13 +68,13 @@ func newSignedType(size uint32) *Type {
 }
 
 var (
-	Trivial = newStaticType(typ.Trivial)
+	Trivial = newStaticType(tpk.Trivial)
 
-	StaticInteger = newStaticType(typ.StaticInteger)
-	StaticFloat   = newStaticType(typ.StaticFloat)
-	StaticString  = newStaticType(typ.StaticString)
-	StaticBoolean = newStaticType(typ.StaticBoolean)
-	StaticNil     = newStaticType(typ.StaticNil)
+	StaticInteger = newStaticType(tpk.StaticInteger)
+	StaticFloat   = newStaticType(tpk.StaticFloat)
+	StaticString  = newStaticType(tpk.StaticString)
+	StaticBoolean = newStaticType(tpk.StaticBoolean)
+	StaticNil     = newStaticType(tpk.StaticNil)
 
 	Uint8Type  = newUnsignedType(1)
 	Uint16Type = newUnsignedType(2)

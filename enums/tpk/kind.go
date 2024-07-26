@@ -1,6 +1,6 @@
-package typ
+package tpk
 
-// Kind indicates type kind
+// Kind indicates type kind.
 type Kind uint8
 
 const (
@@ -62,12 +62,10 @@ const (
 
 	// Types which are defined by giving a new name to another type.
 	//
-	// Most commonly created via language construct:
+	// Created via language construct:
 	//
 	//	type Name <OtherType>
-	//
-	// TODO: rename this to custom type.
-	Named
+	Custom
 
 	// Types which are defined as structs
 	//
@@ -265,8 +263,8 @@ var text = [...]string{
 	StaticBoolean: "static.boolean",
 	StaticNil:     "static.nil",
 
-	Trivial:      "triv",
-	Named:        "named",
+	Trivial:      "trivial",
+	Custom:       "custom",
 	Struct:       "struct",
 	Tuple:        "tuple",
 	Formation:    "formation",

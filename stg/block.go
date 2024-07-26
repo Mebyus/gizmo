@@ -6,10 +6,10 @@ import (
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/stm"
 	"github.com/mebyus/gizmo/enums/smk"
+	"github.com/mebyus/gizmo/enums/tpk"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/stg/scp"
 	"github.com/mebyus/gizmo/stg/sfp"
-	"github.com/mebyus/gizmo/stg/typ"
 )
 
 type Block struct {
@@ -254,14 +254,14 @@ func checkReturnType(pos source.Pos, r, t *Type) error {
 	if t == r {
 		return nil
 	}
-	if t.Kind == typ.StaticBoolean && r.Base.Kind == typ.Boolean {
+	if t.Kind == tpk.StaticBoolean && r.Base.Kind == tpk.Boolean {
 		return nil
 	}
-	if t.Kind == typ.StaticInteger && (r.Base.Kind == typ.Unsigned || r.Base.Kind == typ.Signed) {
+	if t.Kind == tpk.StaticInteger && (r.Base.Kind == tpk.Unsigned || r.Base.Kind == tpk.Signed) {
 		return nil
 	}
 
-	if t.Kind == typ.Signed && r.Kind == typ.Signed {
+	if t.Kind == tpk.Signed && r.Kind == tpk.Signed {
 		// try to promote integer of less size to a higher one
 		if t.Size < r.Size {
 			return nil
@@ -285,7 +285,7 @@ func checkReturnType(pos source.Pos, r, t *Type) error {
 // 		ctx.ref.Add(s)
 // 	}
 
-// 	if s.Type.Kind != typ.Pointer {
+// 	if s.Type.Kind != tpk.Pointer {
 // 		return fmt.Errorf("%s: invalid operation (indirect on non-pointer type)", pos)
 // 	}
 

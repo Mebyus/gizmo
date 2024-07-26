@@ -8,8 +8,8 @@ import (
 	"hash"
 	"hash/fnv"
 
+	"github.com/mebyus/gizmo/enums/tpk"
 	"github.com/mebyus/gizmo/source"
-	"github.com/mebyus/gizmo/stg/typ"
 )
 
 // Type represents a value type of symbol, field, expression or subexpression
@@ -72,7 +72,7 @@ type Type struct {
 	Size uint32
 
 	// Discriminator for type definition category.
-	Kind typ.Kind
+	Kind tpk.Kind
 
 	// True for types that are language builtins.
 	Builtin bool
@@ -83,9 +83,9 @@ type Type struct {
 
 func (t *Type) IsIntegerType() bool {
 	switch t.Kind {
-	case typ.Unsigned, typ.Signed, typ.StaticInteger:
+	case tpk.Unsigned, tpk.Signed, tpk.StaticInteger:
 		return true
-	case typ.Named:
+	case tpk.Custom:
 		return t.Base.IsIntegerType()
 	default:
 		return false
@@ -114,10 +114,10 @@ type Stable struct {
 	Unit uint64
 
 	// kind of type itself
-	Kind typ.Kind
+	Kind tpk.Kind
 
 	// kind of Type.Base
-	BaseKind typ.Kind
+	BaseKind tpk.Kind
 }
 
 func (t *Type) Stable() Stable {
@@ -164,31 +164,31 @@ func (t *Type) computeHash() uint64 {
 	}
 
 	switch t.Kind {
-	case typ.Named:
+	case tpk.Custom:
 		if t.Recursive {
 			return HashRecursiveName(t.Symbol.Name)
 		}
 		// TODO: we probably should panic here, since
 		// named types are not meant to be looked up by hash
 		return HashName(t.Symbol.Name)
-	case typ.Pointer:
+	case tpk.Pointer:
 		return HashPointerType(t.Def.(PointerTypeDef).RefType)
-	case typ.ArrayPointer:
+	case tpk.ArrayPointer:
 		return HashArrayPointerType(t.Def.(ArrayPointerTypeDef).RefType)
-	case typ.Chunk:
+	case tpk.Chunk:
 		return HashChunkType(t.Def.(ChunkTypeDef).ElemType)
-	case typ.Struct:
+	case tpk.Struct:
 		return HashStructType(t)
-	case typ.StaticInteger:
-		return uint64(typ.StaticInteger)
-	case typ.StaticBoolean:
-		return uint64(typ.StaticBoolean)
-	case typ.StaticFloat:
-		return uint64(typ.StaticFloat)
-	case typ.StaticString:
-		return uint64(typ.StaticString)
-	case typ.StaticNil:
-		return uint64(typ.StaticNil)
+	case tpk.StaticInteger:
+		return uint64(tpk.StaticInteger)
+	case tpk.StaticBoolean:
+		return uint64(tpk.StaticBoolean)
+	case tpk.StaticFloat:
+		return uint64(tpk.StaticFloat)
+	case tpk.StaticString:
+		return uint64(tpk.StaticString)
+	case tpk.StaticNil:
+		return uint64(tpk.StaticNil)
 	default:
 		panic(fmt.Sprintf("not implemented for %s", t.Kind.String()))
 	}
@@ -202,7 +202,7 @@ func HashChunkType(elem *Type) uint64 {
 	var buf [10]byte
 
 	h := fnv.New64a()
-	buf[0] = byte(typ.Chunk)
+	buf[0] = byte(tpk.Chunk)
 	putUint64(buf[2:], elem.Hash())
 	h.Write(buf[:])
 	return h.Sum64()
@@ -212,7 +212,7 @@ func HashPointerType(ref *Type) uint64 {
 	var buf [10]byte
 
 	h := fnv.New64a()
-	buf[0] = byte(typ.Pointer)
+	buf[0] = byte(tpk.Pointer)
 	putUint64(buf[2:], ref.Hash())
 	h.Write(buf[:])
 	return h.Sum64()
@@ -222,7 +222,7 @@ func HashArrayPointerType(ref *Type) uint64 {
 	var buf [10]byte
 
 	h := fnv.New64a()
-	buf[0] = byte(typ.ArrayPointer)
+	buf[0] = byte(tpk.ArrayPointer)
 	putUint64(buf[2:], ref.Hash())
 	h.Write(buf[:])
 	return h.Sum64()
@@ -233,7 +233,7 @@ func HashStructType(t *Type) uint64 {
 
 	h := fnv.New64a()
 	var buf [1]byte
-	buf[0] = byte(typ.Struct)
+	buf[0] = byte(tpk.Struct)
 	h.Write(buf[:])
 	for i := 0; i < len(members); i += 1 {
 		m := &members[i]
@@ -287,7 +287,7 @@ type ChunkTypeDef struct {
 
 func newArrayPointerType(ref *Type) *Type {
 	t := &Type{
-		Kind: typ.ArrayPointer,
+		Kind: tpk.ArrayPointer,
 		Def:  ArrayPointerTypeDef{RefType: ref},
 	}
 	t.Base = t
@@ -296,7 +296,7 @@ func newArrayPointerType(ref *Type) *Type {
 
 func newPointerType(ref *Type) *Type {
 	t := &Type{
-		Kind: typ.Pointer,
+		Kind: tpk.Pointer,
 		Def:  PointerTypeDef{RefType: ref},
 	}
 	t.Base = t
@@ -305,7 +305,7 @@ func newPointerType(ref *Type) *Type {
 
 func newChunkType(elem *Type) *Type {
 	t := &Type{
-		Kind: typ.Chunk,
+		Kind: tpk.Chunk,
 		Def:  ChunkTypeDef{ElemType: elem},
 	}
 	t.Base = t
@@ -314,7 +314,7 @@ func newChunkType(elem *Type) *Type {
 
 func newStructType(members MembersList) *Type {
 	t := &Type{
-		Kind: typ.Struct,
+		Kind: tpk.Struct,
 		Def:  &StructTypeDef{Members: members},
 	}
 	t.Base = t
@@ -329,7 +329,7 @@ func checkCallArgType(param *Symbol, arg Expression) error {
 		return nil
 	}
 
-	if (pt.Base.Kind == typ.Unsigned || pt.Base.Kind == typ.Signed) && t.Kind == typ.StaticInteger {
+	if (pt.Base.Kind == tpk.Unsigned || pt.Base.Kind == tpk.Signed) && t.Kind == tpk.StaticInteger {
 		// TODO: check that static integer fits into parameter type max value
 		// and there is no "signedness conflict" between type and value
 		return nil

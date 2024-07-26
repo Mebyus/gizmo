@@ -6,9 +6,9 @@ import (
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/exn"
 	"github.com/mebyus/gizmo/enums/smk"
+	"github.com/mebyus/gizmo/enums/tpk"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/stg/scp"
-	"github.com/mebyus/gizmo/stg/typ"
 	"github.com/mebyus/gizmo/token"
 )
 
@@ -132,7 +132,7 @@ func (s *Scope) scanIndexPart(ctx *Context, tip ChainOperand, part ast.IndexPart
 	t := tip.Type()
 	pos := part.Pos
 	switch t.Base.Kind {
-	case typ.Chunk:
+	case tpk.Chunk:
 		index, err := s.scan(ctx, part.Index)
 		if err != nil {
 			return nil, err
@@ -161,7 +161,7 @@ func (s *Scope) scanAddressPart(ctx *Context, tip ChainOperand, part ast.Address
 
 func (s *Scope) scanIndirectIndexPart(ctx *Context, tip ChainOperand, part ast.IndirectIndexPart) (ChainOperand, error) {
 	t := tip.Type()
-	if t.Base.Kind != typ.ArrayPointer {
+	if t.Base.Kind != tpk.ArrayPointer {
 		return nil, fmt.Errorf("%s: cannot indirect index %s operand of %s type",
 			part.Pos.String(), tip.Kind().String(), t.Base.Kind.String())
 	}
@@ -182,7 +182,7 @@ func (s *Scope) scanIndirectIndexPart(ctx *Context, tip ChainOperand, part ast.I
 
 func (s *Scope) scanIndirectPart(ctx *Context, tip ChainOperand, part ast.IndirectPart) (ChainOperand, error) {
 	t := tip.Type()
-	if t.Base.Kind != typ.Pointer {
+	if t.Base.Kind != tpk.Pointer {
 		return nil, fmt.Errorf("%s: cannot indirect %s operand of %s type",
 			part.Pos.String(), tip.Kind().String(), t.Base.Kind.String())
 	}
@@ -199,7 +199,7 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 	// TODO: think up a better way to lookup members on types,
 	// perhaps we should add a dedicated Type method for this
 
-	if t.Kind == typ.Named {
+	if t.Kind == tpk.Custom {
 		// TODO: first search here for possible methods
 	}
 
@@ -207,7 +207,7 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 	name := part.Member.Lit
 
 	switch t.Base.Kind {
-	case typ.Struct:
+	case tpk.Struct:
 		def := t.Base.Def.(*StructTypeDef)
 		m := def.Members.Find(name)
 		if m == nil {
@@ -219,9 +219,9 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 			Target: tip,
 			Member: m,
 		}, nil
-	case typ.Pointer:
+	case tpk.Pointer:
 		base := t.Def.(PointerTypeDef).RefType.Base
-		if base.Kind != typ.Struct {
+		if base.Kind != tpk.Struct {
 			return nil, fmt.Errorf("%s: cannot select a member from %s type",
 				pos.String(), t.Base.Kind.String())
 		}
@@ -236,7 +236,7 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 			Target: tip,
 			Member: m,
 		}, nil
-	case typ.Chunk:
+	case tpk.Chunk:
 		name := part.Member.Lit
 		switch name {
 		case "len":
@@ -259,7 +259,7 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 		default:
 			return nil, fmt.Errorf("%s: chunks do not have \"%s\" member", pos.String(), name)
 		}
-	case typ.Signed, typ.Unsigned, typ.Boolean, typ.Float:
+	case tpk.Signed, tpk.Unsigned, tpk.Boolean, tpk.Float:
 		return nil, fmt.Errorf("%s: cannot select a member from %s type",
 			pos.String(), t.Base.Kind.String())
 	default:
@@ -348,7 +348,7 @@ func (s *Scope) scanCastExpression(ctx *Context, expr ast.CastExpression) (*Cast
 // 		ctx.ref.Add(symbol)
 // 	}
 
-// 	if symbol.Type.Base.Kind != typ.Struct {
+// 	if symbol.Type.Base.Kind != tpk.Struct {
 // 		return nil, fmt.Errorf("%s: symbol \"%s\" is of %s type and does not have members",
 // 			pos.String(), name, s.Kind.String())
 // 	}
@@ -394,11 +394,11 @@ func (s *Scope) scanCastExpression(ctx *Context, expr ast.CastExpression) (*Cast
 // 	}
 
 // 	switch symbol.Type.Base.Kind {
-// 	case typ.Struct:
+// 	case tpk.Struct:
 // 		panic("not implemented")
-// 	case typ.Pointer:
+// 	case tpk.Pointer:
 // 		refType := symbol.Type.Base.Def.(PtrTypeDef).RefType
-// 		if refType.Base.Kind != typ.Struct {
+// 		if refType.Base.Kind != tpk.Struct {
 // 			return nil, fmt.Errorf("%s: symbol \"%s\" is a pointer to %s type which cannot have members", pos.String(),
 // 				name, refType.Base.Kind)
 // 		}
@@ -556,7 +556,7 @@ func (s *Scope) scanBinaryExpression(ctx *Context, expr ast.BinaryExpression) (*
 // 	}
 // 	target := tg.(ChainOperand)
 // 	targetType := target.Type()
-// 	if targetType.Kind != typ.Pointer {
+// 	if targetType.Kind != tpk.Pointer {
 // 		return nil, fmt.Errorf("%s: invalid operation (indirect on non-pointer type)", expr.Pos)
 // 	}
 // 	return &IndirectExpression{

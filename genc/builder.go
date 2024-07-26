@@ -3,9 +3,9 @@ package genc
 import (
 	"fmt"
 
+	"github.com/mebyus/gizmo/enums/tpk"
 	"github.com/mebyus/gizmo/stg"
 	"github.com/mebyus/gizmo/stg/scp"
-	"github.com/mebyus/gizmo/stg/typ"
 )
 
 type Builder struct {
@@ -76,7 +76,7 @@ func (g *Builder) typeSpecForDef(t *stg.Type) {
 	if t == nil {
 		panic("nil type")
 	}
-	if t.Kind == typ.Struct {
+	if t.Kind == tpk.Struct {
 		g.StructType(t.Base.Def.(*stg.StructTypeDef))
 		return
 	}
@@ -158,15 +158,15 @@ func (g *Builder) getTypeSpec(t *stg.Type) string {
 	}
 
 	switch t.Kind {
-	case typ.Trivial:
+	case tpk.Trivial:
 		return "struct {}"
-	case typ.Named:
+	case tpk.Custom:
 		return g.getSymbolName(t.Symbol)
-	case typ.Pointer:
+	case tpk.Pointer:
 		return g.getTypeSpec(t.Def.(stg.PointerTypeDef).RefType) + "*"
-	case typ.ArrayPointer:
+	case tpk.ArrayPointer:
 		return g.getTypeSpec(t.Def.(stg.ArrayPointerTypeDef).RefType) + "*"
-	case typ.Chunk:
+	case tpk.Chunk:
 		return g.tprefix + "Chunk" + g.getSymbolName(t.Def.(stg.ChunkTypeDef).ElemType.Symbol)
 	default:
 		panic(fmt.Sprintf("%s types not implemented", t.Base.Kind.String()))

@@ -3,7 +3,7 @@ package stg
 import (
 	"fmt"
 
-	"github.com/mebyus/gizmo/stg/typ"
+	"github.com/mebyus/gizmo/enums/tpk"
 )
 
 // perform second scan of named types present in unit,
@@ -51,7 +51,7 @@ func (m *Merger) bindRecursiveType(s *Symbol) {
 		Recursive: true,
 
 		Symbol: s,
-		Kind:   typ.Named,
+		Kind:   tpk.Custom,
 	}
 	s.Def = t
 
@@ -74,6 +74,6 @@ func (m *Merger) bindType(s *Symbol) *Type {
 	return &Type{
 		Symbol: s,
 		Base:   base.Base,
-		Kind:   typ.Named,
+		Kind:   tpk.Custom,
 	}
 }

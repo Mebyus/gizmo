@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/enums/smk"
+	"github.com/mebyus/gizmo/enums/tpk"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/stg/scp"
-	"github.com/mebyus/gizmo/stg/typ"
 )
 
 type Scope struct {
@@ -190,7 +190,7 @@ func (s *Scope) BindTypeSymbol(symbol *Symbol) {
 
 	t := symbol.Def.(*Type)
 
-	if !(t.Builtin || t.Kind == typ.Named) {
+	if !(t.Builtin || t.Kind == tpk.Custom) {
 		panic(fmt.Sprintf("unexpected type kind: %s", t.Kind.String()))
 	}
 	s.Types.tm[t.Stable()] = t

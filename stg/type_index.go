@@ -6,7 +6,7 @@ import (
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/tps"
 	"github.com/mebyus/gizmo/enums/smk"
-	"github.com/mebyus/gizmo/stg/typ"
+	"github.com/mebyus/gizmo/enums/tpk"
 )
 
 // TypeIndex is a helper managment object which is used to lookup and create
@@ -141,7 +141,7 @@ func (x *TypeIndex) lookupNamed(idn ast.Identifier) (*Type, error) {
 		panic(fmt.Sprintf("unexpected symbol kind: %s", s.Kind.String()))
 	}
 	t := s.Def.(*Type)
-	if t.Builtin || t.Kind == typ.Named {
+	if t.Builtin || t.Kind == tpk.Custom {
 		return t, nil
 	}
 	panic(fmt.Sprintf("unexpected type kind: %s", t.Kind.String()))
