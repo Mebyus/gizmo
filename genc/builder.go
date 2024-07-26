@@ -20,6 +20,9 @@ type Builder struct {
 	// name prefix for generated symbols
 	prefix string
 
+	// name prefix for generated type symbols
+	tprefix string
+
 	// cached type specs
 	specs map[*tt.Type]string
 }
@@ -163,6 +166,8 @@ func (g *Builder) getTypeSpec(t *tt.Type) string {
 		return g.getTypeSpec(t.Def.(tt.PointerTypeDef).RefType) + "*"
 	case typ.ArrayPointer:
 		return g.getTypeSpec(t.Def.(tt.ArrayPointerTypeDef).RefType) + "*"
+	case typ.Chunk:
+		return g.tprefix + "Chunk" + g.getSymbolName(t.Def.(tt.ChunkTypeDef).ElemType.Symbol)
 	default:
 		panic(fmt.Sprintf("%s types not implemented", t.Base.Kind.String()))
 	}

@@ -17,23 +17,7 @@ func newTypeSymbol(name string, t *Type) *Symbol {
 	return s
 }
 
-func (s *Scope) addBuiltinUnsignedType(name string, size uint32) {
-	t := &Type{
-		Kind:    typ.Unsigned,
-		Size:    size,
-		Builtin: true,
-	}
-	t.Base = t
-	s.BindTypeSymbol(newTypeSymbol(name, t))
-}
-
-func (s *Scope) addBuiltinSignedType(name string, size uint32) {
-	t := &Type{
-		Kind:    typ.Signed,
-		Size:    size,
-		Builtin: true,
-	}
-	t.Base = t
+func (s *Scope) addTypeSymbol(name string, t *Type) {
 	s.BindTypeSymbol(newTypeSymbol(name, t))
 }
 
@@ -63,6 +47,26 @@ func newStaticType(kind typ.Kind) *Type {
 	return t
 }
 
+func newUnsignedType(size uint32) *Type {
+	t := &Type{
+		Kind:    typ.Unsigned,
+		Size:    size,
+		Builtin: true,
+	}
+	t.Base = t
+	return t
+}
+
+func newSignedType(size uint32) *Type {
+	t := &Type{
+		Kind:    typ.Signed,
+		Size:    size,
+		Builtin: true,
+	}
+	t.Base = t
+	return t
+}
+
 var (
 	Trivial = newStaticType(typ.Trivial)
 
@@ -71,6 +75,20 @@ var (
 	StaticString  = newStaticType(typ.StaticString)
 	StaticBoolean = newStaticType(typ.StaticBoolean)
 	StaticNil     = newStaticType(typ.StaticNil)
+
+	Uint8Type  = newUnsignedType(1)
+	Uint16Type = newUnsignedType(2)
+	Uint32Type = newUnsignedType(4)
+	Uint64Type = newUnsignedType(8)
+	UintType   = newUnsignedType(8) // TODO: adjust uint size based on target arch
+
+	Int8Type  = newSignedType(1)
+	Int16Type = newSignedType(2)
+	Int32Type = newSignedType(4)
+	Int64Type = newSignedType(8)
+	IntType   = newSignedType(8) // TODO: adjust int size based on target arch
+
+	RuneType = newUnsignedType(4)
 )
 
 func (s *Scope) addStaticTypes() {
@@ -92,21 +110,21 @@ func NewGlobalScope() *Scope {
 
 	s.addStaticTypes()
 
-	s.addBuiltinUnsignedType("u8", 1)
-	s.addBuiltinUnsignedType("u16", 2)
-	s.addBuiltinUnsignedType("u32", 4)
-	s.addBuiltinUnsignedType("u64", 8)
-	s.addBuiltinUnsignedType("uint", 8) // TODO: adjust uint size based on target arch
+	s.addTypeSymbol("u8", Uint8Type)
+	s.addTypeSymbol("u16", Uint16Type)
+	s.addTypeSymbol("u32", Uint32Type)
+	s.addTypeSymbol("u64", Uint64Type)
+	s.addTypeSymbol("uint", UintType)
 
-	s.addBuiltinSignedType("i8", 1)
-	s.addBuiltinSignedType("i16", 2)
-	s.addBuiltinSignedType("i32", 4)
-	s.addBuiltinSignedType("i64", 8)
-	s.addBuiltinSignedType("int", 8) // TODO: adjust int size based on target arch
+	s.addTypeSymbol("i8", Int8Type)
+	s.addTypeSymbol("i16", Int16Type)
+	s.addTypeSymbol("i32", Int32Type)
+	s.addTypeSymbol("i64", Int64Type)
+	s.addTypeSymbol("int", IntType)
 
 	s.addBuiltinBoolType()
 	s.addBuiltinStringType()
-	s.addBuiltinUnsignedType("rune", 4)
+	s.addTypeSymbol("rune", RuneType)
 
 	return s
 }

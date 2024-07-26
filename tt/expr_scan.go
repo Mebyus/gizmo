@@ -121,8 +121,33 @@ func (s *Scope) scanChainPart(ctx *Context, tip ChainOperand, part ast.ChainPart
 		return s.scanCallPart(ctx, tip, part.(ast.CallPart))
 	case exn.IndirectIndex:
 		return s.scanIndirectIndexPart(ctx, tip, part.(ast.IndirectIndexPart))
+	case exn.Index:
+		return s.scanIndexPart(ctx, tip, part.(ast.IndexPart))
 	default:
 		panic(fmt.Sprintf("not implemented for %s expression", part.Kind().String()))
+	}
+}
+
+func (s *Scope) scanIndexPart(ctx *Context, tip ChainOperand, part ast.IndexPart) (ChainOperand, error) {
+	t := tip.Type()
+	pos := part.Pos
+	switch t.Base.Kind {
+	case typ.Chunk:
+		index, err := s.scan(ctx, part.Index)
+		if err != nil {
+			return nil, err
+		}
+		if !index.Type().IsIntegerType() {
+			return nil, fmt.Errorf("%s: type %s cannot be used as index", pos.String(), index.Type().Kind.String())
+		}
+		return &ChunkIndexExpression{
+			Pos:    pos,
+			Target: tip,
+			Index:  index,
+			typ:    t.Base.Def.(ChunkTypeDef).ElemType,
+		}, nil
+	default:
+		panic(fmt.Sprintf("not implemented for %s types", t.Base.Kind))
 	}
 }
 
@@ -211,6 +236,29 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 			Target: tip,
 			Member: m,
 		}, nil
+	case typ.Chunk:
+		name := part.Member.Lit
+		switch name {
+		case "len":
+			return &ChunkMemberExpression{
+				Pos:    pos,
+				Target: tip,
+				Name:   "len",
+				typ:    UintType,
+			}, nil
+		case "ptr":
+			return &ChunkMemberExpression{
+				Pos:    pos,
+				Target: tip,
+				Name:   "ptr",
+
+				// TODO: we probably need to construct this type differntly
+				// based when it is custom chunk type
+				typ: s.Types.storeArrayPointer(t.Base.Def.(*ChunkTypeDef).ElemType),
+			}, nil
+		default:
+			return nil, fmt.Errorf("%s: chunks do not have \"%s\" member", pos.String(), name)
+		}
 	case typ.Signed, typ.Unsigned, typ.Boolean, typ.Float:
 		return nil, fmt.Errorf("%s: cannot select a member from %s type",
 			pos.String(), t.Base.Kind.String())

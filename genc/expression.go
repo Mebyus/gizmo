@@ -35,7 +35,9 @@ func (g *Builder) expr(expr tt.Expression) {
 		g.ParenthesizedExpression(expr.(*tt.ParenthesizedExpression))
 	case exn.Cast:
 		g.CastExpression(expr.(*tt.CastExpression))
-	case exn.Chain, exn.Member, exn.Address, exn.Indirect, exn.IndirectIndex, exn.Call, exn.IndirectMember:
+	case exn.Chain, exn.Member, exn.Address, exn.Indirect, exn.IndirectIndex,
+		exn.Call, exn.IndirectMember, exn.ChunkMember, exn.ChunkIndex:
+
 		g.ChainOperand(expr.(tt.ChainOperand))
 
 	default:
@@ -75,6 +77,10 @@ func (g *Builder) ChainOperand(expr tt.ChainOperand) {
 		g.CallExpression(expr.(*tt.CallExpression))
 	case exn.IndirectMember:
 		g.IndirectMemberExpression(expr.(*tt.IndirectMemberExpression))
+	case exn.ChunkMember:
+		g.ChunkMemberExpression(expr.(*tt.ChunkMemberExpression))
+	case exn.ChunkIndex:
+		g.ChunkIndexExpression(expr.(*tt.ChunkIndexExpression))
 	default:
 		panic(fmt.Sprintf("%s operand not implemented", expr.Kind().String()))
 	}
@@ -86,6 +92,19 @@ func (g *Builder) ChainSymbol(expr *tt.ChainSymbol) {
 		return
 	}
 	g.SymbolName(expr.Sym)
+}
+
+func (g *Builder) ChunkIndexExpression(expr *tt.ChunkIndexExpression) {
+	g.expr(expr.Target)
+	g.puts(".ptr[")
+	g.expr(expr.Index)
+	g.puts("]")
+}
+
+func (g *Builder) ChunkMemberExpression(expr *tt.ChunkMemberExpression) {
+	g.expr(expr.Target)
+	g.puts(".")
+	g.puts(expr.Name)
 }
 
 func (g *Builder) ParenthesizedExpression(expr *tt.ParenthesizedExpression) {

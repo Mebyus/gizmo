@@ -202,3 +202,60 @@ func (e *IndirectIndexExpression) Pin() source.Pos {
 func (e *IndirectIndexExpression) Type() *Type {
 	return e.typ
 }
+
+type ChunkIndexExpression struct {
+	nodeChain
+
+	Pos source.Pos
+
+	Target ChainOperand
+
+	Index Expression
+
+	typ *Type
+}
+
+// Explicit interface implementation check.
+var _ ChainOperand = &ChunkIndexExpression{}
+
+func (*ChunkIndexExpression) Kind() exn.Kind {
+	return exn.ChunkIndex
+}
+
+func (e *ChunkIndexExpression) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *ChunkIndexExpression) Type() *Type {
+	return e.typ
+}
+
+type ChunkMemberExpression struct {
+	nodeChain
+
+	Pos source.Pos
+
+	Target ChainOperand
+
+	// property name:
+	//	- len
+	//	- ptr
+	Name string
+
+	typ *Type
+}
+
+// Explicit interface implementation check.
+var _ ChainOperand = &ChunkMemberExpression{}
+
+func (*ChunkMemberExpression) Kind() exn.Kind {
+	return exn.ChunkMember
+}
+
+func (e *ChunkMemberExpression) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *ChunkMemberExpression) Type() *Type {
+	return e.typ
+}

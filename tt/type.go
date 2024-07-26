@@ -81,6 +81,17 @@ type Type struct {
 	Recursive bool
 }
 
+func (t *Type) IsIntegerType() bool {
+	switch t.Kind {
+	case typ.Unsigned, typ.Signed, typ.StaticInteger:
+		return true
+	case typ.Named:
+		return t.Base.IsIntegerType()
+	default:
+		return false
+	}
+}
+
 // Stable is a unique identifier of a type inside a program. Via this identifier
 // different *Type instances (with different pointers) can be compared to
 // establish identity of represented types.

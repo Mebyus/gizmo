@@ -41,6 +41,8 @@ const (
 	Slice
 	IndirectIndex
 	IndirectMember
+	ChunkMember
+	ChunkIndex
 
 	// Template instance
 	Instance
@@ -78,7 +80,9 @@ var text = [...]string{
 	Indirect:       "indirect",
 	Index:          "index",
 	IndirectIndex:  "index.indirect",
+	ChunkIndex:     "index.chunk",
 	IndirectMember: "member.indirect",
+	ChunkMember:    "member.chunk",
 	Address:        "address",
 	Slice:          "slice",
 	Call:           "call",
