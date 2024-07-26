@@ -1,17 +1,12 @@
 package stg
 
 type MethodDef struct {
-	Body Block
+	nodeSymDef
 
-	// Function parameters, equals nil if function has no parameters.
-	Params []*Symbol
+	Signature
+
+	Body Block
 
 	// List of top-level unit symbols which are used in method.
 	Refs []*Symbol
-
-	// Method return type. Equals nil if function returns nothing or never returns.
-	Result *Type
-
-	// Equals true for functions which never return.
-	Never bool
 }

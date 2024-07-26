@@ -283,10 +283,10 @@ func (m *Merger) addImport(bind ast.ImportBind) error {
 
 	// TODO: add context search for imported unit
 	s := &Symbol{
-		Kind:   smk.Import,
-		Name:   name,
-		Pos:    pos,
-		Public: bind.Pub,
+		Kind: smk.Import,
+		Name: name,
+		Pos:  pos,
+		Pub:  bind.Pub,
 	}
 	m.add(s)
 	return nil
@@ -301,11 +301,11 @@ func (m *Merger) addFun(top ast.TopFun) error {
 	}
 
 	s := &Symbol{
-		Kind:   smk.Fun,
-		Name:   name,
-		Pos:    pos,
-		Public: top.Pub,
-		Def:    m.nodes.addFun(top),
+		Kind: smk.Fun,
+		Name: name,
+		Pos:  pos,
+		Pub:  top.Pub,
+		Def:  m.nodes.addFun(top),
 	}
 	m.add(s)
 	m.unit.addFun(s)
@@ -321,11 +321,11 @@ func (m *Merger) addType(top ast.TopType) error {
 	}
 
 	s := &Symbol{
-		Kind:   smk.Type,
-		Name:   name,
-		Pos:    pos,
-		Public: top.Pub,
-		Def:    m.nodes.addType(top),
+		Kind: smk.Type,
+		Name: name,
+		Pos:  pos,
+		Pub:  top.Pub,
+		Def:  m.nodes.addType(top),
 	}
 	m.add(s)
 	m.unit.addType(s)
@@ -341,11 +341,11 @@ func (m *Merger) addLet(top ast.TopLet) error {
 	}
 
 	s := &Symbol{
-		Kind:   smk.Let,
-		Name:   name,
-		Pos:    pos,
-		Public: top.Pub,
-		Def:    m.nodes.addCon(top),
+		Kind: smk.Let,
+		Name: name,
+		Pos:  pos,
+		Pub:  top.Pub,
+		Def:  m.nodes.addCon(top),
 	}
 	m.add(s)
 	m.unit.addLet(s)
@@ -361,11 +361,11 @@ func (m *Merger) addVar(top ast.TopVar) error {
 	}
 
 	s := &Symbol{
-		Kind:   smk.Var,
-		Name:   name,
-		Pos:    pos,
-		Public: top.Pub,
-		Def:    m.nodes.addVar(top),
+		Kind: smk.Var,
+		Name: name,
+		Pos:  pos,
+		Pub:  top.Pub,
+		Def:  m.nodes.addVar(top),
 	}
 	m.add(s)
 	m.unit.addVar(s)
@@ -383,11 +383,11 @@ func (m *Merger) addMethod(top ast.Method) error {
 	}
 
 	s := &Symbol{
-		Kind:   smk.Method,
-		Name:   name,
-		Pos:    pos,
-		Public: top.Pub,
-		Def:    m.nodes.addMed(top),
+		Kind: smk.Method,
+		Name: name,
+		Pos:  pos,
+		Pub:  top.Pub,
+		Def:  m.nodes.addMed(top),
 	}
 	m.add(s)
 	m.unit.addMed(s)

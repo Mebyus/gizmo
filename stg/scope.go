@@ -220,7 +220,7 @@ func (s *Scope) CheckUsage(ctx *Context) error {
 // about unused symbols.
 func (s *Scope) WarnUnused(ctx *Context) {
 	for _, symbol := range s.Symbols {
-		if !symbol.Public && symbol.RefNum == 0 {
+		if !symbol.Pub && symbol.RefNum == 0 {
 			ctx.m.warn(symbol.Pos, fmt.Sprintf("symbol \"%s\" has no references inside unit", symbol.Name))
 		}
 	}

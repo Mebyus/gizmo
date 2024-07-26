@@ -30,30 +30,14 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 		return s.scanSymbolExpression(ctx, expr.(ast.SymbolExpression))
 	case exn.Chain:
 		return s.scanChainOperand(ctx, expr.(ast.ChainOperand))
-	// case exn.Indirect:
-	// 	return s.scanIndirectExpression(ctx, expr.(ast.IndirectExpression))
 	case exn.Unary:
 		return s.scanUnaryExpression(ctx, expr.(*ast.UnaryExpression))
 	case exn.Binary:
 		return s.scanBinaryExpression(ctx, expr.(ast.BinaryExpression))
-	// case exn.Call:
-	// 	return s.scanCallExpression(ctx, expr.(ast.CallExpression))
-	// case exn.Indirx:
-	// 	// g.IndirectIndexExpression(expr.(ast.IndirectIndexExpression))
 	case exn.Paren:
 		return s.scanParenthesizedExpression(ctx, expr.(ast.ParenthesizedExpression))
-	// case exn.SymbolAddress:
-	// 	return s.scanSymbolAddressExpression(ctx, expr.(ast.SymbolAddressExpression))
-	// case exn.MemberCall:
-	// 	return s.scanMemberCallExpression(ctx, expr.(ast.MemberCallExpression))
-	// case exn.Member:
-	// 	return s.scanMemberExpression(ctx, expr.(ast.MemberExpression))
 	case exn.Cast:
 		return s.scanCastExpression(ctx, expr.(ast.CastExpression))
-	// case exn.Instance:
-	// 	// g.InstanceExpression(expr.(ast.InstanceExpression))
-	// case exn.Index:
-	// 	// g.IndexExpression(expr.(ast.IndexExpression))
 	// case exn.Slice:
 	// 	// g.SliceExpression(expr.(ast.SliceExpression))
 	// case exn.BitCast:
@@ -337,100 +321,6 @@ func (s *Scope) scanCastExpression(ctx *Context, expr ast.CastExpression) (*Cast
 	}, nil
 }
 
-// func (s *Scope) scanMemberExpression(ctx *Context, expr ast.MemberExpression) (*MemberExpression, error) {
-// 	name := expr.Target.Lit
-// 	pos := expr.Target.Pos
-// 	symbol := s.Lookup(name, pos.Num)
-// 	if symbol == nil {
-// 		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
-// 	}
-// 	if symbol.Scope.Kind == scp.Unit {
-// 		ctx.ref.Add(symbol)
-// 	}
-
-// 	if symbol.Type.Base.Kind != tpk.Struct {
-// 		return nil, fmt.Errorf("%s: symbol \"%s\" is of %s type and does not have members",
-// 			pos.String(), name, s.Kind.String())
-// 	}
-// 	mname := expr.Member.Lit
-// 	mpos := expr.Member.Pos
-// 	member := symbol.Type.Base.Def.(*StructTypeDef).Members.Find(mname)
-// 	if member == nil {
-// 		return nil, fmt.Errorf("%s: symbol \"%s\" does not have \"%s\" member",
-// 			mpos.String(), name, mname)
-// 	}
-
-// 	return &MemberExpression{
-// 		Pos:    pos,
-// 		Target: symbol,
-// 		Member: member,
-// 	}, nil
-// }
-
-// func (s *Scope) scanMemberCallExpression(ctx *Context, expr ast.MemberCallExpression) (Expression, error) {
-// 	name := expr.Target.Lit
-// 	pos := expr.Target.Pos
-// 	symbol := s.Lookup(name, pos.Num)
-// 	if symbol == nil {
-// 		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
-// 	}
-
-// 	if symbol.Scope.Kind == scp.Unit && symbol.Kind != smk.Import {
-// 		ctx.ref.Add(symbol)
-// 	}
-
-// 	if symbol.Kind == smk.Import {
-// 		// call to imported function
-// 		panic("not implemented")
-// 	}
-
-// 	if symbol.Kind == smk.Type {
-// 		// call to function namespaced within type
-// 		panic("not implemented")
-// 	}
-
-// 	if !(symbol.Kind == smk.Let || symbol.Kind == smk.Param || symbol.Kind == smk.Var) {
-// 		return nil, fmt.Errorf("%s: %s symbol \"%s\" is not selectable", pos.String(), symbol.Kind.String(), name)
-// 	}
-
-// 	switch symbol.Type.Base.Kind {
-// 	case tpk.Struct:
-// 		panic("not implemented")
-// 	case tpk.Pointer:
-// 		refType := symbol.Type.Base.Def.(PtrTypeDef).RefType
-// 		if refType.Base.Kind != tpk.Struct {
-// 			return nil, fmt.Errorf("%s: symbol \"%s\" is a pointer to %s type which cannot have members", pos.String(),
-// 				name, refType.Base.Kind)
-// 		}
-// 		panic("not implemented")
-// 	default:
-// 		return nil, fmt.Errorf("%s: symbol \"%s\" is of %s type which cannot have members", pos.String(),
-// 			name, symbol.Type.Base.Kind.String())
-// 	}
-// }
-
-// func (s *Scope) scanSymbolAddressExpression(ctx *Context, expr ast.SymbolAddressExpression) (*SymbolAddressExpression, error) {
-// 	name := expr.Target.Lit
-// 	pos := expr.Target.Pos
-// 	symbol := s.Lookup(name, pos.Num)
-// 	if symbol == nil {
-// 		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
-// 	}
-
-// 	if !symbol.Kind.Addressable() {
-// 		return nil, fmt.Errorf("%s: symbol \"%s\" (%s) is not addressable", pos.String(), name, symbol.Kind.String())
-// 	}
-
-// 	if symbol.Scope.Kind == scp.Unit {
-// 		ctx.ref.Add(symbol)
-// 	}
-
-// 	return &SymbolAddressExpression{
-// 		Pos:    pos,
-// 		Target: symbol,
-// 	}, nil
-// }
-
 func (s *Scope) scanParenthesizedExpression(ctx *Context, expr ast.ParenthesizedExpression) (*ParenthesizedExpression, error) {
 	pos := expr.Pos
 	inner, err := s.scan(ctx, expr.Inner)
@@ -531,49 +421,6 @@ func (s *Scope) scanBinaryExpression(ctx *Context, expr ast.BinaryExpression) (*
 		Right:    right,
 	}, nil
 }
-
-// func (s *Scope) scanChainStart(ctx *Context, start ast.ChainStart) (*ChainStart, error) {
-// 	name := start.Identifier.Lit
-// 	pos := start.Identifier.Pos
-// 	symbol := s.Lookup(name, pos.Num)
-// 	if symbol == nil {
-// 		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
-// 	}
-// 	if symbol.Scope.Kind == scp.Unit {
-// 		ctx.ref.Add(symbol)
-// 	}
-
-// 	return &ChainStart{
-// 		Pos: pos,
-// 		Sym: symbol,
-// 	}, nil
-// }
-
-// func (s *Scope) scanIndirectExpression(ctx *Context, expr ast.IndirectExpression) (*IndirectExpression, error) {
-// 	tg, err := s.scan(ctx, expr.Target)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	target := tg.(ChainOperand)
-// 	targetType := target.Type()
-// 	if targetType.Kind != tpk.Pointer {
-// 		return nil, fmt.Errorf("%s: invalid operation (indirect on non-pointer type)", expr.Pos)
-// 	}
-// 	return &IndirectExpression{
-// 		Pos:        expr.Pos,
-// 		Target:     target,
-// 		ChainDepth: expr.ChainDepth,
-
-// 		typ: targetType.Def.(PtrTypeDef).RefType,
-// 	}, nil
-// }
-
-// func (s *Scope) scanCallExpression(ctx *Context, expr ast.CallExpression) (*CallExpression, error) {
-// 	return &CallExpression{
-// 		Pos:        expr.Pos,
-// 		ChainDepth: expr.ChainDepth,
-// 	}, nil
-// }
 
 func scanBasicLiteral(lit ast.BasicLiteral) Literal {
 	pos := lit.Token.Pos

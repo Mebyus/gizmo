@@ -62,9 +62,9 @@ type Symbol struct {
 	// Number of times symbol is referenced (used in source code outside its origin).
 	RefNum uint32
 
-	// Used only for top-level symbols in unit. If true than other units, which import unit where this
-	// symbol is declared, can use this symbol in their code.
-	Public bool
+	// Used only for unit level symbols in unit. If true than other units,
+	// which import unit where this symbol is declared, can use this symbol in their code.
+	Pub bool
 }
 
 // Set of symbols
