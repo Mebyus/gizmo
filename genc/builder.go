@@ -39,7 +39,7 @@ func (g *Builder) Gen(u *stg.Unit) {
 		g.nl()
 	}
 
-	for _, s := range u.Cons {
+	for _, s := range u.Lets {
 		g.Con(s)
 		g.nl()
 	}

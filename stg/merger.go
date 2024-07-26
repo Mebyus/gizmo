@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/ast"
+	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/source/origin"
-	"github.com/mebyus/gizmo/stg/sym"
 )
 
 // Merger is a high-level algorithm driver that gathers multiple ASTs of unit's atoms
@@ -33,7 +33,7 @@ type Merger struct {
 
 type NodesBox struct {
 	Funs  []ast.TopFun
-	Cons  []ast.TopCon
+	Cons  []ast.TopLet
 	Vars  []ast.TopVar
 	Meds  []ast.Method
 	Types []ast.TopType
@@ -55,7 +55,7 @@ func (n *NodesBox) addFun(node ast.TopFun) astIndexSymDef {
 	return astIndexSymDef(i)
 }
 
-func (n *NodesBox) addCon(node ast.TopCon) astIndexSymDef {
+func (n *NodesBox) addCon(node ast.TopLet) astIndexSymDef {
 	i := len(n.Cons)
 	n.Cons = append(n.Cons, node)
 	return astIndexSymDef(i)
@@ -85,7 +85,7 @@ func (n *NodesBox) Fun(i astIndexSymDef) ast.TopFun {
 	return n.Funs[i]
 }
 
-func (n *NodesBox) Con(i astIndexSymDef) ast.TopCon {
+func (n *NodesBox) Con(i astIndexSymDef) ast.TopLet {
 	return n.Cons[i]
 }
 
@@ -147,7 +147,7 @@ func (EmptyResolver) Resolve(origin.Path) *Unit {
 }
 
 func (m *Merger) Add(atom *ast.Atom) error {
-	err := m.addImportBlocks(atom.Header.Imports.Blocks)
+	err := m.addImports(atom.Header.Imports.Blocks)
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func (m *Merger) Add(atom *ast.Atom) error {
 	if err != nil {
 		return err
 	}
-	err = m.addCons(atom.Cons)
+	err = m.addLets(atom.Lets)
 	if err != nil {
 		return err
 	}
@@ -167,7 +167,7 @@ func (m *Merger) Add(atom *ast.Atom) error {
 	if err != nil {
 		return err
 	}
-	err = m.addMeds(atom.Meds)
+	err = m.addMethods(atom.Meds)
 	if err != nil {
 		return err
 	}
@@ -175,7 +175,7 @@ func (m *Merger) Add(atom *ast.Atom) error {
 	return nil
 }
 
-func (m *Merger) addImportBlocks(blocks []ast.ImportBlock) error {
+func (m *Merger) addImports(blocks []ast.ImportBlock) error {
 	for _, block := range blocks {
 		for _, spec := range block.Specs {
 			err := m.addImport(ast.ImportBind{
@@ -204,9 +204,9 @@ func (m *Merger) addTypes(types []ast.TopType) error {
 	return nil
 }
 
-func (m *Merger) addCons(cons []ast.TopCon) error {
+func (m *Merger) addLets(cons []ast.TopLet) error {
 	for _, con := range cons {
-		err := m.addCon(con)
+		err := m.addLet(con)
 		if err != nil {
 			return err
 		}
@@ -234,9 +234,9 @@ func (m *Merger) addVars(vars []ast.TopVar) error {
 	return nil
 }
 
-func (m *Merger) addMeds(meds []ast.Method) error {
+func (m *Merger) addMethods(meds []ast.Method) error {
 	for _, med := range meds {
-		err := m.addMed(med)
+		err := m.addMethod(med)
 		if err != nil {
 			return err
 		}
@@ -283,7 +283,7 @@ func (m *Merger) addImport(bind ast.ImportBind) error {
 
 	// TODO: add context search for imported unit
 	s := &Symbol{
-		Kind:   sym.Import,
+		Kind:   smk.Import,
 		Name:   name,
 		Pos:    pos,
 		Public: bind.Pub,
@@ -301,7 +301,7 @@ func (m *Merger) addFun(top ast.TopFun) error {
 	}
 
 	s := &Symbol{
-		Kind:   sym.Fn,
+		Kind:   smk.Fun,
 		Name:   name,
 		Pos:    pos,
 		Public: top.Pub,
@@ -321,7 +321,7 @@ func (m *Merger) addType(top ast.TopType) error {
 	}
 
 	s := &Symbol{
-		Kind:   sym.Type,
+		Kind:   smk.Type,
 		Name:   name,
 		Pos:    pos,
 		Public: top.Pub,
@@ -332,7 +332,7 @@ func (m *Merger) addType(top ast.TopType) error {
 	return nil
 }
 
-func (m *Merger) addCon(top ast.TopCon) error {
+func (m *Merger) addLet(top ast.TopLet) error {
 	name := top.Name.Lit
 	pos := top.Name.Pos
 
@@ -341,14 +341,14 @@ func (m *Merger) addCon(top ast.TopCon) error {
 	}
 
 	s := &Symbol{
-		Kind:   sym.Const,
+		Kind:   smk.Let,
 		Name:   name,
 		Pos:    pos,
 		Public: top.Pub,
 		Def:    m.nodes.addCon(top),
 	}
 	m.add(s)
-	m.unit.addCon(s)
+	m.unit.addLet(s)
 	return nil
 }
 
@@ -361,7 +361,7 @@ func (m *Merger) addVar(top ast.TopVar) error {
 	}
 
 	s := &Symbol{
-		Kind:   sym.Var,
+		Kind:   smk.Var,
 		Name:   name,
 		Pos:    pos,
 		Public: top.Pub,
@@ -372,7 +372,7 @@ func (m *Merger) addVar(top ast.TopVar) error {
 	return nil
 }
 
-func (m *Merger) addMed(top ast.Method) error {
+func (m *Merger) addMethod(top ast.Method) error {
 	rname := top.Receiver.Name.Lit
 	mname := top.Name.Lit
 	pos := top.Name.Pos
@@ -383,7 +383,7 @@ func (m *Merger) addMed(top ast.Method) error {
 	}
 
 	s := &Symbol{
-		Kind:   sym.Method,
+		Kind:   smk.Method,
 		Name:   name,
 		Pos:    pos,
 		Public: top.Pub,

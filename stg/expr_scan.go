@@ -5,11 +5,11 @@ import (
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/exn"
+	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/source"
-	"github.com/mebyus/gizmo/token"
 	"github.com/mebyus/gizmo/stg/scp"
-	"github.com/mebyus/gizmo/stg/sym"
 	"github.com/mebyus/gizmo/stg/typ"
+	"github.com/mebyus/gizmo/token"
 )
 
 // Scan constructs expression from a given AST. Uses current scope for symbol
@@ -274,13 +274,13 @@ func getSignatureByChainSymbol(c *ChainSymbol) (*Signature, error) {
 	}
 
 	switch s.Kind {
-	case sym.Fn:
+	case smk.Fun:
 		return &s.Def.(*FunDef).Signature, nil
-	case sym.Type:
+	case smk.Type:
 		return nil, fmt.Errorf("%s: cannot call type \"%s\"", c.Pos.String(), s.Name)
-	case sym.Import:
+	case smk.Import:
 		return nil, fmt.Errorf("%s: cannot call imported unit \"%s\"", c.Pos.String(), s.Name)
-	case sym.Method:
+	case smk.Method:
 		panic(fmt.Sprintf("bad symbol name \"%s\" resolution", s.Name))
 	default:
 		panic(fmt.Sprintf("%s symbols not implemented", s.Kind.String()))
@@ -375,21 +375,21 @@ func (s *Scope) scanCastExpression(ctx *Context, expr ast.CastExpression) (*Cast
 // 		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
 // 	}
 
-// 	if symbol.Scope.Kind == scp.Unit && symbol.Kind != sym.Import {
+// 	if symbol.Scope.Kind == scp.Unit && symbol.Kind != smk.Import {
 // 		ctx.ref.Add(symbol)
 // 	}
 
-// 	if symbol.Kind == sym.Import {
+// 	if symbol.Kind == smk.Import {
 // 		// call to imported function
 // 		panic("not implemented")
 // 	}
 
-// 	if symbol.Kind == sym.Type {
+// 	if symbol.Kind == smk.Type {
 // 		// call to function namespaced within type
 // 		panic("not implemented")
 // 	}
 
-// 	if !(symbol.Kind == sym.Let || symbol.Kind == sym.Param || symbol.Kind == sym.Var) {
+// 	if !(symbol.Kind == smk.Let || symbol.Kind == smk.Param || symbol.Kind == smk.Var) {
 // 		return nil, fmt.Errorf("%s: %s symbol \"%s\" is not selectable", pos.String(), symbol.Kind.String(), name)
 // 	}
 

@@ -64,8 +64,8 @@ func (p *Parser) top() error {
 		return p.topVar(traits)
 	case token.Fn:
 		return p.topFun(traits)
-	case token.Const:
-		return p.topCon(traits)
+	case token.Let:
+		return p.topLet(traits)
 	case token.Pub:
 		traits.Pub = true
 		return p.topPub(traits)
@@ -88,17 +88,17 @@ func (p *Parser) topVar(traits ast.Traits) error {
 	return nil
 }
 
-func (p *Parser) topCon(traits ast.Traits) error {
-	s, err := p.constStatement()
+func (p *Parser) topLet(traits ast.Traits) error {
+	s, err := p.letStatement()
 	if err != nil {
 		return err
 	}
 
-	c := ast.TopCon{
-		Con:    s.Con,
+	c := ast.TopLet{
+		Let:    s.Let,
 		Traits: traits,
 	}
-	p.atom.Cons = append(p.atom.Cons, c)
+	p.atom.Lets = append(p.atom.Lets, c)
 	return nil
 }
 
@@ -110,8 +110,8 @@ func (p *Parser) topPub(traits ast.Traits) error {
 		return p.topType(traits)
 	case token.Fn:
 		return p.topFun(traits)
-	case token.Const:
-		return p.topCon(traits)
+	case token.Let:
+		return p.topLet(traits)
 	default:
 		return p.unexpected(p.tok)
 	}

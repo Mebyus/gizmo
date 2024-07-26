@@ -65,33 +65,6 @@ func (s ReturnStatement) Pin() source.Pos {
 	return s.Pos
 }
 
-type Con struct {
-	Pos source.Pos
-
-	Name Identifier
-
-	Type TypeSpec
-
-	// Always not nil
-	Expression Expression
-}
-
-type ConstStatement struct {
-	nodeStatement
-
-	Con
-}
-
-var _ Statement = ConstStatement{}
-
-func (ConstStatement) Kind() stm.Kind {
-	return stm.Const
-}
-
-func (s ConstStatement) Pin() source.Pos {
-	return s.Pos
-}
-
 type Var struct {
 	Pos source.Pos
 
@@ -305,9 +278,7 @@ func (s ForEachStatement) Pin() source.Pos {
 	return s.Pos
 }
 
-type LetStatement struct {
-	nodeStatement
-
+type Let struct {
 	Pos source.Pos
 
 	Name Identifier
@@ -316,6 +287,12 @@ type LetStatement struct {
 
 	// Always not nil
 	Expression Expression
+}
+
+type LetStatement struct {
+	nodeStatement
+
+	Let
 }
 
 var _ Statement = LetStatement{}

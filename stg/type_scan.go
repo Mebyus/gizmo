@@ -5,8 +5,8 @@ import (
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/tps"
+	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/stg/scp"
-	"github.com/mebyus/gizmo/stg/sym"
 )
 
 // TypeLinkKind describes how one type uses another in its definition.
@@ -373,7 +373,7 @@ func (m *Merger) shallowScanNamedType(ctx *TypeContext, spec ast.TypeName) error
 	if symbol == nil {
 		return fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
 	}
-	if symbol.Kind != sym.Type {
+	if symbol.Kind != smk.Type {
 		return fmt.Errorf("%s: symbol \"%s\" is not a type", pos.String(), name)
 	}
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/tps"
-	"github.com/mebyus/gizmo/stg/sym"
+	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/stg/typ"
 )
 
@@ -137,7 +137,7 @@ func (x *TypeIndex) lookupNamed(idn ast.Identifier) (*Type, error) {
 	if s == nil {
 		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
 	}
-	if s.Kind != sym.Type {
+	if s.Kind != smk.Type {
 		panic(fmt.Sprintf("unexpected symbol kind: %s", s.Kind.String()))
 	}
 	t := s.Def.(*Type)

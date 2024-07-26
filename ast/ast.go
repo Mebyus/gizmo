@@ -23,7 +23,7 @@ type Atom struct {
 	Types []TopType
 
 	// List of top constant definition nodes.
-	Cons []TopCon
+	Lets []TopLet
 
 	// List of top variable definition nodes.
 	Vars []TopVar

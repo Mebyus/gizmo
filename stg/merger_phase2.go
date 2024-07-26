@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/ast"
-	"github.com/mebyus/gizmo/stg/sym"
+	"github.com/mebyus/gizmo/enums/smk"
 )
 
 // Phase 2 merger indexing coagulates info from AST nodes that were skipped during
@@ -62,7 +62,7 @@ func (m *Merger) bindMethods() error {
 		if r == nil {
 			return fmt.Errorf("%s: unresolved symbol \"%s\" in method receiver", pos.String(), rname)
 		}
-		if r.Kind != sym.Type {
+		if r.Kind != smk.Type {
 			return fmt.Errorf("%s: only custom types can have methods, but \"%s\" is not a type",
 				pos.String(), rname)
 		}
@@ -75,7 +75,7 @@ func (m *Merger) bindMethods() error {
 }
 
 func (m *Merger) scanConstants() error {
-	for _, s := range m.unit.Cons {
+	for _, s := range m.unit.Lets {
 		c, err := m.scanCon(s)
 		if err != nil {
 			return err
@@ -155,7 +155,7 @@ func newParamSymbols(scope *Scope, defs []ast.FieldDefinition) ([]*Symbol, error
 			Pos:  p.Name.Pos,
 			Name: p.Name.Lit,
 			Type: t,
-			Kind: sym.Param,
+			Kind: smk.Param,
 		})
 	}
 	return params, nil

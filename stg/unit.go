@@ -10,16 +10,16 @@ import (
 )
 
 type Unit struct {
-	// List of all top-level function symbols defined in unit.
+	// List of all unit level function symbols defined in unit.
 	Funs []*Symbol
 
-	// List of all top-level constant symbols defined in unit.
-	Cons []*Symbol
+	// List of all unit level constant symbols defined in unit.
+	Lets []*Symbol
 
-	// List of all top-level custom type symbols defined in unit.
+	// List of all unit level custom type symbols defined in unit.
 	Types []*Symbol
 
-	// List of all top-level variable symbols defined in unit.
+	// List of all unit level variable symbols defined in unit.
 	Vars []*Symbol
 
 	// List of all method symbols defined in unit.
@@ -28,7 +28,7 @@ type Unit struct {
 
 	Name string
 
-	// Scope that holds all top-level symbols from all unit atoms.
+	// Scope that holds all unit level symbols from all unit atoms.
 	//
 	// This field is always not nil and Scope.Kind is always equal to scp.Unit.
 	Scope *Scope
@@ -38,8 +38,8 @@ func (u *Unit) addFun(s *Symbol) {
 	u.Funs = append(u.Funs, s)
 }
 
-func (u *Unit) addCon(s *Symbol) {
-	u.Cons = append(u.Cons, s)
+func (u *Unit) addLet(s *Symbol) {
+	u.Lets = append(u.Lets, s)
 }
 
 func (u *Unit) addType(s *Symbol) {

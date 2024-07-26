@@ -1,7 +1,6 @@
 package ast
 
 import (
-	"github.com/mebyus/gizmo/ast/toplvl"
 	"github.com/mebyus/gizmo/source"
 )
 
@@ -13,8 +12,6 @@ type Top interface {
 
 	// dummy discriminator method
 	Top()
-
-	Kind() toplvl.Kind
 }
 
 // Provides quick, easy to use implementation of discriminator Top() method.
@@ -48,10 +45,6 @@ type TopDec struct {
 
 var _ Top = TopDec{}
 
-func (TopDec) Kind() toplvl.Kind {
-	return toplvl.Declare
-}
-
 func (t TopDec) Pin() source.Pos {
 	return t.Name.Pos
 }
@@ -73,30 +66,22 @@ type TopFun struct {
 
 var _ Top = TopFun{}
 
-func (TopFun) Kind() toplvl.Kind {
-	return toplvl.Fn
-}
-
 func (t TopFun) Pin() source.Pos {
 	return t.Name.Pos
 }
 
-// <TopCon> = [ "pub" ] <Con>
-type TopCon struct {
+// <TopLet> = [ "pub" ] <Let>
+type TopLet struct {
 	nodeTop
 
-	Con
+	Let
 
 	Traits
 }
 
-var _ Top = TopCon{}
+var _ Top = TopLet{}
 
-func (TopCon) Kind() toplvl.Kind {
-	return toplvl.Const
-}
-
-func (t TopCon) Pin() source.Pos {
+func (t TopLet) Pin() source.Pos {
 	return t.Pos
 }
 
@@ -115,10 +100,6 @@ type TopType struct {
 
 var _ Top = TopType{}
 
-func (TopType) Kind() toplvl.Kind {
-	return toplvl.Type
-}
-
 func (t TopType) Pin() source.Pos {
 	return t.Name.Pos
 }
@@ -133,10 +114,6 @@ type TopVar struct {
 }
 
 var _ Top = TopVar{}
-
-func (TopVar) Kind() toplvl.Kind {
-	return toplvl.Var
-}
 
 func (t TopVar) Pin() source.Pos {
 	return t.Pos
@@ -169,10 +146,6 @@ type Method struct {
 }
 
 var _ Top = Method{}
-
-func (Method) Kind() toplvl.Kind {
-	return toplvl.Method
-}
 
 func (m Method) Pin() source.Pos {
 	return m.Name.Pos

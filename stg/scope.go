@@ -3,9 +3,9 @@ package stg
 import (
 	"fmt"
 
+	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/stg/scp"
-	"github.com/mebyus/gizmo/stg/sym"
 	"github.com/mebyus/gizmo/stg/typ"
 )
 
@@ -184,7 +184,7 @@ func (s *Scope) bind(symbol *Symbol) {
 func (s *Scope) BindTypeSymbol(symbol *Symbol) {
 	s.bind(symbol)
 
-	if symbol.Kind != sym.Type {
+	if symbol.Kind != smk.Type {
 		panic("method must be called only with symbols representing a type")
 	}
 
@@ -202,7 +202,7 @@ func (s *Scope) CheckUsage(ctx *Context) error {
 	var list []*Symbol
 	for _, symbol := range s.Symbols {
 		if symbol.RefNum == 0 {
-			if symbol.Kind == sym.Param {
+			if symbol.Kind == smk.Param {
 				ctx.m.warn(symbol.Pos, fmt.Sprintf("unused function parameter \"%s\"", symbol.Name))
 			} else {
 				list = append(list, symbol)

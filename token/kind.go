@@ -106,7 +106,6 @@ const (
 
 	Match
 	Type
-	Const
 	Let
 	Var
 

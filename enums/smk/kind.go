@@ -1,4 +1,4 @@
-package sym
+package smk
 
 // Kind indicates symbol kind.
 type Kind uint32
@@ -10,21 +10,20 @@ const (
 	empty Kind = iota
 
 	// Function (produced from declaration or definition)
-	Fn
+	Fun
 
 	// Method (produced from declaration or definition)
 	Method
 
-	// Type definition
+	// Custom type definition.
 	Type
 
-	// Buildtime constant definition (name + type + value)
-	Const
-
-	// Runtime constant definition (name + type + value)
+	// Immutable value definition (name + type + value).
+	//
+	// May be compile-time constant or runtime immutable (i.e. assigned only once).
 	Let
 
-	// Variable definition (name + type + initial value)
+	// Variable definition (name + type + initial value).
 	Var
 
 	// Runtime function or method parameter
@@ -34,15 +33,6 @@ const (
 	// buildtime
 	StaticParam
 
-	// Blueprint, aka "function template"
-	Blue
-
-	// Prototype, aka "type template"
-	Proto
-
-	// Prototype method bluepint, aka "method template"
-	Pmb
-
 	// Symbol created by importing other unit
 	Import
 )
@@ -50,22 +40,14 @@ const (
 var text = [...]string{
 	empty: "<nil>",
 
-	Fn:     "fn",
+	Fun:    "fun",
 	Method: "method",
 	Type:   "type",
-	Const:  "const",
 	Let:    "let",
 	Var:    "var",
-	Blue:   "blue",
-	Proto:  "proto",
-	Pmb:    "pmb",
 	Import: "import",
 }
 
 func (k Kind) String() string {
 	return text[k]
-}
-
-func (k Kind) Addressable() bool {
-	return k == Let || k == Var || k == Param
 }

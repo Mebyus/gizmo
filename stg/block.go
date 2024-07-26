@@ -5,10 +5,10 @@ import (
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/stm"
+	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/stg/scp"
 	"github.com/mebyus/gizmo/stg/sfp"
-	"github.com/mebyus/gizmo/stg/sym"
 	"github.com/mebyus/gizmo/stg/typ"
 )
 
@@ -340,7 +340,7 @@ func (b *Block) addVar(ctx *Context, stmt ast.VarStatement) error {
 		Pos:  pos,
 		Name: name,
 		Type: t,
-		Kind: sym.Var,
+		Kind: smk.Var,
 	}
 
 	expr, err := b.Scope.Scan(ctx, stmt.Expression)
@@ -376,7 +376,7 @@ func (b *Block) addLet(ctx *Context, stmt ast.LetStatement) error {
 		Pos:  pos,
 		Name: name,
 		Type: t,
-		Kind: sym.Let,
+		Kind: smk.Let,
 	}
 
 	if stmt.Expression == nil {

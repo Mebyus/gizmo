@@ -1,8 +1,8 @@
 package stg
 
 import (
+	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/source"
-	"github.com/mebyus/gizmo/stg/sym"
 )
 
 // Symbol. Symbols represent objects in source code which we can reference and
@@ -57,7 +57,7 @@ type Symbol struct {
 	// Scope where this symbol was declared.
 	Scope *Scope
 
-	Kind sym.Kind
+	Kind smk.Kind
 
 	// Number of times symbol is referenced (used in source code outside its origin).
 	RefNum uint32

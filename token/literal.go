@@ -79,7 +79,6 @@ var Literal = [...]string{
 	BitCast: "bitcast",
 	In:      "in",
 	Var:     "var",
-	Const:   "const",
 	Type:    "type",
 	Match:   "match",
 	Enum:    "enum",

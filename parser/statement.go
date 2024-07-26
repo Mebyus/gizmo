@@ -14,8 +14,6 @@ func (p *Parser) Statement() (ast.Statement, error) {
 	switch p.tok.Kind {
 	case token.LeftCurly:
 		return p.Block()
-	case token.Const:
-		return p.constStatement()
 	case token.Let:
 		return p.letStatement()
 	case token.Var:
@@ -512,51 +510,6 @@ func (p *Parser) varStatement() (statement ast.VarStatement, err error) {
 	}, nil
 }
 
-func (p *Parser) constStatement() (statement ast.ConstStatement, err error) {
-	pos := p.tok.Pos
-
-	p.advance() // skip "const"
-	err = p.expect(token.Identifier)
-	if err != nil {
-		return
-	}
-	name := p.idn()
-	p.advance() // skip const name identifier
-
-	err = p.expect(token.Colon)
-	if err != nil {
-		return
-	}
-	p.advance() // skip ":"
-	specifier, err := p.typeSpecifier()
-	if err != nil {
-		return
-	}
-	err = p.expect(token.Assign)
-	if err != nil {
-		return
-	}
-	p.advance() // skip "="
-	expression, err := p.expr()
-	if err != nil {
-		return
-	}
-	err = p.expect(token.Semicolon)
-	if err != nil {
-		return
-	}
-	p.advance() // consume ";"
-
-	return ast.ConstStatement{
-		Con: ast.Con{
-			Pos:        pos,
-			Name:       name,
-			Type:       specifier,
-			Expression: expression,
-		},
-	}, nil
-}
-
 func (p *Parser) letStatement() (statement ast.LetStatement, err error) {
 	pos := p.tok.Pos
 
@@ -593,10 +546,12 @@ func (p *Parser) letStatement() (statement ast.LetStatement, err error) {
 	p.advance() // consume ";"
 
 	return ast.LetStatement{
-		Pos:        pos,
-		Name:       name,
-		Type:       specifier,
-		Expression: expression,
+		Let: ast.Let{
+			Pos:        pos,
+			Name:       name,
+			Type:       specifier,
+			Expression: expression,
+		},
 	}, nil
 }
 

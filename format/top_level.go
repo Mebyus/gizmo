@@ -13,7 +13,7 @@ func (g *Noder) TopFn(top ast.TopFun) {
 	// g.FunctionDefinition(top.Definition)
 }
 
-func (g *Noder) TopConst(top ast.TopCon) {
+func (g *Noder) TopConst(top ast.TopLet) {
 	// f.ConstInit(top.ConstInit)
 }
 

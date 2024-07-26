@@ -7,10 +7,10 @@
 //
 // In broad strokes transformation does the following:
 //
-//	- symbol resolution based on name and lexical scope
-//	- type spec resolution
-//	- unit-level symbol hoisting
-//	- methods to types bindings
-//	- symbols and expressions typing
-//	- expressions and statements type checking
+//   - symbol resolution based on name and lexical scope
+//   - type spec resolution
+//   - unit-level symbol hoisting
+//   - methods to types bindings
+//   - symbols and expressions typing
+//   - expressions and statements type checking
 package stg

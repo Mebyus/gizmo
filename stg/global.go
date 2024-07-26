@@ -1,15 +1,15 @@
 package stg
 
 import (
+	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/stg/scp"
-	"github.com/mebyus/gizmo/stg/sym"
 	"github.com/mebyus/gizmo/stg/typ"
 )
 
 func newTypeSymbol(name string, t *Type) *Symbol {
 	s := &Symbol{
 		Name: name,
-		Kind: sym.Type,
+		Kind: smk.Type,
 		Def:  t,
 		Type: &Type{}, // TODO: make type for other types
 	}
