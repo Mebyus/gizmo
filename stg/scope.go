@@ -182,18 +182,17 @@ func (s *Scope) bind(symbol *Symbol) {
 }
 
 func (s *Scope) BindTypeSymbol(symbol *Symbol) {
-	s.bind(symbol)
-
 	if symbol.Kind != smk.Type {
 		panic("method must be called only with symbols representing a type")
 	}
 
 	t := symbol.Def.(*Type)
 
-	if !(t.Builtin || t.Kind == tpk.Custom) {
+	if t.Kind == tpk.Custom {
 		panic(fmt.Sprintf("unexpected type kind: %s", t.Kind.String()))
 	}
-	s.Types.tm[t.Stable()] = t
+
+	s.bind(symbol)
 }
 
 // CheckUsage scans symbols usage count in this scope. Returns error if there are

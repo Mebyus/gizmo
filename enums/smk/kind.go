@@ -1,7 +1,7 @@
 package smk
 
 // Kind indicates symbol kind.
-type Kind uint32
+type Kind uint8
 
 const (
 	// Zero value of Kind. Should not be used explicitly.

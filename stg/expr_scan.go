@@ -115,7 +115,9 @@ func (s *Scope) scanChainPart(ctx *Context, tip ChainOperand, part ast.ChainPart
 func (s *Scope) scanIndexPart(ctx *Context, tip ChainOperand, part ast.IndexPart) (ChainOperand, error) {
 	t := tip.Type()
 	pos := part.Pos
-	switch t.Base.Kind {
+	switch t.Kind {
+	case tpk.Custom:
+		panic("not implemented")
 	case tpk.Chunk:
 		index, err := s.scan(ctx, part.Index)
 		if err != nil {
@@ -128,10 +130,10 @@ func (s *Scope) scanIndexPart(ctx *Context, tip ChainOperand, part ast.IndexPart
 			Pos:    pos,
 			Target: tip,
 			Index:  index,
-			typ:    t.Base.Def.(ChunkTypeDef).ElemType,
+			typ:    t.Def.(ChunkTypeDef).ElemType,
 		}, nil
 	default:
-		panic(fmt.Sprintf("not implemented for %s types", t.Base.Kind))
+		panic(fmt.Sprintf("not implemented for %s types", t.Kind))
 	}
 }
 
@@ -145,9 +147,10 @@ func (s *Scope) scanAddressPart(ctx *Context, tip ChainOperand, part ast.Address
 
 func (s *Scope) scanIndirectIndexPart(ctx *Context, tip ChainOperand, part ast.IndirectIndexPart) (ChainOperand, error) {
 	t := tip.Type()
-	if t.Base.Kind != tpk.ArrayPointer {
+	// TODO: implement for custom type
+	if t.Kind != tpk.ArrayPointer {
 		return nil, fmt.Errorf("%s: cannot indirect index %s operand of %s type",
-			part.Pos.String(), tip.Kind().String(), t.Base.Kind.String())
+			part.Pos.String(), tip.Kind().String(), t.Kind.String())
 	}
 	index, err := s.scan(ctx, part.Index)
 	if err != nil {
@@ -160,43 +163,48 @@ func (s *Scope) scanIndirectIndexPart(ctx *Context, tip ChainOperand, part ast.I
 		Pos:    part.Pos,
 		Target: tip,
 		Index:  index,
-		typ:    t.Base.Def.(ArrayPointerTypeDef).RefType,
+		typ:    t.Def.(ArrayPointerTypeDef).RefType,
 	}, nil
 }
 
 func (s *Scope) scanIndirectPart(ctx *Context, tip ChainOperand, part ast.IndirectPart) (ChainOperand, error) {
 	t := tip.Type()
-	if t.Base.Kind != tpk.Pointer {
+	// TODO: implement for custom type
+	if t.Kind != tpk.Pointer {
 		return nil, fmt.Errorf("%s: cannot indirect %s operand of %s type",
-			part.Pos.String(), tip.Kind().String(), t.Base.Kind.String())
+			part.Pos.String(), tip.Kind().String(), t.Kind.String())
 	}
 	return &IndirectExpression{
 		Pos:    part.Pos,
 		Target: tip,
-		typ:    t.Base.Def.(PointerTypeDef).RefType,
+		typ:    t.Def.(PointerTypeDef).RefType,
 	}, nil
 }
 
 func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPart) (ChainOperand, error) {
-	t := tip.Type()
+	tt := tip.Type()
 
 	// TODO: think up a better way to lookup members on types,
 	// perhaps we should add a dedicated Type method for this
 
-	if t.Kind == tpk.Custom {
+	var t *Type
+	if tt.Kind == tpk.Custom {
 		// TODO: first search here for possible methods
+		t = tt.Def.(CustomTypeDef).Base
+	} else {
+		t = tt
 	}
 
 	pos := part.Member.Pos
 	name := part.Member.Lit
 
-	switch t.Base.Kind {
+	switch t.Kind {
 	case tpk.Struct:
-		def := t.Base.Def.(*StructTypeDef)
+		def := t.Def.(*StructTypeDef)
 		m := def.Members.Find(name)
 		if m == nil {
 			return nil, fmt.Errorf("%s: type %s no member \"%s\"",
-				pos.String(), t.Base.Kind.String(), name)
+				pos.String(), t.Kind.String(), name)
 		}
 		return &MemberExpression{
 			Pos:    pos,
@@ -204,16 +212,16 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 			Member: m,
 		}, nil
 	case tpk.Pointer:
-		base := t.Def.(PointerTypeDef).RefType.Base
-		if base.Kind != tpk.Struct {
+		ref := t.Def.(PointerTypeDef).RefType
+		if ref.Kind != tpk.Custom && ref.Def.(CustomTypeDef).Base.Kind != tpk.Struct {
 			return nil, fmt.Errorf("%s: cannot select a member from %s type",
-				pos.String(), t.Base.Kind.String())
+				pos.String(), ref.Def.(CustomTypeDef).Base.Kind)
 		}
-		def := base.Def.(*StructTypeDef)
+		def := ref.Def.(CustomTypeDef).Base.Def.(*StructTypeDef)
 		m := def.Members.Find(name)
 		if m == nil {
 			return nil, fmt.Errorf("%s: type %s no member \"%s\"",
-				pos.String(), t.Base.Kind.String(), name)
+				pos.String(), t.Kind.String(), name)
 		}
 		return &IndirectMemberExpression{
 			Pos:    pos,
@@ -238,16 +246,16 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 
 				// TODO: we probably need to construct this type differntly
 				// based when it is custom chunk type
-				typ: s.Types.storeArrayPointer(t.Base.Def.(*ChunkTypeDef).ElemType),
+				typ: s.Types.storeArrayPointer(t.Def.(*ChunkTypeDef).ElemType),
 			}, nil
 		default:
 			return nil, fmt.Errorf("%s: chunks do not have \"%s\" member", pos.String(), name)
 		}
 	case tpk.Signed, tpk.Unsigned, tpk.Boolean, tpk.Float:
 		return nil, fmt.Errorf("%s: cannot select a member from %s type",
-			pos.String(), t.Base.Kind.String())
+			pos.String(), t.Kind.String())
 	default:
-		panic(fmt.Sprintf("%s types not implemented", t.Base.Kind.String()))
+		panic(fmt.Sprintf("%s types not implemented", t.Kind.String()))
 	}
 }
 

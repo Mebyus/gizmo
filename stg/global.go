@@ -13,37 +13,43 @@ func newTypeSymbol(name string, t *Type) *Symbol {
 		Def:  t,
 		Type: &Type{}, // TODO: make type for other types
 	}
-	t.Symbol = s
 	return s
 }
 
 func (s *Scope) addTypeSymbol(name string, t *Type) {
-	s.BindTypeSymbol(newTypeSymbol(name, t))
+	sym := newTypeSymbol(name, t)
+	t.Def = BuiltinTypeDef{Sym: sym}
+	s.BindTypeSymbol(sym)
 }
 
-func (s *Scope) addBuiltinBoolType() {
+func (s *Scope) addBooleanType() {
+	s.addTypeSymbol("bool", BoolType)
+}
+
+func (s *Scope) addStringType() {
+	s.addTypeSymbol("str", StrType)
+}
+
+func newStaticType(kind tpk.Kind) *Type {
+	t := &Type{Kind: kind}
+	return t
+}
+
+func newBooleanType() *Type {
 	t := &Type{
 		Kind:    tpk.Boolean,
 		Size:    1,
 		Builtin: true,
 	}
-	t.Base = t
-	s.BindTypeSymbol(newTypeSymbol("bool", t))
+	return t
 }
 
-func (s *Scope) addBuiltinStringType() {
+func newStringType() *Type {
 	t := &Type{
 		Kind:    tpk.String,
 		Size:    16,
 		Builtin: true,
 	}
-	t.Base = t
-	s.BindTypeSymbol(newTypeSymbol("str", t))
-}
-
-func newStaticType(kind tpk.Kind) *Type {
-	t := &Type{Kind: kind}
-	t.Base = t
 	return t
 }
 
@@ -53,7 +59,6 @@ func newUnsignedType(size uint32) *Type {
 		Size:    size,
 		Builtin: true,
 	}
-	t.Base = t
 	return t
 }
 
@@ -63,7 +68,6 @@ func newSignedType(size uint32) *Type {
 		Size:    size,
 		Builtin: true,
 	}
-	t.Base = t
 	return t
 }
 
@@ -88,10 +92,13 @@ var (
 	Int64Type = newSignedType(8)
 	IntType   = newSignedType(8) // TODO: adjust int size based on target arch
 
+	BoolType = newBooleanType()
+	StrType  = newStringType()
 	RuneType = newUnsignedType(4)
 )
 
 func (s *Scope) addStaticTypes() {
+	// TODO: this is probably redundant
 	s.Types.tm[StaticInteger.Stable()] = StaticInteger
 	s.Types.tm[StaticFloat.Stable()] = StaticFloat
 	s.Types.tm[StaticString.Stable()] = StaticString
@@ -122,8 +129,8 @@ func NewGlobalScope() *Scope {
 	s.addTypeSymbol("i64", Int64Type)
 	s.addTypeSymbol("int", IntType)
 
-	s.addBuiltinBoolType()
-	s.addBuiltinStringType()
+	s.addBooleanType()
+	s.addStringType()
 	s.addTypeSymbol("rune", RuneType)
 
 	return s

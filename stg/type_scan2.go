@@ -50,9 +50,13 @@ func (m *Merger) bindRecursiveType(s *Symbol) {
 	t := &Type{
 		Recursive: true,
 
-		Symbol: s,
-		Kind:   tpk.Custom,
+		Kind: tpk.Custom,
 	}
+	def := CustomTypeDef{
+		Base: t,
+		Sym:  s,
+	}
+	t.Def = def
 	s.Def = t
 
 	base, err := m.unit.Scope.Types.lookup(node.Spec)
@@ -60,7 +64,9 @@ func (m *Merger) bindRecursiveType(s *Symbol) {
 		// type graph structure must guarantee successful lookup
 		panic(err)
 	}
-	t.Base = base.Base
+	if base != t {
+		panic("different recursive type after lookup")
+	}
 }
 
 func (m *Merger) bindType(s *Symbol) *Type {
@@ -72,8 +78,10 @@ func (m *Merger) bindType(s *Symbol) *Type {
 	}
 	fmt.Printf("%s: %T\n", s.Name, base.Def)
 	return &Type{
-		Symbol: s,
-		Base:   base.Base,
-		Kind:   tpk.Custom,
+		Def: CustomTypeDef{
+			Sym:  s,
+			Base: base,
+		},
+		Kind: tpk.Custom,
 	}
 }

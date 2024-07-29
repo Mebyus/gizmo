@@ -65,7 +65,7 @@ func (g *Builder) TypeDef(s *stg.Symbol) {
 
 	g.puts("typedef")
 	g.space()
-	g.typeSpecForDef(t.Base)
+	g.typeSpecForDef(t.Def.(stg.CustomTypeDef).Base)
 	g.space()
 	g.SymbolName(s)
 	g.semi()
@@ -77,7 +77,7 @@ func (g *Builder) typeSpecForDef(t *stg.Type) {
 		panic("nil type")
 	}
 	if t.Kind == tpk.Struct {
-		g.StructType(t.Base.Def.(*stg.StructTypeDef))
+		g.StructType(t.Def.(*stg.StructTypeDef))
 		return
 	}
 	g.TypeSpec(t)
@@ -154,22 +154,22 @@ func (g *Builder) getTypeSpec(t *stg.Type) string {
 		return "void"
 	}
 	if t.Builtin {
-		return g.getSymbolName(t.Symbol)
+		return g.getSymbolName(t.Symbol())
 	}
 
 	switch t.Kind {
 	case tpk.Trivial:
 		return "struct {}"
 	case tpk.Custom:
-		return g.getSymbolName(t.Symbol)
+		return g.getSymbolName(t.Def.(stg.CustomTypeDef).Sym)
 	case tpk.Pointer:
 		return g.getTypeSpec(t.Def.(stg.PointerTypeDef).RefType) + "*"
 	case tpk.ArrayPointer:
 		return g.getTypeSpec(t.Def.(stg.ArrayPointerTypeDef).RefType) + "*"
 	case tpk.Chunk:
-		return g.tprefix + "Chunk" + g.getSymbolName(t.Def.(stg.ChunkTypeDef).ElemType.Symbol)
+		return g.tprefix + "Chunk" + g.getSymbolName(t.Def.(stg.ChunkTypeDef).ElemType.Def.(stg.CustomTypeDef).Sym)
 	default:
-		panic(fmt.Sprintf("%s types not implemented", t.Base.Kind.String()))
+		panic(fmt.Sprintf("%s types not implemented", t.Kind.String()))
 	}
 }
 

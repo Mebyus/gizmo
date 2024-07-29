@@ -33,22 +33,6 @@ type Type struct {
 	//	- Boolean
 	Def TypeDef
 
-	// Not nil only for custom and builtin types. Contains symbol which names
-	// this type.
-	Symbol *Symbol
-
-	// Each type has a base (even builtin types). Base is a type representing
-	// the raw definition (struct, enum, union, etc.) and memory layout of a type.
-	// Has nothing to do with inheritance.
-	//
-	// Types which has the same base are called flavors of that base or type (base is always
-	// a flavor of itself by definition). Flavors can be cast among each other via
-	// explicit type casts and under the hood such casts do not alter memory or
-	// perform any operation. One and only one base exists among all of its flavors.
-	// From formal mathematical point of view all flavors of specific type form
-	// equivalence class in set of all types in a program.
-	Base *Type
-
 	// Pseudo-unique id (hash code) of the type. Depends only on type definition
 	// of represented type and (maybe) compiler version. One should use this field
 	// in conjunction with kind to reduce collision chance of different types.
@@ -81,12 +65,24 @@ type Type struct {
 	Recursive bool
 }
 
+func (t *Type) Symbol() *Symbol {
+	if t.Builtin {
+		return t.Def.(BuiltinTypeDef).Sym
+	}
+
+	if t.Kind == tpk.Custom {
+		return t.Def.(CustomTypeDef).Sym
+	}
+
+	panic(fmt.Sprintf("%s types cannot be bound to symbols", t.Kind))
+}
+
 func (t *Type) IsIntegerType() bool {
 	switch t.Kind {
 	case tpk.Unsigned, tpk.Signed, tpk.StaticInteger:
 		return true
 	case tpk.Custom:
-		return t.Base.IsIntegerType()
+		return t.Def.(CustomTypeDef).Base.IsIntegerType()
 	default:
 		return false
 	}
@@ -107,17 +103,11 @@ type Stable struct {
 	// equal to hash field in type struct
 	Hash uint64
 
-	// equal to hash field in Type.Base struct
-	BaseHash uint64
-
 	// hash of unit in which type is defined (if it's a named type)
 	Unit uint64
 
 	// kind of type itself
 	Kind tpk.Kind
-
-	// kind of Type.Base
-	BaseKind tpk.Kind
 }
 
 func (t *Type) Stable() Stable {
@@ -125,9 +115,6 @@ func (t *Type) Stable() Stable {
 		Hash: t.Hash(),
 		Unit: t.Unit,
 		Kind: t.Kind,
-
-		BaseHash: t.Base.Hash(),
-		BaseKind: t.Base.Kind,
 	}
 }
 
@@ -157,20 +144,17 @@ func (t *Type) Hash() uint64 {
 
 func (t *Type) computeHash() uint64 {
 	if t.Builtin {
-		if t.Symbol.Name == "" {
-			panic("empty name of builtin type")
-		}
-		return HashName(t.Symbol.Name)
+		return HashName(t.Symbol().Name)
 	}
 
 	switch t.Kind {
 	case tpk.Custom:
 		if t.Recursive {
-			return HashRecursiveName(t.Symbol.Name)
+			return HashRecursiveName(t.Def.(CustomTypeDef).Sym.Name)
 		}
 		// TODO: we probably should panic here, since
 		// named types are not meant to be looked up by hash
-		return HashName(t.Symbol.Name)
+		return HashName(t.Def.(CustomTypeDef).Sym.Name)
 	case tpk.Pointer:
 		return HashPointerType(t.Def.(PointerTypeDef).RefType)
 	case tpk.ArrayPointer:
@@ -260,11 +244,20 @@ type nodeTypeDef struct{}
 
 func (nodeTypeDef) TypeDef() {}
 
-type IntTypeDef struct {
+type BuiltinTypeDef struct {
 	nodeTypeDef
 
-	// Integer size in bytes.
-	Size uint32
+	Sym *Symbol
+}
+
+type CustomTypeDef struct {
+	nodeTypeDef
+
+	// Symbol which creates custom type.
+	Sym *Symbol
+
+	// Type which was given a custom name by the symbol.
+	Base *Type
 }
 
 type ArrayPointerTypeDef struct {
@@ -290,7 +283,6 @@ func newArrayPointerType(ref *Type) *Type {
 		Kind: tpk.ArrayPointer,
 		Def:  ArrayPointerTypeDef{RefType: ref},
 	}
-	t.Base = t
 	return t
 }
 
@@ -299,7 +291,6 @@ func newPointerType(ref *Type) *Type {
 		Kind: tpk.Pointer,
 		Def:  PointerTypeDef{RefType: ref},
 	}
-	t.Base = t
 	return t
 }
 
@@ -308,7 +299,6 @@ func newChunkType(elem *Type) *Type {
 		Kind: tpk.Chunk,
 		Def:  ChunkTypeDef{ElemType: elem},
 	}
-	t.Base = t
 	return t
 }
 
@@ -317,7 +307,6 @@ func newStructType(members MembersList) *Type {
 		Kind: tpk.Struct,
 		Def:  &StructTypeDef{Members: members},
 	}
-	t.Base = t
 	return t
 }
 
@@ -329,15 +318,42 @@ func checkCallArgType(param *Symbol, arg Expression) error {
 		return nil
 	}
 
-	if (pt.Base.Kind == tpk.Unsigned || pt.Base.Kind == tpk.Signed) && t.Kind == tpk.StaticInteger {
-		// TODO: check that static integer fits into parameter type max value
-		// and there is no "signedness conflict" between type and value
-		return nil
+	switch pt.Kind {
+	case tpk.Unsigned:
+		switch t.Kind {
+		case tpk.StaticInteger:
+			return nil
+		case tpk.Unsigned:
+			if t.Size < pt.Size {
+				return nil
+			}
+		case tpk.Signed:
+			return fmt.Errorf("%s: cannot silently convert signed to unsigned integer", arg.Pin().String())
+		}
+	case tpk.Signed:
+		switch t.Kind {
+		case tpk.StaticInteger:
+			return nil
+		case tpk.Unsigned:
+			if t.Size < pt.Size {
+				return nil
+			}
+		case tpk.Signed:
+			if t.Size < pt.Size {
+				return nil
+			}
+		}
+	case tpk.Custom:
+
+	default:
+		panic(fmt.Errorf("%s param types not implemented", pt.Kind.String()))
 	}
 
-	// panic("unhandled case")
+	// TODO: check that static integer fits into parameter type max value
+	// and there is no "signedness conflict" between type and value
+
 	return fmt.Errorf("%s: mismatched types of call argument (%s) and parameter (%s)",
-		arg.Pin(), t.Kind, pt.Kind)
+		arg.Pin().String(), t.Kind, pt.Kind)
 }
 
 type MemberKind uint8

@@ -254,10 +254,10 @@ func checkReturnType(pos source.Pos, r, t *Type) error {
 	if t == r {
 		return nil
 	}
-	if t.Kind == tpk.StaticBoolean && r.Base.Kind == tpk.Boolean {
+	if t.Kind == tpk.StaticBoolean && r.Kind == tpk.Boolean {
 		return nil
 	}
-	if t.Kind == tpk.StaticInteger && (r.Base.Kind == tpk.Unsigned || r.Base.Kind == tpk.Signed) {
+	if t.Kind == tpk.StaticInteger && (r.Kind == tpk.Unsigned || r.Kind == tpk.Signed) {
 		return nil
 	}
 
@@ -266,8 +266,8 @@ func checkReturnType(pos source.Pos, r, t *Type) error {
 		if t.Size < r.Size {
 			return nil
 		}
-		return fmt.Errorf("%s: cannot promote %s to return type %s",
-			pos.String(), t.Symbol.Name, r.Symbol.Name)
+		return fmt.Errorf("%s: cannot promote i%d to return type i%d",
+			pos.String(), t.Size, r.Size)
 	}
 
 	return fmt.Errorf("%s: mismatched return types (%s and %s)",
