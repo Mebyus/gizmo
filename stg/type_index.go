@@ -24,6 +24,24 @@ type TypeIndex struct {
 	tm map[Stable]*Type
 }
 
+// Result maps chunk elem type into chunk type itself.
+func (x *TypeIndex) Chunks() map[*Type]*Type {
+	if len(x.tm) == 0 {
+		return nil
+	}
+	m := make(map[*Type]*Type)
+	for _, t := range x.tm {
+		if t.Kind == tpk.Chunk {
+			e := t.Def.(ChunkTypeDef).ElemType
+			m[e] = t
+		}
+	}
+	if len(m) == 0 {
+		return nil
+	}
+	return m
+}
+
 func (x *TypeIndex) Lookup(spec ast.TypeSpec) (*Type, error) {
 	if spec == nil {
 		// handle never and void return "types"

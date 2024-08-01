@@ -24,6 +24,16 @@ typedef u32 rune;
 #define true 1
 #define false 0
 
+void
+ku_must(bool c) {
+	if (c) {
+		return;
+	}
+
+	__builtin_trap();
+	__builtin_unreachable();
+}
+
 `
 
 func (g *Builder) prelude() {

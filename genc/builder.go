@@ -3,6 +3,7 @@ package genc
 import (
 	"fmt"
 
+	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/enums/tpk"
 	"github.com/mebyus/gizmo/stg"
 	"github.com/mebyus/gizmo/stg/scp"
@@ -34,9 +35,21 @@ func (g *Builder) Bytes() []byte {
 func (g *Builder) Gen(u *stg.Unit) {
 	g.prelude()
 
+	chunks := u.Scope.Types.Chunks()
+	g.genBuiltinChunkTypes(chunks)
+
 	for _, s := range u.Types {
 		g.TypeDef(s)
 		g.nl()
+
+		t := s.Def.(*stg.Type)
+		c, ok := chunks[t]
+		if ok {
+			g.ChunkTypeDef(c, t)
+			g.nl()
+			g.ChunkTypeMethods(c, t)
+			g.nl()
+		}
 	}
 
 	for _, s := range u.Lets {
@@ -60,6 +73,71 @@ func (g *Builder) Gen(u *stg.Unit) {
 	}
 }
 
+func (g *Builder) ChunkTypeMethods(c, elem *stg.Type) {
+	g.ChunkTypeIndexMethod(c, elem)
+}
+
+func (g *Builder) ChunkTypeIndexMethod(c, elem *stg.Type) {
+	g.TypeSpec(elem)
+	g.nl()
+	g.puts("ku_chunk_")
+	g.TypeSpec(elem)
+	g.puts("_index")
+
+	g.puts("(")
+
+	g.puts(g.getChunkTypeName(c))
+	g.puts(" c, u64 i) {")
+	g.nl()
+	g.inc()
+
+	g.indent()
+	g.puts("ku_must(c.ptr != nil);")
+	g.nl()
+
+	g.indent()
+	g.puts("ku_must(i < c.len);")
+	g.nl()
+
+	g.indent()
+	g.puts("return c.ptr[i];")
+	g.nl()
+
+	g.dec()
+	g.puts("}")
+	g.nl()
+}
+
+func (g *Builder) genBuiltinChunkTypes(chunks map[*stg.Type]*stg.Type) {
+	list := []*stg.Type{
+		stg.Uint8Type,
+		stg.Uint16Type,
+		stg.Uint32Type,
+		stg.Uint64Type,
+		stg.UintType,
+
+		stg.Int8Type,
+		stg.Int16Type,
+		stg.Int32Type,
+		stg.Int64Type,
+		stg.IntType,
+
+		stg.StrType,
+		stg.BoolType,
+		stg.RuneType,
+	}
+
+	for _, t := range list {
+		c, ok := chunks[t]
+		if ok {
+			g.ChunkTypeDef(c, t)
+			g.nl()
+			g.ChunkTypeMethods(c, t)
+			g.nl()
+		}
+	}
+}
+
 func (g *Builder) TypeDef(s *stg.Symbol) {
 	t := s.Def.(*stg.Type)
 
@@ -68,6 +146,28 @@ func (g *Builder) TypeDef(s *stg.Symbol) {
 	g.typeSpecForDef(t.Def.(stg.CustomTypeDef).Base)
 	g.space()
 	g.SymbolName(s)
+	g.semi()
+	g.nl()
+}
+
+func (g *Builder) ChunkTypeDef(c, elem *stg.Type) {
+	g.puts("typedef")
+	g.puts(" struct {")
+	g.nl()
+	g.inc()
+
+	g.indent()
+	g.TypeSpec(elem)
+	g.puts("* ptr;")
+	g.nl()
+
+	g.indent()
+	g.puts("u64 len;") // TODO: make this integer arch dependant
+	g.nl()
+
+	g.dec()
+	g.puts("} ")
+	g.puts(g.getChunkTypeName(c))
 	g.semi()
 	g.nl()
 }
@@ -140,6 +240,9 @@ func (g *Builder) getSymbolName(s *stg.Symbol) string {
 		}
 	}
 	if s.Scope.Kind == scp.Unit {
+		if s.Kind == smk.Type {
+			return g.tprefix + s.Name
+		}
 		return g.prefix + s.Name
 	}
 	return s.Name
@@ -147,6 +250,10 @@ func (g *Builder) getSymbolName(s *stg.Symbol) string {
 
 func (g *Builder) SymbolName(s *stg.Symbol) {
 	g.puts(g.getSymbolName(s))
+}
+
+func (g *Builder) getChunkTypeName(t *stg.Type) string {
+	return g.tprefix + "Chunk_" + g.getSymbolName(t.Def.(stg.ChunkTypeDef).ElemType.Symbol())
 }
 
 func (g *Builder) getTypeSpec(t *stg.Type) string {
@@ -167,7 +274,7 @@ func (g *Builder) getTypeSpec(t *stg.Type) string {
 	case tpk.ArrayPointer:
 		return g.getTypeSpec(t.Def.(stg.ArrayPointerTypeDef).RefType) + "*"
 	case tpk.Chunk:
-		return g.tprefix + "Chunk" + g.getSymbolName(t.Def.(stg.ChunkTypeDef).ElemType.Def.(stg.CustomTypeDef).Sym)
+		return g.getChunkTypeName(t)
 	default:
 		panic(fmt.Sprintf("%s types not implemented", t.Kind.String()))
 	}
