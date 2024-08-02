@@ -77,12 +77,16 @@ func (g *Builder) ChunkTypeMethods(c, elem *stg.Type) {
 	g.ChunkTypeIndexMethod(c, elem)
 }
 
-func (g *Builder) ChunkTypeIndexMethod(c, elem *stg.Type) {
-	g.TypeSpec(elem)
-	g.nl()
+func (g *Builder) ChunkTypeIndexMethodName(elem *stg.Type) {
 	g.puts("ku_chunk_")
 	g.TypeSpec(elem)
 	g.puts("_index")
+}
+
+func (g *Builder) ChunkTypeIndexMethod(c, elem *stg.Type) {
+	g.TypeSpec(elem)
+	g.nl()
+	g.ChunkTypeIndexMethodName(elem)
 
 	g.puts("(")
 

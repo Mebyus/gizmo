@@ -95,10 +95,12 @@ func (g *Builder) ChainSymbol(expr *stg.ChainSymbol) {
 }
 
 func (g *Builder) ChunkIndexExpression(expr *stg.ChunkIndexExpression) {
+	g.ChunkTypeIndexMethodName(expr.Type())
+	g.puts("(")
 	g.expr(expr.Target)
-	g.puts(".ptr[")
+	g.puts(", ")
 	g.expr(expr.Index)
-	g.puts("]")
+	g.puts(")")
 }
 
 func (g *Builder) ChunkMemberExpression(expr *stg.ChunkMemberExpression) {
