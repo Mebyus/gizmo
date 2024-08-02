@@ -32,6 +32,7 @@ var genFlags = []string{
 	"-fwrapv",
 	"-fno-exceptions",
 	"-fno-rtti",
+	"-fno-asynchronous-unwind-tables",
 }
 
 var customEntryLinkFlags = []string{

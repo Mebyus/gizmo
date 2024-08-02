@@ -38,8 +38,9 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 		return s.scanParenthesizedExpression(ctx, expr.(ast.ParenthesizedExpression))
 	case exn.Cast:
 		return s.scanCastExpression(ctx, expr.(ast.CastExpression))
-	// case exn.Slice:
-	// 	// g.SliceExpression(expr.(ast.SliceExpression))
+	case exn.Receiver:
+		return s.scanReceiverExpression(ctx, expr.(ast.Receiver))
+
 	// case exn.BitCast:
 	// 	// g.BitCastExpression(expr.(ast.BitCastExpression))
 	// case exn.Object:
@@ -47,6 +48,19 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 	default:
 		panic(fmt.Sprintf("not implemented for %s expression", expr.Kind().String()))
 	}
+}
+
+func (s *Scope) scanReceiverExpression(ctx *Context, expr ast.Receiver) (*ReceiverExpression, error) {
+	pos := expr.Pos
+	
+	if ctx.rv == nil {
+		return nil, fmt.Errorf("%s: receiver used in regular function", pos.String())
+	}
+
+	return &ReceiverExpression{
+		Pos: pos,
+		typ: ctx.rv,
+	}, nil
 }
 
 func (s *Scope) scanChainOperand(ctx *Context, expr ast.ChainOperand) (ChainOperand, error) {
@@ -321,6 +335,8 @@ func (s *Scope) scanCastExpression(ctx *Context, expr ast.CastExpression) (*Cast
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: perform types compatibility check
 
 	return &CastExpression{
 		// Pos: expr.,

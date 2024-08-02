@@ -58,7 +58,7 @@ func (e SymbolExpression) Pin() source.Pos {
 	return e.Identifier.Pos
 }
 
-// <Receiver> = "rv"
+// <Receiver> = "g"
 type Receiver struct {
 	nodeOperand
 

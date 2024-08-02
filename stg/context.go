@@ -1,7 +1,7 @@
 package stg
 
 // Context carries information and objects which are needed to perform
-// statements and expressions transformations (from AST to TT), type checking,
+// statements and expressions transformations (from AST to STG), type checking,
 // symbol usage counting, etc.
 type Context struct {
 	m *Merger
@@ -23,6 +23,16 @@ func (m *Merger) newFunCtx(def *FunDef) *Context {
 	return &Context{
 		m:     m,
 		ref:   NewSymSet(),
+		ret:   def.Result,
+		never: def.Never,
+	}
+}
+
+func (m *Merger) newMethodCtx(def *MethodDef) *Context {
+	return &Context{
+		m:     m,
+		ref:   NewSymSet(),
+		rv:    def.Receiver,
 		ret:   def.Result,
 		never: def.Never,
 	}

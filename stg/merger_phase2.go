@@ -43,6 +43,10 @@ func (m *Merger) merge() error {
 	if err != nil {
 		return err
 	}
+	err = m.scanMethods()
+	if err != nil {
+		return err
+	}
 	m.unit.Scope.WarnUnused(&Context{m: m})
 	return nil
 }
@@ -292,6 +296,42 @@ func (m *Merger) scanFunBody(def *FunDef, statements []ast.Statement) error {
 	}
 
 	ctx := m.newFunCtx(def)
+	err := def.Body.Fill(ctx, statements)
+	if err != nil {
+		return err
+	}
+	def.Refs = ctx.ref.Elems()
+	return nil
+}
+
+func (m *Merger) scanMethods() error {
+	for i, s := range m.unit.Meds {
+		err := m.scanMethod(s, astIndexSymDef(i))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Merger) scanMethod(s *Symbol, i astIndexSymDef) error {
+	body := m.nodes.Med(i).Body
+	def := s.Def.(*MethodDef)
+	return m.scanMethodBody(def, body.Statements)
+}
+
+func (m *Merger) scanMethodBody(def *MethodDef, statements []ast.Statement) error {
+	if len(statements) == 0 {
+		if def.Result != nil {
+			return fmt.Errorf("%s: method with return type cannot have empty body", def.Body.Pos.String())
+		}
+		if def.Never {
+			return fmt.Errorf("%s: method marked as never returning cannot have empty body", def.Body.Pos.String())
+		}
+		return nil
+	}
+
+	ctx := m.newMethodCtx(def)
 	err := def.Body.Fill(ctx, statements)
 	if err != nil {
 		return err

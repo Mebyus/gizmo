@@ -40,6 +40,29 @@ type nodeOperand struct{ nodeExpression }
 
 func (nodeOperand) Operand() {}
 
+type ReceiverExpression struct {
+	nodeOperand
+
+	Pos source.Pos
+
+	typ *Type
+}
+
+// Explicit interface implementation check
+var _ Operand = &ReceiverExpression{}
+
+func (*ReceiverExpression) Kind() exn.Kind {
+	return exn.Symbol
+}
+
+func (e *ReceiverExpression) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *ReceiverExpression) Type() *Type {
+	return e.typ
+}
+
 // SymbolExpression is an operand expression which represents direct symbol usage.
 // Example:
 //
