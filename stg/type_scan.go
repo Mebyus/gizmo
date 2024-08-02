@@ -234,7 +234,7 @@ func (m *Merger) shallowScanStructType(ctx *TypeContext, spec ast.StructType) er
 	}
 
 	for _, i := range methods {
-		err := m.shallowScanMethod(ctx, i)
+		err := m.shallowScanTypeMethod(ctx, i)
 		if err != nil {
 			return err
 		}
@@ -243,7 +243,7 @@ func (m *Merger) shallowScanStructType(ctx *TypeContext, spec ast.StructType) er
 	return nil
 }
 
-func (m *Merger) shallowScanMethod(ctx *TypeContext, i astIndexSymDef) error {
+func (m *Merger) shallowScanTypeMethod(ctx *TypeContext, i astIndexSymDef) error {
 	method := m.nodes.Med(i)
 	name := method.Name.Lit
 	pos := method.Name.Pos

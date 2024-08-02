@@ -35,6 +35,10 @@ func (m *Merger) merge() error {
 	if err != nil {
 		return err
 	}
+	err = m.shallowScanMethods()
+	if err != nil {
+		return err
+	}
 	err = m.scanFuns()
 	if err != nil {
 		return err
@@ -136,6 +140,66 @@ func (m *Merger) shallowScanFuns() error {
 			return err
 		}
 	}
+	return nil
+}
+
+func (m *Merger) shallowScanMethods() error {
+	for _, s := range m.unit.Types {
+		t := s.Def.(*Type)
+		methods := t.Def.(CustomTypeDef).Methods
+		for _, method := range methods {
+			err := m.shallowScanMethod(t, method)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (m *Merger) shallowScanMethod(t *Type, s *Symbol) error {
+	scope := m.unit.Scope
+	node := m.nodes.Med(s.Def.(astIndexSymDef))
+
+	params, err := newParamSymbols(scope, node.Signature.Params)
+	if err != nil {
+		return err
+	}
+
+	result, err := scope.Types.Lookup(node.Signature.Result)
+	if err != nil {
+		return err
+	}
+
+	var receiver *Type
+	if node.Receiver.Ptr {
+		receiver = scope.Types.storePointer(t)
+	} else {
+		receiver = t
+	}
+
+	pos := node.Body.Pos
+	def := &MethodDef{
+		Receiver: receiver,
+		Signature: Signature{
+			Params: params,
+			Result: result,
+			Never:  node.Signature.Never,
+		},
+		Body: Block{Pos: pos},
+	}
+
+	def.Body.Scope = NewTopScope(m.unit.Scope, &def.Body.Pos)
+	for _, param := range params {
+		name := param.Name
+		p := def.Body.Scope.sym(name)
+		if p != nil {
+			return fmt.Errorf("%s: parameter \"%s\" redeclared in this function", pos.String(), name)
+		}
+		def.Body.Scope.Bind(param)
+	}
+
+	s.Def = def
 	return nil
 }
 

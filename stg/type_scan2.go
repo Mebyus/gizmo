@@ -69,6 +69,18 @@ func (m *Merger) bindRecursiveType(s *Symbol) {
 	}
 }
 
+func (m *Merger) getReceiverMethods(name string) []*Symbol {
+	ii := m.nodes.MedsByReceiver[name]
+	if len(ii) == 0 {
+		return nil
+	}
+	symbols := make([]*Symbol, 0, len(ii))
+	for _, i := range ii {
+		symbols = append(symbols, m.unit.Meds[i])
+	}
+	return symbols
+}
+
 func (m *Merger) bindType(s *Symbol) *Type {
 	node := m.nodes.Type(s.Def.(astIndexSymDef))
 	base, err := m.unit.Scope.Types.lookup(node.Spec)
@@ -79,8 +91,9 @@ func (m *Merger) bindType(s *Symbol) *Type {
 	fmt.Printf("%s: %T\n", s.Name, base.Def)
 	return &Type{
 		Def: CustomTypeDef{
-			Sym:  s,
-			Base: base,
+			Sym:     s,
+			Base:    base,
+			Methods: m.getReceiverMethods(s.Name),
 		},
 		Kind: tpk.Custom,
 	}

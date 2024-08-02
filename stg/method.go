@@ -9,4 +9,7 @@ type MethodDef struct {
 
 	// List of top-level unit symbols which are used in method.
 	Refs []*Symbol
+
+	// Always not nil.
+	Receiver *Type
 }

@@ -258,6 +258,9 @@ type CustomTypeDef struct {
 
 	// Type which was given a custom name by the symbol.
 	Base *Type
+
+	// List of methods which are bound to this custom type.
+	Methods []*Symbol
 }
 
 type ArrayPointerTypeDef struct {
