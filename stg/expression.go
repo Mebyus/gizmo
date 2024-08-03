@@ -52,7 +52,7 @@ type ReceiverExpression struct {
 var _ Operand = &ReceiverExpression{}
 
 func (*ReceiverExpression) Kind() exn.Kind {
-	return exn.Symbol
+	return exn.Receiver
 }
 
 func (e *ReceiverExpression) Pin() source.Pos {

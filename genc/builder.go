@@ -2,6 +2,7 @@ package genc
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/enums/tpk"
@@ -65,10 +66,26 @@ func (g *Builder) Gen(u *stg.Unit) {
 	}
 
 	g.nl()
+	g.BlockTitle(u.Name, "method declarations")
+	g.nl()
+	for _, s := range u.Meds {
+		g.MethodDecl(s)
+		g.nl()
+	}
+
+	g.nl()
 	g.BlockTitle(u.Name, "function implementations")
 	g.nl()
 	for _, s := range u.Funs {
 		g.FunDef(s)
+		g.nl()
+	}
+
+	g.nl()
+	g.BlockTitle(u.Name, "method implementations")
+	g.nl()
+	for _, s := range u.Meds {
+		g.MethodDef(s)
 		g.nl()
 	}
 }
@@ -247,6 +264,9 @@ func (g *Builder) getSymbolName(s *stg.Symbol) string {
 		if s.Kind == smk.Type {
 			return g.tprefix + s.Name
 		}
+		if s.Kind == smk.Method {
+			return g.prefix + strings.Replace(s.Name, ".", "_", 1)
+		}
 		return g.prefix + s.Name
 	}
 	return s.Name
@@ -333,6 +353,28 @@ func (g *Builder) Block(block *stg.Block) {
 	g.nl()
 }
 
+func (g *Builder) MethodParams(r *stg.Type, params []*stg.Symbol) {
+	g.puts("(")
+	g.TypeSpec(r)
+	g.space()
+	g.puts("g")
+	for _, p := range params {
+		g.puts(", ")
+		g.FnParam(p)
+	}
+	g.puts(")")
+}
+
+func (g *Builder) MethodDecl(s *stg.Symbol) {
+	def := s.Def.(*stg.MethodDef)
+
+	g.TypeSpec(def.Result)
+	g.space()
+	g.SymbolName(s)
+	g.MethodParams(def.Receiver, def.Params)
+	g.semi()
+}
+
 func (g *Builder) FunDecl(s *stg.Symbol) {
 	def := s.Def.(*stg.FunDef)
 
@@ -350,6 +392,17 @@ func (g *Builder) FunDef(s *stg.Symbol) {
 	g.nl()
 	g.SymbolName(s)
 	g.FunParams(def.Params)
+	g.space()
+	g.Block(&def.Body)
+}
+
+func (g *Builder) MethodDef(s *stg.Symbol) {
+	def := s.Def.(*stg.MethodDef)
+
+	g.TypeSpec(def.Result)
+	g.nl()
+	g.SymbolName(s)
+	g.MethodParams(def.Receiver, def.Params)
 	g.space()
 	g.Block(&def.Body)
 }

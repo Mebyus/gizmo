@@ -27,6 +27,8 @@ func (g *Builder) expr(expr stg.Expression) {
 		g.False()
 	case exn.Symbol:
 		g.SymbolExpression(expr.(*stg.SymbolExpression))
+	case exn.Receiver:
+		g.puts("g")
 	case exn.Binary:
 		g.BinaryExpression(expr.(*stg.BinaryExpression))
 	case exn.Unary:

@@ -52,7 +52,7 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 
 func (s *Scope) scanReceiverExpression(ctx *Context, expr ast.Receiver) (*ReceiverExpression, error) {
 	pos := expr.Pos
-	
+
 	if ctx.rv == nil {
 		return nil, fmt.Errorf("%s: receiver used in regular function", pos.String())
 	}

@@ -9,3 +9,18 @@ type MyInt int
 fn [MyInt] value() => int {
     return cast[g: int];
 }
+
+type Buffer struct {
+    buf: []u8,
+    pos: uint,
+}
+
+fn [*Buffer] write(data: []u8) => uint {
+    if data.len == 0 {
+        return 0;
+    }
+
+    g.buf[g.pos] = data[0];
+    g.pos += 1;
+    return 1;
+}
