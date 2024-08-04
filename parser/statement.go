@@ -411,7 +411,7 @@ func (p *Parser) chainStartStatement(identifier ast.Identifier) (ast.Statement, 
 
 func (p *Parser) assignStatement(op aop.Kind, target ast.ChainOperand) (ast.AssignStatement, error) {
 	switch target.Last() {
-	case exn.Call, exn.Address, exn.Slice:
+	case exn.Call, exn.Address, exn.Slice, exn.Receiver:
 		return ast.AssignStatement{}, fmt.Errorf("%s: cannot assign to %s operand",
 			target.Pin().String(), target.Last().String())
 	}

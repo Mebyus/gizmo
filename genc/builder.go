@@ -92,12 +92,20 @@ func (g *Builder) Gen(u *stg.Unit) {
 
 func (g *Builder) ChunkTypeMethods(c, elem *stg.Type) {
 	g.ChunkTypeIndexMethod(c, elem)
+	g.nl()
+	g.ChunkTypeElemMethod(c, elem)
 }
 
 func (g *Builder) ChunkTypeIndexMethodName(elem *stg.Type) {
 	g.puts("ku_chunk_")
 	g.TypeSpec(elem)
 	g.puts("_index")
+}
+
+func (g *Builder) ChunkTypeElemMethodName(elem *stg.Type) {
+	g.puts("ku_chunk_")
+	g.TypeSpec(elem)
+	g.puts("_elem")
 }
 
 func (g *Builder) ChunkTypeIndexMethod(c, elem *stg.Type) {
@@ -122,6 +130,36 @@ func (g *Builder) ChunkTypeIndexMethod(c, elem *stg.Type) {
 
 	g.indent()
 	g.puts("return c.ptr[i];")
+	g.nl()
+
+	g.dec()
+	g.puts("}")
+	g.nl()
+}
+
+func (g *Builder) ChunkTypeElemMethod(c, elem *stg.Type) {
+	g.TypeSpec(elem)
+	g.puts("*")
+	g.nl()
+	g.ChunkTypeElemMethodName(elem)
+
+	g.puts("(")
+
+	g.puts(g.getChunkTypeName(c))
+	g.puts(" c, u64 i) {")
+	g.nl()
+	g.inc()
+
+	g.indent()
+	g.puts("ku_must(c.ptr != nil);")
+	g.nl()
+
+	g.indent()
+	g.puts("ku_must(i < c.len);")
+	g.nl()
+
+	g.indent()
+	g.puts("return c.ptr + i;")
 	g.nl()
 
 	g.dec()

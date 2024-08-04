@@ -661,6 +661,9 @@ func (lx *Lexer) other() token.Token {
 		}
 		return lx.oneByteToken(token.Ampersand)
 	case '/':
+		if lx.Next == '=' {
+			return lx.twoBytesToken(token.DivAssign)
+		}
 		return lx.oneByteToken(token.Slash)
 	case '!':
 		if lx.Next == '=' {

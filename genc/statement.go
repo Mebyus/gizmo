@@ -3,6 +3,7 @@ package genc
 import (
 	"fmt"
 
+	"github.com/mebyus/gizmo/ast/exn"
 	"github.com/mebyus/gizmo/ast/stm"
 	"github.com/mebyus/gizmo/stg"
 )
@@ -44,11 +45,31 @@ func (g *Builder) loopStatement(node *stg.LoopStatement) {
 }
 
 func (g *Builder) assignStatement(node *stg.AssignStatement) {
-	g.ChainOperand(node.Target)
+	g.ChainOperandTarget(node.Target)
 	g.space()
 	g.puts(node.Operation.String())
 	g.space()
 	g.Expression(node.Expr)
+}
+
+// generate target expression for assignment
+func (g *Builder) ChainOperandTarget(node stg.ChainOperand) {
+	switch node.Kind() {
+	case exn.Chain:
+		g.ChainSymbol(node.(*stg.ChainSymbol))
+	case exn.Member:
+		g.MemberExpression(node.(*stg.MemberExpression))
+	case exn.Indirect:
+		g.IndirectExpression(node.(*stg.IndirectExpression))
+	case exn.IndirectIndex:
+		g.IndirectIndexExpression(node.(*stg.IndirectIndexExpression))
+	case exn.IndirectMember:
+		g.IndirectMemberExpression(node.(*stg.IndirectMemberExpression))
+	case exn.ChunkIndex:
+		g.ChunkIndirectElemExpression(node.(*stg.ChunkIndexExpression))
+	default:
+		panic(fmt.Sprintf("unexpected %s operand", node.Kind()))
+	}
 }
 
 func (g *Builder) whileStatement(node *stg.WhileStatement) {

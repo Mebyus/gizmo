@@ -105,6 +105,16 @@ func (g *Builder) ChunkIndexExpression(expr *stg.ChunkIndexExpression) {
 	g.puts(")")
 }
 
+func (g *Builder) ChunkIndirectElemExpression(expr *stg.ChunkIndexExpression) {
+	g.puts("*(")
+	g.ChunkTypeElemMethodName(expr.Type())
+	g.puts("(")
+	g.expr(expr.Target)
+	g.puts(", ")
+	g.expr(expr.Index)
+	g.puts("))")
+}
+
 func (g *Builder) ChunkMemberExpression(expr *stg.ChunkMemberExpression) {
 	g.expr(expr.Target)
 	g.puts(".")
