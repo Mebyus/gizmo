@@ -62,7 +62,7 @@ func (p *Parser) top() error {
 		return p.topType(traits)
 	case token.Var:
 		return p.topVar(traits)
-	case token.Fn:
+	case token.Fun:
 		return p.topFun(traits)
 	case token.Let:
 		return p.topLet(traits)
@@ -108,7 +108,7 @@ func (p *Parser) topPub(traits ast.Traits) error {
 	switch p.tok.Kind {
 	case token.Type:
 		return p.topType(traits)
-	case token.Fn:
+	case token.Fun:
 		return p.topFun(traits)
 	case token.Let:
 		return p.topLet(traits)

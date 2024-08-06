@@ -88,6 +88,45 @@ func (p *Parser) unary() (*ast.UnaryExpression, error) {
 	return topExp, nil
 }
 
+func (p *Parser) tint() (exp ast.TintExp, err error) {
+	pos := p.pos()
+	p.advance() // skip "tint"
+
+	err = p.expect(token.LeftParentheses)
+	if err != nil {
+		return
+	}
+	p.advance() // skip "("
+
+	spec, err := p.typeSpecifier()
+	if err != nil {
+		return
+	}
+
+	err = p.expect(token.Comma)
+	if err != nil {
+		return
+	}
+	p.advance() // skip ","
+
+	target, err := p.expr()
+	if err != nil {
+		return
+	}
+
+	err = p.expect(token.RightParentheses)
+	if err != nil {
+		return
+	}
+	p.advance() // skip ")"
+
+	return ast.TintExp{
+		Pos:    pos,
+		Target: target,
+		Type:   spec,
+	}, nil
+}
+
 func (p *Parser) cast() (ast.CastExpression, error) {
 	p.advance() // skip "cast"
 
@@ -276,6 +315,8 @@ func (p *Parser) operand() (ast.Operand, error) {
 	switch p.tok.Kind {
 	case token.Cast:
 		return p.cast()
+	case token.Tint:
+		return p.tint()
 	case token.BitCast:
 		return p.bitcast()
 	case token.LeftCurly:

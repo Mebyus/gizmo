@@ -82,7 +82,7 @@ type TopLet struct {
 var _ Top = TopLet{}
 
 func (t TopLet) Pin() source.Pos {
-	return t.Pos
+	return t.Name.Pos
 }
 
 // <TopType> = [ "pub" ] "type" <Name> <TypeSpecifier>

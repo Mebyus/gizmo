@@ -92,7 +92,7 @@ func (g *Noder) ReturnStatement(node ast.ReturnStatement) {
 }
 
 func (g *Noder) LetStatement(node ast.LetStatement) {
-	g.genpos(token.Let, node.Pos)
+	g.gen(token.Let)
 	g.ss()
 	g.idn(node.Name)
 	g.gen(token.Colon)
@@ -101,7 +101,7 @@ func (g *Noder) LetStatement(node ast.LetStatement) {
 	g.ss()
 	g.gen(token.Assign)
 	g.ss()
-	g.Expression(node.Expression)
+	g.Expression(node.Expr)
 	g.semi()
 }
 

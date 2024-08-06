@@ -81,7 +81,6 @@ const (
 
 	// Keywords
 
-	Cast
 	Case
 	Jump
 
@@ -91,11 +90,10 @@ const (
 	For
 
 	Defer
-	Fn
+	Fun
 	Import
 
 	Bag
-	BitCast
 
 	Unit
 	Return
@@ -118,6 +116,10 @@ const (
 	Nil
 	True
 	False
+
+	Cast
+	Tint    // truncate (cast with storage size change) integer
+	BitCast // TODO: rename this to memcast
 
 	Receiver // method receiver, consists of one letter "g"
 

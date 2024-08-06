@@ -279,14 +279,13 @@ func (s ForEachStatement) Pin() source.Pos {
 }
 
 type Let struct {
-	Pos source.Pos
-
 	Name Identifier
 
+	// Equals nil if constant type is not specified explicitly.
 	Type TypeSpec
 
-	// Always not nil
-	Expression Expression
+	// Expression that defines constant value. Always not nil.
+	Expr Expression
 }
 
 type LetStatement struct {
@@ -302,7 +301,7 @@ func (LetStatement) Kind() stm.Kind {
 }
 
 func (s LetStatement) Pin() source.Pos {
-	return s.Pos
+	return s.Name.Pos
 }
 
 // <DeferStatement> = "defer" <CallExpression> ";"

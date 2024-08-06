@@ -11,7 +11,7 @@ func (g *Noder) FunctionDefinition(node ast.FunctionDefinition) {
 }
 
 func (g *Noder) FunctionDeclaration(decl ast.FunctionDeclaration) {
-	g.gen(token.Fn)
+	g.gen(token.Fun)
 	g.ss()
 	g.idn(decl.Name)
 	g.ss()

@@ -159,6 +159,25 @@ func (e CastExpression) Pin() source.Pos {
 	return e.Target.Pin()
 }
 
+// <TintExp> = "tint" "[" <TypeSpec> "," <Exp> "]"
+type TintExp struct {
+	nodeOperand
+
+	Pos    source.Pos
+	Target Expression
+	Type   TypeSpec
+}
+
+var _ Expression = TintExp{}
+
+func (TintExp) Kind() exn.Kind {
+	return exn.Tint
+}
+
+func (e TintExp) Pin() source.Pos {
+	return e.Pos
+}
+
 // <BitCastExpression> = "bitcast" "[" <Expression> ":" <TypeSpecifier> "]"
 type BitCastExpression struct {
 	nodeOperand

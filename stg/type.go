@@ -281,6 +281,26 @@ type ChunkTypeDef struct {
 	ElemType *Type
 }
 
+type ArrayTypeDef struct {
+	nodeTypeDef
+
+	ElemType *Type
+
+	// Number of elements in array.
+	Len uint64
+}
+
+func newArrayType(elem *Type, len uint64) *Type {
+	t := &Type{
+		Kind: tpk.Array,
+		Def: ArrayTypeDef{
+			ElemType: elem,
+			Len:      len,
+		},
+	}
+	return t
+}
+
 func newArrayPointerType(ref *Type) *Type {
 	t := &Type{
 		Kind: tpk.ArrayPointer,

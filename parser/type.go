@@ -63,7 +63,7 @@ func (p *Parser) typeSpecifier() (ast.TypeSpec, error) {
 		return p.arrayType()
 	case token.Enum:
 		return p.enumType()
-	case token.Fn:
+	case token.Fun:
 		return p.fnType()
 	case token.Union:
 		return p.unionType()

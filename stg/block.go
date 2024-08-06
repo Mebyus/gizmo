@@ -379,10 +379,10 @@ func (b *Block) addLet(ctx *Context, stmt ast.LetStatement) error {
 		Kind: smk.Let,
 	}
 
-	if stmt.Expression == nil {
+	if stmt.Expr == nil {
 		panic("nil init expression in let statement")
 	}
-	expr, err := b.Scope.Scan(ctx, stmt.Expression)
+	expr, err := b.Scope.Scan(ctx, stmt.Expr)
 	if err != nil {
 		return err
 	}

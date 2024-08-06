@@ -24,7 +24,9 @@ const (
 
 	Unary
 	Binary
+
 	Cast
+	Tint
 	BitCast
 
 	// parenthesized expression
@@ -70,6 +72,7 @@ var text = [...]string{
 	Unary:    "unary",
 	Binary:   "binary",
 	Cast:     "cast",
+	Tint:     "tint",
 	BitCast:  "bitcast",
 	Paren:    "paren",
 	Receiver: "receiver",

@@ -258,9 +258,9 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 				Target: tip,
 				Name:   "ptr",
 
-				// TODO: we probably need to construct this type differntly
-				// based when it is custom chunk type
-				typ: s.Types.storeArrayPointer(t.Def.(*ChunkTypeDef).ElemType),
+				// TODO: we probably need to construct this type differently
+				// when it is custom chunk type
+				typ: s.Types.storeArrayPointer(t.Def.(ChunkTypeDef).ElemType),
 			}, nil
 		default:
 			return nil, fmt.Errorf("%s: chunks do not have \"%s\" member", pos.String(), name)
@@ -458,6 +458,13 @@ func scanBasicLiteral(lit ast.BasicLiteral) Literal {
 		return Integer{Pos: pos, Val: lit.Token.Val}
 	case token.String:
 		return String{Pos: pos, Val: lit.Token.Lit}
+	case token.Rune:
+		// TODO: separate basic literals into classes in AST level,
+		// parser should also verify and transform literals for this nodes
+		if lit.Token.Lit != "" {
+			panic(fmt.Sprintf("complex runes (%s) not implemented", lit.Token.Lit))
+		}
+		return Integer{Pos: pos, Val: lit.Token.Val}
 	default:
 		panic(fmt.Sprintf("not implemented for %s literal", lit.Token.Kind.String()))
 	}

@@ -27,6 +27,69 @@ func (m *Merger) merge() error {
 	if err != nil {
 		return err
 	}
+	// TODO: we need to tiebreak circular hoisting problem for types
+	// and constants. For example consider these unit-level declarations:
+	//
+	//	type Custom struct {
+	//		buf: [SIZE]u8,
+	//		n: int,
+	//	}
+	//
+	//	SIZE := 8 + 8;
+	//
+	// In order to properly create Custom struct we first need to scan
+	// and evaluate (at compile time) expression in SIZE constant definition.
+	//
+	// Our solution to this problem will be to identify custom integer types and
+	// unit-level integer constants first. Then process them before other types and
+	// constants.
+	//
+	// We should probably introduce separate type kinds for signed and unsigned custom
+	// integers instead of deesignating them as just regular custom types. For
+	// architecture dependant integer types (int and uint) we should introduce
+	// bit flag (along with flags field to store it) to indicate integer types which
+	// size depends on architecture.
+	//
+	// Compile time constant integers (even with explicit fixed size) should have
+	// separate types from regular runtime integer types with designated bit flag
+	// set to indicate constant nature of values of such types. In future we can use
+	// such flag to specify (at STG level) function parameters which must be known
+	// at compile time.
+	//
+	// There is a separate problem with walrus constants syntax. Consider this example:
+	//
+	//	a, err := calc_a();
+	//	b, err := cals_b();
+	//
+	// Since second statement tries to alter "err" symbol the statement is invalid with the currently
+	// implied rule that constants (both compile-time and runtime) are defined via walrus syntax.
+	// Rust partially solves it by allowing "let" construct to shadow symbols inside the same block.
+	// This solution is clumsy in my opinion, first of all it may even alter the symbol type mid-block
+	// and second it is only a somewhat mouthful way to circumvent the rule of immutability by default.
+	//
+	// Problem described above is an ergonomic problem of the language:
+	//
+	//	immutability by default vs.
+	//	convenient symbol reuse where it is logically sound, without mouthful syntax
+	//
+	// Maybe we should eliminate syntactic difference between constants and variables,
+	// and make detection whether symbol mutates or not automatic. Consider example below:
+	//
+	//	a := 10; // compile-time constant
+	//	b := a + 2; // variable, mutates later in the code
+	//	c := b - 3; // runtime constant, does not mutate later in the code (can be optimized into compile-time constant)
+	//	...
+	//	b = 1; // symbol mutation automatically turns it into a variable
+	//
+	// This is too much inference for my personal taste. It will be difficult to implement
+	// and confusing to read.
+	//
+	// Perhaps we should ditch the concept of runtime constants for now. And use simple syntax
+	// for distinguishing constants and variables like this:
+	//
+	//	$a := 10;
+	//	b := 3;
+	//
 	err = m.scanConstants()
 	if err != nil {
 		return err
@@ -110,7 +173,7 @@ func (m *Merger) scanCon(s *Symbol) (*ConstDef, error) {
 		return nil, err
 	}
 
-	expr := node.Expression
+	expr := node.Expr
 	if expr == nil {
 		panic("nil expression in constant definition")
 	}

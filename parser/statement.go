@@ -510,13 +510,37 @@ func (p *Parser) varStatement() (statement ast.VarStatement, err error) {
 	}, nil
 }
 
-func (p *Parser) letStatement() (statement ast.LetStatement, err error) {
-	pos := p.tok.Pos
+func (p *Parser) letWalrusStatement() (statement ast.LetStatement, err error) {
+	name := p.idn()
+	p.advance() // skip let name identifier
+	p.advance() // skip ":="
 
+	expression, err := p.expr()
+	if err != nil {
+		return
+	}
+	err = p.expect(token.Semicolon)
+	if err != nil {
+		return
+	}
+	p.advance() // consume ";"
+
+	return ast.LetStatement{
+		Let: ast.Let{
+			Name: name,
+			Expr: expression,
+		},
+	}, nil
+}
+
+func (p *Parser) letStatement() (statement ast.LetStatement, err error) {
 	p.advance() // skip "let"
 	err = p.expect(token.Identifier)
 	if err != nil {
 		return
+	}
+	if p.next.Kind == token.Walrus {
+		return p.letWalrusStatement()
 	}
 	name := p.idn()
 	p.advance() // skip let name identifier
@@ -547,10 +571,9 @@ func (p *Parser) letStatement() (statement ast.LetStatement, err error) {
 
 	return ast.LetStatement{
 		Let: ast.Let{
-			Pos:        pos,
-			Name:       name,
-			Type:       specifier,
-			Expression: expression,
+			Name: name,
+			Type: specifier,
+			Expr: expression,
 		},
 	}, nil
 }

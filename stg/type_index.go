@@ -65,6 +65,9 @@ func (x *TypeIndex) lookup(spec ast.TypeSpec) (*Type, error) {
 		return x.lookupEnum(spec.(ast.EnumType))
 	case tps.ArrayPointer:
 		return x.lookupArrayPointer(spec.(ast.ArrayPointerType).ElemType)
+	case tps.Array:
+		s := spec.(ast.ArrayType)
+		return x.lookupArray(s.ElemType, s.Size)
 	default:
 		panic(fmt.Sprintf("not implemented for %s", spec.Kind().String()))
 	}
@@ -82,6 +85,10 @@ func (x *TypeIndex) storeChunk(elem *Type) *Type {
 	return x.store(newChunkType(elem))
 }
 
+func (x *TypeIndex) storeArray(elem *Type, length uint64) *Type {
+	return x.store(newArrayType(elem, length))
+}
+
 // store saves a given type if it is not yet known to index
 // or returns and old one with the same stable hash.
 func (x *TypeIndex) store(a *Type) *Type {
@@ -92,6 +99,30 @@ func (x *TypeIndex) store(a *Type) *Type {
 		t = a
 	}
 	return t
+}
+
+func (x *TypeIndex) lookupArray(spec ast.TypeSpec, length ast.Expression) (*Type, error) {
+	elem, err := x.lookup(spec)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: we probably need to pass Context from constants scan loop
+	expr, err := x.scope.scan(nil, length)
+	if err != nil {
+		return nil, err
+	}
+	r, err := x.scope.eval(expr)
+	if err != nil {
+		return nil, err
+	}
+
+	t := r.Type()
+	if !t.IsIntegerType() {
+		return nil, fmt.Errorf("%s: only integer types can be used for array length", length.Pin())
+	}
+
+	panic("not implemented")
+	return x.storeArray(elem, 0), nil
 }
 
 func (x *TypeIndex) lookupArrayPointer(spec ast.TypeSpec) (*Type, error) {
