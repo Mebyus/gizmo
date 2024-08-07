@@ -282,7 +282,7 @@ func (g *Builder) Con(s *stg.Symbol) {
 	g.nl()
 	g.SymbolName(s)
 	g.puts(" = ")
-	g.Expression(def.Expr)
+	g.Expression(def.Exp)
 	g.semi()
 	g.nl()
 }

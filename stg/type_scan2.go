@@ -3,6 +3,7 @@ package stg
 import (
 	"fmt"
 
+	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/enums/tpk"
 )
 
@@ -11,31 +12,30 @@ import (
 //
 // after this phase each symbol holding a named type has its Def field
 // set to *Type
-func (m *Merger) bindTypes() error {
+func (m *Merger) eval() error {
 	// TODO: remove debug print
-	fmt.Println("list of isolated types")
+	fmt.Println("list of isolated symbols")
 	for _, i := range m.graph.Isolated {
-		n := m.graph.Nodes[i]
-		s := n.Symbol
-		fmt.Printf("%s\n", s.Name)
-
-		if n.SelfLoop {
-			m.bindRecursiveType(s)
-		} else {
-			s.Def = m.bindType(s)
+		n := &m.graph.Nodes[i]
+		err := m.evalNode(n)
+		if err != nil {
+			return err
 		}
 	}
 
 	fmt.Println()
-	fmt.Println("list of component types")
+	fmt.Println("list of components")
 	for k := 0; k < len(m.graph.Comps); k += 1 {
 		c := &m.graph.Comps[k]
 		fmt.Printf("component %d\n", k)
 		for rank, cohort := range c.Cohorts {
 			fmt.Printf("cohort %d\n", rank)
 			for _, i := range cohort {
-				n := m.graph.Nodes[c.V[i].Index]
-				fmt.Printf("%s\n", n.Symbol.Name)
+				n := &m.graph.Nodes[c.V[i].Index]
+				err := m.evalNode(n)
+				if err != nil {
+					return err
+				}
 			}
 			fmt.Println()
 		}
@@ -45,8 +45,72 @@ func (m *Merger) bindTypes() error {
 	return nil
 }
 
-func (m *Merger) bindRecursiveType(s *Symbol) {
-	node := m.nodes.Type(s.Def.(astIndexSymDef))
+func (m *Merger) evalNode(n *GraphNode) error {
+	s := n.Symbol
+	fmt.Printf("%s %s\n", s.Kind, s.Name)
+
+	var err error
+	switch s.Kind {
+	case smk.Let:
+		if n.SelfLoop {
+			panic("self loop is impossible for const symbol")
+		}
+		err = m.evalConstant(s)
+	case smk.Type:
+		err = m.evalType(s, n.SelfLoop)
+	default:
+		panic(fmt.Sprintf("unexpected %s symbol", s.Kind))
+	}
+	return err
+}
+
+func (m *Merger) evalConstant(s *Symbol) error {
+	scope := m.unit.Scope
+	node := m.nodes.Con(s.Index())
+
+	t, err := scope.Types.Lookup(node.Type)
+	if err != nil {
+		return err
+	}
+
+	exp := node.Expr
+	if exp == nil {
+		panic("nil expression in constant definition")
+	}
+	ctx := m.newConstCtx()
+	e, err := scope.Scan(ctx, exp)
+	if err != nil {
+		return err
+	}
+
+	if t == nil {
+		t = e.Type()
+	} else {
+		panic("type check not implemented")
+	}
+
+	// TODO: eval constant value (reduce expression)
+
+	def := &ConstDef{
+		Exp:  e,
+		Type: t,
+	}
+	s.Def = def
+	s.Type = t
+	return nil
+}
+
+func (m *Merger) evalType(s *Symbol, selfLoop bool) error {
+	if selfLoop {
+		m.evalRecursiveType(s)
+	} else {
+		m.evalSimpleType(s)
+	}
+	return nil
+}
+
+func (m *Merger) evalRecursiveType(s *Symbol) {
+	node := m.nodes.Type(s.Index())
 	t := &Type{
 		Recursive: true,
 
@@ -81,15 +145,15 @@ func (m *Merger) getReceiverMethods(name string) []*Symbol {
 	return symbols
 }
 
-func (m *Merger) bindType(s *Symbol) *Type {
-	node := m.nodes.Type(s.Def.(astIndexSymDef))
+func (m *Merger) evalSimpleType(s *Symbol) {
+	node := m.nodes.Type(s.Index())
 	base, err := m.unit.Scope.Types.lookup(node.Spec)
 	if err != nil {
 		// type graph structure must guarantee successful lookup
 		panic(err)
 	}
 	fmt.Printf("%s: %T\n", s.Name, base.Def)
-	return &Type{
+	t := &Type{
 		Def: CustomTypeDef{
 			Symbol:  s,
 			Base:    base,
@@ -97,4 +161,5 @@ func (m *Merger) bindType(s *Symbol) *Type {
 		},
 		Kind: tpk.Custom,
 	}
+	s.Def = t
 }

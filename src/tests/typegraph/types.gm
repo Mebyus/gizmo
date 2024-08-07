@@ -5,3 +5,5 @@ type Foo struct {
 
 let size2 := 10 + size;
 let size := 10;
+
+let max_foo := 0x0af68;

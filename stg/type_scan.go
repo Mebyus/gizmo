@@ -114,20 +114,41 @@ type Link struct {
 
 type LinkSet map[*Symbol]LinkKind
 
-func NewTypeLinkSet() LinkSet {
+func NewLinkSet() LinkSet {
 	return make(LinkSet)
 }
 
+func (s LinkSet) Has(symbol *Symbol) bool {
+	_, ok := s[symbol]
+	return ok
+}
+
 func (s LinkSet) Add(symbol *Symbol, kind LinkKind) {
-	k, ok := s[symbol]
-	if !ok {
-		s[symbol] = kind
+	switch kind {
+	case linkEmpty:
+		panic("empty kind")
+	case linkDirect:
+		s.AddDirect(symbol)
+	case linkIndirect:
+		s.AddIndirect(symbol)
+	default:
+		panic(fmt.Sprintf("unexpected %s (%d) link kind", kind, kind))
+	}
+}
+
+// Adds direct link to set.
+func (s LinkSet) AddDirect(symbol *Symbol) {
+	s[symbol] = linkDirect
+}
+
+// Adds indirect link to set.
+func (s LinkSet) AddIndirect(symbol *Symbol) {
+	k := s[symbol]
+	if k == linkDirect {
+		// direct link takes priority over indirect one
 		return
 	}
-	if k == linkIndirect && kind == linkDirect {
-		s[symbol] = linkDirect
-		return
-	}
+	s[symbol] = linkIndirect
 }
 
 func (s LinkSet) Elems() []Link {
@@ -153,10 +174,10 @@ type SymbolContext struct {
 
 	Links LinkSet
 
-	// unit custom type name from which scan started.
+	// Unit level symbol from which inspect scan started.
 	Symbol *Symbol
 
-	// keeps track of current link type Kind when descending/ascending
+	// keeps track of current link type kind when descending/ascending
 	// nested type specifiers
 	//
 	// only used during type inspection
@@ -165,7 +186,7 @@ type SymbolContext struct {
 
 func NewSymbolContext(symbol *Symbol) *SymbolContext {
 	return &SymbolContext{
-		Links:  NewTypeLinkSet(),
+		Links:  NewLinkSet(),
 		Symbol: symbol,
 		Kind:   linkDirect,
 	}
@@ -180,7 +201,7 @@ func (c *SymbolContext) push(kind LinkKind) LinkKind {
 	return k
 }
 
-func (m *Merger) shallowScanSymbols() error {
+func (m *Merger) inspect() error {
 	g := NewGraphBuilder(len(m.unit.Types))
 
 	for _, s := range m.unit.Types {
@@ -205,8 +226,8 @@ func (m *Merger) shallowScanSymbols() error {
 			return err
 		}
 
-		if ctx.Links[s] == linkDirect {
-			return fmt.Errorf("%s: symbol \"%s\" directly references itself", s.Pos, s.Name)
+		if ctx.Links.Has(s) {
+			return fmt.Errorf("%s: symbol \"%s\" references itself", s.Pos, s.Name)
 		}
 
 		g.Add(s, ctx.Links.Elems())
@@ -326,7 +347,11 @@ func (m *Merger) shallowScanArrayType(ctx *SymbolContext, spec ast.ArrayType) er
 	// save previous link kind for later
 	k := ctx.push(linkDirect)
 
-	err := m.shallowScanTypeSpecifier(ctx, spec.ElemType)
+	err := m.inspectExp(ctx, spec.Size)
+	if err != nil {
+		return err
+	}
+	err = m.shallowScanTypeSpecifier(ctx, spec.ElemType)
 	if err != nil {
 		return err
 	}

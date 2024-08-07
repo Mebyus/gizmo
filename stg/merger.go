@@ -17,7 +17,7 @@ import (
 //   - 1 (gather) - gather all atoms of the unit
 //   - 2 (index) - index unit level symbol
 //   - 3 (method bind) - bind methods to corresponding receivers
-//   - 4 (inspect) - determine dependency relations between symbols
+//   - 4 (inspect) - determine dependency relations between unit level symbols
 //   - 5 (graph) - construct, map and rank symbol dependency graph
 //   - 6 (static eval) - eval and finalize all properties of unit level types and constants
 //   - 7 (block scan) - recursively scan statements and expressions inside functions

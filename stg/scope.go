@@ -102,6 +102,9 @@ func (s *Scope) nextLevel() uint32 {
 // Lookup a symbol by its name and source code position inside scope
 // and (if not found) all of its parents. If symbol is found its usage
 // count is increased.
+//
+// Note that for global and unit scopes position is irrelevant, since
+// symbols created there are subject to hoisting.
 func (s *Scope) Lookup(name string, pos uint32) *Symbol {
 	sym := s.lookup(name, pos)
 	if sym == nil {

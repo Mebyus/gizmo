@@ -19,11 +19,11 @@ func (m *Merger) merge() error {
 	if err != nil {
 		return err
 	}
-	err = m.shallowScanSymbols()
+	err = m.inspect()
 	if err != nil {
 		return err
 	}
-	err = m.bindTypes()
+	err = m.eval()
 	if err != nil {
 		return err
 	}
@@ -90,10 +90,6 @@ func (m *Merger) merge() error {
 	//	$a := 10;
 	//	b := 3;
 	//
-	err = m.scanConstants()
-	if err != nil {
-		return err
-	}
 	err = m.shallowScanFuns()
 	if err != nil {
 		return err
@@ -145,61 +141,6 @@ func (m *Merger) bindMethods() error {
 	return nil
 }
 
-func (m *Merger) scanConstants() error {
-	for _, s := range m.unit.Lets {
-		c, err := m.scanCon(s)
-		if err != nil {
-			return err
-		}
-		s.Def = c
-
-		if c.Type != nil {
-			s.Type = c.Type
-		} else {
-			// TODO: this won't work if expression has other constants
-			// which are not yet processed
-			s.Type = c.Expr.Type()
-		}
-	}
-	return nil
-}
-
-func (m *Merger) scanCon(s *Symbol) (*ConstDef, error) {
-	scope := m.unit.Scope
-	node := m.nodes.Con(s.Def.(astIndexSymDef))
-
-	t, err := scope.Types.Lookup(node.Type)
-	if err != nil {
-		return nil, err
-	}
-
-	expr := node.Expr
-	if expr == nil {
-		panic("nil expression in constant definition")
-	}
-	ctx := m.newConstCtx()
-	e, err := scope.Scan(ctx, expr)
-	if err != nil {
-		return nil, err
-	}
-
-	if ctx.ref.Has(s) {
-		return nil, fmt.Errorf("%s: init cycle (constant \"%s\" definition references itself)", s.Pos.String(), s.Name)
-	}
-
-	// TODO: check that expression type and constant type match
-	refs := ctx.ref.Elems()
-	if len(refs) != 0 {
-		panic("referencing other symbols in constant definition is not implemented")
-	}
-
-	return &ConstDef{
-		Expr: e,
-		Refs: refs,
-		Type: t,
-	}, nil
-}
-
 func (m *Merger) shallowScanFuns() error {
 	for _, s := range m.unit.Funs {
 		err := m.shallowScanFun(s)
@@ -211,7 +152,7 @@ func (m *Merger) shallowScanFuns() error {
 }
 
 func (m *Merger) shallowScanMethods() error {
-	for _, s := range m.unit.Types {
+	for _, s := range m.unit.Meds {
 		t := s.Def.(*Type)
 		methods := t.Def.(CustomTypeDef).Methods
 		for _, method := range methods {
