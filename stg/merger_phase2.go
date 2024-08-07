@@ -19,7 +19,7 @@ func (m *Merger) merge() error {
 	if err != nil {
 		return err
 	}
-	err = m.shallowScanTypes()
+	err = m.shallowScanSymbols()
 	if err != nil {
 		return err
 	}

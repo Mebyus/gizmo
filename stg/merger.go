@@ -12,12 +12,15 @@ import (
 // Merger is a high-level algorithm driver that gathers multiple ASTs of unit's atoms
 // to produce that unit's type tree.
 //
-// Unit merging is done in two separate phases:
+// Unit merging is done in several separate phases:
 //
-//   - phase 1 - atoms gathering (via Add method)
-//   - phase 2 - symbol indexing, type checking, etc. for the whole unit (via Merge method)
-//
-// Semantic checks and tree construction is split between this two phases.
+//   - 1 (gather) - gather all atoms of the unit
+//   - 2 (index) - index unit level symbol
+//   - 3 (method bind) - bind methods to corresponding receivers
+//   - 4 (inspect) - determine dependency relations between symbols
+//   - 5 (graph) - construct, map and rank symbol dependency graph
+//   - 6 (static eval) - eval and finalize all properties of unit level types and constants
+//   - 7 (block scan) - recursively scan statements and expressions inside functions
 type Merger struct {
 	// Unit that is currently being built by merger.
 	unit Unit
@@ -28,7 +31,7 @@ type Merger struct {
 
 	Warns []Warn
 
-	graph *TypeGraph
+	graph *Graph
 }
 
 type NodesBox struct {

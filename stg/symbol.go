@@ -67,6 +67,10 @@ type Symbol struct {
 	Pub bool
 }
 
+func (s *Symbol) Index() astIndexSymDef {
+	return s.Def.(astIndexSymDef)
+}
+
 // Set of symbols
 type SymSet map[*Symbol]struct{}
 

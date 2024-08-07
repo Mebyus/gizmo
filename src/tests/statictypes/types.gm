@@ -1,0 +1,46 @@
+/* Proposal for static types syntax.
+
+Symbols and literals which values that are known at compile time
+have static types by definition.
+
+For example:
+
+u64 - runtime type of unsigned 64-bit integer. Values of this
+type can vary or be modified at runtime.
+
+<u64> - static unsigned type unsigned 64-bit integer. Values of this
+type are known at compile-time.
+
+In other words angle brackets around the type mark that type
+as static type.
+
+Inside angle brackets two special global identifiers are available:
+
+<int> - marks a static integer of arbitrary size. In contrast
+with signed and unsigned runtime integers it does not have
+"signedness" variants. Values of type <int> can contain 
+positive, negative and zero integers.
+
+<float> - marks a static floating-point number of infinite precision.
+Essentially it represents arbitrary rational number (and works as such
+under the hood).
+
+Functions can accept parameters of static type as any other
+parameter. The syntax is the same for parameters of runtime types and
+static types.
+*/
+
+// This constant is of type <int>. It is known at compile-time
+// and its integer size is not specified.
+let header_size := 16;
+
+// Note that this function can only accept arguments which
+// are compile-time known integers of arbitrary size.
+fun static_add(a: <int>, b: <int>) => <int> {
+    return a + b;
+}
+
+// Compare with syntax of the function "static_add".
+fun add(a: s32, b: s32) => s32 {
+    return a + b;
+}

@@ -1,0 +1,7 @@
+type Foo struct {
+    a: sint,
+    b: [size2]u8,
+}
+
+let size2 := 10 + size;
+let size := 10;

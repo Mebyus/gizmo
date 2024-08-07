@@ -67,11 +67,11 @@ type Type struct {
 
 func (t *Type) Symbol() *Symbol {
 	if t.Builtin {
-		return t.Def.(BuiltinTypeDef).Sym
+		return t.Def.(BuiltinTypeDef).Symbol
 	}
 
 	if t.Kind == tpk.Custom {
-		return t.Def.(CustomTypeDef).Sym
+		return t.Def.(CustomTypeDef).Symbol
 	}
 
 	panic(fmt.Sprintf("%s types cannot be bound to symbols", t.Kind))
@@ -150,11 +150,11 @@ func (t *Type) computeHash() uint64 {
 	switch t.Kind {
 	case tpk.Custom:
 		if t.Recursive {
-			return HashRecursiveName(t.Def.(CustomTypeDef).Sym.Name)
+			return HashRecursiveName(t.Def.(CustomTypeDef).Symbol.Name)
 		}
 		// TODO: we probably should panic here, since
 		// named types are not meant to be looked up by hash
-		return HashName(t.Def.(CustomTypeDef).Sym.Name)
+		return HashName(t.Def.(CustomTypeDef).Symbol.Name)
 	case tpk.Pointer:
 		return HashPointerType(t.Def.(PointerTypeDef).RefType)
 	case tpk.ArrayPointer:
@@ -247,14 +247,14 @@ func (nodeTypeDef) TypeDef() {}
 type BuiltinTypeDef struct {
 	nodeTypeDef
 
-	Sym *Symbol
+	Symbol *Symbol
 }
 
 type CustomTypeDef struct {
 	nodeTypeDef
 
 	// Symbol which creates custom type.
-	Sym *Symbol
+	Symbol *Symbol
 
 	// Type which was given a custom name by the symbol.
 	Base *Type

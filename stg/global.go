@@ -18,7 +18,7 @@ func newTypeSymbol(name string, t *Type) *Symbol {
 
 func (s *Scope) addTypeSymbol(name string, t *Type) {
 	sym := newTypeSymbol(name, t)
-	t.Def = BuiltinTypeDef{Sym: sym}
+	t.Def = BuiltinTypeDef{Symbol: sym}
 	s.BindTypeSymbol(sym)
 }
 
@@ -86,11 +86,11 @@ var (
 	Uint64Type = newUnsignedType(8)
 	UintType   = newUnsignedType(8) // TODO: adjust uint size based on target arch
 
-	Int8Type  = newSignedType(1)
-	Int16Type = newSignedType(2)
-	Int32Type = newSignedType(4)
-	Int64Type = newSignedType(8)
-	IntType   = newSignedType(8) // TODO: adjust int size based on target arch
+	Sint8Type  = newSignedType(1)
+	Sint16Type = newSignedType(2)
+	Sint32Type = newSignedType(4)
+	Sint64Type = newSignedType(8)
+	SintType   = newSignedType(8) // TODO: adjust int size based on target arch
 
 	BoolType = newBooleanType()
 	StrType  = newStringType()
@@ -123,11 +123,11 @@ func NewGlobalScope() *Scope {
 	s.addTypeSymbol("u64", Uint64Type)
 	s.addTypeSymbol("uint", UintType)
 
-	s.addTypeSymbol("i8", Int8Type)
-	s.addTypeSymbol("i16", Int16Type)
-	s.addTypeSymbol("i32", Int32Type)
-	s.addTypeSymbol("i64", Int64Type)
-	s.addTypeSymbol("int", IntType)
+	s.addTypeSymbol("s8", Sint8Type)
+	s.addTypeSymbol("s16", Sint16Type)
+	s.addTypeSymbol("s32", Sint32Type)
+	s.addTypeSymbol("s64", Sint64Type)
+	s.addTypeSymbol("sint", SintType)
 
 	s.addBooleanType()
 	s.addStringType()

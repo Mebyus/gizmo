@@ -175,11 +175,11 @@ func (g *Builder) genBuiltinChunkTypes(chunks map[*stg.Type]*stg.Type) {
 		stg.Uint64Type,
 		stg.UintType,
 
-		stg.Int8Type,
-		stg.Int16Type,
-		stg.Int32Type,
-		stg.Int64Type,
-		stg.IntType,
+		stg.Sint8Type,
+		stg.Sint16Type,
+		stg.Sint32Type,
+		stg.Sint64Type,
+		stg.SintType,
 
 		stg.StrType,
 		stg.BoolType,
@@ -330,7 +330,7 @@ func (g *Builder) getTypeSpec(t *stg.Type) string {
 	case tpk.Trivial:
 		return "struct {}"
 	case tpk.Custom:
-		return g.getSymbolName(t.Def.(stg.CustomTypeDef).Sym)
+		return g.getSymbolName(t.Def.(stg.CustomTypeDef).Symbol)
 	case tpk.Pointer:
 		return g.getTypeSpec(t.Def.(stg.PointerTypeDef).RefType) + "*"
 	case tpk.ArrayPointer:

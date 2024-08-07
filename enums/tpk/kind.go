@@ -224,6 +224,12 @@ const (
 	//	i8, i16, i32, i64, i128, int
 	Signed
 
+	// Rebrand of any unsiged type.
+	CustomUnsigned
+
+	// Rebrand of any signed type.
+	CustomSigned
+
 	// Types with fixed bit size which can hold floating point numbers:
 	//
 	//	f32, f64

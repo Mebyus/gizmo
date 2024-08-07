@@ -1,4 +1,4 @@
-fn inc(x: *int) => int {
+fun inc(x: *int) => int {
     x.@ = 1 + x.@;
     let x2: int = x.@;
 
@@ -8,7 +8,7 @@ fn inc(x: *int) => int {
     return x2;
 }
 
-fn use_inc() => int {
+fun use_inc() => int {
     var x: int = 1;
     let r: int = inc(x.&);
     x = 2;
@@ -16,7 +16,7 @@ fn use_inc() => int {
 }
 
 // top-level test comment
-fn test_dead_code(a: int) {
+fun test_dead_code(a: int) {
     var x: int = a;
     x = "";
     defer use_inc();
@@ -27,20 +27,20 @@ fn test_dead_code(a: int) {
 }
 
 pub
-fn test_assign() => uint {
+fun test_assign() => uint {
     var c: uint = dirty;
     c = 1;
     c += 2;
     return c;
 }
 
-fn abs(a: int) => int {
+fun abs(a: int) => int {
     if a < 0 {
         return -a;
     }
     return a;
 }
 
-fn use_parens(a: int, b: int) => int {
+fun use_parens(a: int, b: int) => int {
     return (a + 2 * b) / 3;
 }

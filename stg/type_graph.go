@@ -5,35 +5,39 @@ import (
 	"sort"
 )
 
-// TypeGraphLink represents a link between two graph nodes.
-type TypeGraphLink struct {
+// GraphLink represents a link between two graph nodes.
+type GraphLink struct {
 	// Index of connected node inside graph's list of nodes.
 	Index int
 
 	// Describes how link was formed: through direct or indirect inclusion.
-	Kind TypeLinkKind
+	Kind LinkKind
 }
 
-type TypeGraphNode struct {
+type GraphNode struct {
 	// Ancestor links between symbols. This slice is created during
 	// initial graph construction. Graph links between nodes are created
 	// based on this information.
-	Links []TypeLink
+	Links []Link
 
 	// List of ancestor nodes indices. For root nodes this list is always empty.
+	// Sorted by link node index.
 	//
 	// These nodes correspond to symbols used by this node's symbol.
-	Anc []TypeGraphLink
+	Anc []GraphLink
 
 	// List of descendant nodes indices. For pinnacle nodes this list is always empty.
+	// Sorted by link node index.
 	//
 	// These nodes correspond to symbols which use this node's symbol.
-	Des []TypeGraphLink
+	Des []GraphLink
 
 	// List of adjacent node indices. This list is obtained by turning
 	// digraph (directed graph) into ugraph (undirected graph). In other
 	// words this is a list of node indices merged from ancestors and
 	// descendants.
+	//
+	// Sorted in ascending order.
 	Adj []int
 
 	// Component number. Each distinct number marks connected isolated component
@@ -49,33 +53,33 @@ type TypeGraphNode struct {
 
 	// Symbol which defines named type attached to this node.
 	// Contains payload information which does not affect graph structure.
-	Sym *Symbol
+	Symbol *Symbol
 
 	// If true means that symbol has indirect link to itself among
 	// its ancestors.
 	SelfLoop bool
 }
 
-type TypeGraphStrayNode struct {
-	Sym      *Symbol
+type GraphStrayNode struct {
+	Symbol   *Symbol
 	SelfLoop bool
 }
 
-type TypeGraph struct {
-	Nodes []TypeGraphNode
+type Graph struct {
+	Nodes []GraphNode
 
 	// Stores all non-trivial (more than 1 node) components inside the graph.
-	Comps []TypeGraphComponent
+	Comps []GraphComponent
 
 	// List of isolated node indices.
 	Isolated []int
 }
 
-type TypeGraphBuilder struct {
-	Nodes []TypeGraphNode
+type GraphBuilder struct {
+	Nodes []GraphNode
 
 	// Stores all non-trivial (more than 1 node) components inside the graph.
-	Comps []TypeGraphComponent
+	Comps []GraphComponent
 
 	// List of isolated node indices.
 	Isolated []int
@@ -103,7 +107,7 @@ type TypeGraphBuilder struct {
 	remap []int
 }
 
-type TypeGraphStack struct {
+type GraphStack struct {
 	// stack elements, each element is a node index
 	s []int
 
@@ -111,21 +115,21 @@ type TypeGraphStack struct {
 	m []bool
 }
 
-func (s *TypeGraphStack) Init(size int) {
+func (s *GraphStack) Init(size int) {
 	s.m = make([]bool, size)
 	s.s = make([]int, 0, size/2) // prealloc some space, to reduce number of reallocations
 }
 
-func (s *TypeGraphStack) Reset() {
+func (s *GraphStack) Reset() {
 	s.s = s.s[:0]
 	clear(s.m)
 }
 
-func (s *TypeGraphStack) Has(i int) bool {
+func (s *GraphStack) Has(i int) bool {
 	return s.m[i]
 }
 
-func (s *TypeGraphStack) Push(i int) {
+func (s *GraphStack) Push(i int) {
 	s.s = append(s.s, i)
 
 	// mark added element as present in stack
@@ -134,7 +138,7 @@ func (s *TypeGraphStack) Push(i int) {
 
 // Pop removes element stored on top of the stack and returns it
 // to the caller.
-func (s *TypeGraphStack) Pop() int {
+func (s *GraphStack) Pop() int {
 	i := s.Top()
 
 	// shrink stack by one element, but keep underlying space
@@ -149,25 +153,24 @@ func (s *TypeGraphStack) Pop() int {
 
 // Top returns element stored on top of the stack. Does not alter
 // stack state.
-func (s *TypeGraphStack) Top() int {
+func (s *GraphStack) Top() int {
 	return s.s[s.tip()]
 }
 
-func (s *TypeGraphStack) tip() int {
+func (s *GraphStack) tip() int {
 	return len(s.s) - 1
 }
 
-func NewTypeGraphBuilder(size int) *TypeGraphBuilder {
-	return &TypeGraphBuilder{
-		Nodes: make([]TypeGraphNode, 0, size),
+func NewGraphBuilder(size int) *GraphBuilder {
+	return &GraphBuilder{
+		Nodes: make([]GraphNode, 0, size),
 
 		sm: make(map[*Symbol]int, size),
-		// vis: make([]bool, size),
 	}
 }
 
 // Add a symbol with the list of its ancestor links.
-func (g *TypeGraphBuilder) Add(s *Symbol, links []TypeLink) {
+func (g *GraphBuilder) Add(s *Symbol, links []Link) {
 	if s == nil {
 		panic("nil symbol")
 	}
@@ -178,9 +181,9 @@ func (g *TypeGraphBuilder) Add(s *Symbol, links []TypeLink) {
 
 	index := len(g.Nodes)
 	g.sm[s] = index
-	g.Nodes = append(g.Nodes, TypeGraphNode{
-		Links: links,
-		Sym:   s,
+	g.Nodes = append(g.Nodes, GraphNode{
+		Links:  links,
+		Symbol: s,
 	})
 }
 
@@ -237,7 +240,7 @@ func MergeInts(a, b []int) []int {
 	return s
 }
 
-func linksToIndices(links []TypeGraphLink) []int {
+func linksToIndices(links []GraphLink) []int {
 	if len(links) == 0 {
 		return nil
 	}
@@ -248,12 +251,12 @@ func linksToIndices(links []TypeGraphLink) []int {
 	return s
 }
 
-func mergeLinks(a, b []TypeGraphLink) []int {
+func mergeLinks(a, b []GraphLink) []int {
 	return MergeInts(linksToIndices(a), linksToIndices(b))
 }
 
 // split graph into connected components
-func (g *TypeGraphBuilder) split() {
+func (g *GraphBuilder) split() {
 	for i := 0; i < len(g.Nodes); i += 1 {
 		// during first pass we construct adjacent links
 		// for all nodes
@@ -291,10 +294,10 @@ func (g *TypeGraphBuilder) split() {
 	}
 }
 
-func (g *TypeGraphBuilder) bfs(n int) {
+func (g *GraphBuilder) bfs(n int) {
 	// create new component and store its index
 	k := len(g.Comps)
-	g.Comps = append(g.Comps, TypeGraphComponent{Num: g.comp})
+	g.Comps = append(g.Comps, GraphComponent{Num: g.comp})
 	c := &g.Comps[k]
 
 	// reset the slice from previous BFS, but keep
@@ -312,7 +315,7 @@ func (g *TypeGraphBuilder) bfs(n int) {
 				c.Pinnacles = append(c.Pinnacles, l)
 			}
 			g.remap[i] = l
-			c.V = append(c.V, TypeGraphVertex{Index: i})
+			c.V = append(c.V, ComponentVertex{Index: i})
 
 			adj := g.Nodes[i].Adj
 			for _, j := range adj {
@@ -351,13 +354,13 @@ func (g *TypeGraphBuilder) bfs(n int) {
 	}
 }
 
-func (g *TypeGraphBuilder) Scan() *TypeGraph {
+func (g *GraphBuilder) Scan() *Graph {
 	for i := 0; i < len(g.Nodes); i += 1 {
 		anc := g.mapAncestors(i)
 		g.Nodes[i].Anc = anc
 
 		for _, l := range anc {
-			g.Nodes[l.Index].Des = append(g.Nodes[l.Index].Des, TypeGraphLink{
+			g.Nodes[l.Index].Des = append(g.Nodes[l.Index].Des, GraphLink{
 				Index: i,
 				Kind:  l.Kind,
 			})
@@ -369,15 +372,15 @@ func (g *TypeGraphBuilder) Scan() *TypeGraph {
 	// TODO: scan clusters for direct-indirect correctness
 	g.rank()
 
-	return &TypeGraph{
+	return &Graph{
 		Nodes:    g.Nodes,
 		Comps:    g.Comps,
 		Isolated: g.Isolated,
 	}
 }
 
-func (g *TypeGraphBuilder) rank() {
-	var r TypeGraphRanker
+func (g *GraphBuilder) rank() {
+	var r GraphRanker
 
 	for k := 0; k < len(g.Comps); k += 1 {
 		c := &g.Comps[k]
@@ -397,7 +400,7 @@ func (g *TypeGraphBuilder) rank() {
 	}
 }
 
-func (g *TypeGraphBuilder) discoverClusters() {
+func (g *GraphBuilder) discoverClusters() {
 	if len(g.Comps) == 0 {
 		return
 	}
@@ -406,7 +409,7 @@ func (g *TypeGraphBuilder) discoverClusters() {
 		panic("connected components are present, but max component size is less than 2 vertices, which is impossible")
 	}
 
-	var w TypeGraphComponentWalker
+	var w GraphComponentWalker
 
 	var k int
 
@@ -435,7 +438,7 @@ func (g *TypeGraphBuilder) discoverClusters() {
 	}
 }
 
-func remapLinks(remap []int, links []TypeGraphLink) []int {
+func remapLinks(remap []int, links []GraphLink) []int {
 	if len(links) == 0 {
 		return nil
 	}
@@ -446,13 +449,13 @@ func remapLinks(remap []int, links []TypeGraphLink) []int {
 	return s
 }
 
-func (g *TypeGraphBuilder) mapAncestors(node int) []TypeGraphLink {
+func (g *GraphBuilder) mapAncestors(node int) []GraphLink {
 	links := g.Nodes[node].Links
 	if len(links) == 0 {
 		return nil
 	}
 
-	anc := make([]TypeGraphLink, 0, len(links))
+	anc := make([]GraphLink, 0, len(links))
 	for _, l := range links {
 		if l.Symbol == nil {
 			panic("nil symbol")
@@ -469,7 +472,7 @@ func (g *TypeGraphBuilder) mapAncestors(node int) []TypeGraphLink {
 		if i == node {
 			g.Nodes[node].SelfLoop = true
 		} else {
-			anc = append(anc, TypeGraphLink{
+			anc = append(anc, GraphLink{
 				Index: i,
 				Kind:  l.Kind,
 			})
@@ -489,7 +492,7 @@ func (g *TypeGraphBuilder) mapAncestors(node int) []TypeGraphLink {
 	for j := 1; j < len(anc); j += 1 {
 		if anc[j-1].Index == anc[j].Index {
 			i := anc[j].Index
-			name := g.Nodes[i].Sym.Name
+			name := g.Nodes[i].Symbol.Name
 			panic(fmt.Sprintf("duplicate ancestor link: %s (i=%d)", name, i))
 		}
 	}
@@ -498,7 +501,7 @@ func (g *TypeGraphBuilder) mapAncestors(node int) []TypeGraphLink {
 
 // Walk implements Tarjan’s algorithm for searching Strongly Connected Components
 // inside directed graph.
-func (w *TypeGraphComponentWalker) Walk() {
+func (w *GraphComponentWalker) Walk() {
 	for _, i := range w.c.Roots {
 		w.walk(i)
 	}
@@ -522,7 +525,7 @@ func (w *TypeGraphComponentWalker) Walk() {
 }
 
 // recursive depth-first walk
-func (w *TypeGraphComponentWalker) walk(v int) {
+func (w *GraphComponentWalker) walk(v int) {
 	w.step += 1
 	w.disc[v] = w.step
 	w.low[v] = w.step
@@ -573,7 +576,10 @@ func (w *TypeGraphComponentWalker) walk(v int) {
 	}
 }
 
-type TypeGraphVertex struct {
+// ComponentVertex represent a vertex (node) inside graph component.
+// This entity is much like GraphNode but does not carry symbol
+// information within itself.
+type ComponentVertex struct {
 	// list of ancestor indices inside V
 	Anc []int
 
@@ -592,8 +598,8 @@ type TypeGraphVertex struct {
 	Cluster int
 }
 
-type TypeGraphComponent struct {
-	V []TypeGraphVertex
+type GraphComponent struct {
+	V []ComponentVertex
 
 	// list of indices inside V
 	Roots []int
@@ -611,15 +617,15 @@ type TypeGraphComponent struct {
 	Num int
 }
 
-func (c *TypeGraphComponent) isTwoLevelNoCluster() bool {
+func (c *GraphComponent) isTwoLevelNoCluster() bool {
 	// component has 2 levels and no cycles
 	return len(c.V) == len(c.Roots)+len(c.Pinnacles)
 }
 
 // Keeps track of internal state for clusters discovery
 // inside graph component.
-type TypeGraphComponentWalker struct {
-	stack TypeGraphStack
+type GraphComponentWalker struct {
+	stack GraphStack
 
 	// Stores discovery step number of visited vertices.
 	//
@@ -632,13 +638,13 @@ type TypeGraphComponentWalker struct {
 	low []int
 
 	// component currently being processed
-	c *TypeGraphComponent
+	c *GraphComponent
 
 	// keeps track on number of steps happened during traversal
 	step int
 }
 
-func (w *TypeGraphComponentWalker) Init(size int, c *TypeGraphComponent) {
+func (w *GraphComponentWalker) Init(size int, c *GraphComponent) {
 	w.disc = make([]int, size)
 	w.low = make([]int, size)
 	w.stack.Init(size)
@@ -646,7 +652,7 @@ func (w *TypeGraphComponentWalker) Init(size int, c *TypeGraphComponent) {
 	w.c = c
 }
 
-func (w *TypeGraphComponentWalker) Reset(c *TypeGraphComponent) {
+func (w *GraphComponentWalker) Reset(c *GraphComponent) {
 	w.step = 0
 	clear(w.disc)
 	clear(w.low)
@@ -655,7 +661,7 @@ func (w *TypeGraphComponentWalker) Reset(c *TypeGraphComponent) {
 	w.c = c
 }
 
-type TypeGraphRanker struct {
+type GraphRanker struct {
 	// Indicates how many ancestors are still unranked for a vertex with
 	// particular index, directly corresponding to index in this slice.
 	// If vertex was already ranked corresponding left value will be 0
@@ -668,10 +674,10 @@ type TypeGraphRanker struct {
 	// buffer for preparing next wave
 	next []int
 
-	c *TypeGraphComponent
+	c *GraphComponent
 }
 
-func (r *TypeGraphRanker) Rank(c *TypeGraphComponent) {
+func (r *GraphRanker) Rank(c *GraphComponent) {
 	r.c = c
 	r.left = r.left[:0]
 	for i := 0; i < len(c.V); i += 1 {
@@ -690,13 +696,13 @@ func (r *TypeGraphRanker) Rank(c *TypeGraphComponent) {
 	r.rank()
 }
 
-func (r *TypeGraphRanker) swap() {
+func (r *GraphRanker) swap() {
 	r.wave, r.next = r.next, r.wave
 	r.next = r.next[:0]
 }
 
 // add node with specified graph index to cohort of the specified rank
-func (r *TypeGraphRanker) add(node int, rank int) {
+func (r *GraphRanker) add(node int, rank int) {
 	for j := len(r.c.Cohorts); j <= rank; j++ {
 		// allocate place for storing slices of graph indices
 		// for cohorts with rank not initialized previously
@@ -706,7 +712,7 @@ func (r *TypeGraphRanker) add(node int, rank int) {
 	r.c.Cohorts[rank] = append(r.c.Cohorts[rank], node)
 }
 
-func (r *TypeGraphRanker) rank() {
+func (r *GraphRanker) rank() {
 	for len(r.wave) != 0 {
 		for _, i := range r.wave {
 			waiters := r.c.V[i].Des

@@ -16,7 +16,7 @@ func (m *Merger) bindTypes() error {
 	fmt.Println("list of isolated types")
 	for _, i := range m.graph.Isolated {
 		n := m.graph.Nodes[i]
-		s := n.Sym
+		s := n.Symbol
 		fmt.Printf("%s\n", s.Name)
 
 		if n.SelfLoop {
@@ -35,7 +35,7 @@ func (m *Merger) bindTypes() error {
 			fmt.Printf("cohort %d\n", rank)
 			for _, i := range cohort {
 				n := m.graph.Nodes[c.V[i].Index]
-				fmt.Printf("%s\n", n.Sym.Name)
+				fmt.Printf("%s\n", n.Symbol.Name)
 			}
 			fmt.Println()
 		}
@@ -53,8 +53,8 @@ func (m *Merger) bindRecursiveType(s *Symbol) {
 		Kind: tpk.Custom,
 	}
 	def := CustomTypeDef{
-		Base: t,
-		Sym:  s,
+		Base:   t,
+		Symbol: s,
 	}
 	t.Def = def
 	s.Def = t
@@ -91,7 +91,7 @@ func (m *Merger) bindType(s *Symbol) *Type {
 	fmt.Printf("%s: %T\n", s.Name, base.Def)
 	return &Type{
 		Def: CustomTypeDef{
-			Sym:     s,
+			Symbol:  s,
 			Base:    base,
 			Methods: m.getReceiverMethods(s.Name),
 		},

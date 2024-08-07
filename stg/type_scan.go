@@ -9,7 +9,7 @@ import (
 	"github.com/mebyus/gizmo/stg/scp"
 )
 
-// TypeLinkKind describes how one type uses another in its definition.
+// LinkKind describes how one type uses another in its definition.
 // In general link type is determined by memory layout of type usage.
 // When one type needs to know the size of another to form its
 // memory layout it means a direct link between them. Indirect link is
@@ -27,13 +27,13 @@ import (
 //   - struct or union field of chunk of A's
 //   - struct or union field of array pointer to A's
 //   - any inclusion with more than one levels of indirections to A
-type TypeLinkKind uint8
+type LinkKind uint8
 
 const (
 	// Zero value of TypeLinkKind. Should not be used explicitly.
 	//
 	// Mostly a trick to detect places where TypeLinkKind is left unspecified.
-	linkEmpty TypeLinkKind = iota
+	linkEmpty LinkKind = iota
 
 	// Direct inclusion. In the example below type B directly
 	// includes type A:
@@ -102,22 +102,23 @@ var linkText = [...]string{
 	linkIndirect: "indirect",
 }
 
-func (k TypeLinkKind) String() string {
+func (k LinkKind) String() string {
 	return linkText[k]
 }
 
-type TypeLink struct {
+// Link describes a dependency connection between two symbols.
+type Link struct {
 	Symbol *Symbol
-	Kind   TypeLinkKind
+	Kind   LinkKind
 }
 
-type TypeLinkSet map[*Symbol]TypeLinkKind
+type LinkSet map[*Symbol]LinkKind
 
-func NewTypeLinkSet() TypeLinkSet {
-	return make(TypeLinkSet)
+func NewTypeLinkSet() LinkSet {
+	return make(LinkSet)
 }
 
-func (s TypeLinkSet) Add(symbol *Symbol, kind TypeLinkKind) {
+func (s LinkSet) Add(symbol *Symbol, kind LinkKind) {
 	k, ok := s[symbol]
 	if !ok {
 		s[symbol] = kind
@@ -129,14 +130,14 @@ func (s TypeLinkSet) Add(symbol *Symbol, kind TypeLinkKind) {
 	}
 }
 
-func (s TypeLinkSet) Elems() []TypeLink {
+func (s LinkSet) Elems() []Link {
 	if len(s) == 0 {
 		return nil
 	}
 
-	elems := make([]TypeLink, 0, len(s))
+	elems := make([]Link, 0, len(s))
 	for symbol, kind := range s {
-		elems = append(elems, TypeLink{
+		elems = append(elems, Link{
 			Symbol: symbol,
 			Kind:   kind,
 		})
@@ -144,54 +145,71 @@ func (s TypeLinkSet) Elems() []TypeLink {
 	return elems
 }
 
-// TypeContext carries information and objects which are needed to perform
-// top-level unit types hoisting, cycled definitions detection, etc.
-type TypeContext struct {
-	links TypeLinkSet
-
+// SymbolContext carries information and objects which are needed to perform
+// unit level symbols hoisting, cycled definitions detection, etc.
+type SymbolContext struct {
+	// only used during type inspection
 	members MembersList
 
-	// top-level custom type name from which scan started.
-	name string
+	Links LinkSet
 
-	// keeps track of current link type kind when descending/ascending
+	// unit custom type name from which scan started.
+	Symbol *Symbol
+
+	// keeps track of current link type Kind when descending/ascending
 	// nested type specifiers
-	kind TypeLinkKind
+	//
+	// only used during type inspection
+	Kind LinkKind
 }
 
-func NewTypeContext(name string) *TypeContext {
-	return &TypeContext{
-		links: NewTypeLinkSet(),
-		name:  name,
-		kind:  linkDirect,
+func NewSymbolContext(symbol *Symbol) *SymbolContext {
+	return &SymbolContext{
+		Links:  NewTypeLinkSet(),
+		Symbol: symbol,
+		Kind:   linkDirect,
 	}
 }
 
-func (c *TypeContext) push(kind TypeLinkKind) TypeLinkKind {
-	k := c.kind
+func (c *SymbolContext) push(kind LinkKind) LinkKind {
+	k := c.Kind
 	if k == linkDirect {
 		// only direct link can be changed by descending nested type specifiers
-		c.kind = kind
+		c.Kind = kind
 	}
 	return k
 }
 
-func (m *Merger) shallowScanTypes() error {
-	g := NewTypeGraphBuilder(len(m.unit.Types))
+func (m *Merger) shallowScanSymbols() error {
+	g := NewGraphBuilder(len(m.unit.Types))
 
 	for _, s := range m.unit.Types {
 		i := s.Def.(astIndexSymDef)
-		ctx := NewTypeContext(s.Name)
+		ctx := NewSymbolContext(s)
 		err := m.shallowScanType(ctx, i)
 		if err != nil {
 			return err
 		}
 
-		if ctx.links[s] == linkDirect {
-			return fmt.Errorf("%s: symbol \"%s\" directly references itself", s.Pos.String(), s.Name)
+		if ctx.Links[s] == linkDirect {
+			return fmt.Errorf("%s: symbol \"%s\" directly references itself", s.Pos, s.Name)
 		}
 
-		g.Add(s, ctx.links.Elems())
+		g.Add(s, ctx.Links.Elems())
+	}
+
+	for _, s := range m.unit.Lets {
+		ctx := NewSymbolContext(s)
+		err := m.inspectConstant(ctx)
+		if err != nil {
+			return err
+		}
+
+		if ctx.Links[s] == linkDirect {
+			return fmt.Errorf("%s: symbol \"%s\" directly references itself", s.Pos, s.Name)
+		}
+
+		g.Add(s, ctx.Links.Elems())
 	}
 
 	m.graph = g.Scan()
@@ -200,7 +218,7 @@ func (m *Merger) shallowScanTypes() error {
 
 // performs preliminary top-level type definition scan in order to obtain data
 // necessary for constructing dependency graph between the named types
-func (m *Merger) shallowScanType(ctx *TypeContext, i astIndexSymDef) error {
+func (m *Merger) shallowScanType(ctx *SymbolContext, i astIndexSymDef) error {
 	spec := m.nodes.Type(i).Spec
 	kind := spec.Kind()
 
@@ -222,8 +240,8 @@ func (m *Merger) shallowScanType(ctx *TypeContext, i astIndexSymDef) error {
 	return err
 }
 
-func (m *Merger) shallowScanStructType(ctx *TypeContext, spec ast.StructType) error {
-	methods := m.nodes.MedsByReceiver[ctx.name]
+func (m *Merger) shallowScanStructType(ctx *SymbolContext, spec ast.StructType) error {
+	methods := m.nodes.MedsByReceiver[ctx.Symbol.Name]
 	ctx.members.Init(len(spec.Fields) + len(methods))
 
 	for _, field := range spec.Fields {
@@ -243,7 +261,7 @@ func (m *Merger) shallowScanStructType(ctx *TypeContext, spec ast.StructType) er
 	return nil
 }
 
-func (m *Merger) shallowScanTypeMethod(ctx *TypeContext, i astIndexSymDef) error {
+func (m *Merger) shallowScanTypeMethod(ctx *SymbolContext, i astIndexSymDef) error {
 	method := m.nodes.Med(i)
 	name := method.Name.Lit
 	pos := method.Name.Pos
@@ -262,7 +280,7 @@ func (m *Merger) shallowScanTypeMethod(ctx *TypeContext, i astIndexSymDef) error
 	return nil
 }
 
-func (m *Merger) shallowScanStructField(ctx *TypeContext, field ast.FieldDefinition) error {
+func (m *Merger) shallowScanStructField(ctx *SymbolContext, field ast.FieldDefinition) error {
 	name := field.Name.Lit
 	pos := field.Name.Pos
 
@@ -285,7 +303,7 @@ func (m *Merger) shallowScanStructField(ctx *TypeContext, field ast.FieldDefinit
 	return nil
 }
 
-func (m *Merger) shallowScanTypeSpecifier(ctx *TypeContext, spec ast.TypeSpec) error {
+func (m *Merger) shallowScanTypeSpecifier(ctx *SymbolContext, spec ast.TypeSpec) error {
 	switch spec.Kind() {
 	case tps.Name:
 		return m.shallowScanNamedType(ctx, spec.(ast.TypeName))
@@ -297,18 +315,14 @@ func (m *Merger) shallowScanTypeSpecifier(ctx *TypeContext, spec ast.TypeSpec) e
 		return m.shallowScanArrayType(ctx, spec.(ast.ArrayType))
 	case tps.ArrayPointer:
 		return m.shallowScanArrayPointerType(ctx, spec.(ast.ArrayPointerType))
-	case tps.Struct:
-		return fmt.Errorf("%s: anonymous nested structs are not allowed", spec.Pin().String())
-	case tps.Enum:
-		return fmt.Errorf("%s: anonymous nested enums are not allowed", spec.Pin().String())
-	case tps.Union:
-		return fmt.Errorf("%s: anonymous nested unions are not allowed", spec.Pin().String())
+	case tps.Struct, tps.Enum, tps.Union, tps.Bag:
+		return fmt.Errorf("%s: anonymous nested %ss are not allowed", spec.Pin(), spec.Kind())
 	default:
 		panic(fmt.Sprintf("not implemented for %s", spec.Kind().String()))
 	}
 }
 
-func (m *Merger) shallowScanArrayType(ctx *TypeContext, spec ast.ArrayType) error {
+func (m *Merger) shallowScanArrayType(ctx *SymbolContext, spec ast.ArrayType) error {
 	// save previous link kind for later
 	k := ctx.push(linkDirect)
 
@@ -318,11 +332,11 @@ func (m *Merger) shallowScanArrayType(ctx *TypeContext, spec ast.ArrayType) erro
 	}
 
 	// restore previous link kind
-	ctx.kind = k
+	ctx.Kind = k
 	return nil
 }
 
-func (m *Merger) shallowScanArrayPointerType(ctx *TypeContext, spec ast.ArrayPointerType) error {
+func (m *Merger) shallowScanArrayPointerType(ctx *SymbolContext, spec ast.ArrayPointerType) error {
 	// save previous link kind for later
 	k := ctx.push(linkIndirect)
 
@@ -332,11 +346,11 @@ func (m *Merger) shallowScanArrayPointerType(ctx *TypeContext, spec ast.ArrayPoi
 	}
 
 	// restore previous link kind
-	ctx.kind = k
+	ctx.Kind = k
 	return nil
 }
 
-func (m *Merger) shallowScanChunkType(ctx *TypeContext, spec ast.ChunkType) error {
+func (m *Merger) shallowScanChunkType(ctx *SymbolContext, spec ast.ChunkType) error {
 	// save previous link kind for later
 	k := ctx.push(linkIndirect)
 
@@ -346,11 +360,11 @@ func (m *Merger) shallowScanChunkType(ctx *TypeContext, spec ast.ChunkType) erro
 	}
 
 	// restore previous link kind
-	ctx.kind = k
+	ctx.Kind = k
 	return nil
 }
 
-func (m *Merger) shallowScanPointerType(ctx *TypeContext, spec ast.PointerType) error {
+func (m *Merger) shallowScanPointerType(ctx *SymbolContext, spec ast.PointerType) error {
 	// save previous link kind for later
 	k := ctx.push(linkIndirect)
 
@@ -360,11 +374,11 @@ func (m *Merger) shallowScanPointerType(ctx *TypeContext, spec ast.PointerType) 
 	}
 
 	// restore previous link kind
-	ctx.kind = k
+	ctx.Kind = k
 	return nil
 }
 
-func (m *Merger) shallowScanNamedType(ctx *TypeContext, spec ast.TypeName) error {
+func (m *Merger) shallowScanNamedType(ctx *SymbolContext, spec ast.TypeName) error {
 	name := spec.Name.Lit
 	pos := spec.Name.Pos
 
@@ -378,7 +392,7 @@ func (m *Merger) shallowScanNamedType(ctx *TypeContext, spec ast.TypeName) error
 	}
 
 	if symbol.Scope.Kind == scp.Unit {
-		ctx.links.Add(symbol, ctx.kind)
+		ctx.Links.Add(symbol, ctx.Kind)
 	}
 	return nil
 }
