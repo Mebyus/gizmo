@@ -63,13 +63,20 @@ func (False) Type() *Type {
 	return StaticBoolean
 }
 
-// Integer represents integer literal usage in source code.
+// Integer represents integer literal usage
+// or statically evaluated integer.
 type Integer struct {
 	nodeLiteral
 
 	Pos source.Pos
 
 	Val uint64
+
+	typ *Type
+
+	// True if integer if negative.
+	// Only evaluated integer can be negative.
+	Neg bool
 }
 
 // Explicit interface implementation check
@@ -83,8 +90,8 @@ func (n Integer) Pin() source.Pos {
 	return n.Pos
 }
 
-func (Integer) Type() *Type {
-	return StaticInteger
+func (n Integer) Type() *Type {
+	return n.typ
 }
 
 // String represents string literal usage in source code.

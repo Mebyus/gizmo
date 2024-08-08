@@ -289,14 +289,7 @@ func (g *Builder) Con(s *stg.Symbol) {
 
 func (g *Builder) getSymbolName(s *stg.Symbol) string {
 	if s.Scope.Kind == scp.Global {
-		switch s.Name {
-		case "int":
-			return "i64" // TODO: determine name based on type size
-		case "uint":
-			return "u64"
-		default:
-			return s.Name
-		}
+		return s.Name
 	}
 	if s.Scope.Kind == scp.Unit {
 		if s.Kind == smk.Type {
@@ -322,7 +315,7 @@ func (g *Builder) getTypeSpec(t *stg.Type) string {
 	if t == nil {
 		return "void"
 	}
-	if t.Builtin {
+	if t.Builtin() {
 		return g.getSymbolName(t.Symbol())
 	}
 

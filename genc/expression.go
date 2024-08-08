@@ -162,8 +162,11 @@ func (g *Builder) IndirectMemberExpression(expr *stg.IndirectMemberExpression) {
 	g.puts(expr.Member.Name)
 }
 
-func (g *Builder) Integer(expr stg.Integer) {
-	g.puts(strconv.FormatUint(expr.Val, 10))
+func (g *Builder) Integer(exp stg.Integer) {
+	if exp.Neg {
+		g.puts("-")
+	}
+	g.puts(strconv.FormatUint(exp.Val, 10))
 }
 
 func (g *Builder) CallArgs(args []stg.Expression) {

@@ -68,7 +68,7 @@ func (m *Merger) inspectExp(ctx *SymbolContext, exp ast.Expression) error {
 	case exn.Symbol:
 		return m.inspectSymbolExp(ctx, exp.(ast.SymbolExpression))
 	case exn.Unary:
-		return m.inspectUnaryExp(ctx, exp.(ast.UnaryExpression))
+		return m.inspectUnaryExp(ctx, exp.(*ast.UnaryExpression))
 	case exn.Binary:
 		return m.inspectBinaryExp(ctx, exp.(ast.BinaryExpression))
 	case exn.Paren:
@@ -95,7 +95,7 @@ func (m *Merger) inspectSymbolExp(ctx *SymbolContext, exp ast.SymbolExpression) 
 	return nil
 }
 
-func (m *Merger) inspectUnaryExp(ctx *SymbolContext, exp ast.UnaryExpression) error {
+func (m *Merger) inspectUnaryExp(ctx *SymbolContext, exp *ast.UnaryExpression) error {
 	return m.inspectExp(ctx, exp.Inner)
 }
 

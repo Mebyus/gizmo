@@ -111,7 +111,7 @@ func (x *TypeIndex) lookupArray(spec ast.TypeSpec, length ast.Expression) (*Type
 	if err != nil {
 		return nil, err
 	}
-	r, err := x.scope.eval(expr)
+	r, err := x.scope.evalStaticExp(expr)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +190,7 @@ func (x *TypeIndex) lookupNamed(idn ast.Identifier) (*Type, error) {
 		panic(fmt.Sprintf("unexpected symbol kind: %s", s.Kind.String()))
 	}
 	t := s.Def.(*Type)
-	if t.Builtin || t.Kind == tpk.Custom {
+	if t.Builtin() || t.Kind == tpk.Custom {
 		return t, nil
 	}
 	panic(fmt.Sprintf("unexpected type kind: %s", t.Kind.String()))

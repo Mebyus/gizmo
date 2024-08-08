@@ -6,7 +6,6 @@ import (
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/stm"
 	"github.com/mebyus/gizmo/enums/smk"
-	"github.com/mebyus/gizmo/enums/tpk"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/stg/scp"
 	"github.com/mebyus/gizmo/stg/sfp"
@@ -213,10 +212,10 @@ func (b *Block) addReturn(ctx *Context, stmt ast.ReturnStatement) error {
 
 	if stmt.Expression == nil {
 		if ctx.ret != nil {
-			return fmt.Errorf("%s: empty return in function which return value is not empty", pos.String())
+			return fmt.Errorf("%s: empty return in function which return value is not empty", pos)
 		}
 		if ctx.never {
-			return fmt.Errorf("%s: return used in function which is marked as never returning", pos.String())
+			return fmt.Errorf("%s: return used in function which is marked as never returning", pos)
 		}
 
 		b.addNode(&ReturnStatement{Pos: pos})
@@ -224,83 +223,31 @@ func (b *Block) addReturn(ctx *Context, stmt ast.ReturnStatement) error {
 	}
 
 	if ctx.ret == nil {
-		return fmt.Errorf("%s: return with expression in function which does not return a value", pos.String())
+		return fmt.Errorf("%s: return with expression in function which does not return a value", pos)
 	}
 	if ctx.never {
 		panic("unreachable: impossible condition")
 	}
 
-	expr, err := b.Scope.Scan(ctx, stmt.Expression)
+	exp, err := b.Scope.Scan(ctx, stmt.Expression)
 	if err != nil {
 		return err
 	}
-	t := expr.Type()
+	t := exp.Type()
 	if t == nil {
-		panic(fmt.Sprintf("%s: %s expression has no type", expr.Pin().String(), expr.Kind()))
+		panic(fmt.Sprintf("%s: %s expression has no type", exp.Pin(), exp.Kind()))
 	}
-	err = checkReturnType(expr.Pin(), ctx.ret, t)
+	err = typeCheckExp(ctx.ret, exp)
 	if err != nil {
 		return err
 	}
 
 	b.addNode(&ReturnStatement{
 		Pos:  pos,
-		Expr: expr,
+		Expr: exp,
 	})
 	return nil
 }
-
-func checkReturnType(pos source.Pos, r, t *Type) error {
-	if t == r {
-		return nil
-	}
-	if t.Kind == tpk.StaticBoolean && r.Kind == tpk.Boolean {
-		return nil
-	}
-	if t.Kind == tpk.StaticInteger && (r.Kind == tpk.Unsigned || r.Kind == tpk.Signed) {
-		return nil
-	}
-
-	if t.Kind == tpk.Signed && r.Kind == tpk.Signed {
-		// try to promote integer of less size to a higher one
-		if t.Size < r.Size {
-			return nil
-		}
-		return fmt.Errorf("%s: cannot promote i%d to return type i%d",
-			pos.String(), t.Size, r.Size)
-	}
-
-	return fmt.Errorf("%s: mismatched return types (%s and %s)",
-		pos.String(), r.Kind.String(), t.Kind.String())
-}
-
-// func (b *Block) addIndirectAssign(ctx *Context, stmt ast.IndirectAssignStatement) error {
-// 	name := stmt.Target.Lit
-// 	pos := stmt.Target.Pos
-// 	s := b.Scope.Lookup(name, pos.Num)
-// 	if s == nil {
-// 		return fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
-// 	}
-// 	if s.Scope.Kind == scp.Unit {
-// 		ctx.ref.Add(s)
-// 	}
-
-// 	if s.Type.Kind != tpk.Pointer {
-// 		return fmt.Errorf("%s: invalid operation (indirect on non-pointer type)", pos)
-// 	}
-
-// 	expr, err := b.Scope.Scan(ctx, stmt.Expression)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	b.addNode(&IndirectAssignStatement{
-// 		Pos:    pos,
-// 		Target: s,
-// 		Expr:   expr,
-// 	})
-// 	return nil
-// }
 
 func (b *Block) addAssign(ctx *Context, stmt ast.AssignStatement) error {
 	o, err := b.Scope.scanChainOperand(ctx, stmt.Target)

@@ -3,6 +3,7 @@ package stg
 import (
 	"fmt"
 
+	"github.com/mebyus/gizmo/ast/exn"
 	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/enums/tpk"
 )
@@ -82,9 +83,23 @@ func (m *Merger) evalConstant(s *Symbol) error {
 	if err != nil {
 		return err
 	}
+	e2, err := scope.evalStaticExp(e)
+	if err != nil {
+		return err
+	}
+
+	// TODO: remove debug print
+	if e2.Kind() == exn.Integer {
+		i := e2.(Integer)
+		sign := ""
+		if i.Neg {
+			sign = "-"
+		}
+		fmt.Printf("integer const %s = %s%d\n", s.Name, sign, i.Val)
+	}
 
 	if t == nil {
-		t = e.Type()
+		t = e2.Type()
 	} else {
 		panic("type check not implemented")
 	}
@@ -92,7 +107,7 @@ func (m *Merger) evalConstant(s *Symbol) error {
 	// TODO: eval constant value (reduce expression)
 
 	def := &ConstDef{
-		Exp:  e,
+		Exp:  e2,
 		Type: t,
 	}
 	s.Def = def
@@ -112,9 +127,8 @@ func (m *Merger) evalType(s *Symbol, selfLoop bool) error {
 func (m *Merger) evalRecursiveType(s *Symbol) {
 	node := m.nodes.Type(s.Index())
 	t := &Type{
-		Recursive: true,
-
-		Kind: tpk.Custom,
+		Flags: TypeFlagRecursive,
+		Kind:  tpk.Custom,
 	}
 	def := CustomTypeDef{
 		Base:   t,

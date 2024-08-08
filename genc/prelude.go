@@ -7,11 +7,11 @@ typedef unsigned int u32;
 typedef unsigned long int u64;
 typedef __uint128_t u128;
 
-typedef signed char i8;
-typedef signed short int i16;
-typedef signed int i32;
-typedef signed long int i64;
-typedef __int128_t i128;
+typedef signed char s8;
+typedef signed short int s16;
+typedef signed int s32;
+typedef signed long int s64;
+typedef __int128_t s128;
 
 typedef float f32;
 typedef double f64;
@@ -19,6 +19,9 @@ typedef __float128 f128;
 
 typedef _Bool bool;
 typedef u32 rune;
+
+typedef u64 uint;
+typedef s64 sint;
 
 #define nil 0
 #define true 1

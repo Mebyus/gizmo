@@ -265,7 +265,7 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 		default:
 			return nil, fmt.Errorf("%s: chunks do not have \"%s\" member", pos.String(), name)
 		}
-	case tpk.Signed, tpk.Unsigned, tpk.Boolean, tpk.Float:
+	case tpk.Integer, tpk.Boolean, tpk.Float:
 		return nil, fmt.Errorf("%s: cannot select a member from %s type",
 			pos.String(), t.Kind.String())
 	default:
@@ -390,7 +390,7 @@ func (s *Scope) scanCallArgs(ctx *Context, pos source.Pos, params []*Symbol, arg
 			return nil, err
 		}
 
-		err = checkCallArgType(param, a)
+		err = typeCheckExp(param.Type, a)
 		if err != nil {
 			return nil, err
 		}
@@ -455,7 +455,7 @@ func scanBasicLiteral(lit ast.BasicLiteral) Literal {
 	case token.False:
 		return False{Pos: pos}
 	case token.BinaryInteger, token.OctalInteger, token.DecimalInteger, token.HexadecimalInteger:
-		return Integer{Pos: pos, Val: lit.Token.Val}
+		return Integer{Pos: pos, Val: lit.Token.Val, typ: PerfectIntegerType}
 	case token.String:
 		return String{Pos: pos, Val: lit.Token.Lit}
 	case token.Rune:
@@ -464,7 +464,7 @@ func scanBasicLiteral(lit ast.BasicLiteral) Literal {
 		if lit.Token.Lit != "" {
 			panic(fmt.Sprintf("complex runes (%s) not implemented", lit.Token.Lit))
 		}
-		return Integer{Pos: pos, Val: lit.Token.Val}
+		return Integer{Pos: pos, Val: lit.Token.Val, typ: PerfectIntegerType}
 	default:
 		panic(fmt.Sprintf("not implemented for %s literal", lit.Token.Kind.String()))
 	}

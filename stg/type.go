@@ -50,6 +50,10 @@ type Type struct {
 	// where the type is defined.
 	Unit uint64
 
+	// Bit flags with additional type properties. Actual meaning may differ
+	// upon Kind.
+	Flags TypeFlag
+
 	// Byte size of this type's value. May be 0 for some types.
 	// More specifically this field equals the stride between two
 	// consecutive elements of this type inside an array.
@@ -57,16 +61,52 @@ type Type struct {
 
 	// Discriminator for type definition category.
 	Kind tpk.Kind
+}
 
-	// True for types that are language builtins.
-	Builtin bool
+// TypeFlag bit flags for specifing additional type properties.
+type TypeFlag uint64
 
-	// True for types which definition references itself.
-	Recursive bool
+const (
+	// Static variant of the type.
+	TypeFlagStatic TypeFlag = 1 << iota
+
+	// Type is a builtin.
+	TypeFlagBuiltin
+
+	// Type has recursive definition.
+	TypeFlagRecursive
+
+	// Signed integer type.
+	TypeFlagSigned
+)
+
+func (t *Type) Static() bool {
+	return t.Flags&TypeFlagStatic != 0
+}
+
+// Returns true for types that are language builtins.
+func (t *Type) Builtin() bool {
+	return t.Flags&TypeFlagBuiltin != 0
+}
+
+// Returns true for types which definition references itself.
+func (t *Type) Recursive() bool {
+	return t.Flags&TypeFlagRecursive != 0
+}
+
+// Returns true for signed integer type and false otherwise.
+// In particular returns false for unsigned integer types.
+func (t *Type) Signed() bool {
+	return t.Flags&TypeFlagSigned != 0
+}
+
+// Returns true for perfect integer type.
+func (t *Type) PerfectInteger() bool {
+	return t.Kind == tpk.Integer && t.Static() && t.Size == 0
 }
 
 func (t *Type) Symbol() *Symbol {
-	if t.Builtin {
+	if t.Builtin() {
 		return t.Def.(BuiltinTypeDef).Symbol
 	}
 
@@ -79,10 +119,10 @@ func (t *Type) Symbol() *Symbol {
 
 func (t *Type) IsIntegerType() bool {
 	switch t.Kind {
-	case tpk.Unsigned, tpk.Signed, tpk.StaticInteger:
+	case tpk.Integer:
 		return true
 	case tpk.Custom:
-		return t.Def.(CustomTypeDef).Base.IsIntegerType()
+		return t.Def.(CustomTypeDef).Base.Kind == tpk.Integer
 	default:
 		return false
 	}
@@ -106,15 +146,18 @@ type Stable struct {
 	// hash of unit in which type is defined (if it's a named type)
 	Unit uint64
 
+	Flags TypeFlag
+
 	// kind of type itself
 	Kind tpk.Kind
 }
 
 func (t *Type) Stable() Stable {
 	return Stable{
-		Hash: t.Hash(),
-		Unit: t.Unit,
-		Kind: t.Kind,
+		Hash:  t.Hash(),
+		Unit:  t.Unit,
+		Flags: t.Flags,
+		Kind:  t.Kind,
 	}
 }
 
@@ -143,13 +186,16 @@ func (t *Type) Hash() uint64 {
 }
 
 func (t *Type) computeHash() uint64 {
-	if t.Builtin {
+	if t.PerfectInteger() {
+		return uint64(tpk.Integer)
+	}
+	if t.Builtin() {
 		return HashName(t.Symbol().Name)
 	}
 
 	switch t.Kind {
 	case tpk.Custom:
-		if t.Recursive {
+		if t.Recursive() {
 			return HashRecursiveName(t.Def.(CustomTypeDef).Symbol.Name)
 		}
 		// TODO: we probably should panic here, since
@@ -163,8 +209,6 @@ func (t *Type) computeHash() uint64 {
 		return HashChunkType(t.Def.(ChunkTypeDef).ElemType)
 	case tpk.Struct:
 		return HashStructType(t)
-	case tpk.StaticInteger:
-		return uint64(tpk.StaticInteger)
 	case tpk.StaticBoolean:
 		return uint64(tpk.StaticBoolean)
 	case tpk.StaticFloat:
@@ -334,49 +378,61 @@ func newStructType(members MembersList) *Type {
 }
 
 // returns an error if argument type does not match parameter type
-func checkCallArgType(param *Symbol, arg Expression) error {
-	t := arg.Type()
-	pt := param.Type
-	if t == pt {
+func typeCheckExp(want *Type, exp Expression) error {
+	t := exp.Type()
+	if t == want {
 		return nil
 	}
 
-	switch pt.Kind {
-	case tpk.Unsigned:
-		switch t.Kind {
-		case tpk.StaticInteger:
-			return nil
-		case tpk.Unsigned:
-			if t.Size < pt.Size {
-				return nil
-			}
-		case tpk.Signed:
-			return fmt.Errorf("%s: cannot silently convert signed to unsigned integer", arg.Pin().String())
+	switch want.Kind {
+	case tpk.Integer:
+		if t.Kind != tpk.Integer {
+			return fmt.Errorf("%s: param expects integer type, but argument has %s type",
+				exp.Pin(), t.Kind)
 		}
-	case tpk.Signed:
-		switch t.Kind {
-		case tpk.StaticInteger:
+
+		if t.PerfectInteger() {
+			// TODO: check that static integer fits into parameter type max value
+			// and there is no "signedness conflict" between type and value
 			return nil
-		case tpk.Unsigned:
-			if t.Size < pt.Size {
-				return nil
+		}
+
+		if want.Signed() {
+			if t.Signed() {
+				if t.Size < want.Size {
+					// argument fits into parameter type
+					// silently cast signed integer
+					// into bigger one
+					return nil
+				}
+			} else {
+				if t.Size < want.Size {
+					// argument fits into parameter type
+					// silently cast unsigned integer
+					// into bigger signed one
+					return nil
+				}
 			}
-		case tpk.Signed:
-			if t.Size < pt.Size {
-				return nil
+		} else {
+			if t.Signed() {
+				return fmt.Errorf("%s: cannot silently convert signed to unsigned integer", exp.Pin())
+			} else {
+				if t.Size < want.Size {
+					// argument fits into parameter type
+					// silently cast unsigned integer
+					// into bigger one
+					return nil
+				}
 			}
 		}
 	case tpk.Custom:
-
+		panic("not implemented")
 	default:
-		panic(fmt.Errorf("%s param types not implemented", pt.Kind.String()))
+		panic(fmt.Errorf("%s param types not implemented", want.Kind.String()))
 	}
 
-	// TODO: check that static integer fits into parameter type max value
-	// and there is no "signedness conflict" between type and value
-
 	return fmt.Errorf("%s: mismatched types of call argument (%s) and parameter (%s)",
-		arg.Pin().String(), t.Kind, pt.Kind)
+		exp.Pin().String(), t.Kind, want.Kind)
 }
 
 type MemberKind uint8

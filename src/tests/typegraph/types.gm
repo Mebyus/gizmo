@@ -1,9 +1,12 @@
 type Foo struct {
     a: sint,
-    b: [size2]u8,
+    // b: [size2]u8,
 }
 
 let size2 := 10 + size;
 let size := 10;
 
 let max_foo := 0x0af68;
+
+let bar := -35 + size2;
+let foo2 := 1 - size;

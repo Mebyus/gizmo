@@ -18,12 +18,26 @@ const (
 	// There is always only one trivial type.
 	Trivial
 
-	// Type for static integers (literals, constants and expressions).
-	// Includes positive, negative and zero integers.
+	// Type for any integers (literals, constants and expressions)
+	// excluding custom integer types.
 	//
-	// There is always only one type of this category and it is the base
-	// of all static positive integer flavors.
-	StaticInteger
+	// Flags specify whether this integer type has specified storage
+	// size, is signed or unsigned, static or runtime type.
+	//
+	// Types with fixed bit size which can hold unsigned integers:
+	//
+	//	u8, u16, u32, u64, u128, uint
+	//
+	// Types with fixed bit size which can hold signed integers:
+	//
+	//	s8, s16, s32, s64, s128, sint
+	//
+	// Static integer of arbitrary size is specified as:
+	//
+	//	<int>
+	//
+	// And this static type has size set to 0.
+	Integer
 
 	// Type for static floats (literals, constants and expressions).
 	//
@@ -214,22 +228,6 @@ const (
 	// raw bytes of data
 	Chunk
 
-	// Types with fixed bit size which can hold unsigned integers:
-	//
-	//	u8, u16, u32, u64, u128, uint
-	Unsigned
-
-	// Types with fixed bit size which can hold signed integers:
-	//
-	//	i8, i16, i32, i64, i128, int
-	Signed
-
-	// Rebrand of any unsiged type.
-	CustomUnsigned
-
-	// Rebrand of any signed type.
-	CustomSigned
-
 	// Types with fixed bit size which can hold floating point numbers:
 	//
 	//	f32, f64
@@ -263,7 +261,7 @@ const (
 var text = [...]string{
 	empty: "<nil>",
 
-	StaticInteger: "static.integer",
+	Integer:       "integer",
 	StaticFloat:   "static.float",
 	StaticString:  "static.string",
 	StaticBoolean: "static.boolean",
@@ -283,8 +281,6 @@ var text = [...]string{
 	Proto:        "proto",
 	Blue:         "blue",
 	Chunk:        "chunk",
-	Unsigned:     "unsigned",
-	Signed:       "signed",
 	Float:        "float",
 	String:       "string",
 	Boolean:      "boolean",

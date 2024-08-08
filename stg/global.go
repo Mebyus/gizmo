@@ -37,36 +37,44 @@ func newStaticType(kind tpk.Kind) *Type {
 
 func newBooleanType() *Type {
 	t := &Type{
-		Kind:    tpk.Boolean,
-		Size:    1,
-		Builtin: true,
+		Kind:  tpk.Boolean,
+		Size:  1,
+		Flags: TypeFlagBuiltin,
 	}
 	return t
 }
 
 func newStringType() *Type {
 	t := &Type{
-		Kind:    tpk.String,
-		Size:    16,
-		Builtin: true,
+		Kind:  tpk.String,
+		Size:  16,
+		Flags: TypeFlagBuiltin,
 	}
 	return t
 }
 
 func newUnsignedType(size uint32) *Type {
 	t := &Type{
-		Kind:    tpk.Unsigned,
-		Size:    size,
-		Builtin: true,
+		Kind:  tpk.Integer,
+		Size:  size,
+		Flags: TypeFlagBuiltin,
 	}
 	return t
 }
 
 func newSignedType(size uint32) *Type {
 	t := &Type{
-		Kind:    tpk.Signed,
-		Size:    size,
-		Builtin: true,
+		Kind:  tpk.Integer,
+		Size:  size,
+		Flags: TypeFlagBuiltin | TypeFlagSigned,
+	}
+	return t
+}
+
+func newPerfectIntegerType() *Type {
+	t := &Type{
+		Kind:  tpk.Integer,
+		Flags: TypeFlagBuiltin | TypeFlagStatic,
 	}
 	return t
 }
@@ -74,7 +82,13 @@ func newSignedType(size uint32) *Type {
 var (
 	Trivial = newStaticType(tpk.Trivial)
 
-	StaticInteger = newStaticType(tpk.StaticInteger)
+	// Static integer of arbitrary size. Can hold
+	// positive, negative and zero values.
+	//
+	// This type implicitly encompasses integer literals
+	// and their evaluations.
+	PerfectIntegerType = newPerfectIntegerType()
+
 	StaticFloat   = newStaticType(tpk.StaticFloat)
 	StaticString  = newStaticType(tpk.StaticString)
 	StaticBoolean = newStaticType(tpk.StaticBoolean)
@@ -90,7 +104,7 @@ var (
 	Sint16Type = newSignedType(2)
 	Sint32Type = newSignedType(4)
 	Sint64Type = newSignedType(8)
-	SintType   = newSignedType(8) // TODO: adjust int size based on target arch
+	SintType   = newSignedType(8) // TODO: adjust sint size based on target arch
 
 	BoolType = newBooleanType()
 	StrType  = newStringType()
@@ -99,7 +113,7 @@ var (
 
 func (s *Scope) addStaticTypes() {
 	// TODO: this is probably redundant
-	s.Types.tm[StaticInteger.Stable()] = StaticInteger
+	s.Types.tm[PerfectIntegerType.Stable()] = PerfectIntegerType
 	s.Types.tm[StaticFloat.Stable()] = StaticFloat
 	s.Types.tm[StaticString.Stable()] = StaticString
 	s.Types.tm[StaticBoolean.Stable()] = StaticBoolean
