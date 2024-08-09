@@ -16,34 +16,36 @@ func (g *Builder) Expression(expr stg.Expression) {
 	g.expr(expr)
 }
 
-func (g *Builder) expr(expr stg.Expression) {
-	switch expr.Kind() {
+func (g *Builder) expr(exp stg.Expression) {
+	switch exp.Kind() {
 
 	case exn.Integer:
-		g.Integer(expr.(stg.Integer))
+		g.Integer(exp.(stg.Integer))
 	case exn.True:
 		g.True()
 	case exn.False:
 		g.False()
 	case exn.Symbol:
-		g.SymbolExpression(expr.(*stg.SymbolExpression))
+		g.SymbolExp(exp.(*stg.SymbolExpression))
 	case exn.Receiver:
 		g.puts("g")
 	case exn.Binary:
-		g.BinaryExpression(expr.(*stg.BinaryExpression))
+		g.BinaryExp(exp.(*stg.BinaryExpression))
 	case exn.Unary:
-		g.UnaryExpression(expr.(*stg.UnaryExpression))
+		g.UnaryExp(exp.(*stg.UnaryExpression))
 	case exn.Paren:
-		g.ParenthesizedExpression(expr.(*stg.ParenthesizedExpression))
+		g.ParenExp(exp.(*stg.ParenthesizedExpression))
 	case exn.Cast:
-		g.CastExpression(expr.(*stg.CastExpression))
+		g.CastExp(exp.(*stg.CastExpression))
+	case exn.Tint:
+		g.TintExp(exp.(*stg.TintExp))
 	case exn.Chain, exn.Member, exn.Address, exn.Indirect, exn.IndirectIndex,
-		exn.Call, exn.IndirectMember, exn.ChunkMember, exn.ChunkIndex:
+		exn.Call, exn.IndirectMember, exn.ChunkMember, exn.ChunkIndex, exn.ChunkSlice, exn.ArraySlice:
 
-		g.ChainOperand(expr.(stg.ChainOperand))
+		g.ChainOperand(exp.(stg.ChainOperand))
 
 	default:
-		panic(fmt.Sprintf("%s expression not implemented", expr.Kind().String()))
+		panic(fmt.Sprintf("%s expression not implemented", exp.Kind().String()))
 	}
 }
 
@@ -55,111 +57,161 @@ func (g *Builder) False() {
 	g.puts("false")
 }
 
-func (g *Builder) CastExpression(expr *stg.CastExpression) {
+func (g *Builder) TintExp(exp *stg.TintExp) {
 	g.puts("(")
-	g.TypeSpec(expr.DestinationType)
+	g.TypeSpec(exp.DestType)
+	g.puts(")(")
+	g.expr(exp.Target)
+	g.puts(")")
+}
+
+func (g *Builder) CastExp(expr *stg.CastExpression) {
+	g.puts("(")
+	g.TypeSpec(expr.DestType)
 	g.puts(")(")
 	g.expr(expr.Target)
 	g.puts(")")
 }
 
-func (g *Builder) ChainOperand(expr stg.ChainOperand) {
-	switch expr.Kind() {
+func (g *Builder) ChainOperand(exp stg.ChainOperand) {
+	switch exp.Kind() {
 	case exn.Chain:
-		g.ChainSymbol(expr.(*stg.ChainSymbol))
+		g.ChainSymbol(exp.(*stg.ChainSymbol))
 	case exn.Member:
-		g.MemberExpression(expr.(*stg.MemberExpression))
+		g.MemberExp(exp.(*stg.MemberExpression))
 	case exn.Address:
-		g.AddressExpression(expr.(*stg.AddressExpression))
+		g.AddressExp(exp.(*stg.AddressExpression))
 	case exn.Indirect:
-		g.IndirectExpression(expr.(*stg.IndirectExpression))
+		g.IndirectExp(exp.(*stg.IndirectExpression))
 	case exn.IndirectIndex:
-		g.IndirectIndexExpression(expr.(*stg.IndirectIndexExpression))
+		g.IndirectIndexExp(exp.(*stg.IndirectIndexExpression))
 	case exn.Call:
-		g.CallExpression(expr.(*stg.CallExpression))
+		g.CallExp(exp.(*stg.CallExpression))
 	case exn.IndirectMember:
-		g.IndirectMemberExpression(expr.(*stg.IndirectMemberExpression))
+		g.IndirectMemberExp(exp.(*stg.IndirectMemberExpression))
 	case exn.ChunkMember:
-		g.ChunkMemberExpression(expr.(*stg.ChunkMemberExpression))
+		g.ChunkMemberExp(exp.(*stg.ChunkMemberExpression))
 	case exn.ChunkIndex:
-		g.ChunkIndexExpression(expr.(*stg.ChunkIndexExpression))
+		g.ChunkIndexExp(exp.(*stg.ChunkIndexExpression))
+	case exn.ArraySlice:
+		g.ArraySliceExp(exp.(*stg.ArraySliceExp))
 	default:
-		panic(fmt.Sprintf("%s operand not implemented", expr.Kind().String()))
+		panic(fmt.Sprintf("%s operand not implemented", exp.Kind().String()))
 	}
 }
 
-func (g *Builder) ChainSymbol(expr *stg.ChainSymbol) {
-	if expr.Sym == nil {
+func (g *Builder) ChainSymbol(exp *stg.ChainSymbol) {
+	if exp.Sym == nil {
 		g.puts("g")
 		return
 	}
-	g.SymbolName(expr.Sym)
+	g.SymbolName(exp.Sym)
 }
 
-func (g *Builder) ChunkIndexExpression(expr *stg.ChunkIndexExpression) {
-	g.ChunkTypeIndexMethodName(expr.Type())
-	g.puts("(")
-	g.expr(expr.Target)
+func (g *Builder) ArraySliceExp(exp *stg.ArraySliceExp) {
+	if exp.Start == nil && exp.End == nil {
+		// full array slice
+		panic("not implemented")
+	}
+	if exp.Start == nil && exp.End != nil {
+		g.arrayHeadSliceExp(exp)
+		return
+	}
+	if exp.Start != nil && exp.End == nil {
+		// tail slice
+		panic("not implemented")
+	}
+	if exp.Start != nil && exp.End != nil {
+		// regular slice
+		panic("not implemented")
+	}
+
+	panic("impossible condition")
+}
+
+func (g *Builder) arrayHeadSliceExp(exp *stg.ArraySliceExp) {
+	g.ArrayTypeHeadSliceMethodName(exp.Target.Type())
+	g.puts("(&")
+	g.expr(exp.Target)
 	g.puts(", ")
-	g.expr(expr.Index)
+	g.expr(exp.End)
 	g.puts(")")
 }
 
-func (g *Builder) ChunkIndirectElemExpression(expr *stg.ChunkIndexExpression) {
-	g.puts("*(")
-	g.ChunkTypeElemMethodName(expr.Type())
+func (g *Builder) ChunkIndexExp(exp *stg.ChunkIndexExpression) {
+	g.ChunkTypeIndexMethodName(exp.Type())
 	g.puts("(")
-	g.expr(expr.Target)
+	g.expr(exp.Target)
 	g.puts(", ")
-	g.expr(expr.Index)
+	g.expr(exp.Index)
+	g.puts(")")
+}
+
+func (g *Builder) ChunkIndirectElemExp(exp *stg.ChunkIndexExpression) {
+	g.puts("*(")
+	g.ChunkTypeElemMethodName(exp.Type())
+	g.puts("(")
+	g.expr(exp.Target)
+	g.puts(", ")
+	g.expr(exp.Index)
 	g.puts("))")
 }
 
-func (g *Builder) ChunkMemberExpression(expr *stg.ChunkMemberExpression) {
-	g.expr(expr.Target)
-	g.puts(".")
-	g.puts(expr.Name)
+func (g *Builder) ArrayIndirectElemExp(exp *stg.ArrayIndexExp) {
+	g.puts("*(")
+	g.ArrayTypeElemMethodName(exp.Target.Type())
+	g.puts("(&")
+	g.expr(exp.Target)
+	g.puts(", ")
+	g.expr(exp.Index)
+	g.puts("))")
 }
 
-func (g *Builder) ParenthesizedExpression(expr *stg.ParenthesizedExpression) {
+func (g *Builder) ChunkMemberExp(exp *stg.ChunkMemberExpression) {
+	g.expr(exp.Target)
+	g.puts(".")
+	g.puts(exp.Name)
+}
+
+func (g *Builder) ParenExp(exp *stg.ParenthesizedExpression) {
 	g.puts("(")
-	g.expr(expr.Inner)
+	g.expr(exp.Inner)
 	g.puts(")")
 }
 
-func (g *Builder) UnaryExpression(expr *stg.UnaryExpression) {
-	g.puts(expr.Operator.Kind.String())
-	g.expr(expr.Inner)
+func (g *Builder) UnaryExp(exp *stg.UnaryExpression) {
+	g.puts(exp.Operator.Kind.String())
+	g.expr(exp.Inner)
 }
 
-func (g *Builder) IndirectIndexExpression(expr *stg.IndirectIndexExpression) {
-	g.ChainOperand(expr.Target)
+func (g *Builder) IndirectIndexExp(exp *stg.IndirectIndexExpression) {
+	g.ChainOperand(exp.Target)
 	g.puts("[")
-	g.expr(expr.Index)
+	g.expr(exp.Index)
 	g.puts("]")
 }
 
-func (g *Builder) IndirectExpression(expr *stg.IndirectExpression) {
+func (g *Builder) IndirectExp(exp *stg.IndirectExpression) {
 	g.puts("*(")
-	g.ChainOperand(expr.Target)
+	g.ChainOperand(exp.Target)
 	g.puts(")")
 }
 
-func (g *Builder) AddressExpression(expr *stg.AddressExpression) {
+func (g *Builder) AddressExp(exp *stg.AddressExpression) {
 	g.puts("&")
-	g.ChainOperand(expr.Target)
+	g.ChainOperand(exp.Target)
 }
 
-func (g *Builder) MemberExpression(expr *stg.MemberExpression) {
-	g.ChainOperand(expr.Target)
+func (g *Builder) MemberExp(exp *stg.MemberExpression) {
+	g.ChainOperand(exp.Target)
 	g.puts(".")
-	g.puts(expr.Member.Name)
+	g.puts(exp.Member.Name)
 }
 
-func (g *Builder) IndirectMemberExpression(expr *stg.IndirectMemberExpression) {
-	g.ChainOperand(expr.Target)
+func (g *Builder) IndirectMemberExp(exp *stg.IndirectMemberExpression) {
+	g.ChainOperand(exp.Target)
 	g.puts("->")
-	g.puts(expr.Member.Name)
+	g.puts(exp.Member.Name)
 }
 
 func (g *Builder) Integer(exp stg.Integer) {
@@ -184,12 +236,12 @@ func (g *Builder) CallArgs(args []stg.Expression) {
 	g.puts(")")
 }
 
-func (g *Builder) CallExpression(expr *stg.CallExpression) {
+func (g *Builder) CallExp(expr *stg.CallExpression) {
 	g.ChainOperand(expr.Callee)
 	g.CallArgs(expr.Arguments)
 }
 
-func (g *Builder) BinaryExpression(expr *stg.BinaryExpression) {
+func (g *Builder) BinaryExp(expr *stg.BinaryExpression) {
 	g.expr(expr.Left)
 	g.space()
 	g.puts(expr.Operator.Kind.String())
@@ -197,6 +249,6 @@ func (g *Builder) BinaryExpression(expr *stg.BinaryExpression) {
 	g.expr(expr.Right)
 }
 
-func (g *Builder) SymbolExpression(expr *stg.SymbolExpression) {
+func (g *Builder) SymbolExp(expr *stg.SymbolExpression) {
 	g.SymbolName(expr.Sym)
 }

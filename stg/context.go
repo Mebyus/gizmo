@@ -17,24 +17,31 @@ type Context struct {
 
 	// true for function or method that does not return.
 	never bool
+
+	// TODO: add fields for analyzing defers usage
+	// most likely it will be
+	//	- returns counter
+	//	- slice of defer info (conditional/unconditional, arg expressions, etc.)
 }
 
-func (m *Merger) newFunCtx(def *FunDef) *Context {
+func (m *Merger) newFunCtx() *Context {
 	return &Context{
-		m:     m,
-		ref:   NewSymSet(),
-		ret:   def.Result,
-		never: def.Never,
+		m:   m,
+		ref: NewSymSet(),
 	}
 }
 
-func (m *Merger) newMethodCtx(def *MethodDef) *Context {
+func (m *Merger) newMethodCtx() *Context {
 	return &Context{
-		m:     m,
-		ref:   NewSymSet(),
-		rv:    def.Receiver,
-		ret:   def.Result,
-		never: def.Never,
+		m:   m,
+		ref: NewSymSet(),
+	}
+}
+
+func (m *Merger) newTypeCtx() *Context {
+	return &Context{
+		m:   m,
+		ref: NewSymSet(),
 	}
 }
 

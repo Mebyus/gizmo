@@ -69,16 +69,16 @@ func (m *Merger) evalConstant(s *Symbol) error {
 	scope := m.unit.Scope
 	node := m.nodes.Con(s.Index())
 
-	t, err := scope.Types.Lookup(node.Type)
+	ctx := m.newConstCtx()
+	t, err := scope.Types.Lookup(ctx, node.Type)
 	if err != nil {
 		return err
 	}
 
-	exp := node.Expr
+	exp := node.Exp
 	if exp == nil {
 		panic("nil expression in constant definition")
 	}
-	ctx := m.newConstCtx()
 	e, err := scope.Scan(ctx, exp)
 	if err != nil {
 		return err
@@ -137,7 +137,8 @@ func (m *Merger) evalRecursiveType(s *Symbol) {
 	t.Def = def
 	s.Def = t
 
-	base, err := m.unit.Scope.Types.lookup(node.Spec)
+	ctx := m.newTypeCtx()
+	base, err := m.unit.Scope.Types.lookup(ctx, node.Spec)
 	if err != nil {
 		// type graph structure must guarantee successful lookup
 		panic(err)
@@ -161,7 +162,8 @@ func (m *Merger) getReceiverMethods(name string) []*Symbol {
 
 func (m *Merger) evalSimpleType(s *Symbol) {
 	node := m.nodes.Type(s.Index())
-	base, err := m.unit.Scope.Types.lookup(node.Spec)
+	ctx := m.newTypeCtx()
+	base, err := m.unit.Scope.Types.lookup(ctx, node.Spec)
 	if err != nil {
 		// type graph structure must guarantee successful lookup
 		panic(err)

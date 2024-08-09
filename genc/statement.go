@@ -58,15 +58,17 @@ func (g *Builder) ChainOperandTarget(node stg.ChainOperand) {
 	case exn.Chain:
 		g.ChainSymbol(node.(*stg.ChainSymbol))
 	case exn.Member:
-		g.MemberExpression(node.(*stg.MemberExpression))
+		g.MemberExp(node.(*stg.MemberExpression))
 	case exn.Indirect:
-		g.IndirectExpression(node.(*stg.IndirectExpression))
+		g.IndirectExp(node.(*stg.IndirectExpression))
 	case exn.IndirectIndex:
-		g.IndirectIndexExpression(node.(*stg.IndirectIndexExpression))
+		g.IndirectIndexExp(node.(*stg.IndirectIndexExpression))
 	case exn.IndirectMember:
-		g.IndirectMemberExpression(node.(*stg.IndirectMemberExpression))
+		g.IndirectMemberExp(node.(*stg.IndirectMemberExpression))
 	case exn.ChunkIndex:
-		g.ChunkIndirectElemExpression(node.(*stg.ChunkIndexExpression))
+		g.ChunkIndirectElemExp(node.(*stg.ChunkIndexExpression))
+	case exn.ArrayIndex:
+		g.ArrayIndirectElemExp(node.(*stg.ArrayIndexExp))
 	default:
 		panic(fmt.Sprintf("unexpected %s operand", node.Kind()))
 	}
@@ -87,7 +89,7 @@ func (g *Builder) simpleIfStatement(node *stg.SimpleIfStatement) {
 }
 
 func (g *Builder) callStatement(node *stg.CallStatement) {
-	g.CallExpression(node.Call)
+	g.CallExp(node.Call)
 }
 
 func (g *Builder) varStatement(node *stg.VarStatement) {

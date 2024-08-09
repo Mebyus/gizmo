@@ -183,7 +183,7 @@ type CastExpression struct {
 	Target Expression
 
 	// Type after cast is performed.
-	DestinationType *Type
+	DestType *Type
 }
 
 // Explicit interface implementation check
@@ -198,5 +198,31 @@ func (e *CastExpression) Pin() source.Pos {
 }
 
 func (e *CastExpression) Type() *Type {
-	return e.DestinationType
+	return e.DestType
+}
+
+type TintExp struct {
+	nodeOperand
+
+	Pos source.Pos
+
+	Target Expression
+
+	// Type after cast is performed.
+	DestType *Type
+}
+
+// Explicit interface implementation check
+var _ Operand = &TintExp{}
+
+func (*TintExp) Kind() exn.Kind {
+	return exn.Tint
+}
+
+func (e *TintExp) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *TintExp) Type() *Type {
+	return e.DestType
 }

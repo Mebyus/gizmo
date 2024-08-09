@@ -230,6 +230,95 @@ func (e *ChunkIndexExpression) Type() *Type {
 	return e.typ
 }
 
+type ArrayIndexExp struct {
+	nodeChain
+
+	Pos source.Pos
+
+	Target ChainOperand
+
+	Index Expression
+
+	typ *Type
+}
+
+// Explicit interface implementation check.
+var _ ChainOperand = &ArrayIndexExp{}
+
+func (*ArrayIndexExp) Kind() exn.Kind {
+	return exn.ArrayIndex
+}
+
+func (e *ArrayIndexExp) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *ArrayIndexExp) Type() *Type {
+	return e.typ
+}
+
+type ArraySliceExp struct {
+	nodeChain
+
+	Pos source.Pos
+
+	Target ChainOperand
+
+	// Can be nil if expression is omitted.
+	Start Expression
+
+	// Can be nil if expression is omitted.
+	End Expression
+
+	typ *Type
+}
+
+// Explicit interface implementation check.
+var _ ChainOperand = &ArraySliceExp{}
+
+func (*ArraySliceExp) Kind() exn.Kind {
+	return exn.ArraySlice
+}
+
+func (e *ArraySliceExp) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *ArraySliceExp) Type() *Type {
+	return e.typ
+}
+
+type ChunkSliceExp struct {
+	nodeChain
+
+	Pos source.Pos
+
+	Target ChainOperand
+
+	// Can be nil if expression is omitted.
+	Start Expression
+
+	// Can be nil if expression is omitted.
+	End Expression
+
+	typ *Type
+}
+
+// Explicit interface implementation check.
+var _ ChainOperand = &ChunkSliceExp{}
+
+func (*ChunkSliceExp) Kind() exn.Kind {
+	return exn.ChunkSlice
+}
+
+func (e *ChunkSliceExp) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *ChunkSliceExp) Type() *Type {
+	return e.typ
+}
+
 type ChunkMemberExpression struct {
 	nodeChain
 

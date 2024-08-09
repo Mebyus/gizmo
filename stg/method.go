@@ -12,4 +12,8 @@ type MethodDef struct {
 
 	// Always not nil.
 	Receiver *Type
+
+	// Temporary field for transferring context between inspect
+	// and full scan phases.
+	ctx *Context
 }

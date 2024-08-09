@@ -9,6 +9,10 @@ type FunDef struct {
 
 	// List of top-level unit symbols which are used in function.
 	Refs []*Symbol
+
+	// Temporary field for transferring context between inspect
+	// and full scan phases.
+	ctx *Context
 }
 
 // Explicit interface implementation check.

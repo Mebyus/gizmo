@@ -45,6 +45,9 @@ const (
 	IndirectMember
 	ChunkMember
 	ChunkIndex
+	ChunkSlice
+	ArrayIndex
+	ArraySlice
 
 	// Template instance
 	Instance
@@ -84,6 +87,9 @@ var text = [...]string{
 	Index:          "index",
 	IndirectIndex:  "index.indirect",
 	ChunkIndex:     "index.chunk",
+	ChunkSlice:     "slice.chunk",
+	ArrayIndex:     "index.array",
+	ArraySlice:     "slice.array",
 	IndirectMember: "member.indirect",
 	ChunkMember:    "member.chunk",
 	Address:        "address",

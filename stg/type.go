@@ -117,6 +117,17 @@ func (t *Type) Symbol() *Symbol {
 	panic(fmt.Sprintf("%s types cannot be bound to symbols", t.Kind))
 }
 
+func (t *Type) ElemType() *Type {
+	switch t.Kind {
+	case tpk.Chunk:
+		return t.Def.(ChunkTypeDef).ElemType
+	case tpk.Array:
+		return t.Def.(ArrayTypeDef).ElemType
+	default:
+		panic(fmt.Sprintf("%s types do not have elements", t.Kind))
+	}
+}
+
 func (t *Type) IsIntegerType() bool {
 	switch t.Kind {
 	case tpk.Integer:
@@ -209,6 +220,8 @@ func (t *Type) computeHash() uint64 {
 		return HashChunkType(t.Def.(ChunkTypeDef).ElemType)
 	case tpk.Struct:
 		return HashStructType(t)
+	case tpk.Array:
+		return HashArrayType(t)
 	case tpk.StaticBoolean:
 		return uint64(tpk.StaticBoolean)
 	case tpk.StaticFloat:
@@ -224,6 +237,18 @@ func (t *Type) computeHash() uint64 {
 
 func putUint64(buf []byte, x uint64) {
 	binary.LittleEndian.PutUint64(buf, x)
+}
+
+func HashArrayType(t *Type) uint64 {
+	def := t.Def.(ArrayTypeDef)
+	elem := def.ElemType
+
+	var buf [19]byte
+	h := fnv.New64a()
+	buf[0] = byte(tpk.Array)
+	putUint64(buf[2:10], elem.Hash())
+	putUint64(buf[11:], def.Len)
+	return h.Sum64()
 }
 
 func HashChunkType(elem *Type) uint64 {

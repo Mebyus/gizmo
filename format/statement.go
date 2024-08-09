@@ -70,10 +70,10 @@ func (g *Noder) VarStatement(node ast.VarStatement) {
 	g.ss()
 	g.gen(token.Assign)
 	g.ss()
-	if node.Expression == nil {
+	if node.Exp == nil {
 		g.gen(token.Dirty)
 	} else {
-		g.Expression(node.Expression)
+		g.Expression(node.Exp)
 	}
 	g.semi()
 }
@@ -101,7 +101,7 @@ func (g *Noder) LetStatement(node ast.LetStatement) {
 	g.ss()
 	g.gen(token.Assign)
 	g.ss()
-	g.Expression(node.Expr)
+	g.Expression(node.Exp)
 	g.semi()
 }
 

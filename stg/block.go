@@ -278,9 +278,17 @@ func (b *Block) addVar(ctx *Context, stmt ast.VarStatement) error {
 		return fmt.Errorf("%s: symbol \"%s\" redeclared in this block", pos.String(), name)
 	}
 
-	t, err := b.Scope.Types.Lookup(stmt.Type)
+	t, err := b.Scope.Types.Lookup(ctx, stmt.Type)
 	if err != nil {
 		return err
+	}
+	exp, err := b.Scope.Scan(ctx, stmt.Exp)
+	if err != nil {
+		return err
+	}
+	if t == nil {
+		// infer type from expression if it is specified explicitly
+		t = exp.Type()
 	}
 
 	s = &Symbol{
@@ -290,18 +298,13 @@ func (b *Block) addVar(ctx *Context, stmt ast.VarStatement) error {
 		Kind: smk.Var,
 	}
 
-	expr, err := b.Scope.Scan(ctx, stmt.Expression)
-	if err != nil {
-		return err
-	}
-
 	// bind occurs after expression scan, because variable
 	// that is being defined must not be visible in init expression
 	b.Scope.Bind(s)
 
 	b.addNode(&VarStatement{
 		Sym:  s,
-		Expr: expr,
+		Expr: exp,
 	})
 	return nil
 }
@@ -314,9 +317,17 @@ func (b *Block) addLet(ctx *Context, stmt ast.LetStatement) error {
 		return fmt.Errorf("%s: symbol \"%s\" redeclared in this block", pos.String(), name)
 	}
 
-	t, err := b.Scope.Types.Lookup(stmt.Type)
+	t, err := b.Scope.Types.Lookup(ctx, stmt.Type)
 	if err != nil {
 		return err
+	}
+	exp, err := b.Scope.Scan(ctx, stmt.Exp)
+	if err != nil {
+		return err
+	}
+	if t == nil {
+		// infer type from expression if it is specified explicitly
+		t = exp.Type()
 	}
 
 	s = &Symbol{
@@ -326,12 +337,8 @@ func (b *Block) addLet(ctx *Context, stmt ast.LetStatement) error {
 		Kind: smk.Let,
 	}
 
-	if stmt.Expr == nil {
+	if stmt.Exp == nil {
 		panic("nil init expression in let statement")
-	}
-	expr, err := b.Scope.Scan(ctx, stmt.Expr)
-	if err != nil {
-		return err
 	}
 
 	// bind occurs after expression scan, because variable
@@ -340,7 +347,7 @@ func (b *Block) addLet(ctx *Context, stmt ast.LetStatement) error {
 
 	b.addNode(&LetStatement{
 		Sym:  s,
-		Expr: expr,
+		Expr: exp,
 	})
 	return nil
 }

@@ -502,10 +502,10 @@ func (p *Parser) varStatement() (statement ast.VarStatement, err error) {
 
 	return ast.VarStatement{
 		Var: ast.Var{
-			Pos:        pos,
-			Name:       name,
-			Type:       specifier,
-			Expression: expr,
+			Pos:  pos,
+			Name: name,
+			Type: specifier,
+			Exp:  expr,
 		},
 	}, nil
 }
@@ -528,7 +528,7 @@ func (p *Parser) letWalrusStatement() (statement ast.LetStatement, err error) {
 	return ast.LetStatement{
 		Let: ast.Let{
 			Name: name,
-			Expr: expression,
+			Exp:  expression,
 		},
 	}, nil
 }
@@ -573,7 +573,7 @@ func (p *Parser) letStatement() (statement ast.LetStatement, err error) {
 		Let: ast.Let{
 			Name: name,
 			Type: specifier,
-			Expr: expression,
+			Exp:  expression,
 		},
 	}, nil
 }

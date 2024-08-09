@@ -42,32 +42,53 @@ func (x *TypeIndex) Chunks() map[*Type]*Type {
 	return m
 }
 
-func (x *TypeIndex) Lookup(spec ast.TypeSpec) (*Type, error) {
+// Result maps array elem type into list of array types with this element.
+func (x *TypeIndex) Arrays() map[*Type][]*Type {
+	if len(x.tm) == 0 {
+		return nil
+	}
+	m := make(map[*Type][]*Type)
+	for _, t := range x.tm {
+		if t.Kind == tpk.Array {
+			e := t.Def.(ArrayTypeDef).ElemType
+			m[e] = append(m[e], t)
+		}
+	}
+	if len(m) == 0 {
+		return nil
+	}
+	return m
+}
+
+func (x *TypeIndex) Lookup(ctx *Context, spec ast.TypeSpec) (*Type, error) {
+	if ctx == nil {
+		panic("nil context")
+	}
 	if spec == nil {
 		// handle never and void return "types"
 		return nil, nil
 	}
 
-	return x.lookup(spec)
+	return x.lookup(ctx, spec)
 }
 
-func (x *TypeIndex) lookup(spec ast.TypeSpec) (*Type, error) {
+func (x *TypeIndex) lookup(ctx *Context, spec ast.TypeSpec) (*Type, error) {
 	switch spec.Kind() {
 	case tps.Name:
 		return x.lookupNamed(spec.(ast.TypeName).Name)
 	case tps.Pointer:
-		return x.lookupPointer(spec.(ast.PointerType).RefType)
+		return x.lookupPointer(ctx, spec.(ast.PointerType).RefType)
 	case tps.Struct:
-		return x.lookupStruct(spec.(ast.StructType))
+		return x.lookupStruct(ctx, spec.(ast.StructType))
 	case tps.Chunk:
-		return x.lookupChunk(spec.(ast.ChunkType).ElemType)
+		return x.lookupChunk(ctx, spec.(ast.ChunkType).ElemType)
 	case tps.Enum:
 		return x.lookupEnum(spec.(ast.EnumType))
 	case tps.ArrayPointer:
-		return x.lookupArrayPointer(spec.(ast.ArrayPointerType).ElemType)
+		return x.lookupArrayPointer(ctx, spec.(ast.ArrayPointerType).ElemType)
 	case tps.Array:
 		s := spec.(ast.ArrayType)
-		return x.lookupArray(s.ElemType, s.Size)
+		return x.lookupArray(ctx, s.ElemType, s.Size)
 	default:
 		panic(fmt.Sprintf("not implemented for %s", spec.Kind().String()))
 	}
@@ -101,32 +122,38 @@ func (x *TypeIndex) store(a *Type) *Type {
 	return t
 }
 
-func (x *TypeIndex) lookupArray(spec ast.TypeSpec, length ast.Expression) (*Type, error) {
-	elem, err := x.lookup(spec)
+func (x *TypeIndex) lookupArray(ctx *Context, spec ast.TypeSpec, length ast.Expression) (*Type, error) {
+	elem, err := x.lookup(ctx, spec)
 	if err != nil {
 		return nil, err
 	}
-	// TODO: we probably need to pass Context from constants scan loop
-	expr, err := x.scope.scan(nil, length)
+	expr, err := x.scope.scan(ctx, length)
 	if err != nil {
 		return nil, err
+	}
+	if !expr.Type().IsIntegerType() {
+		return nil, fmt.Errorf("%s: only integer types can be used for array length", length.Pin())
 	}
 	r, err := x.scope.evalStaticExp(expr)
 	if err != nil {
 		return nil, err
 	}
 
-	t := r.Type()
-	if !t.IsIntegerType() {
-		return nil, fmt.Errorf("%s: only integer types can be used for array length", length.Pin())
+	// extract array length from evaluated integer
+	i := r.(Integer)
+	if i.Neg {
+		return nil, fmt.Errorf("%s: array cannot have negative length", length.Pin())
+	}
+	l := i.Val
+	if l == 0 {
+		return Trivial, nil
 	}
 
-	panic("not implemented")
-	return x.storeArray(elem, 0), nil
+	return x.storeArray(elem, l), nil
 }
 
-func (x *TypeIndex) lookupArrayPointer(spec ast.TypeSpec) (*Type, error) {
-	elem, err := x.lookup(spec)
+func (x *TypeIndex) lookupArrayPointer(ctx *Context, spec ast.TypeSpec) (*Type, error) {
+	elem, err := x.lookup(ctx, spec)
 	if err != nil {
 		return nil, err
 	}
@@ -138,15 +165,15 @@ func (x *TypeIndex) lookupEnum(spec ast.EnumType) (*Type, error) {
 	return nil, nil
 }
 
-func (x *TypeIndex) lookupChunk(spec ast.TypeSpec) (*Type, error) {
-	elem, err := x.lookup(spec)
+func (x *TypeIndex) lookupChunk(ctx *Context, spec ast.TypeSpec) (*Type, error) {
+	elem, err := x.lookup(ctx, spec)
 	if err != nil {
 		return nil, err
 	}
 	return x.storeChunk(elem), nil
 }
 
-func (x *TypeIndex) lookupStruct(spec ast.StructType) (*Type, error) {
+func (x *TypeIndex) lookupStruct(ctx *Context, spec ast.StructType) (*Type, error) {
 	if len(spec.Fields) == 0 {
 		return Trivial, nil
 	}
@@ -155,7 +182,7 @@ func (x *TypeIndex) lookupStruct(spec ast.StructType) (*Type, error) {
 	members.Init(len(spec.Fields))
 
 	for _, f := range spec.Fields {
-		t, err := x.lookup(f.Type)
+		t, err := x.lookup(ctx, f.Type)
 		if err != nil {
 			return nil, err
 		}
@@ -171,8 +198,8 @@ func (x *TypeIndex) lookupStruct(spec ast.StructType) (*Type, error) {
 	return x.store(newStructType(members)), nil
 }
 
-func (x *TypeIndex) lookupPointer(spec ast.TypeSpec) (*Type, error) {
-	ref, err := x.lookup(spec)
+func (x *TypeIndex) lookupPointer(ctx *Context, spec ast.TypeSpec) (*Type, error) {
+	ref, err := x.lookup(ctx, spec)
 	if err != nil {
 		return nil, err
 	}

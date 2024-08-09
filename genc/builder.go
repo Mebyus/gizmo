@@ -2,6 +2,7 @@ package genc
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/mebyus/gizmo/enums/smk"
@@ -38,6 +39,8 @@ func (g *Builder) Gen(u *stg.Unit) {
 
 	chunks := u.Scope.Types.Chunks()
 	g.genBuiltinChunkTypes(chunks)
+	arrays := u.Scope.Types.Arrays()
+	g.genBuiltinArrayTypes(arrays)
 
 	for _, s := range u.Types {
 		g.TypeDef(s)
@@ -96,6 +99,12 @@ func (g *Builder) ChunkTypeMethods(c, elem *stg.Type) {
 	g.ChunkTypeElemMethod(c, elem)
 }
 
+func (g *Builder) ArrayTypeMethods(a, elem *stg.Type) {
+	g.ArrayTypeElemMethod(a, elem)
+	g.nl()
+	g.ArrayTypeHeadSliceMethod(a, elem)
+}
+
 func (g *Builder) ChunkTypeIndexMethodName(elem *stg.Type) {
 	g.puts("ku_chunk_")
 	g.TypeSpec(elem)
@@ -106,6 +115,22 @@ func (g *Builder) ChunkTypeElemMethodName(elem *stg.Type) {
 	g.puts("ku_chunk_")
 	g.TypeSpec(elem)
 	g.puts("_elem")
+}
+
+func (g *Builder) ArrayTypeElemMethodName(t *stg.Type) {
+	g.puts("ku_array")
+	g.putn(t.Def.(stg.ArrayTypeDef).Len)
+	g.puts("_")
+	g.TypeSpec(t.ElemType())
+	g.puts("_elem")
+}
+
+func (g *Builder) ArrayTypeHeadSliceMethodName(t *stg.Type) {
+	g.puts("ku_array")
+	g.putn(t.Def.(stg.ArrayTypeDef).Len)
+	g.puts("_")
+	g.TypeSpec(t.ElemType())
+	g.puts("_head_slice")
 }
 
 func (g *Builder) ChunkTypeIndexMethod(c, elem *stg.Type) {
@@ -146,7 +171,7 @@ func (g *Builder) ChunkTypeElemMethod(c, elem *stg.Type) {
 	g.puts("(")
 
 	g.puts(g.getChunkTypeName(c))
-	g.puts(" c, u64 i) {")
+	g.puts(" c, uint i) {")
 	g.nl()
 	g.inc()
 
@@ -167,26 +192,106 @@ func (g *Builder) ChunkTypeElemMethod(c, elem *stg.Type) {
 	g.nl()
 }
 
-func (g *Builder) genBuiltinChunkTypes(chunks map[*stg.Type]*stg.Type) {
-	list := []*stg.Type{
-		stg.Uint8Type,
-		stg.Uint16Type,
-		stg.Uint32Type,
-		stg.Uint64Type,
-		stg.UintType,
+func (g *Builder) ArrayTypeElemMethod(a, elem *stg.Type) {
+	g.TypeSpec(elem)
+	g.puts("*")
+	g.nl()
+	g.ArrayTypeElemMethodName(a)
 
-		stg.Sint8Type,
-		stg.Sint16Type,
-		stg.Sint32Type,
-		stg.Sint64Type,
-		stg.SintType,
+	g.puts("(")
 
-		stg.StrType,
-		stg.BoolType,
-		stg.RuneType,
+	g.puts(g.getArrayTypeName(a))
+	g.puts("* a, uint i) {")
+	g.nl()
+	g.inc()
+
+	g.indent()
+	g.puts("ku_must(i < ")
+	g.putn(a.Def.(stg.ArrayTypeDef).Len)
+	g.puts(");")
+	g.nl()
+
+	g.indent()
+	g.puts("return a->arr + i;")
+	g.nl()
+
+	g.dec()
+	g.puts("}")
+	g.nl()
+}
+
+func (g *Builder) ArrayTypeHeadSliceMethod(a, elem *stg.Type) {
+	g.puts(g.getChunkTypeNameByElem(elem))
+	g.nl()
+	g.ArrayTypeHeadSliceMethodName(a)
+
+	g.puts("(")
+
+	g.puts(g.getArrayTypeName(a))
+	g.puts("* a, uint i) {")
+	g.nl()
+	g.inc()
+
+	g.indent()
+	g.puts("ku_must(i < ")
+	g.putn(a.Def.(stg.ArrayTypeDef).Len)
+	g.puts(");")
+	g.nl()
+
+	g.indent()
+	g.puts(g.getChunkTypeNameByElem(elem))
+	g.puts(" s;")
+	g.nl()
+
+	g.indent()
+	g.puts("s.ptr = a->arr;")
+	g.nl()
+
+	g.indent()
+	g.puts("s.len = i;")
+	g.nl()
+
+	g.indent()
+	g.puts("return s;")
+	g.nl()
+
+	g.dec()
+	g.puts("}")
+	g.nl()
+}
+
+var builtinTypes = []*stg.Type{
+	stg.Uint8Type,
+	stg.Uint16Type,
+	stg.Uint32Type,
+	stg.Uint64Type,
+	stg.UintType,
+
+	stg.Sint8Type,
+	stg.Sint16Type,
+	stg.Sint32Type,
+	stg.Sint64Type,
+	stg.SintType,
+
+	stg.StrType,
+	stg.BoolType,
+	stg.RuneType,
+}
+
+func (g *Builder) genBuiltinArrayTypes(arrays map[*stg.Type][]*stg.Type) {
+	for _, t := range builtinTypes {
+		list := arrays[t]
+		for _, a := range list {
+			g.ArrayTypeDef(a, t)
+			g.nl()
+			g.ArrayTypeMethods(a, t)
+			g.nl()
+		}
 	}
+}
 
-	for _, t := range list {
+func (g *Builder) genBuiltinChunkTypes(chunks map[*stg.Type]*stg.Type) {
+	for _, t := range builtinTypes {
 		c, ok := chunks[t]
 		if ok {
 			g.ChunkTypeDef(c, t)
@@ -209,6 +314,26 @@ func (g *Builder) TypeDef(s *stg.Symbol) {
 	g.nl()
 }
 
+func (g *Builder) ArrayTypeDef(a, elem *stg.Type) {
+	g.puts("typedef")
+	g.puts(" struct {")
+	g.nl()
+	g.inc()
+
+	g.indent()
+	g.TypeSpec(elem)
+	g.puts(" arr[")
+	g.putn(a.Def.(stg.ArrayTypeDef).Len)
+	g.puts("];")
+	g.nl()
+
+	g.dec()
+	g.puts("} ")
+	g.puts(g.getArrayTypeName(a))
+	g.semi()
+	g.nl()
+}
+
 func (g *Builder) ChunkTypeDef(c, elem *stg.Type) {
 	g.puts("typedef")
 	g.puts(" struct {")
@@ -221,7 +346,7 @@ func (g *Builder) ChunkTypeDef(c, elem *stg.Type) {
 	g.nl()
 
 	g.indent()
-	g.puts("u64 len;") // TODO: make this integer arch dependant
+	g.puts("uint len;")
 	g.nl()
 
 	g.dec()
@@ -308,12 +433,25 @@ func (g *Builder) SymbolName(s *stg.Symbol) {
 }
 
 func (g *Builder) getChunkTypeName(t *stg.Type) string {
-	return g.tprefix + "Chunk_" + g.getSymbolName(t.Def.(stg.ChunkTypeDef).ElemType.Symbol())
+	def := t.Def.(stg.ChunkTypeDef)
+	return g.getChunkTypeNameByElem(def.ElemType)
+}
+
+func (g *Builder) getChunkTypeNameByElem(elem *stg.Type) string {
+	return g.tprefix + "Chunk_" + g.getSymbolName(elem.Symbol())
+}
+
+func (g *Builder) getArrayTypeName(t *stg.Type) string {
+	def := t.Def.(stg.ArrayTypeDef)
+	return g.tprefix + "Array" + strconv.FormatUint(def.Len, 10) + "_" + g.getSymbolName(def.ElemType.Symbol())
 }
 
 func (g *Builder) getTypeSpec(t *stg.Type) string {
 	if t == nil {
 		return "void"
+	}
+	if t.PerfectInteger() {
+		return "s64"
 	}
 	if t.Builtin() {
 		return g.getSymbolName(t.Symbol())
@@ -330,6 +468,8 @@ func (g *Builder) getTypeSpec(t *stg.Type) string {
 		return g.getTypeSpec(t.Def.(stg.ArrayPointerTypeDef).RefType) + "*"
 	case tpk.Chunk:
 		return g.getChunkTypeName(t)
+	case tpk.Array:
+		return g.getArrayTypeName(t)
 	default:
 		panic(fmt.Sprintf("%s types not implemented", t.Kind.String()))
 	}
@@ -445,6 +585,11 @@ func (g *Builder) BlockTitle(unit string, s string) {
 	g.puts(s)
 	g.puts(" ===== */")
 	g.nl()
+}
+
+// put decimal formatted integer into output buffer
+func (g *Builder) putn(n uint64) {
+	g.puts(strconv.FormatUint(n, 10))
 }
 
 // put string into output buffer

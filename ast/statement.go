@@ -73,7 +73,7 @@ type Var struct {
 	Type TypeSpec
 
 	// Equals nil if init expression is dirty
-	Expression Expression
+	Exp Expression
 }
 
 type VarStatement struct {
@@ -285,7 +285,7 @@ type Let struct {
 	Type TypeSpec
 
 	// Expression that defines constant value. Always not nil.
-	Expr Expression
+	Exp Expression
 }
 
 type LetStatement struct {

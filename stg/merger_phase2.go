@@ -168,13 +168,14 @@ func (m *Merger) shallowScanMethods() error {
 func (m *Merger) shallowScanMethod(t *Type, s *Symbol) error {
 	scope := m.unit.Scope
 	node := m.nodes.Med(s.Def.(astIndexSymDef))
+	ctx := m.newMethodCtx()
 
-	params, err := newParamSymbols(scope, node.Signature.Params)
+	params, err := newParamSymbols(ctx, scope, node.Signature.Params)
 	if err != nil {
 		return err
 	}
 
-	result, err := scope.Types.Lookup(node.Signature.Result)
+	result, err := scope.Types.Lookup(ctx, node.Signature.Result)
 	if err != nil {
 		return err
 	}
@@ -186,6 +187,9 @@ func (m *Merger) shallowScanMethod(t *Type, s *Symbol) error {
 		receiver = t
 	}
 
+	ctx.never = node.Signature.Never
+	ctx.ret = result
+	ctx.rv = receiver
 	pos := node.Body.Pos
 	def := &MethodDef{
 		Receiver: receiver,
@@ -195,6 +199,8 @@ func (m *Merger) shallowScanMethod(t *Type, s *Symbol) error {
 			Never:  node.Signature.Never,
 		},
 		Body: Block{Pos: pos},
+
+		ctx: ctx,
 	}
 
 	def.Body.Scope = NewTopScope(m.unit.Scope, &def.Body.Pos)
@@ -211,14 +217,14 @@ func (m *Merger) shallowScanMethod(t *Type, s *Symbol) error {
 	return nil
 }
 
-func newParamSymbols(scope *Scope, defs []ast.FieldDefinition) ([]*Symbol, error) {
+func newParamSymbols(ctx *Context, scope *Scope, defs []ast.FieldDefinition) ([]*Symbol, error) {
 	if len(defs) == 0 {
 		return nil, nil
 	}
 
 	params := make([]*Symbol, 0, len(defs))
 	for _, p := range defs {
-		t, err := scope.Types.Lookup(p.Type)
+		t, err := scope.Types.Lookup(ctx, p.Type)
 		if err != nil {
 			return nil, err
 		}
@@ -237,18 +243,21 @@ func newParamSymbols(scope *Scope, defs []ast.FieldDefinition) ([]*Symbol, error
 func (m *Merger) shallowScanFun(s *Symbol) error {
 	scope := m.unit.Scope
 	node := m.nodes.Fun(s.Def.(astIndexSymDef))
+	ctx := m.newFunCtx()
 
-	params, err := newParamSymbols(scope, node.Signature.Params)
+	params, err := newParamSymbols(ctx, scope, node.Signature.Params)
 	if err != nil {
 		return err
 	}
 
+	result, err := scope.Types.Lookup(ctx, node.Signature.Result)
+	if err != nil {
+		return err
+	}
+
+	ctx.never = node.Signature.Never
+	ctx.ret = result
 	pos := node.Body.Pos
-	result, err := scope.Types.Lookup(node.Signature.Result)
-	if err != nil {
-		return err
-	}
-
 	f := &FunDef{
 		Signature: Signature{
 			Params: params,
@@ -256,6 +265,8 @@ func (m *Merger) shallowScanFun(s *Symbol) error {
 			Never:  node.Signature.Never,
 		},
 		Body: Block{Pos: pos},
+
+		ctx: ctx,
 	}
 
 	f.Body.Scope = NewTopScope(m.unit.Scope, &f.Body.Pos)
@@ -299,7 +310,7 @@ func (m *Merger) scanFunBody(def *FunDef, statements []ast.Statement) error {
 		return nil
 	}
 
-	ctx := m.newFunCtx(def)
+	ctx := def.ctx
 	err := def.Body.Fill(ctx, statements)
 	if err != nil {
 		return err
@@ -335,7 +346,7 @@ func (m *Merger) scanMethodBody(def *MethodDef, statements []ast.Statement) erro
 		return nil
 	}
 
-	ctx := m.newMethodCtx(def)
+	ctx := def.ctx
 	err := def.Body.Fill(ctx, statements)
 	if err != nil {
 		return err

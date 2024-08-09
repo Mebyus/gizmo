@@ -38,6 +38,8 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 		return s.scanParenthesizedExpression(ctx, expr.(ast.ParenthesizedExpression))
 	case exn.Cast:
 		return s.scanCastExpression(ctx, expr.(ast.CastExpression))
+	case exn.Tint:
+		return s.scanTintExp(ctx, expr.(ast.TintExp))
 	case exn.Receiver:
 		return s.scanReceiverExpression(ctx, expr.(ast.Receiver))
 
@@ -121,30 +123,84 @@ func (s *Scope) scanChainPart(ctx *Context, tip ChainOperand, part ast.ChainPart
 		return s.scanIndirectIndexPart(ctx, tip, part.(ast.IndirectIndexPart))
 	case exn.Index:
 		return s.scanIndexPart(ctx, tip, part.(ast.IndexPart))
+	case exn.Slice:
+		return s.scanSlicePart(ctx, tip, part.(ast.SlicePart))
 	default:
 		panic(fmt.Sprintf("not implemented for %s expression", part.Kind().String()))
 	}
 }
 
-func (s *Scope) scanIndexPart(ctx *Context, tip ChainOperand, part ast.IndexPart) (ChainOperand, error) {
-	t := tip.Type()
+func (s *Scope) scanSlicePart(ctx *Context, tip ChainOperand, part ast.SlicePart) (ChainOperand, error) {
+	start, err := s.Scan(ctx, part.Start)
+	if err != nil {
+		return nil, err
+	}
+	if start != nil && !start.Type().IsIntegerType() {
+		return nil, fmt.Errorf("%s: type %s cannot be used as index", start.Pin(), start.Type().Kind)
+	}
+
+	end, err := s.Scan(ctx, part.End)
+	if err != nil {
+		return nil, err
+	}
+	if end != nil && !end.Type().IsIntegerType() {
+		return nil, fmt.Errorf("%s: type %s cannot be used as index", end.Pin(), end.Type().Kind)
+	}
+
 	pos := part.Pos
+	t := tip.Type()
+
 	switch t.Kind {
 	case tpk.Custom:
 		panic("not implemented")
 	case tpk.Chunk:
-		index, err := s.scan(ctx, part.Index)
-		if err != nil {
-			return nil, err
-		}
-		if !index.Type().IsIntegerType() {
-			return nil, fmt.Errorf("%s: type %s cannot be used as index", pos.String(), index.Type().Kind.String())
-		}
+		return &ChunkSliceExp{
+			Pos:    pos,
+			Target: tip,
+			Start:  start,
+			End:    end,
+			typ:    s.Types.storeChunk(t.Def.(ChunkTypeDef).ElemType),
+		}, nil
+	case tpk.Array:
+		return &ArraySliceExp{
+			Pos:    pos,
+			Target: tip,
+			Start:  start,
+			End:    end,
+			typ:    s.Types.storeChunk(t.Def.(ArrayTypeDef).ElemType),
+		}, nil
+	default:
+		panic(fmt.Sprintf("not implemented for %s types", t.Kind))
+	}
+}
+
+func (s *Scope) scanIndexPart(ctx *Context, tip ChainOperand, part ast.IndexPart) (ChainOperand, error) {
+	index, err := s.scan(ctx, part.Index)
+	if err != nil {
+		return nil, err
+	}
+	if !index.Type().IsIntegerType() {
+		return nil, fmt.Errorf("%s: type %s cannot be used as index", index.Pin(), index.Type().Kind)
+	}
+
+	pos := part.Pos
+	t := tip.Type()
+	switch t.Kind {
+	case tpk.Custom:
+		panic("not implemented")
+	case tpk.Chunk:
 		return &ChunkIndexExpression{
 			Pos:    pos,
 			Target: tip,
 			Index:  index,
 			typ:    t.Def.(ChunkTypeDef).ElemType,
+		}, nil
+	case tpk.Array:
+		return &ArrayIndexExp{
+			Pos:    pos,
+			Target: tip,
+			Index:  index,
+			typ:    t.Def.(ArrayTypeDef).ElemType,
 		}, nil
 	default:
 		panic(fmt.Sprintf("not implemented for %s types", t.Kind))
@@ -326,12 +382,38 @@ func (s *Scope) scanCallPart(ctx *Context, tip ChainOperand, part ast.CallPart) 
 	}, nil
 }
 
+func (s *Scope) scanTintExp(ctx *Context, exp ast.TintExp) (*TintExp, error) {
+	target, err := s.scan(ctx, exp.Target)
+	if err != nil {
+		return nil, err
+	}
+	t, err := s.Types.lookup(ctx, exp.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	if !t.IsIntegerType() {
+		return nil, fmt.Errorf("%s: destination must be integer type", exp.Type.Pin())
+	}
+	if !target.Type().IsIntegerType() {
+		return nil, fmt.Errorf("%s: target is not an integer", target.Pin())
+	}
+
+	pos := exp.Pos
+	return &TintExp{
+		Pos:    pos,
+		Target: target,
+
+		DestType: t,
+	}, nil
+}
+
 func (s *Scope) scanCastExpression(ctx *Context, expr ast.CastExpression) (*CastExpression, error) {
 	target, err := s.scan(ctx, expr.Target)
 	if err != nil {
 		return nil, err
 	}
-	t, err := s.Types.lookup(expr.Type)
+	t, err := s.Types.lookup(ctx, expr.Type)
 	if err != nil {
 		return nil, err
 	}
@@ -340,8 +422,8 @@ func (s *Scope) scanCastExpression(ctx *Context, expr ast.CastExpression) (*Cast
 
 	return &CastExpression{
 		// Pos: expr.,
-		Target:          target,
-		DestinationType: t,
+		Target:   target,
+		DestType: t,
 	}, nil
 }
 

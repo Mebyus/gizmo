@@ -19,10 +19,10 @@ func (m *Merger) inspectConstant(ctx *SymbolContext) error {
 	if err != nil {
 		return err
 	}
-	if node.Expr == nil {
+	if node.Exp == nil {
 		panic("nil expression in constant definition")
 	}
-	return m.inspectExp(ctx, node.Expr)
+	return m.inspectExp(ctx, node.Exp)
 }
 
 // determines which symbols are used in constant definition type specifier.
