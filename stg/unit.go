@@ -3,13 +3,25 @@ package stg
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/mebyus/gizmo/parser"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/source/origin"
 )
 
+type UnitImports struct {
+	// Sorted.
+	Paths []origin.Path
+
+	// Has order corresponding to Paths field.
+	// That means expression Units[i].Path == Paths[i] is true.
+	Units []*Unit
+}
+
 type Unit struct {
+	Imports UnitImports
+
 	// List of all unit level function symbols defined in unit.
 	Funs []*Symbol
 
@@ -26,12 +38,26 @@ type Unit struct {
 	// Methods can only be defined at unit level.
 	Meds []*Symbol
 
+	// Import path of this unit.
+	Path origin.Path
+
 	Name string
 
 	// Scope that holds all unit level symbols from all unit atoms.
 	//
 	// This field is always not nil and Scope.Kind is always equal to scp.Unit.
 	Scope *Scope
+
+	DiscoveryIndex uint32
+}
+
+func SortUnits(units []*Unit) {
+	u := units
+	sort.Slice(u, func(i, j int) bool {
+		a := u[i]
+		b := u[j]
+		return origin.Less(a.Path, b.Path)
+	})
 }
 
 func (u *Unit) addFun(s *Symbol) {

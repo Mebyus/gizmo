@@ -1,14 +1,18 @@
+/*
 import std {
     mem => "mem"
     os  => "os"
 }
+*/
 
 import {
-    fmt  => "fmt"
-    math => "math"
+    fmt  => "tests/fmt"
+    math => "tests/math"
 }
 
+/*
 import pkg {
     http => "net/http"
     pool => "mebyus/pool"
 }
+*/

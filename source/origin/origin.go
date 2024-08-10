@@ -2,7 +2,7 @@ package origin
 
 // Origin denotes context in which import string should be resolved.
 // Resolution mechanisms and rules may significantly vary between
-// different origins
+// different origins.
 //
 // Origin is specified at the start of import block, like this:
 //

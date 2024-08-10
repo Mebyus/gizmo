@@ -3,9 +3,11 @@ package build
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
-	"github.com/mebyus/gizmo/builder"
 	"github.com/mebyus/gizmo/butler"
+	"github.com/mebyus/gizmo/source/origin"
+	"github.com/mebyus/gizmo/uwalk"
 )
 
 var Build = &butler.Lackey{
@@ -19,6 +21,8 @@ var Build = &butler.Lackey{
 }
 
 type Config struct {
+	OutputFile string
+
 	BuildKind string
 
 	// Project build configuration file
@@ -32,6 +36,8 @@ func (c *Config) Apply(p *butler.Param) error {
 	switch p.Name {
 	case "":
 		panic("param with empty name")
+	case "output":
+		c.OutputFile = p.Str()
 	case "kind":
 		c.BuildKind = p.Str()
 	case "file":
@@ -52,6 +58,12 @@ func (c *Config) Recipe() []butler.Param {
 			Def:         "debug",
 			ValidValues: []string{"debug", "test", "safe", "fast"},
 			Desc:        "select build kind (optimizations, some defaults, etc.)",
+		},
+		{
+			Name: "output",
+			Kind: butler.String,
+			Def:  "",
+			Desc: "specify output file path",
 		},
 		{
 			Name: "file",
@@ -76,20 +88,17 @@ func execute(r *butler.Lackey, targets []string) error {
 }
 
 func build(config *Config, path string) error {
-	kind, err := builder.ParseKind(config.BuildKind)
+	path = filepath.Clean(path)
+
+	// TODO: remove this hack
+	// it is here only for convenient development with autocomplete
+	path = strings.TrimPrefix(path, "src/")
+
+	bundle, err := uwalk.Walk(origin.Local(path))
 	if err != nil {
 		return err
 	}
+	_ = bundle
 
-	path = filepath.Clean(path)
-	cfg := builder.Config{
-		BaseOutputDir: filepath.Join("build", "target"),
-		BaseCacheDir:  filepath.Join("build", ".cache"),
-		BaseSourceDir: "src",
-		BaseNamespace: "coven",
-
-		BuildKind: kind,
-	}
-
-	return builder.Build(cfg, path)
+	return nil
 }
