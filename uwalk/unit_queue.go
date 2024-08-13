@@ -26,7 +26,7 @@ func NewUnitQueue() *UnitQueue {
 
 // Sorted returns stored units sorted by import path.
 func (w *UnitQueue) Sorted() []*stg.Unit {
-	stg.SortUnits(w.units)
+	stg.SortAndOrderUnits(w.units)
 	return w.units
 }
 

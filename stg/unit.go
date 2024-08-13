@@ -48,16 +48,33 @@ type Unit struct {
 	// This field is always not nil and Scope.Kind is always equal to scp.Unit.
 	Scope *Scope
 
+	// Unit index assigned by order in which units are discovered
+	// during unit discovery phase (uwalk).
 	DiscoveryIndex uint32
+
+	// Unit index assigned after path sorting.
+	Index uint32
 }
 
-func SortUnits(units []*Unit) {
+func SortAndOrderUnits(units []*Unit) {
+	if len(units) == 0 {
+		panic("invalid argument: <nil>")
+	}
+
+	if len(units) == 1 {
+		return
+	}
+
 	u := units
 	sort.Slice(u, func(i, j int) bool {
 		a := u[i]
 		b := u[j]
 		return origin.Less(a.Path, b.Path)
 	})
+
+	for i := 0; i < len(u); i += 1 {
+		u[i].Index = uint32(i)
+	}
 }
 
 func (u *Unit) addFun(s *Symbol) {

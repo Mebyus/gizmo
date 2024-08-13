@@ -11,7 +11,7 @@ import (
 type Bundle struct {
 	Graph Graph
 
-	// Sorted.
+	// Sorted by import path.
 	Units []*stg.Unit
 
 	// Index in this slice corresponds to Unit.DiscoveryIndex.
@@ -47,5 +47,9 @@ func Walk(path origin.Path) (*Bundle, error) {
 		}
 		return nil, fmt.Errorf("import cycle")
 	}
+
+	// TODO: remove debug prints
+	printGraph(&b.Graph)
+
 	return &b, nil
 }

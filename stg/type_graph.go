@@ -703,7 +703,7 @@ func (r *GraphRanker) swap() {
 
 // add node with specified graph index to cohort of the specified rank
 func (r *GraphRanker) add(node int, rank int) {
-	for j := len(r.c.Cohorts); j <= rank; j++ {
+	for j := len(r.c.Cohorts); j <= rank; j += 1 {
 		// allocate place for storing slices of graph indices
 		// for cohorts with rank not initialized previously
 		r.c.Cohorts = append(r.c.Cohorts, nil)
