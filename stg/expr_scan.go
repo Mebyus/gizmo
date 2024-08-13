@@ -252,6 +252,7 @@ func (s *Scope) scanIndirectPart(ctx *Context, tip ChainOperand, part ast.Indire
 }
 
 func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPart) (ChainOperand, error) {
+	// TODO: add type and symdef for import symbols
 	tt := tip.Type()
 
 	// TODO: think up a better way to lookup members on types,

@@ -7,6 +7,7 @@ import (
 
 	"github.com/mebyus/gizmo/butler"
 	"github.com/mebyus/gizmo/source/origin"
+	"github.com/mebyus/gizmo/stg"
 	"github.com/mebyus/gizmo/uwalk"
 )
 
@@ -98,7 +99,41 @@ func build(config *Config, path string) error {
 	if err != nil {
 		return err
 	}
-	_ = bundle
+
+	global := stg.NewGlobalScope()
+	resolver := stg.MapResolver(bundle.Map)
+	for _, c := range bundle.Graph.Cohorts {
+		for _, i := range c {
+			u := bundle.Graph.Nodes[i].Unit
+
+			parsers := bundle.GetUnitParsers(u)
+			if len(parsers) == 0 {
+				panic("no unit parsers")
+			}
+
+			m := stg.New(stg.UnitContext{
+				Resolver: resolver,
+				Global:   global,
+				Unit:     u,
+			})
+			for _, p := range parsers {
+				atom, err := p.Parse()
+				if err != nil {
+					return err
+				}
+				// TODO: pass all units to merger at once
+				// as a slice
+				err = m.Add(atom)
+				if err != nil {
+					return err
+				}
+			}
+			_, err := m.Merge()
+			if err != nil {
+				return err
+			}
+		}
+	}
 
 	return nil
 }

@@ -16,3 +16,7 @@ import pkg {
     pool => "mebyus/pool"
 }
 */
+
+fun use_math_add(a: s32, b: s32) => s32 {
+    return fmt.add(a, b);
+}

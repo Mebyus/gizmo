@@ -23,7 +23,7 @@ import (
 //   - 7 (block scan) - recursively scan statements and expressions inside functions
 type Merger struct {
 	// Unit that is currently being built by merger.
-	unit Unit
+	unit *Unit
 
 	ctx UnitContext
 
@@ -101,12 +101,15 @@ func (n *NodesBox) Med(i astIndexSymDef) ast.Method {
 }
 
 func New(ctx UnitContext) *Merger {
+	u := ctx.Unit
+	if u == nil {
+		u = &Unit{Name: ctx.Name}
+	}
+	u.Scope = NewUnitScope(ctx.Global)
+
 	return &Merger{
-		ctx: ctx,
-		unit: Unit{
-			Name:  ctx.Name,
-			Scope: NewUnitScope(ctx.Global),
-		},
+		ctx:  ctx,
+		unit: u,
 		nodes: NodesBox{
 			MedsByReceiver: make(map[string][]astIndexSymDef),
 		},
@@ -126,6 +129,9 @@ type UnitContext struct {
 	Resolver Resolver
 
 	Global *Scope
+
+	// Could be nil when constructing merger.
+	Unit *Unit
 }
 
 // Resolver gives access to other units by their origin path.
@@ -147,6 +153,15 @@ var _ Resolver = EmptyResolver{}
 
 func (EmptyResolver) Resolve(origin.Path) *Unit {
 	return nil
+}
+
+type MapResolver map[origin.Path]*Unit
+
+// Explicit interface implementation check.
+var _ Resolver = MapResolver(nil)
+
+func (r MapResolver) Resolve(p origin.Path) *Unit {
+	return r[p]
 }
 
 func (m *Merger) Add(atom *ast.Atom) error {
@@ -253,7 +268,7 @@ func (m *Merger) Merge() (*Unit, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &m.unit, nil
+	return m.unit, nil
 }
 
 // add top-level symbol to unit
