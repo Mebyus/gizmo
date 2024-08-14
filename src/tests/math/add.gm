@@ -6,3 +6,6 @@ pub
 fun add(a: s32, b: s32) => s32 {
     return a + b;
 }
+
+pub
+type SuperInt u64

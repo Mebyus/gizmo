@@ -22,6 +22,7 @@ type nodeTypeSpec struct{}
 
 func (nodeTypeSpec) TypeSpec() {}
 
+// <TypeName> => <Identifier>
 type TypeName struct {
 	nodeTypeSpec
 
@@ -37,6 +38,25 @@ func (TypeName) Kind() tps.Kind {
 
 func (t TypeName) Pin() source.Pos {
 	return t.Name.Pos
+}
+
+// <ImportType> => <UnitName> "." <TypeName>
+type ImportType struct {
+	nodeTypeSpec
+
+	Unit Identifier
+	Name Identifier
+}
+
+// Explicit interface implementation check
+var _ TypeSpec = ImportType{}
+
+func (ImportType) Kind() tps.Kind {
+	return tps.ImportName
+}
+
+func (t ImportType) Pin() source.Pos {
+	return t.Unit.Pos
 }
 
 // <StructTypeLiteral> = "struct" "{" { <FieldDefinition> "," } "}"

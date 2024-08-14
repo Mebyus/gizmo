@@ -133,7 +133,7 @@ func (s *Scope) scanImportExp(ctx *Context, pos source.Pos, imp *Symbol, parts [
 			return nil, fmt.Errorf("%s: unit %s has no \"%s\" symbol", pos, unit.Name, name)
 		}
 		if !symbol.Pub {
-			return nil, fmt.Errorf("%s: imported symbol %s.%s is not public", pos, unit.Name, name)
+			return nil, fmt.Errorf("%s: imported symbol \"%s.%s\" is not public", pos, unit.Name, name)
 		}
 		chain = &ChainSymbol{
 			Pos: pos,

@@ -10,6 +10,7 @@ const (
 	empty Kind = iota
 
 	Name
+	ImportName
 	Struct
 	Pointer
 	Array
@@ -18,7 +19,6 @@ const (
 	Union
 	Enum
 	Bag
-	Instance
 	Function
 	Tuple
 )
@@ -27,15 +27,15 @@ var text = [...]string{
 	empty: "<nil>",
 
 	Name:         "name",
+	ImportName:   "name.import",
 	Struct:       "struct",
 	Pointer:      "pointer",
 	Array:        "array",
-	ArrayPointer: "array_pointer",
+	ArrayPointer: "pointer.array",
 	Chunk:        "chunk",
 	Union:        "union",
 	Enum:         "enum",
 	Bag:          "bag",
-	Instance:     "instance",
 	Function:     "function",
 	Tuple:        "tuple",
 }

@@ -50,6 +50,9 @@ func (p *Parser) DefTypeSpecifier() (ast.TypeSpec, error) {
 func (p *Parser) typeSpecifier() (ast.TypeSpec, error) {
 	switch p.tok.Kind {
 	case token.Identifier:
+		if p.next.Kind == token.Period {
+			return p.importType()
+		}
 		return p.typeName()
 	case token.Asterisk:
 		return p.pointerType()
@@ -177,6 +180,23 @@ func (p *Parser) fnType() (ast.FunctionType, error) {
 	return ast.FunctionType{
 		Pos:       pos,
 		Signature: signature,
+	}, nil
+}
+
+func (p *Parser) importType() (ast.ImportType, error) {
+	unit := p.idn()
+	p.advance() // skip unit name
+	p.advance() // skip "."
+
+	if p.tok.Kind != token.Identifier {
+		return ast.ImportType{}, p.unexpected(p.tok)
+	}
+	name := p.idn()
+	p.advance() // skip type name
+
+	return ast.ImportType{
+		Unit: unit,
+		Name: name,
 	}, nil
 }
 

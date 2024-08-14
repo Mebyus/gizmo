@@ -89,9 +89,42 @@ func (x *TypeIndex) lookup(ctx *Context, spec ast.TypeSpec) (*Type, error) {
 	case tps.Array:
 		s := spec.(ast.ArrayType)
 		return x.lookupArray(ctx, s.ElemType, s.Size)
+	case tps.ImportName:
+		i := spec.(ast.ImportType)
+		return x.lookupImportName(i.Unit, i.Name)
 	default:
 		panic(fmt.Sprintf("not implemented for %s", spec.Kind().String()))
 	}
+}
+
+func (x *TypeIndex) lookupImportName(unit ast.Identifier, name ast.Identifier) (*Type, error) {
+	uname := unit.Lit
+	upos := unit.Pos
+	usymbol := x.scope.Lookup(uname, upos.Num)
+	if usymbol == nil {
+		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", upos, uname)
+	}
+	if usymbol.Kind != smk.Import {
+		return nil, fmt.Errorf("%s: symbol \"%s\" is not an import", upos, uname)
+	}
+	u := usymbol.Def.(ImportSymDef).Unit
+	n := name.Lit
+	pos := name.Pos
+	s := u.Scope.sym(n)
+	if s == nil {
+		return nil, fmt.Errorf("%s: unit %s has no \"%s\" symbol", pos, u.Name, name)
+	}
+	if s.Kind != smk.Type {
+		return nil, fmt.Errorf("%s: imported symbol \"%s.%s\" is a %s, not a type", pos, u.Name, name, s.Kind)
+	}
+	if !s.Pub {
+		return nil, fmt.Errorf("%s: imported symbol \"%s.%s\" is not public", pos, u.Name, name)
+	}
+	t := s.Def.(*Type)
+	if t.Builtin() || t.Kind == tpk.Custom {
+		return t, nil
+	}
+	panic(fmt.Sprintf("unexpected type kind: %s", t.Kind.String()))
 }
 
 func (x *TypeIndex) storePointer(ref *Type) *Type {
@@ -211,14 +244,14 @@ func (x *TypeIndex) lookupNamed(idn ast.Identifier) (*Type, error) {
 	pos := idn.Pos
 	s := x.scope.Lookup(name, pos.Num)
 	if s == nil {
-		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", pos.String(), name)
+		return nil, fmt.Errorf("%s: undefined symbol \"%s\"", pos, name)
 	}
 	if s.Kind != smk.Type {
-		panic(fmt.Sprintf("unexpected symbol kind: %s", s.Kind.String()))
+		return nil, fmt.Errorf("%s: symbol \"%s\" is a %s, not a type", pos, name, s.Kind)
 	}
 	t := s.Def.(*Type)
 	if t.Builtin() || t.Kind == tpk.Custom {
 		return t, nil
 	}
-	panic(fmt.Sprintf("unexpected type kind: %s", t.Kind.String()))
+	panic(fmt.Sprintf("unexpected type kind: %s", t.Kind))
 }

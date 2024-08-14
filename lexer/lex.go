@@ -587,6 +587,22 @@ func (lx *Lexer) other() token.Token {
 				Kind: token.ArrayPointer,
 			}
 		}
+		if lx.Next == '^' {
+			pos := lx.pos()
+			lx.Advance() // skip "["
+			if lx.Next != ']' {
+				return token.Token{
+					Pos:  pos,
+					Kind: token.LeftSquare,
+				}
+			}
+			lx.Advance() // skip "^"
+			lx.Advance() // skip "]"
+			return token.Token{
+				Pos:  pos,
+				Kind: token.CapBuffer,
+			}
+		}
 		return lx.oneByteToken(token.LeftSquare)
 	case ']':
 		return lx.oneByteToken(token.RightSquare)

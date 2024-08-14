@@ -60,6 +60,7 @@ var Literal = [...]string{
 	Chunk:            "[]",
 	AutoLen:          "[_]",
 	ArrayPointer:     "[*]",
+	CapBuffer:        "[^]",
 	Nillable:         "?|",
 	NillableChunk:    "[?]",
 

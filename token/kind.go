@@ -75,6 +75,7 @@ const (
 	Chunk        // []
 	AutoLen      // [_]
 	ArrayPointer // [*]
+	CapBuffer    // [^]
 
 	Nillable      // ?|
 	NillableChunk // [?]

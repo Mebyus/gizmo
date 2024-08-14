@@ -20,3 +20,7 @@ import pkg {
 fun use_math_add(a: s32, b: s32) => s32 {
     return math.add(a, b);
 }
+
+fun use_import_type(x: math.SuperInt) => u32 {
+    return tint(u32, x);
+}

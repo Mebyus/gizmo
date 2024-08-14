@@ -1,0 +1,9 @@
+fun use_match(x: uint) => uint {
+    if x =>
+    case 1, 2, 4 { return 2; }
+    case 3 {
+        a := 1;
+        return a;
+    }
+    else { return x; }
+}
