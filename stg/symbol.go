@@ -121,3 +121,10 @@ func (nodeSymDef) SymDef() {}
 type astIndexSymDef int
 
 func (astIndexSymDef) SymDef() {}
+
+type ImportSymDef struct {
+	nodeSymDef
+
+	// Unit imported by symbol.
+	Unit *Unit
+}

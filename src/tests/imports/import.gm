@@ -18,5 +18,5 @@ import pkg {
 */
 
 fun use_math_add(a: s32, b: s32) => s32 {
-    return fmt.add(a, b);
+    return math.add(a, b);
 }

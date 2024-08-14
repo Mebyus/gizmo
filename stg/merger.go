@@ -299,12 +299,12 @@ func (m *Merger) addImport(bind ast.ImportBind) error {
 		return m.errMultDef(name, pos)
 	}
 
-	// TODO: add context search for imported unit
 	s := &Symbol{
 		Kind: smk.Import,
 		Name: name,
 		Pos:  pos,
 		Pub:  bind.Pub,
+		Def:  ImportSymDef{Unit: u},
 	}
 	m.add(s)
 	return nil

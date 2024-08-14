@@ -65,9 +65,9 @@ func (s *Scope) scanReceiverExpression(ctx *Context, expr ast.Receiver) (*Receiv
 	}, nil
 }
 
-func (s *Scope) scanChainOperand(ctx *Context, expr ast.ChainOperand) (ChainOperand, error) {
-	name := expr.Identifier.Lit
-	pos := expr.Identifier.Pos
+func (s *Scope) scanChainOperand(ctx *Context, exp ast.ChainOperand) (ChainOperand, error) {
+	name := exp.Identifier.Lit
+	pos := exp.Identifier.Pos
 
 	var symbol *Symbol
 	var t *Type
@@ -79,6 +79,9 @@ func (s *Scope) scanChainOperand(ctx *Context, expr ast.ChainOperand) (ChainOper
 		// TODO: probably check symbol kind here
 		if symbol.Scope.Kind == scp.Unit {
 			ctx.ref.Add(symbol)
+		}
+		if symbol.Kind == smk.Import {
+			return s.scanImportExp(ctx, pos, symbol, exp.Parts)
 		}
 
 		t = symbol.Type
@@ -96,17 +99,53 @@ func (s *Scope) scanChainOperand(ctx *Context, expr ast.ChainOperand) (ChainOper
 		Sym: symbol,
 		typ: t,
 	}
-	var tip ChainOperand = chain
+	return s.scanChainParts(ctx, chain, exp.Parts)
+}
 
+func (s *Scope) scanChainParts(ctx *Context, tip ChainOperand, parts []ast.ChainPart) (ChainOperand, error) {
 	var err error
-	for _, part := range expr.Parts {
+	for _, part := range parts {
 		tip, err = s.scanChainPart(ctx, tip, part)
 		if err != nil {
 			return nil, err
 		}
 	}
-
 	return tip, nil
+}
+
+func (s *Scope) scanImportExp(ctx *Context, pos source.Pos, imp *Symbol, parts []ast.ChainPart) (ChainOperand, error) {
+	if len(parts) == 0 {
+		return nil, fmt.Errorf("%s: import symbol \"%s\" cannot be used as standalone expression",
+			pos, imp.Name)
+	}
+
+	var chain *ChainSymbol
+
+	part := parts[0]
+	switch part.Kind() {
+	case exn.Member:
+		unit := imp.Def.(ImportSymDef).Unit
+		m := part.(ast.MemberPart).Member
+		name := m.Lit
+		pos := m.Pos
+		symbol := unit.Scope.sym(name)
+		if symbol == nil {
+			return nil, fmt.Errorf("%s: unit %s has no \"%s\" symbol", pos, unit.Name, name)
+		}
+		if !symbol.Pub {
+			return nil, fmt.Errorf("%s: imported symbol %s.%s is not public", pos, unit.Name, name)
+		}
+		chain = &ChainSymbol{
+			Pos: pos,
+			Sym: symbol,
+			typ: symbol.Type,
+		}
+	default:
+		return nil, fmt.Errorf("%s: %s chain cannot be used on \"%s\" import symbol",
+			part.Pin(), part.Kind(), imp.Name)
+	}
+
+	return s.scanChainParts(ctx, chain, parts[1:])
 }
 
 func (s *Scope) scanChainPart(ctx *Context, tip ChainOperand, part ast.ChainPart) (ChainOperand, error) {
