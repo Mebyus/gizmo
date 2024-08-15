@@ -25,7 +25,7 @@ type nodeStatement struct{}
 
 func (nodeStatement) Statement() {}
 
-type BlockStatement struct {
+type Block struct {
 	nodeStatement
 
 	// starting position of block
@@ -35,13 +35,13 @@ type BlockStatement struct {
 }
 
 // interface implementation check
-var _ Statement = BlockStatement{}
+var _ Statement = Block{}
 
-func (BlockStatement) Kind() stm.Kind {
+func (Block) Kind() stm.Kind {
 	return stm.Block
 }
 
-func (s BlockStatement) Pin() source.Pos {
+func (s Block) Pin() source.Pos {
 	return s.Pos
 }
 
@@ -111,7 +111,7 @@ type IfClause struct {
 
 	// Always not nil
 	Condition Expression
-	Body      BlockStatement
+	Body      Block
 }
 
 // <IfClause> = "else" "if" <Expression> <BlockStatement>
@@ -121,14 +121,14 @@ type ElseIfClause struct {
 	// Always not nil
 	Condition Expression
 
-	Body BlockStatement
+	Body Block
 }
 
 // <ElseClause> = "else" <BlockStatement>
 type ElseClause struct {
 	Pos source.Pos
 
-	Body BlockStatement
+	Body Block
 }
 
 var _ Statement = IfStatement{}
@@ -166,7 +166,7 @@ type ForStatement struct {
 	Pos source.Pos
 
 	// must contain at least one statement
-	Body BlockStatement
+	Body Block
 }
 
 var _ Statement = ForStatement{}
@@ -189,7 +189,7 @@ type ForConditionStatement struct {
 	Condition Expression
 
 	// must contain at least one statement
-	Body BlockStatement
+	Body Block
 }
 
 var _ Statement = ForConditionStatement{}
@@ -207,23 +207,24 @@ type MatchStatement struct {
 
 	Pos source.Pos
 
-	// Expression at the top of match statement that is being matched
-	Expression Expression
+	// Exp at the top of match statement that is being matched.
+	// Equals nil for bool match variant.
+	Exp Expression
 
-	// Match cases in order they appear
+	// Match cases in order they appear.
 	Cases []MatchCase
 
-	// Always present, but can have zero statements in block
-	//
-	// Else case is always the last in match statement
-	Else BlockStatement
+	// Else is always last in match statement.
+	Else *Block
 }
 
 type MatchCase struct {
-	// Always not nil
-	Expression Expression
+	Pos source.Pos
 
-	Body BlockStatement
+	// Always not nil
+	Exp Expression
+
+	Body Block
 }
 
 var _ Statement = MatchStatement{}
@@ -265,7 +266,7 @@ type ForEachStatement struct {
 	Iterator Expression
 
 	// must contain at least one statement
-	Body BlockStatement
+	Body Block
 }
 
 var _ Statement = ForEachStatement{}

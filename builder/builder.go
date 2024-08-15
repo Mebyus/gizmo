@@ -192,7 +192,7 @@ func (g *Builder) FindUnitBuildInfo(p origin.Path) (*DepEntry, error) {
 	if unit.Header.Unit == nil {
 		return nil, fmt.Errorf("file \"%s\" does not contain unit block", src.Path)
 	}
-	imports := []string{} // TODO: implement imports search from unit
+	imports := []string{}
 	for _, s := range imports {
 		cleaned := filepath.Clean(s)
 		if cleaned != s {

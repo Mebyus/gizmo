@@ -68,7 +68,7 @@ func (g *Builder) Link(objs []string, entry string, out string) error {
 	if len(objs) == 0 {
 		panic("empty object files list")
 	}
-	if len(entry) == 0 {
+	if entry == "" {
 		panic("entry point name is not specified")
 	}
 

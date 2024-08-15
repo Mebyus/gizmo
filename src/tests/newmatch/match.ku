@@ -1,5 +1,5 @@
 fun use_if_match(x: uint) => uint {
-    if x =>
+    if x
     case 1, 2, 4 { return 2; }
     case 3 {
         a := 1;
@@ -9,7 +9,7 @@ fun use_if_match(x: uint) => uint {
 }
 
 fun use_if_bool_match(x: uint) => uint {
-    if =>
+    if
     case x == 1 {}
     case x > 2 { return 2; }
     case 2 * x < 10 { 

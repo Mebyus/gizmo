@@ -103,7 +103,6 @@ const (
 	Struct
 	Union
 
-	Match
 	Type
 	Let
 	Var
@@ -120,7 +119,8 @@ const (
 
 	Cast
 	Tint    // truncate (cast with storage size change) integer
-	BitCast // TODO: rename this to memcast
+	MemCast // TODO: rename this to memcast
+	MemSize
 
 	Receiver // method receiver, consists of one letter "g"
 

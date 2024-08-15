@@ -17,7 +17,6 @@ var words = map[string]Kind{
 	"in":     In,
 	"var":    Var,
 	"type":   Type,
-	"match":  Match,
 	"enum":   Enum,
 	"struct": Struct,
 	"union":  Union,
@@ -30,20 +29,21 @@ var words = map[string]Kind{
 	"false": False,
 	"let":   Let,
 
-	"cast":    Cast,
-	"tint":    Tint,
-	"bitcast": BitCast,
+	"cast":  Cast,
+	"tint":  Tint,
+	"mcast": MemCast,
+	"msize": MemSize,
 }
 
 const (
 	minKeywordLen = 2
-	maxKeywordLen = 7
+	maxKeywordLen = 6
 )
 
 // Lookup finds token Kind (if any) by its literal
 func Lookup(lit string) (Kind, bool) {
 	if len(lit) < minKeywordLen || len(lit) > maxKeywordLen {
-		return empty, false
+		return 0, false
 	}
 	k, ok := words[lit]
 	return k, ok

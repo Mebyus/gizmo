@@ -18,7 +18,7 @@ type FunctionDeclaration struct {
 type FunctionDefinition struct {
 	Head FunctionDeclaration
 
-	Body BlockStatement
+	Body Block
 }
 
 // <Signature> = <Parameters> [ "=>" ( <Result> | "never" ) ]

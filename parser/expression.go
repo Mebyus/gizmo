@@ -322,7 +322,7 @@ func (p *Parser) operand() (ast.Operand, error) {
 		return p.cast()
 	case token.Tint:
 		return p.tint()
-	case token.BitCast:
+	case token.MemCast:
 		return p.bitcast()
 	case token.LeftCurly:
 		return p.objectLiteral()

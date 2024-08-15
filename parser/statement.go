@@ -7,6 +7,7 @@ import (
 	"github.com/mebyus/gizmo/ast/aop"
 	"github.com/mebyus/gizmo/ast/exn"
 	"github.com/mebyus/gizmo/ast/lbl"
+	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/token"
 )
 
@@ -24,8 +25,6 @@ func (p *Parser) Statement() (ast.Statement, error) {
 		return p.returnStatement()
 	case token.For:
 		return p.forStatement()
-	case token.Match:
-		return p.matchStatement()
 	case token.Jump:
 		return p.jumpStatement()
 	case token.Defer:
@@ -108,66 +107,63 @@ func (p *Parser) label() (ast.Label, error) {
 	}
 }
 
-func (p *Parser) matchStatement() (ast.MatchStatement, error) {
+func (p *Parser) boolMatch() (ast.MatchStatement, error) {
 	pos := p.pos()
+	p.advance() // skip "if"
 
-	p.advance() // skip "match"
-
-	expr, err := p.expr()
+	var node ast.MatchStatement
+	err := p.fillMatchCases(&node)
 	if err != nil {
 		return ast.MatchStatement{}, err
 	}
 
-	if p.tok.Kind != token.LeftCurly {
-		return ast.MatchStatement{}, p.unexpected(p.tok)
-	}
-	p.advance() // skip "{"
+	node.Pos = pos
+	return node, nil
+}
 
-	var cases []ast.MatchCase
+func (p *Parser) fillMatchCases(node *ast.MatchStatement) error {
 	for {
 		switch p.tok.Kind {
 		case token.Case:
 			c, err := p.matchCase()
 			if err != nil {
-				return ast.MatchStatement{}, err
+				return err
 			}
-			cases = append(cases, c)
+			node.Cases = append(node.Cases, c)
 		case token.Else:
 			block, err := p.matchElse()
 			if err != nil {
-				return ast.MatchStatement{}, err
+				return err
 			}
-
-			// closing curly of match statement
-			if p.tok.Kind != token.RightCurly {
-				return ast.MatchStatement{}, p.unexpected(p.tok)
-			}
-			p.advance() // skip "}"
-
-			return ast.MatchStatement{
-				Pos:        pos,
-				Expression: expr,
-				Cases:      cases,
-				Else:       block,
-			}, nil
+			node.Else = &block
+			// else case is always last in match statement
+			return nil
 		default:
-			return ast.MatchStatement{}, p.unexpected(p.tok)
+			return nil
 		}
 	}
 }
 
+func (p *Parser) matchStatement(pos source.Pos, exp ast.Expression) (ast.MatchStatement, error) {
+	var node ast.MatchStatement
+	err := p.fillMatchCases(&node)
+	if err != nil {
+		return ast.MatchStatement{}, err
+	}
+
+	node.Pos = pos
+	node.Exp = exp
+	return node, nil
+}
+
 func (p *Parser) matchCase() (ast.MatchCase, error) {
+	pos := p.pos()
 	p.advance() // skip "case"
 
-	expr, err := p.expr()
+	exp, err := p.expr()
 	if err != nil {
 		return ast.MatchCase{}, err
 	}
-
-	if p.tok.Kind != token.RightArrow {
-		return ast.MatchCase{}, p.unexpected(p.tok)
-	}
-	p.advance() // skip "=>"
 
 	block, err := p.Block()
 	if err != nil {
@@ -175,25 +171,15 @@ func (p *Parser) matchCase() (ast.MatchCase, error) {
 	}
 
 	return ast.MatchCase{
-		Expression: expr,
-		Body:       block,
+		Pos:  pos,
+		Exp:  exp,
+		Body: block,
 	}, nil
 }
 
-func (p *Parser) matchElse() (ast.BlockStatement, error) {
+func (p *Parser) matchElse() (ast.Block, error) {
 	p.advance() // skip "else"
-
-	if p.tok.Kind != token.RightArrow {
-		return ast.BlockStatement{}, p.unexpected(p.tok)
-	}
-	p.advance() // skip "=>"
-
-	block, err := p.Block()
-	if err != nil {
-		return ast.BlockStatement{}, err
-	}
-
-	return block, nil
+	return p.Block()
 }
 
 func (p *Parser) forStatement() (ast.Statement, error) {
@@ -314,8 +300,30 @@ func (p *Parser) returnStatement() (statement ast.ReturnStatement, err error) {
 	return
 }
 
-func (p *Parser) ifStatement() (statement ast.IfStatement, err error) {
-	ifClause, err := p.ifClause()
+func (p *Parser) ifStatement() (statement ast.Statement, err error) {
+	switch p.next.Kind {
+	case token.Case, token.Else:
+		return p.boolMatch()
+	}
+
+	pos := p.tok.Pos
+	p.advance() // skip "if"
+
+	exp, err := p.expr()
+	if err != nil {
+		return
+	}
+
+	switch p.tok.Kind {
+	case token.Case, token.Else:
+		return p.matchStatement(pos, exp)
+	case token.LeftCurly:
+		// continue regular if statement
+	default:
+		return nil, p.unexpected(p.tok)
+	}
+
+	body, err := p.Block()
 	if err != nil {
 		return
 	}
@@ -342,7 +350,7 @@ func (p *Parser) ifStatement() (statement ast.IfStatement, err error) {
 		if err != nil {
 			return
 		}
-		var body ast.BlockStatement
+		var body ast.Block
 		body, err = p.Block()
 		if err != nil {
 			return
@@ -353,7 +361,11 @@ func (p *Parser) ifStatement() (statement ast.IfStatement, err error) {
 	}
 
 	return ast.IfStatement{
-		If:     ifClause,
+		If: ast.IfClause{
+			Condition: exp,
+			Pos:       pos,
+			Body:      body,
+		},
 		ElseIf: elseIf,
 		Else:   elseClause,
 	}, nil
@@ -578,7 +590,7 @@ func (p *Parser) letStatement() (statement ast.LetStatement, err error) {
 	}, nil
 }
 
-func (p *Parser) Block() (block ast.BlockStatement, err error) {
+func (p *Parser) Block() (block ast.Block, err error) {
 	block.Pos = p.pos()
 	p.skip(token.LeftCurly)
 	for {

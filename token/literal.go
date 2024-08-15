@@ -2,7 +2,7 @@ package token
 
 // Literal maps Kind to token static literal
 var Literal = [...]string{
-	empty: "EMPTY",
+	empty: "<nil>",
 
 	EOF: "EOF",
 
@@ -79,7 +79,6 @@ var Literal = [...]string{
 	In:     "in",
 	Var:    "var",
 	Type:   "type",
-	Match:  "match",
 	Enum:   "enum",
 	Struct: "struct",
 	Union:  "union",
@@ -97,7 +96,8 @@ var Literal = [...]string{
 
 	Cast:    "cast",
 	Tint:    "tint",
-	BitCast: "bitcast",
+	MemCast: "mcast",
+	MemSize: "msize",
 
 	Receiver: "g",
 

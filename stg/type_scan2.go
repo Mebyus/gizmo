@@ -104,8 +104,6 @@ func (m *Merger) evalConstant(s *Symbol) error {
 		panic("type check not implemented")
 	}
 
-	// TODO: eval constant value (reduce expression)
-
 	def := &ConstDef{
 		Exp:  e2,
 		Type: t,

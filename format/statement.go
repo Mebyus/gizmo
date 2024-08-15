@@ -9,7 +9,7 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-func (g *Noder) Block(block ast.BlockStatement) {
+func (g *Noder) Block(block ast.Block) {
 	if len(block.Statements) == 0 {
 		g.emptyBlock(block.Pos)
 		return
@@ -22,7 +22,7 @@ func (g *Noder) Block(block ast.BlockStatement) {
 	g.endBlock()
 }
 
-func (g *Noder) BlockStatement(block ast.BlockStatement) {
+func (g *Noder) BlockStatement(block ast.Block) {
 	g.Block(block)
 }
 
@@ -37,7 +37,7 @@ func (g *Noder) Statement(node ast.Statement) {
 
 	switch node.Kind() {
 	case stm.Block:
-		g.BlockStatement(node.(ast.BlockStatement))
+		g.BlockStatement(node.(ast.Block))
 	case stm.If:
 		g.IfStatement(node.(ast.IfStatement))
 	case stm.Let:

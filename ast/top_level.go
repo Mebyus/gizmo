@@ -59,7 +59,7 @@ type TopFun struct {
 
 	Name Identifier
 
-	Body BlockStatement
+	Body Block
 
 	Traits
 }
@@ -140,7 +140,7 @@ type Method struct {
 
 	Signature Signature
 
-	Body BlockStatement
+	Body Block
 
 	Traits
 }

@@ -390,8 +390,6 @@ func NewRanker(g *Graph) *Ranker {
 	for i, node := range g.Nodes {
 		r.left[i] = len(node.Anc)
 		if len(node.Des) != 0 {
-			// TODO: possibly we can remove this map and just use
-			// list of descendants for each node
 			r.queue[i] = node.Des
 		}
 	}
