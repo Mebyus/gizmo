@@ -1,6 +1,0 @@
-fn use_chunk_u64(c: []u64) => u64 {
-    if c.len == 0 {
-        return 0;
-    }
-    return c[0];
-}

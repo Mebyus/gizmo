@@ -1,0 +1,9 @@
+#[ asm ]
+#[ link.name = "ku_linux_syscall_exit" ]
+pub
+fun exit(code: s32) => never
+
+pub
+fun main() {
+    add(1, 2);
+}

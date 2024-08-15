@@ -16,7 +16,7 @@ const (
 	NoExt Kind = iota
 	Unknown
 
-	GZM
+	KU
 	CPP
 	ASM
 )
@@ -25,8 +25,8 @@ var kindText = [...]string{
 	NoExt:   "<nil>",
 	Unknown: "<unknown>",
 
-	GZM: "gizmo",
-	CPP: "c++",
+	KU:  "ku",
+	CPP: "c",
 	ASM: "asm",
 }
 
@@ -38,9 +38,9 @@ func ParseKindFromExtension(ext string) Kind {
 	switch ext {
 	case "":
 		return NoExt
-	case ".gm":
-		return GZM
-	case ".cpp", ".cc":
+	case ".ku":
+		return KU
+	case ".c":
 		return CPP
 	case ".asm":
 		return ASM
@@ -256,7 +256,7 @@ func LoadUnitFiles(dir string) ([]*File, error) {
 		}
 
 		name := entry.Name()
-		if filepath.Ext(name) != ".gm" {
+		if filepath.Ext(name) != ".ku" {
 			continue
 		}
 

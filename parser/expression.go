@@ -127,35 +127,40 @@ func (p *Parser) tint() (exp ast.TintExp, err error) {
 	}, nil
 }
 
-func (p *Parser) cast() (ast.CastExpression, error) {
+func (p *Parser) cast() (exp ast.CastExp, err error) {
+	pos := p.pos()
 	p.advance() // skip "cast"
 
-	if p.tok.Kind != token.LeftSquare {
-		return ast.CastExpression{}, p.unexpected(p.tok)
-	}
-	p.advance() // skip "["
-
-	target, err := p.expr()
+	err = p.expect(token.LeftParentheses)
 	if err != nil {
-		return ast.CastExpression{}, err
+		return
 	}
-
-	if p.tok.Kind != token.Colon {
-		return ast.CastExpression{}, p.unexpected(p.tok)
-	}
-	p.advance() // skip ":"
+	p.advance() // skip "("
 
 	spec, err := p.typeSpecifier()
 	if err != nil {
-		return ast.CastExpression{}, p.unexpected(p.tok)
+		return
 	}
 
-	if p.tok.Kind != token.RightSquare {
-		return ast.CastExpression{}, p.unexpected(p.tok)
+	err = p.expect(token.Comma)
+	if err != nil {
+		return
 	}
-	p.advance() // skip "]"
+	p.advance() // skip ","
 
-	return ast.CastExpression{
+	target, err := p.expr()
+	if err != nil {
+		return
+	}
+
+	err = p.expect(token.RightParentheses)
+	if err != nil {
+		return
+	}
+	p.advance() // skip ")"
+
+	return ast.CastExp{
+		Pos:    pos,
 		Target: target,
 		Type:   spec,
 	}, nil

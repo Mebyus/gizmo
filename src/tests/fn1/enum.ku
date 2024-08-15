@@ -1,0 +1,7 @@
+/*
+type Color enum uint {
+    RED,
+    BLUE,
+    GREEN,
+}
+*/

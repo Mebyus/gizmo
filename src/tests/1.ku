@@ -1,0 +1,224 @@
+fun default_namespace_function() {
+
+}
+
+let default_namespace_const: str = " default_const ";
+
+fun do_something()
+
+fun do_something() {
+    return;
+}
+
+fun add(a: u32, b: u32) => u32 {
+    let c: u32 = a + b;
+    return c;
+}
+
+let max_u32: u32 = 0xffffffff;
+
+fun sub(a: s32, b: s32) => s32 {
+    var c: s32 = dirty;
+    c = a - b;
+    return c;
+}
+
+// Calculate n-th fibonacci number
+fun fib(n: u64) => u64 {
+    if n == 0 {
+        return 0;
+    } else if n == 1 {
+        return 1;
+    } else {
+        return fib(n-1) + fib(n-2);
+    }
+}
+
+fun change_by_pointer(x: *s32) {
+    if x == nil {
+        return;
+    }
+
+    x.@ = -0xf4;
+}
+
+fun call_another_function() {
+    fib(5);
+}
+
+fun change_array_pointer(a: [*]u8) {
+    a.[0] = 'h';
+    a.[1] = 'e';
+    a.[2] = 'l';
+    a.[3] = 'l';
+    a.[4] = 'o';
+}
+
+type SourceFile struct {
+    data: []u8,
+}
+
+fun [SourceFile] size() => uarch {
+    return data.len;
+}
+
+fun [SourceFile] dummy() {}
+
+fun [SourceFile] ptr() => *[]u8 {
+    return data.&;
+}
+
+type Pos struct {
+    file: *SourceFile,
+
+    line: u32,
+    col:  u32,
+}
+
+let empty_string_test: str = "";
+var hello: str = "Hello, world!";
+
+var two: u32 = (1 + 1) - 0 * 2 * (0 + 1 - 0x0 * 7 - 8 + 0o11);
+
+fun print_hello() {
+    stdout.print(hello);
+    stdout.flush();
+}
+
+/* 
+    Test multiline comment
+
+    This should be skipped by lexer
+*/
+
+#[ export = true ]
+#[ link.name = "coven_stdout_write" ]
+fun stdout_write(c: []u8) {
+    stdout.write(c);
+}
+
+fun return_the_same_chunk(c: []Pos) => []Pos {
+    return c;
+}
+
+fun for_loop_no_condition() {
+    var i: uint = 0;
+    for {
+        i += 1;
+        if i > 27 {
+            return;
+        }
+    }
+}
+
+fun for_loop_with_condition() {
+    var i: uint = 0;
+    for i <= 45 {
+        i += 1;
+        if i > 27 {
+            return;
+        }
+    }
+}
+
+fun if_with_always_true() => bool {
+    if true {
+        print("true branch");
+    } else {
+        // unreachable
+        print("false branch");
+    }
+
+    return false;
+}
+
+fun take_array(a: [16]u64) {
+
+}
+
+fun use_type_cast() {
+    var a: u64 = 28;
+
+    let i: s32 = cast[ state.window.height: s32 ];
+}
+
+fun match_example(x: u64) => u8 {
+    match x {
+        case 0 => { return 1; }
+        
+        case 2 => {
+            let r: u64 = x + 25;
+            return r;
+        }
+
+        case 3 => {}
+
+        else => {
+            return ^x;
+        }
+    }
+
+    return 0;
+}
+
+type Error enum u8 {
+    Ok,
+    EOF,
+
+    Unknown = 0x10,
+
+}
+
+fun loop_jumps() {
+    var i: uint = 0;
+    for {
+        i += 1;
+
+        if i < 10 {
+            jump @.next;
+        }
+
+        if i == 0 {
+            jump @.end;
+        }
+    }
+}
+
+/*
+fun add_numbers(T: type, x: T, y: T) => T {
+    return x + y;
+}
+
+
+fun use_template(x: u32, y: u32) {
+    return add_numbers(u32, x, y);
+}
+*/
+
+#[ linkage = "external" ]
+#[ link.name = "another_link_name" ]
+#[ deprecated = true ]
+#[ abi = "c4" ]
+fun with_external_linkage(x: *u32, y: *uint) => s32
+
+/*
+type AwesomeTemplate(T: type) struct {
+    field: T,
+}
+
+fn [AwesomeTemplate(T: type)] set(t: T) {
+    field = t;
+}
+
+fn make_awesome_template(v: int) => AwesomeTemplate(int) {
+    var ret: AwesomeTemplate(int) = dirty;
+    ret.field = v;
+    return ret;
+}
+
+var global_template_instance: AwesomeTemplate(int) = make_awesome_template(12);
+
+fun change_global_value(v: sint) {
+    global_template_instance.set(v);
+}
+*/

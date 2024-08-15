@@ -1,0 +1,14 @@
+fun print(s: str) {
+    // some code to output string to stdout
+}
+
+let r1: rune = 'k';
+let r2: rune = '\n';
+let r3: rune = 'н';
+
+fun print_some_strings() {
+    print("Hello, world!");
+    print("Строка на русском. Тестируем utf-8");
+    print("\tTest\n simple\\ escapes \"");
+}
+

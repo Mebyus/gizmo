@@ -1,9 +1,0 @@
-#[ asm ]
-#[ link.name = "coven_linux_syscall_exit" ]
-pub
-fn exit(code: i32) => never
-
-pub
-fn main() {
-    math::add(1, 2);
-}

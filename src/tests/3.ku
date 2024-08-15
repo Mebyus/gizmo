@@ -1,0 +1,15 @@
+fun change_int_by_pointer(v: *sint) {
+    if v == nil {
+        return;
+    }
+    v.@ = 4;
+}
+
+fun assign_by_index(c: []u8) {
+    let i: uint = c.len;
+    c[i - 2] = c[1];
+}
+
+fun slice_given_slice(numbers: []u64) => []u64 {
+    return numbers[2 : 10];
+}

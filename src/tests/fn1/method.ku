@@ -1,0 +1,26 @@
+fun [*Adder] inc(x: s32) {
+    if x < 0 {
+        return;
+    }
+}
+
+type MyInt sint
+
+fun [MyInt] value() => sint {
+    return cast(sint, g);
+}
+
+type Buffer struct {
+    buf: []u8,
+    pos: uint,
+}
+
+fun [*Buffer] write(data: []u8) => uint {
+    if data.len == 0 {
+        return 0;
+    }
+
+    g.buf[g.pos] = data[0];
+    g.pos += 1;
+    return 1;
+}

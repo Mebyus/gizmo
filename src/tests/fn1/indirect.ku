@@ -1,0 +1,14 @@
+fun indirect(a: *s32) => s32 {
+    return a.@;
+}
+
+fun address() => sint {
+    var i: sint = 10;
+    var p: *sint = i.&;
+    p.@ = 3;
+    return i;
+}
+
+fun indirect_index(p: [*]s32, n: sint) => s32 {
+    return p.[n];
+}

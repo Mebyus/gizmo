@@ -1,0 +1,46 @@
+fun inc(x: *sint) => sint {
+    x.@ = 1 + x.@;
+    let x2: sint = x.@;
+
+    if x2 >= 19 {
+        return 19;
+    }
+    return x2;
+}
+
+fun use_inc() => sint {
+    var x: sint = 1;
+    let r: sint = inc(x.&);
+    x = 2;
+    return r;
+}
+
+// top-level test comment
+fun test_dead_code(a: sint) {
+    var x: sint = a;
+    x = "";
+    defer use_inc();
+    return;
+
+    // line comment before statement
+    let r: sint = inc(x.&);
+}
+
+pub
+fun test_assign() => uint {
+    var c: uint = dirty;
+    c = 1;
+    c += 2;
+    return c;
+}
+
+fun abs(a: sint) => sint {
+    if a < 0 {
+        return -a;
+    }
+    return a;
+}
+
+fun use_parens(a: sint, b: sint) => sint {
+    return (a + 2 * b) / 3;
+}

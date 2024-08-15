@@ -141,25 +141,27 @@ func (e BinaryExpression) Pin() source.Pos {
 	return e.Left.Pin()
 }
 
-// <CastExpression> = "cast" "[" <Expression> ":" <TypeSpecifier> "]"
-type CastExpression struct {
+// <CastExp> = "cast" "(" <TypeSpec> "," <Exp> ")"
+type CastExp struct {
 	nodeOperand
 
+	Pos    source.Pos
 	Target Expression
 	Type   TypeSpec
 }
 
-var _ Expression = CastExpression{}
+// Explicit interface implementation check.
+var _ Expression = CastExp{}
 
-func (CastExpression) Kind() exn.Kind {
+func (CastExp) Kind() exn.Kind {
 	return exn.Cast
 }
 
-func (e CastExpression) Pin() source.Pos {
-	return e.Target.Pin()
+func (e CastExp) Pin() source.Pos {
+	return e.Pos
 }
 
-// <TintExp> = "tint" "[" <TypeSpec> "," <Exp> "]"
+// <TintExp> = "tint" "(" <TypeSpec> "," <Exp> ")"
 type TintExp struct {
 	nodeOperand
 

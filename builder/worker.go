@@ -363,7 +363,7 @@ func (w *Worker) process(task *BuildTask) (*BuildTaskResult, error) {
 		var err error
 
 		switch file.Kind {
-		case source.GZM:
+		case source.KU:
 			var fileEntryPoint string
 			fileEntryPoint, err = w.gizmoGenout(&buf, task, file.Name)
 			if fileEntryPoint != "" {

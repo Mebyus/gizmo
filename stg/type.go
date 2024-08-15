@@ -450,6 +450,10 @@ func typeCheckExp(want *Type, exp Expression) error {
 				}
 			}
 		}
+	case tpk.Boolean:
+		if t.Kind == tpk.StaticBoolean {
+			return nil
+		}
 	case tpk.Custom:
 		panic("not implemented")
 	default:

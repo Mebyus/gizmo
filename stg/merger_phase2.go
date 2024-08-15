@@ -152,7 +152,7 @@ func (m *Merger) shallowScanFuns() error {
 }
 
 func (m *Merger) shallowScanMethods() error {
-	for _, s := range m.unit.Meds {
+	for _, s := range m.unit.Types {
 		t := s.Def.(*Type)
 		methods := t.Def.(CustomTypeDef).Methods
 		for _, method := range methods {

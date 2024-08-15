@@ -1,0 +1,10 @@
+fun use_bit_cast() {
+    var a: u64 = 28;
+
+    let i: s64 = bitcast(s64, a);
+}
+
+fun fatal(s: str) => never {
+    print(s);
+    exit(10);
+} 

@@ -1,0 +1,17 @@
+type TwoInts struct {
+    a: s64,
+    b: u32,
+}
+
+fun make_two_ints(a: s64, b: u32) => TwoInts {
+    let r: TwoInts = {
+        a: a,
+        b: b,
+    };
+    return r;
+}
+
+fun [*TwoInts] set_field(a: s64) {
+    g.a = a;
+    call_some_other_function(g.a);
+}

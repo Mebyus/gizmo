@@ -1,0 +1,16 @@
+fun add(a: u32, b: u32) => u32 {
+    let c: u32 = a + b;
+    return c;
+}
+
+let ADD_INC := 10;
+
+fun use_add(a: u32) => u32 {
+    return add(ADD_INC, a + 2);
+}
+
+fun change_and_return(a: s32) => s32 {
+    var b: s32 = a - 8;
+    b = 10 - b;
+    return a + b;
+}

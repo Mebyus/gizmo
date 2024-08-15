@@ -1,3 +1,0 @@
-fn use_case(x: i32) => u32 {
-    return cast[x: u32];
-}

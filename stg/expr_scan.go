@@ -37,7 +37,7 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 	case exn.Paren:
 		return s.scanParenthesizedExpression(ctx, expr.(ast.ParenthesizedExpression))
 	case exn.Cast:
-		return s.scanCastExpression(ctx, expr.(ast.CastExpression))
+		return s.scanCastExpression(ctx, expr.(ast.CastExp))
 	case exn.Tint:
 		return s.scanTintExp(ctx, expr.(ast.TintExp))
 	case exn.Receiver:
@@ -448,7 +448,7 @@ func (s *Scope) scanTintExp(ctx *Context, exp ast.TintExp) (*TintExp, error) {
 	}, nil
 }
 
-func (s *Scope) scanCastExpression(ctx *Context, expr ast.CastExpression) (*CastExpression, error) {
+func (s *Scope) scanCastExpression(ctx *Context, expr ast.CastExp) (*CastExpression, error) {
 	target, err := s.scan(ctx, expr.Target)
 	if err != nil {
 		return nil, err

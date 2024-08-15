@@ -1,0 +1,21 @@
+fun return_neg(b: bool) => bool {
+    return !b;
+}
+
+fun return_bool() => bool {
+    return true;
+}
+
+fun bool_loop() => u32 {
+    var stop: bool = false;
+    var k: s32 = -1;
+    for {
+        if stop {
+            return 27;
+        }
+        if k >= 2034 {
+            stop = true;
+        }
+        k += 1;
+    }
+}

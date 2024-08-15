@@ -1,0 +1,51 @@
+type Counter struct {
+    names: []str,
+    c: sint,
+    string_field: *Counter,
+}
+
+fun [*Counter] inc() => sint {
+    let c: sint = g.c;
+    g.c += 1;
+    return c;
+}
+
+fun use_counter(c: *Counter) => sint {
+    return c.inc();
+}
+
+type A struct {
+    b: B,
+    b2: *B,
+    s: str,
+    c: []C,
+}
+
+type B uint
+
+type C struct {
+    s: str,
+    b: []*B,
+    s2: [*]u8,
+    // a: *A,
+}
+
+type D sint
+
+type E struct {
+    d: D,
+}
+
+type K struct {
+    // k: K,
+    e: E,
+    d: D,
+}
+
+// type F struct {
+//     gg: *G,  
+// }
+
+// type G struct {
+//     f: *F,
+// }

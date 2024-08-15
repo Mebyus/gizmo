@@ -1,0 +1,44 @@
+import std {
+    mem => "mem"
+    os  => "os"
+}
+
+import {
+    fmt  => "fmt"
+    math => "math"
+}
+
+/*
+
+type Result enum u32 {
+    Ok      = 0,
+    Error   = 1,
+    Unknown = 2,
+}
+
+fn [Result] is_ok() => bool {
+    return g == Result.Ok;
+}
+
+fn [Result] is_err() => bool {
+    return g == Result.Error;
+}
+
+*/
+
+fun add(a: u32, b: u32) => u32 {
+    let c: u32 = a + b;
+    return c;
+}
+
+let max_u32: u32 = 0xffffffff;
+
+fun sub(a: s32, b: s32) => s32 {
+    var c: s32 = dirty;
+    c = a - b;
+    return c;
+}
+
+fun sub_five(a: s32) => s32 {
+    return sub(a, 5);
+}
