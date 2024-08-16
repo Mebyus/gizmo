@@ -70,7 +70,6 @@ var Literal = [...]string{
 	Fun:    "fun",
 	Jump:   "jump",
 	Return: "return",
-	Case:   "case",
 	For:    "for",
 	Else:   "else",
 	If:     "if",

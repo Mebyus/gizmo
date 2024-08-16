@@ -1,0 +1,9 @@
+// define a macro
+def some_code(x: type) :: other_macro(x) another_macro(x) {
+    fun take_value(a: *x) => x {
+        return a.@;
+    }
+}
+
+// expand it into a namespace
+my_code :: some_code(uint)

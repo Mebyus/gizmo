@@ -21,6 +21,7 @@ const (
 	ForCond
 	ForEach
 	Match
+	MatchBool
 	Jump
 
 	// Defer function or method call
@@ -48,8 +49,10 @@ var text = [...]string{
 	ForCond: "for_cond",
 	ForEach: "for_each",
 	Match:   "match",
-	Jump:    "jump",
 	Defer:   "defer",
+	Jump:    "jump",
+
+	MatchBool: "match.bool",
 
 	DeferBlock: "defer.block",
 

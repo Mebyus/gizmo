@@ -141,11 +141,11 @@ func (s IfStatement) Pin() source.Pos {
 	return s.If.Pos
 }
 
-// <CallStatement> = <Expression> ";"
+// <CallStatement> = <ChainOperand> ";"
 type CallStatement struct {
 	nodeStatement
 
-	// must be call operand
+	// Must be call operand.
 	Call ChainOperand
 }
 
@@ -165,7 +165,6 @@ type ForStatement struct {
 
 	Pos source.Pos
 
-	// must contain at least one statement
 	Body Block
 }
 
@@ -185,10 +184,9 @@ type ForConditionStatement struct {
 
 	Pos source.Pos
 
-	// Always not nil
+	// Always not nil.
 	Condition Expression
 
-	// must contain at least one statement
 	Body Block
 }
 
@@ -208,7 +206,6 @@ type MatchStatement struct {
 	Pos source.Pos
 
 	// Exp at the top of match statement that is being matched.
-	// Equals nil for bool match variant.
 	Exp Expression
 
 	// Match cases in order they appear.
@@ -221,8 +218,8 @@ type MatchStatement struct {
 type MatchCase struct {
 	Pos source.Pos
 
-	// Always not nil
-	Exp Expression
+	// Always has at least one element.
+	ExpList []Expression
 
 	Body Block
 }
@@ -234,6 +231,37 @@ func (MatchStatement) Kind() stm.Kind {
 }
 
 func (s MatchStatement) Pin() source.Pos {
+	return s.Pos
+}
+
+type MatchBoolStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	// Match cases in order they appear.
+	Cases []MatchBoolCase
+
+	// Else is always last in match statement.
+	Else *Block
+}
+
+type MatchBoolCase struct {
+	Pos source.Pos
+
+	// Always not nil.
+	Exp Expression
+
+	Body Block
+}
+
+var _ Statement = MatchBoolStatement{}
+
+func (MatchBoolStatement) Kind() stm.Kind {
+	return stm.MatchBool
+}
+
+func (s MatchBoolStatement) Pin() source.Pos {
 	return s.Pos
 }
 

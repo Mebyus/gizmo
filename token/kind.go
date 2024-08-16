@@ -82,7 +82,6 @@ const (
 
 	// Keywords
 
-	Case
 	Jump
 
 	If

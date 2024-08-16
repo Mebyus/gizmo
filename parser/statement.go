@@ -107,24 +107,47 @@ func (p *Parser) label() (ast.Label, error) {
 	}
 }
 
-func (p *Parser) boolMatch() (ast.MatchStatement, error) {
+func (p *Parser) matchBool() (ast.MatchBoolStatement, error) {
 	pos := p.pos()
 	p.advance() // skip "if"
 
-	var node ast.MatchStatement
-	err := p.fillMatchCases(&node)
+	var node ast.MatchBoolStatement
+	err := p.fillMatchBoolCases(&node)
 	if err != nil {
-		return ast.MatchStatement{}, err
+		return ast.MatchBoolStatement{}, err
 	}
 
 	node.Pos = pos
 	return node, nil
 }
 
+func (p *Parser) fillMatchBoolCases(node *ast.MatchBoolStatement) error {
+	for {
+		switch p.tok.Kind {
+		case token.RightArrow:
+			c, err := p.matchBoolCase()
+			if err != nil {
+				return err
+			}
+			node.Cases = append(node.Cases, c)
+		case token.Else:
+			block, err := p.matchElse()
+			if err != nil {
+				return err
+			}
+			node.Else = &block
+			// else case is always last in match statement
+			return nil
+		default:
+			return nil
+		}
+	}
+}
+
 func (p *Parser) fillMatchCases(node *ast.MatchStatement) error {
 	for {
 		switch p.tok.Kind {
-		case token.Case:
+		case token.RightArrow:
 			c, err := p.matchCase()
 			if err != nil {
 				return err
@@ -144,6 +167,57 @@ func (p *Parser) fillMatchCases(node *ast.MatchStatement) error {
 	}
 }
 
+// parse list of expressions in case
+//
+//	case <Exp>, <Exp>, <Exp>, ... {}
+func (p *Parser) caseExpList() ([]ast.Expression, error) {
+	p.advance() // skip "=>"
+
+	var list []ast.Expression
+	for {
+		if p.tok.Kind == token.LeftCurly {
+			if len(list) == 0 {
+				return nil, fmt.Errorf("%s: case with no expressions", p.tok.Pos)
+			}
+			return list, nil
+		}
+
+		expr, err := p.expr()
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, expr)
+
+		if p.tok.Kind == token.Comma {
+			p.advance() // skip ","
+		} else if p.tok.Kind == token.LeftCurly {
+			// will cause return at next iteration
+		} else {
+			return nil, p.unexpected(p.tok)
+		}
+	}
+}
+
+func (p *Parser) matchCase() (ast.MatchCase, error) {
+	pos := p.pos()
+
+	list, err := p.caseExpList()
+	if err != nil {
+		return ast.MatchCase{}, err
+	}
+
+	block, err := p.Block()
+	if err != nil {
+		return ast.MatchCase{}, err
+	}
+
+	return ast.MatchCase{
+		Pos:     pos,
+		ExpList: list,
+		Body:    block,
+	}, nil
+}
+
 func (p *Parser) matchStatement(pos source.Pos, exp ast.Expression) (ast.MatchStatement, error) {
 	var node ast.MatchStatement
 	err := p.fillMatchCases(&node)
@@ -156,21 +230,21 @@ func (p *Parser) matchStatement(pos source.Pos, exp ast.Expression) (ast.MatchSt
 	return node, nil
 }
 
-func (p *Parser) matchCase() (ast.MatchCase, error) {
+func (p *Parser) matchBoolCase() (ast.MatchBoolCase, error) {
 	pos := p.pos()
 	p.advance() // skip "case"
 
 	exp, err := p.expr()
 	if err != nil {
-		return ast.MatchCase{}, err
+		return ast.MatchBoolCase{}, err
 	}
 
 	block, err := p.Block()
 	if err != nil {
-		return ast.MatchCase{}, err
+		return ast.MatchBoolCase{}, err
 	}
 
-	return ast.MatchCase{
+	return ast.MatchBoolCase{
 		Pos:  pos,
 		Exp:  exp,
 		Body: block,
@@ -302,8 +376,8 @@ func (p *Parser) returnStatement() (statement ast.ReturnStatement, err error) {
 
 func (p *Parser) ifStatement() (statement ast.Statement, err error) {
 	switch p.next.Kind {
-	case token.Case, token.Else:
-		return p.boolMatch()
+	case token.RightArrow, token.Else:
+		return p.matchBool()
 	}
 
 	pos := p.tok.Pos
@@ -315,7 +389,7 @@ func (p *Parser) ifStatement() (statement ast.Statement, err error) {
 	}
 
 	switch p.tok.Kind {
-	case token.Case, token.Else:
+	case token.RightArrow, token.Else:
 		return p.matchStatement(pos, exp)
 	case token.LeftCurly:
 		// continue regular if statement
