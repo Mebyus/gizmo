@@ -31,12 +31,64 @@ func (g *Builder) Statement(node stg.Statement) {
 	case stm.ForCond:
 		g.whileStatement(node.(*stg.WhileStatement))
 		return
+	case stm.Match:
+		g.matchStatement(node.(*stg.MatchStatement))
+		return
 	default:
 		panic(fmt.Sprintf("%s statement not implemented", node.Kind().String()))
 	}
 
 	g.semi()
 	g.nl()
+}
+
+func (g *Builder) matchStatement(node *stg.MatchStatement) {
+	g.puts("switch (")
+	g.exp(node.Exp)
+	g.puts(") {")
+	g.nl()
+
+	for i := range len(node.Cases) {
+		c := &node.Cases[i]
+		g.matchCase(c)
+		g.nl()
+	}
+	g.matchElseCase(node.Else)
+
+	g.indent()
+	g.puts("}")
+	g.nl()
+}
+
+func (g *Builder) matchCase(c *stg.MatchCase) {
+	exp := c.ExpList[0]
+	g.indent()
+	g.puts("case ")
+	g.exp(exp)
+	g.puts(":")
+	for _, exp := range c.ExpList[1:] {
+		g.nl()
+		g.indent()
+		g.puts("case ")
+		g.exp(exp)
+		g.puts(":")
+	}
+
+	g.space()
+	g.Block(&c.Body)
+	g.indent()
+	g.puts("break;")
+	g.nl()
+}
+
+func (g *Builder) matchElseCase(c *stg.Block) {
+	if c == nil {
+		return
+	}
+
+	g.indent()
+	g.puts("default: ")
+	g.Block(c)
 }
 
 func (g *Builder) loopStatement(node *stg.LoopStatement) {

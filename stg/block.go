@@ -90,8 +90,8 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 		return b.addFor(ctx, statement.(ast.ForStatement))
 	case stm.ForCond:
 		return b.addForCond(ctx, statement.(ast.ForConditionStatement))
-	// case stm.Match:
-	// g.MatchStatement(statement.(ast.MatchStatement))
+	case stm.Match:
+		return b.addMatch(ctx, statement.(ast.MatchStatement))
 	// case stm.Jump:
 	// g.JumpStatement(statement.(ast.JumpStatement))
 	// case stm.ForEach:
@@ -103,6 +103,88 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	default:
 		panic(fmt.Sprintf("not implemented for %s statement", statement.Kind().String()))
 	}
+}
+
+func (b *Block) addMatch(ctx *Context, stmt ast.MatchStatement) error {
+	exp, err := b.Scope.scan(ctx, stmt.Exp)
+	if err != nil {
+		return err
+	}
+	t := exp.Type()
+	if !t.IsIntegerType() {
+		return fmt.Errorf("%s: only integer types can be matched", exp.Pin())
+	}
+
+	cases := make([]MatchCase, 0, len(stmt.Cases))
+	for _, mc := range stmt.Cases {
+		c, err := b.fillMatchCase(ctx, t, mc)
+		if err != nil {
+			return err
+		}
+		cases = append(cases, c)
+	}
+
+	elseCase, err := b.fillElseCase(ctx, stmt.Else)
+	if err != nil {
+		return err
+	}
+
+	b.addNode(&MatchStatement{
+		Pos:   stmt.Pos,
+		Exp:   exp,
+		Cases: cases,
+		Else:  elseCase,
+	})
+	return nil
+}
+
+func (b *Block) fillMatchCase(ctx *Context, want *Type, mc ast.MatchCase) (MatchCase, error) {
+	if len(mc.ExpList) == 0 {
+		panic("empty list")
+	}
+
+	list := make([]Expression, 0, len(mc.ExpList))
+	for _, exp := range mc.ExpList {
+		e, err := b.Scope.scan(ctx, exp)
+		if err != nil {
+			return MatchCase{}, err
+		}
+		err = typeCheckExp(want, e)
+		if err != nil {
+			return MatchCase{}, err
+		}
+		list = append(list, e)
+	}
+
+	c := MatchCase{
+		Pos:     mc.Pos,
+		ExpList: list,
+		Body:    Block{Pos: mc.Body.Pos},
+	}
+	c.Body.Scope = NewScope(scp.Case, b.Scope, &c.Body.Pos)
+
+	err := c.Body.Fill(ctx, mc.Body.Statements)
+	if err != nil {
+		return MatchCase{}, nil
+	}
+
+	return c, nil
+}
+
+func (b *Block) fillElseCase(ctx *Context, c *ast.Block) (*Block, error) {
+	if c == nil {
+		return nil, nil
+	}
+
+	block := Block{Pos: c.Pos}
+	block.Scope = NewScope(scp.Else, b.Scope, &block.Pos)
+
+	err := block.Fill(ctx, c.Statements)
+	if err != nil {
+		return nil, err
+	}
+
+	return &block, nil
 }
 
 func (b *Block) addFor(ctx *Context, stmt ast.ForStatement) error {
@@ -128,21 +210,6 @@ func (b *Block) addCall(ctx *Context, stmt ast.CallStatement) error {
 	}
 
 	pos := stmt.Call.Identifier.Pos
-
-	// def := s.Def.(*FnDef)
-	// if len(stmt.Arguments) < len(def.Params) {
-	// 	return fmt.Errorf("%s: not enough arguments (got %d) to call \"%s\" function (want %d)",
-	// 		pos.String(), len(stmt.Arguments), name, len(def.Params))
-	// }
-	// if len(stmt.Arguments) > len(def.Params) {
-	// 	return fmt.Errorf("%s: too many arguments (got %d) in function \"%s\" call (want %d)",
-	// 		pos.String(), len(stmt.Arguments), name, len(def.Params))
-	// }
-	// args, err := b.Scope.scanCallArgs(ctx, def.Params, stmt.Arguments)
-	// if err != nil {
-	// 	return err
-	// }
-
 	b.addNode(&CallStatement{
 		Pos:  pos,
 		Call: o.(*CallExpression),

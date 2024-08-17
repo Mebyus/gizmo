@@ -132,6 +132,36 @@ func (s *SimpleIfStatement) Pin() source.Pos {
 	return s.Pos
 }
 
+type MatchStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	Exp Expression
+
+	Cases []MatchCase
+
+	Else *Block
+}
+
+type MatchCase struct {
+	Pos source.Pos
+
+	ExpList []Expression
+
+	Body Block
+}
+
+var _ Statement = &MatchStatement{}
+
+func (*MatchStatement) Kind() stm.Kind {
+	return stm.Match
+}
+
+func (s *MatchStatement) Pin() source.Pos {
+	return s.Pos
+}
+
 type WhileStatement struct {
 	nodeStatement
 

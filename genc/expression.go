@@ -13,10 +13,10 @@ func (g *Builder) Expression(expr stg.Expression) {
 		panic("nil expression")
 	}
 
-	g.expr(expr)
+	g.exp(expr)
 }
 
-func (g *Builder) expr(exp stg.Expression) {
+func (g *Builder) exp(exp stg.Expression) {
 	switch exp.Kind() {
 
 	case exn.Integer:
@@ -61,7 +61,7 @@ func (g *Builder) TintExp(exp *stg.TintExp) {
 	g.puts("(")
 	g.TypeSpec(exp.DestType)
 	g.puts(")(")
-	g.expr(exp.Target)
+	g.exp(exp.Target)
 	g.puts(")")
 }
 
@@ -69,7 +69,7 @@ func (g *Builder) CastExp(expr *stg.CastExpression) {
 	g.puts("(")
 	g.TypeSpec(expr.DestType)
 	g.puts(")(")
-	g.expr(expr.Target)
+	g.exp(expr.Target)
 	g.puts(")")
 }
 
@@ -132,18 +132,18 @@ func (g *Builder) ArraySliceExp(exp *stg.ArraySliceExp) {
 func (g *Builder) arrayHeadSliceExp(exp *stg.ArraySliceExp) {
 	g.ArrayTypeHeadSliceMethodName(exp.Target.Type())
 	g.puts("(&")
-	g.expr(exp.Target)
+	g.exp(exp.Target)
 	g.puts(", ")
-	g.expr(exp.End)
+	g.exp(exp.End)
 	g.puts(")")
 }
 
 func (g *Builder) ChunkIndexExp(exp *stg.ChunkIndexExpression) {
 	g.ChunkTypeIndexMethodName(exp.Type())
 	g.puts("(")
-	g.expr(exp.Target)
+	g.exp(exp.Target)
 	g.puts(", ")
-	g.expr(exp.Index)
+	g.exp(exp.Index)
 	g.puts(")")
 }
 
@@ -151,9 +151,9 @@ func (g *Builder) ChunkIndirectElemExp(exp *stg.ChunkIndexExpression) {
 	g.puts("*(")
 	g.ChunkTypeElemMethodName(exp.Type())
 	g.puts("(")
-	g.expr(exp.Target)
+	g.exp(exp.Target)
 	g.puts(", ")
-	g.expr(exp.Index)
+	g.exp(exp.Index)
 	g.puts("))")
 }
 
@@ -161,33 +161,33 @@ func (g *Builder) ArrayIndirectElemExp(exp *stg.ArrayIndexExp) {
 	g.puts("*(")
 	g.ArrayTypeElemMethodName(exp.Target.Type())
 	g.puts("(&")
-	g.expr(exp.Target)
+	g.exp(exp.Target)
 	g.puts(", ")
-	g.expr(exp.Index)
+	g.exp(exp.Index)
 	g.puts("))")
 }
 
 func (g *Builder) ChunkMemberExp(exp *stg.ChunkMemberExpression) {
-	g.expr(exp.Target)
+	g.exp(exp.Target)
 	g.puts(".")
 	g.puts(exp.Name)
 }
 
 func (g *Builder) ParenExp(exp *stg.ParenthesizedExpression) {
 	g.puts("(")
-	g.expr(exp.Inner)
+	g.exp(exp.Inner)
 	g.puts(")")
 }
 
 func (g *Builder) UnaryExp(exp *stg.UnaryExpression) {
 	g.puts(exp.Operator.Kind.String())
-	g.expr(exp.Inner)
+	g.exp(exp.Inner)
 }
 
 func (g *Builder) IndirectIndexExp(exp *stg.IndirectIndexExpression) {
 	g.ChainOperand(exp.Target)
 	g.puts("[")
-	g.expr(exp.Index)
+	g.exp(exp.Index)
 	g.puts("]")
 }
 
@@ -228,10 +228,10 @@ func (g *Builder) CallArgs(args []stg.Expression) {
 	}
 
 	g.puts("(")
-	g.expr(args[0])
+	g.exp(args[0])
 	for _, arg := range args[1:] {
 		g.puts(", ")
-		g.expr(arg)
+		g.exp(arg)
 	}
 	g.puts(")")
 }
@@ -242,11 +242,11 @@ func (g *Builder) CallExp(expr *stg.CallExpression) {
 }
 
 func (g *Builder) BinaryExp(expr *stg.BinaryExpression) {
-	g.expr(expr.Left)
+	g.exp(expr.Left)
 	g.space()
 	g.puts(expr.Operator.Kind.String())
 	g.space()
-	g.expr(expr.Right)
+	g.exp(expr.Right)
 }
 
 func (g *Builder) SymbolExp(expr *stg.SymbolExpression) {
