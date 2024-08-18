@@ -244,7 +244,6 @@ func (m *Merger) shallowScanType(ctx *SymbolContext, i astIndexSymDef) error {
 	kind := spec.Kind()
 
 	var err error
-	// TODO: mechanism for other types dependency shallow scanning and hoisting
 	switch kind {
 	case tps.Name:
 		err = m.shallowScanNamedType(ctx, spec.(ast.TypeName))
@@ -253,7 +252,7 @@ func (m *Merger) shallowScanType(ctx *SymbolContext, i astIndexSymDef) error {
 	case tps.Enum:
 		// TODO: implement enum scan
 	case tps.Bag:
-		// TODO: implement bag scan
+		panic("not implemented")
 	default:
 		panic(fmt.Sprintf("unexpected %s type specifier", kind.String()))
 	}

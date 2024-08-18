@@ -83,7 +83,7 @@ func (x *TypeIndex) lookup(ctx *Context, spec ast.TypeSpec) (*Type, error) {
 	case tps.Chunk:
 		return x.lookupChunk(ctx, spec.(ast.ChunkType).ElemType)
 	case tps.Enum:
-		return x.lookupEnum(spec.(ast.EnumType))
+		return x.lookupEnum(ctx, spec.(ast.EnumType))
 	case tps.ArrayPointer:
 		return x.lookupArrayPointer(ctx, spec.(ast.ArrayPointerType).ElemType)
 	case tps.Array:
@@ -193,9 +193,31 @@ func (x *TypeIndex) lookupArrayPointer(ctx *Context, spec ast.TypeSpec) (*Type, 
 	return x.storeArrayPointer(elem), nil
 }
 
-func (x *TypeIndex) lookupEnum(spec ast.EnumType) (*Type, error) {
-	panic("not implemented")
-	return nil, nil
+func (x *TypeIndex) lookupEnum(ctx *Context, spec ast.EnumType) (*Type, error) {
+	base, err := x.lookup(ctx, spec.Base)
+	if err != nil {
+		return nil, err
+	}
+	if !base.IsIntegerType() {
+		return nil, fmt.Errorf("%s: \"%s\" is not an integer type", spec.Pos, spec.Base.Name)
+	}
+
+	var entries []EnumEntry
+	if len(spec.Entries) != 0 {
+		entries = make([]EnumEntry, 0, len(entries))
+	}
+	for _, entry := range spec.Entries {
+		if entry.Expression != nil {
+			panic("not implemented")
+		}
+
+		entries = append(entries, EnumEntry{
+			Pos:  entry.Name.Pos,
+			Name: entry.Name.Lit,
+		})
+	}
+
+	return newEnumType(base, entries)
 }
 
 func (x *TypeIndex) lookupChunk(ctx *Context, spec ast.TypeSpec) (*Type, error) {

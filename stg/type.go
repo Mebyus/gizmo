@@ -402,6 +402,41 @@ func newStructType(members MembersList) *Type {
 	return t
 }
 
+func newEnumType(base *Type, entries []EnumEntry) (*Type, error) {
+	var index map[string]*EnumEntry
+	if len(entries) != 0 {
+		index = make(map[string]*EnumEntry, len(entries))
+	}
+	for i := range len(entries) {
+		e := &entries[i]
+		if e.Exp != nil {
+			panic("not implemented")
+		}
+		name := e.Name
+		_, ok := index[name]
+		if ok {
+			return nil, fmt.Errorf("%s: duplicate enum entry \"%s\"", e.Pos, name)
+		}
+
+		index[name] = e
+		e.Exp = Integer{
+			Val: uint64(i),
+			typ: PerfectIntegerType,
+		}
+	}
+
+	return &Type{
+		Kind: tpk.Enum,
+		Size: base.Size,
+		Def: &EnumTypeDef{
+			Base:    base,
+			Entries: entries,
+
+			index: index,
+		},
+	}, nil
+}
+
 // returns an error if argument type does not match parameter type
 func typeCheckExp(want *Type, exp Expression) error {
 	t := exp.Type()
@@ -548,10 +583,13 @@ type NamedTypeDef struct {
 type EnumTypeDef struct {
 	nodeTypeDef
 
+	// Entries are ordered by their position in source code.
 	Entries []EnumEntry
 
+	Base *Type
+
 	// maps entry name to its index inside Entries slice
-	index map[string]int
+	index map[string]*EnumEntry
 }
 
 type EnumEntry struct {
@@ -560,6 +598,7 @@ type EnumEntry struct {
 
 	Name string
 
-	// Can be nil if entry does not have explicit assigned value
-	Expression Expression
+	// Can be nil before complete type is constructed
+	// if entry does not have explicit assigned value.
+	Exp Expression
 }

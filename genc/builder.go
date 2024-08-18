@@ -305,9 +305,18 @@ func (g *Builder) genBuiltinChunkTypes(chunks map[*stg.Type]*stg.Type) {
 func (g *Builder) TypeDef(s *stg.Symbol) {
 	t := s.Def.(*stg.Type)
 
+	def := t.Def.(stg.CustomTypeDef)
+	if def.Base.Kind == tpk.Enum {
+		// TODO: give separate typedef for integer storing enum
+		panic("not implemented")
+		return
+	}
+
 	g.puts("typedef")
 	g.space()
-	g.typeSpecForDef(t.Def.(stg.CustomTypeDef).Base)
+
+	g.typeSpecForDef(def.Symbol.Name, def.Base)
+
 	g.space()
 	g.SymbolName(s)
 	g.semi()
@@ -356,7 +365,7 @@ func (g *Builder) ChunkTypeDef(c, elem *stg.Type) {
 	g.nl()
 }
 
-func (g *Builder) typeSpecForDef(t *stg.Type) {
+func (g *Builder) typeSpecForDef(name string, t *stg.Type) {
 	if t == nil {
 		panic("nil type")
 	}
@@ -364,7 +373,42 @@ func (g *Builder) typeSpecForDef(t *stg.Type) {
 		g.StructType(t.Def.(*stg.StructTypeDef))
 		return
 	}
+	if t.Kind == tpk.Enum {
+		g.EnumType("KU_ENUM_"+strings.ToUpper(name)+"_", t.Def.(*stg.EnumTypeDef))
+		return
+	}
 	g.TypeSpec(t)
+}
+
+func (g *Builder) EnumType(prefix string, def *stg.EnumTypeDef) {
+	g.puts("enum ")
+	g.enumFields(prefix, def.Entries)
+}
+
+func (g *Builder) enumFields(prefix string, entries []stg.EnumEntry) {
+	if len(entries) == 0 {
+		g.puts("{}")
+		return
+	}
+
+	g.puts("{")
+	g.nl()
+	g.inc()
+	for i := 0; i < len(entries); i += 1 {
+		g.indent()
+		g.enumField(prefix, &entries[i])
+		g.nl()
+	}
+	g.dec()
+	g.puts("}")
+}
+
+func (g *Builder) enumField(prefix string, entry *stg.EnumEntry) {
+	g.puts(prefix)
+	g.puts(entry.Name)
+	g.puts(" = ")
+	g.exp(entry.Exp)
+	g.puts(",")
 }
 
 func (g *Builder) structFields(members []stg.Member) {
