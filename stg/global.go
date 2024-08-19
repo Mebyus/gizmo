@@ -79,6 +79,15 @@ func newPerfectIntegerType() *Type {
 	return t
 }
 
+func newRawMemoryPointerType() *Type {
+	t := &Type{
+		Kind:  tpk.RawMemoryPointer,
+		Size:  8, // TODO: adjust uint size based on target arch
+		Flags: TypeFlagBuiltin,
+	}
+	return t
+}
+
 var (
 	Trivial = newStaticType(tpk.Trivial)
 
@@ -88,6 +97,8 @@ var (
 	// This type implicitly encompasses integer literals
 	// and their evaluations.
 	PerfectIntegerType = newPerfectIntegerType()
+
+	RawMemoryPointerType = newRawMemoryPointerType()
 
 	StaticFloat   = newStaticType(tpk.StaticFloat)
 	StaticString  = newStaticType(tpk.StaticString)

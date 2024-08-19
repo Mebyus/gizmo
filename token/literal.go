@@ -98,6 +98,7 @@ var Literal = [...]string{
 	MemCast: "mcast",
 	MemSize: "msize",
 
+	RawMem:   "rawmem",
 	Receiver: "g",
 
 	LabelNext: "@.next",

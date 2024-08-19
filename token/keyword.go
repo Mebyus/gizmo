@@ -32,6 +32,8 @@ var words = map[string]Kind{
 	"tint":  Tint,
 	"mcast": MemCast,
 	"msize": MemSize,
+
+	"rawmem": RawMem,
 }
 
 const (

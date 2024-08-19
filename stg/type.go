@@ -586,6 +586,7 @@ type EnumTypeDef struct {
 	// Entries are ordered by their position in source code.
 	Entries []EnumEntry
 
+	// Enum base integer (storage) type.
 	Base *Type
 
 	// maps entry name to its index inside Entries slice

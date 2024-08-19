@@ -92,6 +92,8 @@ func (x *TypeIndex) lookup(ctx *Context, spec ast.TypeSpec) (*Type, error) {
 	case tps.ImportName:
 		i := spec.(ast.ImportType)
 		return x.lookupImportName(i.Unit, i.Name)
+	case tps.RawMemoryPointer:
+		return RawMemoryPointerType, nil
 	default:
 		panic(fmt.Sprintf("not implemented for %s", spec.Kind().String()))
 	}

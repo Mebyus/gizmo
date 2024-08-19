@@ -55,6 +55,9 @@ func (p *Parser) typeSpecifier() (ast.TypeSpec, error) {
 		}
 		return p.typeName()
 	case token.Asterisk:
+		if p.next.Kind == token.RawMem {
+			return p.rawMemoryPointerType()
+		}
 		return p.pointerType()
 	case token.ArrayPointer:
 		return p.arrayPointerType()
@@ -272,6 +275,17 @@ func (p *Parser) enumEntry() (ast.EnumEntry, error) {
 	return ast.EnumEntry{
 		Name:       name,
 		Expression: expr,
+	}, nil
+}
+
+func (p *Parser) rawMemoryPointerType() (ast.RawMemoryPointerType, error) {
+	pos := p.pos()
+
+	p.advance() // skip "*"
+	p.advance() // skip "rawmem"
+
+	return ast.RawMemoryPointerType{
+		Pos: pos,
 	}, nil
 }
 

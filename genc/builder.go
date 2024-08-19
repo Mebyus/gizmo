@@ -307,20 +307,46 @@ func (g *Builder) TypeDef(s *stg.Symbol) {
 
 	def := t.Def.(stg.CustomTypeDef)
 	if def.Base.Kind == tpk.Enum {
-		// TODO: give separate typedef for integer storing enum
-		panic("not implemented")
+		g.TypeDefEnum(s, def.Base)
+		g.nl()
 		return
 	}
 
 	g.puts("typedef")
 	g.space()
 
-	g.typeSpecForDef(def.Symbol.Name, def.Base)
+	g.typeSpecForDef(def.Base)
 
 	g.space()
 	g.SymbolName(s)
 	g.semi()
 	g.nl()
+}
+
+func (g *Builder) TypeDefEnum(s *stg.Symbol, t *stg.Type) {
+	g.EnumType(s, t)
+	g.semi()
+	g.nl()
+	g.nl()
+
+	g.puts("typedef")
+	g.space()
+	g.SymbolName(t.Def.(*stg.EnumTypeDef).Base.Symbol())
+	g.space()
+	g.puts(g.enumTypeName(s))
+	g.semi()
+}
+
+func (g *Builder) enumTypeName(s *stg.Symbol) string {
+	return g.tprefix + s.Name
+}
+
+func (g *Builder) genEnumTypeName(s *stg.Symbol) string {
+	return g.tprefix + "GenEnum" + s.Name
+}
+
+func getEnumEntryName(sname, name string) string {
+	return "KU_ENUM_" + strings.ToUpper(sname) + "_" + name
 }
 
 func (g *Builder) ArrayTypeDef(a, elem *stg.Type) {
@@ -365,7 +391,7 @@ func (g *Builder) ChunkTypeDef(c, elem *stg.Type) {
 	g.nl()
 }
 
-func (g *Builder) typeSpecForDef(name string, t *stg.Type) {
+func (g *Builder) typeSpecForDef(t *stg.Type) {
 	if t == nil {
 		panic("nil type")
 	}
@@ -373,19 +399,18 @@ func (g *Builder) typeSpecForDef(name string, t *stg.Type) {
 		g.StructType(t.Def.(*stg.StructTypeDef))
 		return
 	}
-	if t.Kind == tpk.Enum {
-		g.EnumType("KU_ENUM_"+strings.ToUpper(name)+"_", t.Def.(*stg.EnumTypeDef))
-		return
-	}
 	g.TypeSpec(t)
 }
 
-func (g *Builder) EnumType(prefix string, def *stg.EnumTypeDef) {
-	g.puts("enum ")
-	g.enumFields(prefix, def.Entries)
+func (g *Builder) EnumType(s *stg.Symbol, t *stg.Type) {
+	g.puts("enum")
+	g.space()
+	g.puts(g.genEnumTypeName(s))
+	g.space()
+	g.enumFields(s.Name, t.Def.(*stg.EnumTypeDef).Entries)
 }
 
-func (g *Builder) enumFields(prefix string, entries []stg.EnumEntry) {
+func (g *Builder) enumFields(name string, entries []stg.EnumEntry) {
 	if len(entries) == 0 {
 		g.puts("{}")
 		return
@@ -396,16 +421,15 @@ func (g *Builder) enumFields(prefix string, entries []stg.EnumEntry) {
 	g.inc()
 	for i := 0; i < len(entries); i += 1 {
 		g.indent()
-		g.enumField(prefix, &entries[i])
+		g.enumField(name, &entries[i])
 		g.nl()
 	}
 	g.dec()
 	g.puts("}")
 }
 
-func (g *Builder) enumField(prefix string, entry *stg.EnumEntry) {
-	g.puts(prefix)
-	g.puts(entry.Name)
+func (g *Builder) enumField(name string, entry *stg.EnumEntry) {
+	g.puts(getEnumEntryName(name, entry.Name))
 	g.puts(" = ")
 	g.exp(entry.Exp)
 	g.puts(",")

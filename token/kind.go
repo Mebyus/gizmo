@@ -117,10 +117,11 @@ const (
 	False
 
 	Cast
-	Tint    // truncate (cast with storage size change) integer
-	MemCast // TODO: rename this to memcast
+	Tint // truncate (cast with storage size change) integer
+	MemCast
 	MemSize
 
+	RawMem   // designator to use as *rawmem (void* analog)
 	Receiver // method receiver, consists of one letter "g"
 
 	LabelNext // @.next

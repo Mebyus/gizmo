@@ -101,6 +101,24 @@ func (t PointerType) Pin() source.Pos {
 	return t.Pos
 }
 
+// <RawMemoryPointerType> = "*" "rawmem"
+type RawMemoryPointerType struct {
+	nodeTypeSpec
+
+	Pos source.Pos
+}
+
+// Explicit interface implementation check
+var _ TypeSpec = RawMemoryPointerType{}
+
+func (RawMemoryPointerType) Kind() tps.Kind {
+	return tps.RawMemoryPointer
+}
+
+func (t RawMemoryPointerType) Pin() source.Pos {
+	return t.Pos
+}
+
 // <ArrayPointerType> = "[*]" <ElemType>
 //
 // <ElemType> = <TypeSpecifier>

@@ -63,6 +63,8 @@ const (
 	// have Flavors
 	StaticNil
 
+	RawMemoryPointer
+
 	// Types of symbols, created by importing other unit
 	//
 	//	import std {
@@ -266,6 +268,8 @@ var text = [...]string{
 	StaticString:  "static.string",
 	StaticBoolean: "static.boolean",
 	StaticNil:     "static.nil",
+
+	RawMemoryPointer: "pointer.rawmem",
 
 	Trivial:      "trivial",
 	Custom:       "custom",
