@@ -41,20 +41,36 @@ type nodeOperand struct{ nodeExpression }
 
 func (nodeOperand) Operand() {}
 
-// <SymbolExpression> = <Identifier>
-type SymbolExpression struct {
+// <SymbolExp> = <Identifier>
+type SymbolExp struct {
 	nodeOperand
 
 	Identifier Identifier
 }
 
-var _ Operand = SymbolExpression{}
+var _ Operand = SymbolExp{}
 
-func (SymbolExpression) Kind() exn.Kind {
+func (SymbolExp) Kind() exn.Kind {
 	return exn.Symbol
 }
 
-func (e SymbolExpression) Pin() source.Pos {
+func (e SymbolExp) Pin() source.Pos {
+	return e.Identifier.Pos
+}
+
+type IncompNameExp struct {
+	nodeOperand
+
+	Identifier Identifier
+}
+
+var _ Operand = IncompNameExp{}
+
+func (IncompNameExp) Kind() exn.Kind {
+	return exn.IncompName
+}
+
+func (e IncompNameExp) Pin() source.Pos {
 	return e.Identifier.Pos
 }
 
@@ -180,21 +196,21 @@ func (e TintExp) Pin() source.Pos {
 	return e.Pos
 }
 
-// <BitCastExpression> = "bitcast" "[" <Expression> ":" <TypeSpecifier> "]"
-type BitCastExpression struct {
+// <MemCastExpression> = "mcast" "(" <TypeSpecifier> "," <Expression> ")"
+type MemCastExpression struct {
 	nodeOperand
 
 	Target Expression
 	Type   TypeSpec
 }
 
-var _ Expression = BitCastExpression{}
+var _ Expression = MemCastExpression{}
 
-func (BitCastExpression) Kind() exn.Kind {
-	return exn.BitCast
+func (MemCastExpression) Kind() exn.Kind {
+	return exn.MemCast
 }
 
-func (e BitCastExpression) Pin() source.Pos {
+func (e MemCastExpression) Pin() source.Pos {
 	return e.Target.Pin()
 }
 

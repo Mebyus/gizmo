@@ -11,7 +11,7 @@ import (
 func (g *Noder) Expression(expr ast.Expression) {
 	switch expr.Kind() {
 	case exn.Symbol:
-		g.SymbolExpression(expr.(ast.SymbolExpression))
+		g.SymbolExpression(expr.(ast.SymbolExp))
 	case exn.Receiver:
 		g.ReceiverExpression(expr.(ast.Receiver))
 	case exn.Basic:
@@ -110,7 +110,7 @@ func (g *Noder) ReceiverExpression(expr ast.Receiver) {
 	g.genpos(token.Receiver, expr.Pos)
 }
 
-func (g *Noder) SymbolExpression(expr ast.SymbolExpression) {
+func (g *Noder) SymbolExpression(expr ast.SymbolExp) {
 	g.idn(expr.Identifier)
 }
 

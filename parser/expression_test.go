@@ -36,8 +36,8 @@ func idn(name string) ast.Identifier {
 	return ast.Identifier{Lit: name}
 }
 
-func sym(name string) ast.SymbolExpression {
-	return ast.SymbolExpression{Identifier: idn(name)}
+func sym(name string) ast.SymbolExp {
+	return ast.SymbolExp{Identifier: idn(name)}
 }
 
 func par(x ast.Expression) ast.ParenthesizedExpression {

@@ -27,7 +27,7 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 	case exn.Basic:
 		return scanBasicLiteral(expr.(ast.BasicLiteral)), nil
 	case exn.Symbol:
-		return s.scanSymbolExpression(ctx, expr.(ast.SymbolExpression))
+		return s.scanSymbolExpression(ctx, expr.(ast.SymbolExp))
 	case exn.Chain:
 		return s.scanChainOperand(ctx, expr.(ast.ChainOperand))
 	case exn.Unary:
@@ -522,7 +522,7 @@ func (s *Scope) scanCallArgs(ctx *Context, pos source.Pos, params []*Symbol, arg
 	return aa, nil
 }
 
-func (s *Scope) scanSymbolExpression(ctx *Context, expr ast.SymbolExpression) (*SymbolExpression, error) {
+func (s *Scope) scanSymbolExpression(ctx *Context, expr ast.SymbolExp) (*SymbolExpression, error) {
 	name := expr.Identifier.Lit
 	pos := expr.Identifier.Pos
 	symbol := s.Lookup(name, pos.Num)

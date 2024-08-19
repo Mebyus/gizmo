@@ -166,35 +166,35 @@ func (p *Parser) cast() (exp ast.CastExp, err error) {
 	}, nil
 }
 
-func (p *Parser) bitcast() (ast.BitCastExpression, error) {
-	p.advance() // skip "bitcast"
+func (p *Parser) memcast() (ast.MemCastExpression, error) {
+	p.advance() // skip "mcast"
 
 	if p.tok.Kind != token.LeftSquare {
-		return ast.BitCastExpression{}, p.unexpected(p.tok)
+		return ast.MemCastExpression{}, p.unexpected(p.tok)
 	}
 	p.advance() // skip "["
 
 	target, err := p.expr()
 	if err != nil {
-		return ast.BitCastExpression{}, err
+		return ast.MemCastExpression{}, err
 	}
 
 	if p.tok.Kind != token.Colon {
-		return ast.BitCastExpression{}, p.unexpected(p.tok)
+		return ast.MemCastExpression{}, p.unexpected(p.tok)
 	}
 	p.advance() // skip ":"
 
 	spec, err := p.typeSpecifier()
 	if err != nil {
-		return ast.BitCastExpression{}, p.unexpected(p.tok)
+		return ast.MemCastExpression{}, p.unexpected(p.tok)
 	}
 
 	if p.tok.Kind != token.RightSquare {
-		return ast.BitCastExpression{}, p.unexpected(p.tok)
+		return ast.MemCastExpression{}, p.unexpected(p.tok)
 	}
 	p.advance() // skip "]"
 
-	return ast.BitCastExpression{
+	return ast.MemCastExpression{
 		Target: target,
 		Type:   spec,
 	}, nil
@@ -323,7 +323,7 @@ func (p *Parser) operand() (ast.Operand, error) {
 	case token.Tint:
 		return p.tint()
 	case token.MemCast:
-		return p.bitcast()
+		return p.memcast()
 	case token.LeftCurly:
 		return p.objectLiteral()
 	case token.Identifier:
@@ -336,6 +336,8 @@ func (p *Parser) operand() (ast.Operand, error) {
 		return p.list()
 	case token.Chunk:
 		return p.chunkStartOperand()
+	case token.Period:
+		return p.incompNameOperand()
 	default:
 		return nil, p.unexpected(p.tok)
 	}
@@ -372,13 +374,26 @@ func isChainOperandToken(kind token.Kind) bool {
 	}
 }
 
+func (p *Parser) incompNameOperand() (ast.IncompNameExp, error) {
+	p.advance() // skip "."
+
+	if p.tok.Kind != token.Identifier {
+		return ast.IncompNameExp{}, p.unexpected(p.tok)
+	}
+
+	name := p.idn()
+	p.advance() // skip name identifier
+
+	return ast.IncompNameExp{Identifier: name}, nil
+}
+
 // SymbolExpression, SelectorExpression, IndexExpression, CallExpression or InstanceExpression
 func (p *Parser) identifierStartOperand() (ast.Operand, error) {
 	idn := p.idn()
 	p.advance() // skip identifier
 
 	if !isChainOperandToken(p.tok.Kind) {
-		return ast.SymbolExpression{Identifier: idn}, nil
+		return ast.SymbolExp{Identifier: idn}, nil
 	}
 
 	chain := ast.ChainOperand{Identifier: idn}

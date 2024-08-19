@@ -22,12 +22,15 @@ const (
 	Symbol
 	Receiver
 
+	// incomplete name usage
+	IncompName
+
 	Unary
 	Binary
 
 	Cast
 	Tint
-	BitCast
+	MemCast
 
 	// parenthesized expression
 	Paren
@@ -76,7 +79,7 @@ var text = [...]string{
 	Binary:   "binary",
 	Cast:     "cast",
 	Tint:     "tint",
-	BitCast:  "bitcast",
+	MemCast:  "mcast",
 	Paren:    "paren",
 	Receiver: "receiver",
 	Instance: "instance",
@@ -95,6 +98,8 @@ var text = [...]string{
 	Address:        "address",
 	Slice:          "slice",
 	Call:           "call",
+
+	IncompName: "name.incomp",
 
 	Integer: "integer",
 	String:  "string",
