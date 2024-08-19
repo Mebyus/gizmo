@@ -23,6 +23,7 @@ const (
 	Match
 	MatchBool
 	Jump
+	Never
 
 	// Defer function or method call
 	Defer
@@ -51,6 +52,7 @@ var text = [...]string{
 	Match:   "match",
 	Defer:   "defer",
 	Jump:    "jump",
+	Never:   "never",
 
 	MatchBool: "match.bool",
 

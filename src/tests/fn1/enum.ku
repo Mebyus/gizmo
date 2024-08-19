@@ -3,3 +3,7 @@ type Color enum uint {
     BLUE,
     GREEN,
 }
+
+fun use_never() => never {
+    never;
+}

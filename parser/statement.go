@@ -27,6 +27,8 @@ func (p *Parser) Statement() (ast.Statement, error) {
 		return p.forStatement()
 	case token.Jump:
 		return p.jumpStatement()
+	case token.Never:
+		return p.neverStatement()
 	case token.Defer:
 		return p.deferStatement()
 	case token.Receiver:
@@ -73,6 +75,18 @@ func (p *Parser) deferStatement() (ast.DeferStatement, error) {
 		Pos:  pos,
 		Call: chain,
 	}, nil
+}
+
+func (p *Parser) neverStatement() (ast.NeverStatement, error) {
+	pos := p.pos()
+	p.advance() // skip "never"
+
+	if p.tok.Kind != token.Semicolon {
+		return ast.NeverStatement{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip ";"
+
+	return ast.NeverStatement{Pos: pos}, nil
 }
 
 func (p *Parser) jumpStatement() (ast.JumpStatement, error) {

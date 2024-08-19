@@ -65,6 +65,23 @@ func (s ReturnStatement) Pin() source.Pos {
 	return s.Pos
 }
 
+// <NeverStatement> = "never"
+type NeverStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+}
+
+var _ Statement = NeverStatement{}
+
+func (NeverStatement) Kind() stm.Kind {
+	return stm.Never
+}
+
+func (s NeverStatement) Pin() source.Pos {
+	return s.Pos
+}
+
 type Var struct {
 	Pos source.Pos
 

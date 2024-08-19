@@ -14,14 +14,14 @@ type Color enum u8 {
     BLUE,
 }
 
-fun colot_to_int(c: Color) => u8 {
+fun color_to_int(c: Color) => u8 {
     if c
     => .RED { return 1; }
     => .GREEN { return 2; }
     => .BLUE { return 3; }
 
     // never marks unreachable code path
-    // never;
+    never;
 }
 
 /*
