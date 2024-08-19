@@ -23,6 +23,8 @@ typedef u32 rune;
 typedef u64 uint;
 typedef s64 sint;
 
+typedef uint pint;
+
 #define nil 0
 #define true 1
 #define false 0

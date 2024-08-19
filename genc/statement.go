@@ -42,6 +42,25 @@ func (g *Builder) Statement(node stg.Statement) {
 	g.nl()
 }
 
+func (g *Builder) Block(block *stg.Block) {
+	if len(block.Nodes) == 0 {
+		g.puts("{}")
+		g.nl()
+		return
+	}
+
+	g.puts("{")
+	g.nl()
+	g.inc()
+	for _, node := range block.Nodes {
+		g.Statement(node)
+	}
+	g.dec()
+	g.indent()
+	g.puts("}")
+	g.nl()
+}
+
 func (g *Builder) matchStatement(node *stg.MatchStatement) {
 	g.puts("switch (")
 	g.exp(node.Exp)
