@@ -139,6 +139,17 @@ func (t *Type) IsIntegerType() bool {
 	}
 }
 
+func (t *Type) IsEnumType() bool {
+	switch t.Kind {
+	case tpk.Enum:
+		return true
+	case tpk.Custom:
+		return t.Def.(CustomTypeDef).Base.Kind == tpk.Enum
+	default:
+		return false
+	}
+}
+
 // Stable is a unique identifier of a type inside a program. Via this identifier
 // different *Type instances (with different pointers) can be compared to
 // establish identity of represented types.
@@ -591,6 +602,10 @@ type EnumTypeDef struct {
 
 	// maps entry name to its index inside Entries slice
 	index map[string]*EnumEntry
+}
+
+func (d *EnumTypeDef) Entry(name string) *EnumEntry {
+	return d.index[name]
 }
 
 type EnumEntry struct {

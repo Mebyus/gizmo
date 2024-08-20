@@ -52,6 +52,8 @@ const (
 	ArrayIndex
 	ArraySlice
 
+	Enum
+
 	// Template instance
 	Instance
 
@@ -100,6 +102,8 @@ var text = [...]string{
 	Call:           "call",
 
 	IncompName: "name.incomp",
+
+	Enum: "enum",
 
 	Integer: "integer",
 	String:  "string",

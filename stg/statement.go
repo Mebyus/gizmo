@@ -88,6 +88,23 @@ func (s *ReturnStatement) Kind() stm.Kind {
 	return stm.Return
 }
 
+type NeverStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+}
+
+// Explicit interface implementation check
+var _ Statement = &NeverStatement{}
+
+func (s *NeverStatement) Pin() source.Pos {
+	return s.Pos
+}
+
+func (s *NeverStatement) Kind() stm.Kind {
+	return stm.Never
+}
+
 type AssignStatement struct {
 	nodeStatement
 

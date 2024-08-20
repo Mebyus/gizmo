@@ -15,6 +15,9 @@ type Context struct {
 	// receiver type of a method, equals nil for regular functions
 	rv *Type
 
+	// Context for resolving incomplete enum names.
+	enum *Symbol
+
 	// true for function or method that does not return.
 	never bool
 
@@ -22,6 +25,12 @@ type Context struct {
 	// most likely it will be
 	//	- returns counter
 	//	- slice of defer info (conditional/unconditional, arg expressions, etc.)
+}
+
+func (c *Context) pushEnum(s *Symbol) *Symbol {
+	old := c.enum
+	c.enum = s
+	return old
 }
 
 func (m *Merger) newFunCtx() *Context {

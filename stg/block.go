@@ -92,6 +92,8 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 		return b.addForCond(ctx, statement.(ast.ForConditionStatement))
 	case stm.Match:
 		return b.addMatch(ctx, statement.(ast.MatchStatement))
+	case stm.Never:
+		return b.addNever(ctx, statement.(ast.NeverStatement))
 	// case stm.Jump:
 	// g.JumpStatement(statement.(ast.JumpStatement))
 	// case stm.ForEach:
@@ -105,14 +107,29 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	}
 }
 
+func (b *Block) addNever(ctx *Context, stmt ast.NeverStatement) error {
+	b.addNode(&NeverStatement{
+		Pos: stmt.Pos,
+	})
+	return nil
+}
+
 func (b *Block) addMatch(ctx *Context, stmt ast.MatchStatement) error {
 	exp, err := b.Scope.scan(ctx, stmt.Exp)
 	if err != nil {
 		return err
 	}
 	t := exp.Type()
-	if !t.IsIntegerType() {
-		return fmt.Errorf("%s: only integer types can be matched", exp.Pin())
+	switch {
+	case t.IsEnumType():
+		old := ctx.pushEnum(t.Symbol())
+		defer func() {
+			ctx.enum = old
+		}()
+	case t.IsIntegerType():
+		// continue execution
+	default:
+		return fmt.Errorf("%s: only integer or enum types can be matched", exp.Pin())
 	}
 
 	cases := make([]MatchCase, 0, len(stmt.Cases))

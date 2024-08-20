@@ -29,14 +29,24 @@ typedef uint pint;
 #define true 1
 #define false 0
 
+_Noreturn void
+ku_trap_unreachable() {
+	__builtin_trap();
+	__builtin_unreachable();
+}
+
 void
 ku_must(bool c) {
 	if (c) {
 		return;
 	}
 
-	__builtin_trap();
-	__builtin_unreachable();
+	ku_trap_unreachable();
+}
+
+_Noreturn void
+ku_panic_never(u64 pos) {
+	ku_trap_unreachable();
 }
 
 `

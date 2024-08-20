@@ -91,6 +91,32 @@ func (e *SymbolExpression) Type() *Type {
 	return e.Sym.Type
 }
 
+// EnumExp direct usage of enum entry as value.
+type EnumExp struct {
+	nodeOperand
+
+	Pos source.Pos
+
+	Enum *Type
+
+	Entry *EnumEntry
+}
+
+// Explicit interface implementation check
+var _ Operand = &EnumExp{}
+
+func (*EnumExp) Kind() exn.Kind {
+	return exn.Enum
+}
+
+func (e *EnumExp) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *EnumExp) Type() *Type {
+	return e.Enum
+}
+
 type UnaryOperator ast.UnaryOperator
 
 type UnaryExpression struct {

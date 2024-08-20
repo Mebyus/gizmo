@@ -39,6 +39,9 @@ func (g *Builder) exp(exp stg.Expression) {
 		g.CastExp(exp.(*stg.CastExpression))
 	case exn.Tint:
 		g.TintExp(exp.(*stg.TintExp))
+	case exn.Enum:
+		g.EnumExp(exp.(*stg.EnumExp))
+
 	case exn.Chain, exn.Member, exn.Address, exn.Indirect, exn.IndirectIndex,
 		exn.Call, exn.IndirectMember, exn.ChunkMember, exn.ChunkIndex, exn.ChunkSlice, exn.ArraySlice:
 
@@ -55,6 +58,12 @@ func (g *Builder) True() {
 
 func (g *Builder) False() {
 	g.puts("false")
+}
+
+func (g *Builder) EnumExp(exp *stg.EnumExp) {
+	symbol := exp.Enum.Def.(stg.CustomTypeDef).Symbol
+	name := getEnumEntryName(symbol.Name, exp.Entry.Name)
+	g.puts(name)
 }
 
 func (g *Builder) TintExp(exp *stg.TintExp) {

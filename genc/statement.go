@@ -22,6 +22,8 @@ func (g *Builder) Statement(node stg.Statement) {
 		g.callStatement(node.(*stg.CallStatement))
 	case stm.Assign:
 		g.assignStatement(node.(*stg.AssignStatement))
+	case stm.Never:
+		g.neverStatement(node.(*stg.NeverStatement))
 	case stm.SimpleIf:
 		g.simpleIfStatement(node.(*stg.SimpleIfStatement))
 		return
@@ -59,6 +61,11 @@ func (g *Builder) Block(block *stg.Block) {
 	g.indent()
 	g.puts("}")
 	g.nl()
+}
+
+func (g *Builder) neverStatement(node *stg.NeverStatement) {
+	// TODO: use node position to supply panic argument
+	g.puts("ku_panic_never(0)")
 }
 
 func (g *Builder) matchStatement(node *stg.MatchStatement) {

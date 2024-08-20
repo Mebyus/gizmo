@@ -37,12 +37,13 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 	case exn.Paren:
 		return s.scanParenthesizedExpression(ctx, expr.(ast.ParenthesizedExpression))
 	case exn.Cast:
-		return s.scanCastExpression(ctx, expr.(ast.CastExp))
+		return s.scanCastExp(ctx, expr.(ast.CastExp))
 	case exn.Tint:
 		return s.scanTintExp(ctx, expr.(ast.TintExp))
 	case exn.Receiver:
-		return s.scanReceiverExpression(ctx, expr.(ast.Receiver))
-
+		return s.scanReceiverExp(ctx, expr.(ast.Receiver))
+	case exn.IncompName:
+		return s.scanIncompNameExp(ctx, expr.(ast.IncompNameExp))
 	// case exn.BitCast:
 	// 	// g.BitCastExpression(expr.(ast.BitCastExpression))
 	// case exn.Object:
@@ -52,8 +53,31 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 	}
 }
 
-func (s *Scope) scanReceiverExpression(ctx *Context, expr ast.Receiver) (*ReceiverExpression, error) {
-	pos := expr.Pos
+func (s *Scope) scanIncompNameExp(ctx *Context, exp ast.IncompNameExp) (*EnumExp, error) {
+	name := exp.Identifier.Lit
+	pos := exp.Identifier.Pos
+
+	if ctx.enum == nil {
+		return nil, fmt.Errorf("%s: incomplete name \".%s\" used outside of enum context", pos, name)
+	}
+
+	enum := ctx.enum.Def.(*Type)
+	def := enum.Def.(CustomTypeDef).Base.Def.(*EnumTypeDef)
+	entry := def.Entry(name)
+	if entry == nil {
+		return nil, fmt.Errorf("%s: enum \"%s\" does not have entry named \".%s\"",
+			pos, ctx.enum.Name, name)
+	}
+
+	return &EnumExp{
+		Pos:   pos,
+		Enum:  enum,
+		Entry: entry,
+	}, nil
+}
+
+func (s *Scope) scanReceiverExp(ctx *Context, exp ast.Receiver) (*ReceiverExpression, error) {
+	pos := exp.Pos
 
 	if ctx.rv == nil {
 		return nil, fmt.Errorf("%s: receiver used in regular function", pos.String())
@@ -448,7 +472,7 @@ func (s *Scope) scanTintExp(ctx *Context, exp ast.TintExp) (*TintExp, error) {
 	}, nil
 }
 
-func (s *Scope) scanCastExpression(ctx *Context, expr ast.CastExp) (*CastExpression, error) {
+func (s *Scope) scanCastExp(ctx *Context, expr ast.CastExp) (*CastExpression, error) {
 	target, err := s.scan(ctx, expr.Target)
 	if err != nil {
 		return nil, err
