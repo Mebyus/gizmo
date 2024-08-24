@@ -13,8 +13,8 @@ import (
 var Gen = &butler.Lackey{
 	Name: "gen",
 
-	Short: "generate C code from a given gizmo unit",
-	Usage: "gizmo unit gen [options] <units>",
+	Short: "generate C code from a given ku unit",
+	Usage: "ku unit gen [options] <units>",
 
 	Exec:   execute,
 	Params: &Config{},

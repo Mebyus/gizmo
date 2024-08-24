@@ -8,8 +8,8 @@ import (
 var Unit = &butler.Lackey{
 	Name: "unit",
 
-	Short: "use command on gizmo unit",
-	Usage: "gizmo unit <command>",
+	Short: "use command on ku unit",
+	Usage: "ku unit <command>",
 
 	Sub: []*butler.Lackey{
 		gen.Gen,

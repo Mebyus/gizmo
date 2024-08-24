@@ -11,6 +11,8 @@ import (
 	"github.com/mebyus/gizmo/cmd/ku/format"
 	"github.com/mebyus/gizmo/cmd/ku/gen"
 	"github.com/mebyus/gizmo/cmd/ku/lex"
+	"github.com/mebyus/gizmo/cmd/ku/rbs"
+	"github.com/mebyus/gizmo/cmd/ku/symlink"
 	"github.com/mebyus/gizmo/cmd/ku/unit"
 	"github.com/mebyus/gizmo/cmd/ku/vm"
 )
@@ -42,6 +44,8 @@ var root = &butler.Lackey{
 		unit.Unit,
 		format.Format,
 		vm.VM,
+		symlink.Symlink,
+		rbs.ReBuildSelf,
 	},
 }
 

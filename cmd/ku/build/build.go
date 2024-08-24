@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -15,7 +16,7 @@ var Build = &butler.Lackey{
 	Name: "build",
 
 	Short: "build specified targets and their dependencies",
-	Usage: "gizmo build [options] <targets>",
+	Usage: "ku build [options] <targets>",
 
 	Exec:   execute,
 	Params: &Config{},
@@ -31,6 +32,8 @@ type Config struct {
 
 	// Local build configuration file
 	EnvFile string
+
+	RootDir string
 }
 
 func (c *Config) Apply(p *butler.Param) error {
@@ -85,6 +88,15 @@ func execute(r *butler.Lackey, targets []string) error {
 	if len(targets) == 0 {
 		return fmt.Errorf("at least one unit must be specified")
 	}
+	execPath, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	execDir := filepath.Dir(execPath)
+	rootDir := filepath.Join(execDir, "./../..")
+	fmt.Println(execPath)
+	fmt.Println(execDir)
+	fmt.Println(rootDir)
 	return build(r.Params.(*Config), targets[0])
 }
 

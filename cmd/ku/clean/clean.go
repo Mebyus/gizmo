@@ -11,7 +11,7 @@ var Clean = &butler.Lackey{
 	Name: "clean",
 
 	Short: "clean project build output and local cache",
-	Usage: "gizmo clean [options]",
+	Usage: "ku clean [options]",
 
 	Exec: execute,
 }

@@ -12,7 +12,7 @@ var VM = &butler.Lackey{
 	Name: "vm",
 
 	Short: "use kuvm command",
-	Usage: "gizmo vm <command>",
+	Usage: "ku vm <command>",
 
 	Sub: []*butler.Lackey{
 		lex.Lex,

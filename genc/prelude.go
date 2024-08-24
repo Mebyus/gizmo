@@ -29,13 +29,18 @@ typedef uint pint;
 #define true 1
 #define false 0
 
-_Noreturn void
+typedef struct {
+	u8   *ptr;
+	uint  len;
+} str;
+
+_Noreturn static void
 ku_trap_unreachable() {
 	__builtin_trap();
 	__builtin_unreachable();
 }
 
-void
+static void
 ku_must(bool c) {
 	if (c) {
 		return;
@@ -44,9 +49,41 @@ ku_must(bool c) {
 	ku_trap_unreachable();
 }
 
-_Noreturn void
+_Noreturn static void
 ku_panic_never(u64 pos) {
 	ku_trap_unreachable();
+}
+
+#define KU_SYSCALL_AMD64_LINUX_WRITE 1
+
+static sint
+ku_syscall_write(u32 fd, const void *buf, uint size)
+{
+    sint ret;
+    asm volatile
+    (
+        "syscall"
+		
+		// RAX
+        : "=a" (ret)
+
+		// RAX
+        : "0"(KU_SYSCALL_AMD64_LINUX_WRITE), 
+        //  RDI      RSI       RDX
+			"D"(fd), "S"(buf), "d"(size)
+
+		// two registers are clobbered after system call
+        : "rcx", "r11", 
+			"memory"
+    );
+    return ret;
+}
+
+#define KU_LINUX_STDOUT 1
+
+static void
+print(str s) {
+	ku_syscall_write(KU_LINUX_STDOUT, s.ptr, s.len);
 }
 
 `
