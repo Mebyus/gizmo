@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/mebyus/gizmo/butler"
 )
@@ -28,7 +29,6 @@ func rebuild() error {
 		return err
 	}
 	rootDir := filepath.Join(path, "./../../..")
-	fmt.Println("root dir:", rootDir)
 	if rootDir == "." || rootDir == "/" || rootDir == "" {
 		return fmt.Errorf("bad root dir \"%s\"", rootDir)
 	}
@@ -38,10 +38,11 @@ func rebuild() error {
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
+	start := time.Now()
 	err = cmd.Run()
 	if err != nil {
 		return err
 	}
-	fmt.Println("updated:", path)
+	fmt.Printf("build ku: %s\n", time.Since(start))
 	return nil
 }

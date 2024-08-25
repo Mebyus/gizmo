@@ -11,7 +11,7 @@ import (
 type Bundle struct {
 	Graph Graph
 
-	// Sorted by import path.
+	// List of all program units sorted by import path.
 	Units []*stg.Unit
 
 	// Index in this slice corresponds to Unit.DiscoveryIndex.
@@ -23,12 +23,41 @@ type Bundle struct {
 	Main *stg.Unit
 }
 
+type Program struct {
+	Graph Graph
+
+	// List of all program units sorted by import path.
+	Units []*stg.Unit
+
+	// Not nil if program has main unit.
+	Main *stg.Unit
+}
+
+func (b *Bundle) Program() *Program {
+	return &Program{
+		Graph: b.Graph,
+		Units: b.Units,
+		Main:  b.Main,
+	}
+}
+
 func (b *Bundle) GetUnitParsers(unit *stg.Unit) ParserSet {
 	return b.Source[unit.DiscoveryIndex]
 }
 
-func Walk(path origin.Path) (*Bundle, error) {
-	w := Walker{}
+type Config struct {
+	// Root directory for searching units from standard library.
+	StdDir string
+
+	// Root directory for searching local units (from project being built).
+	LocalDir string
+}
+
+func Walk(cfg *Config, path origin.Path) (*Bundle, error) {
+	w := Walker{
+		StdDir:   cfg.StdDir,
+		LocalDir: cfg.LocalDir,
+	}
 	err := w.WalkFrom(path)
 	if err != nil {
 		return nil, err

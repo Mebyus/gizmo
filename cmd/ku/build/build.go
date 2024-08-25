@@ -5,8 +5,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/mebyus/gizmo/butler"
+	"github.com/mebyus/gizmo/cmd/ku/env"
+	"github.com/mebyus/gizmo/genc"
 	"github.com/mebyus/gizmo/source/origin"
 	"github.com/mebyus/gizmo/stg"
 	"github.com/mebyus/gizmo/uwalk"
@@ -33,6 +36,7 @@ type Config struct {
 	// Local build configuration file
 	EnvFile string
 
+	// Compiler root directory.
 	RootDir string
 }
 
@@ -88,16 +92,24 @@ func execute(r *butler.Lackey, targets []string) error {
 	if len(targets) == 0 {
 		return fmt.Errorf("at least one unit must be specified")
 	}
-	execPath, err := os.Executable()
+
+	start := time.Now()
+
+	root, err := env.RootDir()
 	if err != nil {
 		return err
 	}
-	execDir := filepath.Dir(execPath)
-	rootDir := filepath.Join(execDir, "./../..")
-	fmt.Println(execPath)
-	fmt.Println(execDir)
-	fmt.Println(rootDir)
-	return build(r.Params.(*Config), targets[0])
+
+	config := r.Params.(*Config)
+	config.RootDir = root
+
+	err = build(config, targets[0])
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("build: %s\n", time.Since(start))
+	return nil
 }
 
 func build(config *Config, path string) error {
@@ -107,7 +119,10 @@ func build(config *Config, path string) error {
 	// it is here only for convenient development with autocomplete
 	path = strings.TrimPrefix(path, "src/")
 
-	bundle, err := uwalk.Walk(origin.Local(path))
+	bundle, err := uwalk.Walk(&uwalk.Config{
+		StdDir:   filepath.Join(config.RootDir, "src/std"),
+		LocalDir: "src",
+	}, origin.Local(path))
 	if err != nil {
 		return err
 	}
@@ -147,5 +162,18 @@ func build(config *Config, path string) error {
 		}
 	}
 
-	return nil
+	var file *os.File
+	if config.OutputFile == "" {
+		file = os.Stdout
+	} else {
+		f, err := os.Create(config.OutputFile)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		file = f
+	}
+
+	return genc.GenProgram(file, bundle.Program())
 }

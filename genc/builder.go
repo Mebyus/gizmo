@@ -7,6 +7,9 @@ import (
 )
 
 type Builder struct {
+	// Mangled unit name. Index corresponds to Unit.Index.
+	unames []string
+
 	buf []byte
 
 	// Indentation buffer.
@@ -15,13 +18,16 @@ type Builder struct {
 	// in output. When a new line starts this buffer is used to add identation.
 	ib []byte
 
-	// name prefix for generated symbols
+	// global name prefix for generated symbols.
 	prefix string
+
+	// name prefix for unit level symbols.
+	uprefix string
 
 	// name prefix for generated type symbols
 	tprefix string
 
-	// cached type specs
+	// cached type specs.
 	specs map[*stg.Type]string
 }
 

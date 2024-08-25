@@ -16,6 +16,9 @@ type Walker struct {
 	Units  []*stg.Unit
 	Source []ParserSet
 
+	StdDir   string
+	LocalDir string
+
 	// Not nil if main unit is found.
 	Main *stg.Unit
 }
@@ -127,11 +130,11 @@ func (w *Walker) Resolve(path origin.Path) (string, error) {
 	case 0:
 		panic("empty path")
 	case origin.Std:
-		panic("not implemented")
+		return w.StdDir + "/" + path.ImpStr, nil
 	case origin.Pkg:
 		panic("not implemented")
 	case origin.Loc:
-		return "src/" + path.ImpStr, nil
+		return w.LocalDir + "/" + path.ImpStr, nil
 	default:
 		panic(fmt.Sprintf("unexpected %s (%d) origin", o, o))
 	}
