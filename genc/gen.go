@@ -35,10 +35,14 @@ const defaultPrefix = "ku_"
 func GenUnit(w io.Writer, u *stg.Unit) error {
 	var g Builder
 	g.prefix = defaultPrefix
-	g.uprefix = g.prefix + u.Name // mangling of unit name is not needed for single unit generation
-	g.tprefix = "Ku"
 	g.specs = make(map[*stg.Type]string)
+
+	g.uprefix = g.prefix + u.Name // mangling of unit name is not needed for single unit generation
+
+	g.prelude()
+	g.builtinDerivativeTypes(u.Scope.Types)
 	g.Gen(u)
+
 	_, err := w.Write(g.Bytes())
 	return err
 }
@@ -50,14 +54,13 @@ func GenProgram(w io.Writer, p *uwalk.Program) error {
 
 	g.MangleUnitNames(p.Units)
 
-	// TODO: gen prelude only once
-
+	g.prelude()
+	g.builtinDerivativeTypes(p.Global.Types)
 	for _, c := range p.Graph.Cohorts {
 		for _, i := range c {
 			u := p.Graph.Nodes[i].Unit
-			g.uprefix = g.prefix + g.getMangledUnitName(u)
-
-			// TODO: gen without prelude
+			g.uprefix = g.prefix + g.getMangledUnitName(u) + "_"
+			g.Gen(u)
 		}
 	}
 

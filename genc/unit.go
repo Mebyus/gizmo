@@ -3,12 +3,7 @@ package genc
 import "github.com/mebyus/gizmo/stg"
 
 func (g *Builder) Gen(u *stg.Unit) {
-	g.prelude()
-
-	chunks := u.Scope.Types.Chunks()
-	g.genBuiltinChunkTypes(chunks)
-	arrays := u.Scope.Types.Arrays()
-	g.genBuiltinArrayTypes(arrays)
+	g.BlockTitle(u.Name, "unit "+u.Path.String())
 
 	for _, s := range u.Types {
 		g.SymbolSourceComment(s)
@@ -16,7 +11,7 @@ func (g *Builder) Gen(u *stg.Unit) {
 		g.nl()
 
 		t := s.Def.(*stg.Type)
-		c, ok := chunks[t]
+		c, ok := g.chunks[t]
 		if ok {
 			g.ChunkTypeDef(c, t)
 			g.nl()
@@ -25,37 +20,20 @@ func (g *Builder) Gen(u *stg.Unit) {
 		}
 	}
 
-	for _, s := range u.Lets {
-		g.Con(s)
-		g.nl()
-	}
+	g.Constants(u)
+	g.FunDecs(u)
+	g.MethodDecs(u)
+	g.FunDefs(u)
+	g.MethodDefs(u)
+}
 
-	g.BlockTitle(u.Name, "function declaraions")
-	g.nl()
-	for _, s := range u.Funs {
-		g.FunDecl(s)
-		g.nl()
-	}
-
-	g.nl()
-	g.BlockTitle(u.Name, "method declarations")
-	g.nl()
-	for _, s := range u.Meds {
-		g.MethodDecl(s)
-		g.nl()
+func (g *Builder) MethodDefs(u *stg.Unit) {
+	if len(u.Meds) == 0 {
+		return
 	}
 
 	g.nl()
-	g.BlockTitle(u.Name, "function implementations")
-	g.nl()
-	for _, s := range u.Funs {
-		g.SymbolSourceComment(s)
-		g.FunDef(s)
-		g.nl()
-	}
-
-	g.nl()
-	g.BlockTitle(u.Name, "method implementations")
+	g.BlockTitle(u.Name, "method definitions")
 	g.nl()
 	for _, s := range u.Meds {
 		g.SymbolSourceComment(s)
@@ -64,7 +42,62 @@ func (g *Builder) Gen(u *stg.Unit) {
 	}
 }
 
-func (g *Builder) Con(s *stg.Symbol) {
+func (g *Builder) FunDefs(u *stg.Unit) {
+	if len(u.Funs) == 0 {
+		return
+	}
+
+	g.nl()
+	g.BlockTitle(u.Name, "function definitions")
+	g.nl()
+	for _, s := range u.Funs {
+		g.SymbolSourceComment(s)
+		g.FunDef(s)
+		g.nl()
+	}
+}
+
+func (g *Builder) MethodDecs(u *stg.Unit) {
+	if len(u.Meds) == 0 {
+		return
+	}
+
+	g.nl()
+	g.BlockTitle(u.Name, "method declarations")
+	g.nl()
+	for _, s := range u.Meds {
+		g.MethodDec(s)
+		g.nl()
+	}
+}
+
+func (g *Builder) FunDecs(u *stg.Unit) {
+	if len(u.Funs) == 0 {
+		return
+	}
+
+	g.BlockTitle(u.Name, "function declaraions")
+	g.nl()
+	for _, s := range u.Funs {
+		g.FunDec(s)
+		g.nl()
+	}
+}
+
+func (g *Builder) Constants(u *stg.Unit) {
+	if len(u.Lets) == 0 {
+		return
+	}
+
+	g.BlockTitle(u.Name, "constants")
+	g.nl()
+	for _, s := range u.Lets {
+		g.Constant(s)
+		g.nl()
+	}
+}
+
+func (g *Builder) Constant(s *stg.Symbol) {
 	def := s.Def.(*stg.ConstDef)
 
 	g.puts("const")

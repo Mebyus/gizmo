@@ -143,19 +143,15 @@ fun use_type_cast() {
 }
 
 fun match_example(x: u64) => u8 {
-    match x {
-        case 0 => { return 1; }
-        
-        case 2 => {
-            let r: u64 = x + 25;
-            return r;
-        }
-
-        case 3 => {}
-
-        else => {
-            return ^x;
-        }
+    if x
+    => 0 { return 1; }
+    => 2 {
+        let r: u64 = x + 25;
+        return r;
+    }
+    => 3 {}
+    else {
+        return ^x;
     }
 
     return 0;

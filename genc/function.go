@@ -23,9 +23,10 @@ func (g *Builder) FunParam(p *stg.Symbol) {
 	g.SymbolName(p)
 }
 
-func (g *Builder) FunDecl(s *stg.Symbol) {
+func (g *Builder) FunDec(s *stg.Symbol) {
 	def := s.Def.(*stg.FunDef)
 
+	g.puts("static ")
 	g.TypeSpec(def.Result)
 	g.space()
 	g.SymbolName(s)
@@ -36,6 +37,7 @@ func (g *Builder) FunDecl(s *stg.Symbol) {
 func (g *Builder) FunDef(s *stg.Symbol) {
 	def := s.Def.(*stg.FunDef)
 
+	g.puts("static ")
 	g.TypeSpec(def.Result)
 	g.nl()
 	g.SymbolName(s)

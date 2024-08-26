@@ -127,7 +127,6 @@ func build(config *Config, path string) error {
 		return err
 	}
 
-	global := stg.NewGlobalScope()
 	resolver := stg.MapResolver(bundle.Map)
 	for _, c := range bundle.Graph.Cohorts {
 		for _, i := range c {
@@ -140,7 +139,7 @@ func build(config *Config, path string) error {
 
 			m := stg.New(stg.UnitContext{
 				Resolver: resolver,
-				Global:   global,
+				Global:   bundle.Global,
 				Unit:     u,
 			})
 			for _, p := range parsers {
@@ -162,18 +161,26 @@ func build(config *Config, path string) error {
 		}
 	}
 
-	var file *os.File
-	if config.OutputFile == "" {
-		file = os.Stdout
-	} else {
-		f, err := os.Create(config.OutputFile)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		file = f
+	base := filepath.Base(path)
+	outc := filepath.Join("build/.cache", base+".gen.c")
+	err = genCode(outc, bundle.Program())
+	if err != nil {
+		return err
 	}
+	outbin := filepath.Join("build/.cache", base+".o")
+	return compile(outbin, outc)
+}
 
-	return genc.GenProgram(file, bundle.Program())
+func genCode(out string, p *uwalk.Program) error {
+	f, err := os.Create(out)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return genc.GenProgram(f, p)
+}
+
+func compile(out string, cfile string) error {
+	return Compile(cfile, out)
 }

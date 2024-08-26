@@ -105,7 +105,7 @@ func New(ctx UnitContext) *Merger {
 	if u == nil {
 		u = &Unit{Name: ctx.Name}
 	}
-	u.Scope = NewUnitScope(ctx.Global)
+	u.Scope = NewUnitScope(u, ctx.Global)
 
 	return &Merger{
 		ctx:  ctx,

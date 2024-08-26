@@ -1,12 +1,10 @@
-/*
 import std {
-    mem => "mem"
-    os  => "os"
+    // mem => "mem"
+    // os  => "os"
+    fmt => "fmt"
 }
-*/
 
 import {
-    fmt  => "tests/fmt"
     math => "tests/math"
 }
 

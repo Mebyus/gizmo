@@ -9,6 +9,13 @@ import (
 	"github.com/mebyus/gizmo/stg"
 )
 
+func (g *Builder) builtinDerivativeTypes(x *stg.TypeIndex) {
+	g.chunks = x.Chunks()
+	g.arrays = x.Arrays()
+	g.genBuiltinChunkTypes()
+	g.genBuiltinArrayTypes()
+}
+
 func (g *Builder) getTypeSpec(t *stg.Type) string {
 	if t == nil {
 		return "void"
@@ -53,12 +60,12 @@ func (g *Builder) getChunkTypeName(t *stg.Type) string {
 }
 
 func (g *Builder) getChunkTypeNameByElem(elem *stg.Type) string {
-	return g.tprefix + "Chunk_" + g.getSymbolName(elem.Symbol())
+	return g.prefix + "Chunk_" + g.getSymbolName(elem.Symbol())
 }
 
 func (g *Builder) getArrayTypeName(t *stg.Type) string {
 	def := t.Def.(stg.ArrayTypeDef)
-	return g.tprefix + "Array" + strconv.FormatUint(def.Len, 10) + "_" + g.getSymbolName(def.ElemType.Symbol())
+	return g.prefix + "Array" + strconv.FormatUint(def.Len, 10) + "_" + g.getSymbolName(def.ElemType.Symbol())
 }
 
 func (g *Builder) TypeDef(s *stg.Symbol) {
@@ -97,11 +104,11 @@ func (g *Builder) TypeDefEnum(s *stg.Symbol, t *stg.Type) {
 }
 
 func (g *Builder) enumTypeName(s *stg.Symbol) string {
-	return g.tprefix + s.Name
+	return g.getSymbolName(s)
 }
 
 func (g *Builder) genEnumTypeName(s *stg.Symbol) string {
-	return g.tprefix + "GenEnum" + s.Name
+	return g.prefix + "GenEnum" + s.Name
 }
 
 func getEnumEntryName(sname, name string) string {
@@ -243,9 +250,9 @@ var builtinTypes = []*stg.Type{
 	stg.RuneType,
 }
 
-func (g *Builder) genBuiltinArrayTypes(arrays map[*stg.Type][]*stg.Type) {
+func (g *Builder) genBuiltinArrayTypes() {
 	for _, t := range builtinTypes {
-		list := arrays[t]
+		list := g.arrays[t]
 		for _, a := range list {
 			g.ArrayTypeDef(a, t)
 			g.nl()
@@ -255,9 +262,9 @@ func (g *Builder) genBuiltinArrayTypes(arrays map[*stg.Type][]*stg.Type) {
 	}
 }
 
-func (g *Builder) genBuiltinChunkTypes(chunks map[*stg.Type]*stg.Type) {
+func (g *Builder) genBuiltinChunkTypes() {
 	for _, t := range builtinTypes {
-		c, ok := chunks[t]
+		c, ok := g.chunks[t]
 		if ok {
 			g.ChunkTypeDef(c, t)
 			g.nl()

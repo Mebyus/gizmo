@@ -34,6 +34,10 @@ type Scope struct {
 	// global, unit and top scopes.
 	Pos *source.Pos
 
+	// Unit where this scope is located.
+	// Always nil for global scope.
+	Unit *Unit
+
 	// Scope's nesting level. Starts from 0 for global scope. Language structure
 	// implies that first levels are dependant on Kind:
 	//
@@ -74,6 +78,9 @@ func NewScope(kind scp.Kind, parent *Scope, pos *source.Pos) *Scope {
 		scope: s,
 		tm:    inheritTypeMap(parent),
 	}
+	if parent != nil {
+		s.Unit = parent.Unit
+	}
 	return s
 }
 
@@ -84,12 +91,14 @@ func inheritTypeMap(parent *Scope) map[Stable]*Type {
 	return parent.Types.tm
 }
 
-func NewUnitScope(global *Scope) *Scope {
-	return NewScope(scp.Unit, global, nil)
+func NewUnitScope(unit *Unit, global *Scope) *Scope {
+	s := NewScope(scp.Unit, global, nil)
+	s.Unit = unit
+	return s
 }
 
-func NewTopScope(unit *Scope, pos *source.Pos) *Scope {
-	return NewScope(scp.Top, unit, pos)
+func NewTopScope(parent *Scope, pos *source.Pos) *Scope {
+	return NewScope(scp.Top, parent, pos)
 }
 
 func (s *Scope) nextLevel() uint32 {

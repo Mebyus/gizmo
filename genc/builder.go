@@ -24,11 +24,14 @@ type Builder struct {
 	// name prefix for unit level symbols.
 	uprefix string
 
-	// name prefix for generated type symbols
-	tprefix string
-
 	// cached type specs.
 	specs map[*stg.Type]string
+
+	// from type index.
+	arrays map[*stg.Type][]*stg.Type
+
+	// from type index.
+	chunks map[*stg.Type]*stg.Type
 }
 
 func (g *Builder) Bytes() []byte {

@@ -1,5 +1,5 @@
-import {
-    fmt => "tests/fmt"
+import std {
+    fmt => "fmt"
 }
 
 pub

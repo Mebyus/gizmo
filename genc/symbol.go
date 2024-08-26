@@ -13,15 +13,18 @@ func (g *Builder) getSymbolName(s *stg.Symbol) string {
 		return s.Name
 	}
 	if s.Scope.Kind == scp.Unit {
-		if s.Kind == smk.Type {
-			return g.tprefix + s.Name
-		}
+		prefix := g.prefix + g.unames[s.Scope.Unit.Index] + "_"
 		if s.Kind == smk.Method {
-			return g.prefix + strings.Replace(s.Name, ".", "_", 1)
+			return prefix + "g" + "_" + strings.Replace(s.Name, ".", "_", 1)
 		}
-		return g.prefix + s.Name
+		return prefix + s.Name
 	}
-	return s.Name
+	switch s.Name {
+	case "long", "unsigned", "signed", "static", "inline":
+		return g.prefix + s.Name
+	default:
+		return s.Name
+	}
 }
 
 func (g *Builder) SymbolName(s *stg.Symbol) {

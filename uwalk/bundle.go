@@ -21,6 +21,8 @@ type Bundle struct {
 
 	// Not nil if bundle has main unit inside.
 	Main *stg.Unit
+
+	Global *stg.Scope
 }
 
 type Program struct {
@@ -31,13 +33,16 @@ type Program struct {
 
 	// Not nil if program has main unit.
 	Main *stg.Unit
+
+	Global *stg.Scope
 }
 
 func (b *Bundle) Program() *Program {
 	return &Program{
-		Graph: b.Graph,
-		Units: b.Units,
-		Main:  b.Main,
+		Graph:  b.Graph,
+		Units:  b.Units,
+		Main:   b.Main,
+		Global: b.Global,
 	}
 }
 
@@ -80,5 +85,6 @@ func Walk(cfg *Config, path origin.Path) (*Bundle, error) {
 	// TODO: remove debug prints
 	printGraph(&b.Graph)
 
+	b.Global = stg.NewGlobalScope()
 	return &b, nil
 }

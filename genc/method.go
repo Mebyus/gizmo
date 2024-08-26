@@ -5,6 +5,7 @@ import "github.com/mebyus/gizmo/stg"
 func (g *Builder) MethodDef(s *stg.Symbol) {
 	def := s.Def.(*stg.MethodDef)
 
+	g.puts("static ")
 	g.TypeSpec(def.Result)
 	g.nl()
 	g.SymbolName(s)
@@ -25,9 +26,10 @@ func (g *Builder) MethodParams(r *stg.Type, params []*stg.Symbol) {
 	g.puts(")")
 }
 
-func (g *Builder) MethodDecl(s *stg.Symbol) {
+func (g *Builder) MethodDec(s *stg.Symbol) {
 	def := s.Def.(*stg.MethodDef)
 
+	g.puts("static ")
 	g.TypeSpec(def.Result)
 	g.space()
 	g.SymbolName(s)
@@ -76,6 +78,7 @@ func (g *Builder) ArrayTypeHeadSliceMethodName(t *stg.Type) {
 }
 
 func (g *Builder) ChunkTypeIndexMethod(c, elem *stg.Type) {
+	g.puts("static ")
 	g.TypeSpec(elem)
 	g.nl()
 	g.ChunkTypeIndexMethodName(elem)
@@ -105,6 +108,7 @@ func (g *Builder) ChunkTypeIndexMethod(c, elem *stg.Type) {
 }
 
 func (g *Builder) ChunkTypeElemMethod(c, elem *stg.Type) {
+	g.puts("static ")
 	g.TypeSpec(elem)
 	g.puts("*")
 	g.nl()
@@ -135,6 +139,7 @@ func (g *Builder) ChunkTypeElemMethod(c, elem *stg.Type) {
 }
 
 func (g *Builder) ArrayTypeElemMethod(a, elem *stg.Type) {
+	g.puts("static ")
 	g.TypeSpec(elem)
 	g.puts("*")
 	g.nl()
@@ -163,6 +168,7 @@ func (g *Builder) ArrayTypeElemMethod(a, elem *stg.Type) {
 }
 
 func (g *Builder) ArrayTypeHeadSliceMethod(a, elem *stg.Type) {
+	g.puts("static ")
 	g.puts(g.getChunkTypeNameByElem(elem))
 	g.nl()
 	g.ArrayTypeHeadSliceMethodName(a)

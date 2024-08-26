@@ -60,7 +60,7 @@ static sint
 ku_syscall_write(u32 fd, const void *buf, uint size)
 {
     sint ret;
-    asm volatile
+    __asm__ volatile
     (
         "syscall"
 		
