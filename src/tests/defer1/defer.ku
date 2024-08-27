@@ -1,0 +1,19 @@
+fun other_fun() {}
+
+fun fun2(x: uint) {}
+
+fun fun3(x: uint, a: u8) {}
+
+fun use_defer(x: uint) => uint {
+    defer other_fun();
+    if x == 1 {}
+    defer fun2(113);
+    if x < 10 {
+        defer fun2(x);
+    }
+    if x > 111 {
+        return 2;
+    }
+    defer fun3(x, 3);
+    return 1;
+}

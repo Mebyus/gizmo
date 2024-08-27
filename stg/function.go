@@ -7,6 +7,8 @@ type FunDef struct {
 
 	Body Block
 
+	Defers []Defer
+
 	// List of top-level unit symbols which are used in function.
 	Refs []*Symbol
 
@@ -29,4 +31,20 @@ type Signature struct {
 
 	// Equals true for functions which never return.
 	Never bool
+}
+
+// Defer describes defer usage inside a function.
+type Defer struct {
+	// param names of the call
+	Params []*Symbol
+
+	// symbol being called in defer
+	Symbol *Symbol
+
+	// index of this defer among list of defers inside a function
+	Index uint32
+
+	// When false this defer always occurs at runtime if the function is called.
+	// When true this defer may or may not occur at runtime.
+	Uncertain bool
 }

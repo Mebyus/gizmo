@@ -21,9 +21,6 @@ type Builder struct {
 	// global name prefix for generated symbols.
 	prefix string
 
-	// name prefix for unit level symbols.
-	uprefix string
-
 	// cached type specs.
 	specs map[*stg.Type]string
 

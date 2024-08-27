@@ -100,11 +100,26 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	// g.ForEachStatement(statement.(ast.ForEachStatement))
 	case stm.Let:
 		return b.addLet(ctx, statement.(ast.LetStatement))
-	// case stm.Defer:
-	//
+	case stm.Defer:
+		return b.handleDefer(ctx, statement.(ast.DeferStatement))
 	default:
 		panic(fmt.Sprintf("not implemented for %s statement", statement.Kind().String()))
 	}
+}
+
+func (b *Block) handleDefer(ctx *Context, stmt ast.DeferStatement) error {
+	pos := stmt.Pos
+	if b.Scope.LoopLevel != 0 {
+		return fmt.Errorf("%s: defer cannot be used inside a loop", pos)
+	}
+	uncertain := ctx.rets != 0 || b.Scope.BranchLevel != 0
+
+	index := len(ctx.defers)
+	ctx.defers = append(ctx.defers, Defer{
+		Index:     uint32(index),
+		Uncertain: uncertain,
+	})
+	return nil
 }
 
 func (b *Block) addNever(ctx *Context, stmt ast.NeverStatement) error {
@@ -302,6 +317,7 @@ func (b *Block) addReturn(ctx *Context, stmt ast.ReturnStatement) error {
 			return fmt.Errorf("%s: return used in function which is marked as never returning", pos)
 		}
 
+		ctx.rets += 1
 		b.addNode(&ReturnStatement{Pos: pos})
 		return nil
 	}
@@ -326,6 +342,7 @@ func (b *Block) addReturn(ctx *Context, stmt ast.ReturnStatement) error {
 		return err
 	}
 
+	ctx.rets += 1
 	b.addNode(&ReturnStatement{
 		Pos:  pos,
 		Expr: exp,

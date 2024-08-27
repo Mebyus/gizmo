@@ -316,6 +316,16 @@ func (m *Merger) scanFunBody(def *FunDef, statements []ast.Statement) error {
 		return err
 	}
 	def.Refs = ctx.ref.Elems()
+	def.Defers = ctx.defers
+
+	// TODO: remove debug print
+	if len(def.Defers) != 0 {
+		fmt.Printf("found defers at %s\n", def.Body.Pos)
+	}
+	for _, d := range def.Defers {
+		fmt.Printf("%d: %v\n", d.Index, d.Uncertain)
+	}
+
 	return nil
 }
 

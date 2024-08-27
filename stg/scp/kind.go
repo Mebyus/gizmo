@@ -24,7 +24,6 @@ const (
 	Block
 	Loop
 	If
-	IfElse
 	Else
 	Case
 )
@@ -39,7 +38,6 @@ var text = [...]string{
 	Block:  "block",
 	Loop:   "loop",
 	If:     "if",
-	IfElse: "ifelse",
 	Else:   "else",
 	Case:   "case",
 }

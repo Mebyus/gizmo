@@ -50,6 +50,14 @@ type Scope struct {
 	// various language constructs.
 	Level uint32
 
+	// How many loops deep this scope resides (within a function or method).
+	// Starts from 0 for top scope (where there are no surrounding loops).
+	LoopLevel uint32
+
+	// How many logic branches deep (excluding loops) this scope resides (within a function or method).
+	// Starts from 0 for top scope (where there are no surrounding branches).
+	BranchLevel uint32
+
 	Kind scp.Kind
 }
 
@@ -80,6 +88,15 @@ func NewScope(kind scp.Kind, parent *Scope, pos *source.Pos) *Scope {
 	}
 	if parent != nil {
 		s.Unit = parent.Unit
+		s.LoopLevel = parent.LoopLevel
+		s.BranchLevel = parent.BranchLevel
+
+		switch kind {
+		case scp.Loop:
+			s.LoopLevel += 1
+		case scp.If, scp.Case, scp.Else:
+			s.BranchLevel += 1
+		}
 	}
 	return s
 }

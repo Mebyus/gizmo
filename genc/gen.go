@@ -37,8 +37,6 @@ func GenUnit(w io.Writer, u *stg.Unit) error {
 	g.prefix = defaultPrefix
 	g.specs = make(map[*stg.Type]string)
 
-	g.uprefix = g.prefix + u.Name // mangling of unit name is not needed for single unit generation
-
 	g.prelude()
 	g.builtinDerivativeTypes(u.Scope.Types)
 	g.Gen(u)
@@ -59,7 +57,6 @@ func GenProgram(w io.Writer, p *uwalk.Program) error {
 	for _, c := range p.Graph.Cohorts {
 		for _, i := range c {
 			u := p.Graph.Nodes[i].Unit
-			g.uprefix = g.prefix + g.getMangledUnitName(u) + "_"
 			g.Gen(u)
 		}
 	}

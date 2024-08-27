@@ -13,7 +13,7 @@ func (g *Builder) getSymbolName(s *stg.Symbol) string {
 		return s.Name
 	}
 	if s.Scope.Kind == scp.Unit {
-		prefix := g.prefix + g.unames[s.Scope.Unit.Index] + "_"
+		prefix := g.prefix + g.getMangledUnitName(s.Scope.Unit) + "_"
 		if s.Kind == smk.Method {
 			return prefix + "g" + "_" + strings.Replace(s.Name, ".", "_", 1)
 		}

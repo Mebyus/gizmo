@@ -4,6 +4,8 @@ package stg
 // statements and expressions transformations (from AST to STG), type checking,
 // symbol usage counting, etc.
 type Context struct {
+	defers []Defer
+
 	m *Merger
 
 	// gathers top-level symbols used in function, method, unit constant or variable.
@@ -17,6 +19,9 @@ type Context struct {
 
 	// Context for resolving incomplete enum names.
 	enum *Symbol
+
+	// counter for number of returns used.
+	rets int
 
 	// true for function or method that does not return.
 	never bool

@@ -108,25 +108,32 @@ func execute(r *butler.Lackey, targets []string) error {
 		return err
 	}
 
-	fmt.Printf("build: %s\n", time.Since(start))
+	fmt.Printf("total: %s\n", time.Since(start))
 	return nil
 }
 
-func build(config *Config, path string) error {
+func makeUnitsBundle(config *Config, path string) (*uwalk.Bundle, error) {
 	path = filepath.Clean(path)
 
 	// TODO: remove this hack
 	// it is here only for convenient development with autocomplete
 	path = strings.TrimPrefix(path, "src/")
 
+	start := time.Now()
 	bundle, err := uwalk.Walk(&uwalk.Config{
 		StdDir:   filepath.Join(config.RootDir, "src/std"),
 		LocalDir: "src",
 	}, origin.Local(path))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	fmt.Printf("uwalk: %s\n", time.Since(start))
+	return bundle, nil
+}
+
+func makeProgram(config *Config, bundle *uwalk.Bundle) (*uwalk.Program, error) {
+	start := time.Now()
 	resolver := stg.MapResolver(bundle.Map)
 	for _, c := range bundle.Graph.Cohorts {
 		for _, i := range c {
@@ -145,25 +152,40 @@ func build(config *Config, path string) error {
 			for _, p := range parsers {
 				atom, err := p.Parse()
 				if err != nil {
-					return err
+					return nil, err
 				}
 				// TODO: pass all units to merger at once
 				// as a slice
 				err = m.Add(atom)
 				if err != nil {
-					return err
+					return nil, err
 				}
 			}
 			_, err := m.Merge()
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
 
+	fmt.Printf("stg: %s\n", time.Since(start))
+	return bundle.Program(), nil
+}
+
+func build(config *Config, path string) error {
+	bundle, err := makeUnitsBundle(config, path)
+	if err != nil {
+		return err
+	}
+
+	program, err := makeProgram(config, bundle)
+	if err != nil {
+		return err
+	}
+
 	base := filepath.Base(path)
 	outc := filepath.Join("build/.cache", base+".gen.c")
-	err = genCode(outc, bundle.Program())
+	err = genCode(outc, program)
 	if err != nil {
 		return err
 	}
@@ -172,15 +194,30 @@ func build(config *Config, path string) error {
 }
 
 func genCode(out string, p *uwalk.Program) error {
+	start := time.Now()
+
 	f, err := os.Create(out)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	return genc.GenProgram(f, p)
+	err = genc.GenProgram(f, p)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("genc: %s\n", time.Since(start))
+	return nil
 }
 
 func compile(out string, cfile string) error {
-	return Compile(cfile, out)
+	start := time.Now()
+	err := Compile(cfile, out)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("cc: %s\n", time.Since(start))
+	return nil
 }
