@@ -235,3 +235,25 @@ func (*CallStatement) Kind() stm.Kind {
 func (s *CallStatement) Pin() source.Pos {
 	return s.Pos
 }
+
+type DeferStatement struct {
+	nodeStatement
+
+	Pos source.Pos
+
+	Args []Expression
+
+	Index uint32
+
+	Uncertain bool
+}
+
+var _ Statement = &DeferStatement{}
+
+func (*DeferStatement) Kind() stm.Kind {
+	return stm.Defer
+}
+
+func (s *DeferStatement) Pin() source.Pos {
+	return s.Pos
+}

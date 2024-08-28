@@ -101,21 +101,39 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	case stm.Let:
 		return b.addLet(ctx, statement.(ast.LetStatement))
 	case stm.Defer:
-		return b.handleDefer(ctx, statement.(ast.DeferStatement))
+		return b.addDefer(ctx, statement.(ast.DeferStatement))
 	default:
 		panic(fmt.Sprintf("not implemented for %s statement", statement.Kind().String()))
 	}
 }
 
-func (b *Block) handleDefer(ctx *Context, stmt ast.DeferStatement) error {
+func (b *Block) addDefer(ctx *Context, stmt ast.DeferStatement) error {
 	pos := stmt.Pos
 	if b.Scope.LoopLevel != 0 {
 		return fmt.Errorf("%s: defer cannot be used inside a loop", pos)
 	}
-	uncertain := ctx.rets != 0 || b.Scope.BranchLevel != 0
+
+	exp, err := b.Scope.scanChainOperand(ctx, stmt.Call)
+	if err != nil {
+		return err
+	}
+	call := exp.(*CallExpression)
+	details, err := getCallDetails(call.Callee)
+	if err != nil {
+		return err
+	}
 
 	index := len(ctx.defers)
+	uncertain := ctx.rets != 0 || b.Scope.BranchLevel != 0
+	b.addNode(&DeferStatement{
+		Pos:       pos,
+		Args:      call.Arguments,
+		Index:     uint32(index),
+		Uncertain: uncertain,
+	})
 	ctx.defers = append(ctx.defers, Defer{
+		Params:    details.Params,
+		Symbol:    details.Symbol,
 		Index:     uint32(index),
 		Uncertain: uncertain,
 	})

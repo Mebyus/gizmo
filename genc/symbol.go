@@ -13,11 +13,7 @@ func (g *Builder) getSymbolName(s *stg.Symbol) string {
 		return s.Name
 	}
 	if s.Scope.Kind == scp.Unit {
-		prefix := g.prefix + g.getMangledUnitName(s.Scope.Unit) + "_"
-		if s.Kind == smk.Method {
-			return prefix + "g" + "_" + strings.Replace(s.Name, ".", "_", 1)
-		}
-		return prefix + s.Name
+		return g.prefix + g.getUnitSymbolName(s)
 	}
 	switch s.Name {
 	case "long", "unsigned", "signed", "static", "inline":
@@ -25,6 +21,14 @@ func (g *Builder) getSymbolName(s *stg.Symbol) string {
 	default:
 		return s.Name
 	}
+}
+
+func (g *Builder) getUnitSymbolName(s *stg.Symbol) string {
+	prefix := g.getMangledUnitName(s.Scope.Unit) + "_"
+	if s.Kind == smk.Method {
+		return prefix + "g_" + strings.Replace(s.Name, ".", "_", 1)
+	}
+	return prefix + s.Name
 }
 
 func (g *Builder) SymbolName(s *stg.Symbol) {

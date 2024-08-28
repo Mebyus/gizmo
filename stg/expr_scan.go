@@ -393,7 +393,23 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 	}
 }
 
-func getSignatureByChainSymbol(c *ChainSymbol) (*Signature, error) {
+type CallDetails struct {
+	Signature
+
+	Args []Expression
+
+	// Not nil only for method calls.
+	Receiver Expression
+
+	// What symbol is being called. One of:
+	//
+	//	- function
+	//	- method
+	//	- variable of function type
+	Symbol *Symbol
+}
+
+func getCallDetailsByChainSymbol(c *ChainSymbol) (*CallDetails, error) {
 	s := c.Sym
 	if s == nil {
 		panic("receiver not implemented")
@@ -401,7 +417,10 @@ func getSignatureByChainSymbol(c *ChainSymbol) (*Signature, error) {
 
 	switch s.Kind {
 	case smk.Fun:
-		return &s.Def.(*FunDef).Signature, nil
+		return &CallDetails{
+			Signature: s.Def.(*FunDef).Signature,
+			Symbol:    s,
+		}, nil
 	case smk.Type:
 		return nil, fmt.Errorf("%s: cannot call type \"%s\"", c.Pos.String(), s.Name)
 	case smk.Import:
@@ -413,23 +432,24 @@ func getSignatureByChainSymbol(c *ChainSymbol) (*Signature, error) {
 	}
 }
 
-func getSignature(o ChainOperand) (*Signature, error) {
+// TODO: refactor this to accept CallExpression.
+func getCallDetails(o ChainOperand) (*CallDetails, error) {
 	switch o.Kind() {
 	case exn.Chain:
-		return getSignatureByChainSymbol(o.(*ChainSymbol))
+		return getCallDetailsByChainSymbol(o.(*ChainSymbol))
 	default:
 		panic(fmt.Sprintf("%s: %s operands not implemented", o.Pin().String(), o.Kind().String()))
 	}
 }
 
 func (s *Scope) scanCallPart(ctx *Context, tip ChainOperand, part ast.CallPart) (ChainOperand, error) {
-	sig, err := getSignature(tip)
+	details, err := getCallDetails(tip)
 	if err != nil {
 		return nil, err
 	}
 
 	pos := part.Pos
-	params := sig.Params
+	params := details.Params
 	args := part.Args
 
 	aa, err := s.scanCallArgs(ctx, pos, params, args)
@@ -441,8 +461,8 @@ func (s *Scope) scanCallPart(ctx *Context, tip ChainOperand, part ast.CallPart) 
 		Arguments: aa,
 		Callee:    tip,
 
-		typ:   sig.Result,
-		never: sig.Never,
+		typ:   details.Result,
+		never: details.Never,
 	}, nil
 }
 

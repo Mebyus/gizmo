@@ -46,23 +46,90 @@ func (g *Builder) FunDef(s *stg.Symbol) {
 func (g *Builder) funDefWithDefers(s *stg.Symbol) {
 	def := s.Def.(*stg.FunDef)
 
+	unitSymbolName := g.getUnitSymbolName(s)
+	deferArgsTypeName := g.getDeferArgsTypeName(unitSymbolName)
+
+	g.funDeferArgsType(def.Defers, deferArgsTypeName)
+	g.nl()
+
+	g.funDefersWrapper(s, deferArgsTypeName)
+}
+
+func (g *Builder) funDeferArgsType(defers []stg.Defer, deferArgsTypeName string) {
+	g.puts("typedef struct {")
+	g.nl()
+	g.inc()
+
+	for i := range len(defers) {
+		d := &defers[i]
+		g.deferArgsTypeField(d)
+	}
+
+	g.dec()
+	g.puts("} ")
+	g.puts(deferArgsTypeName)
+	g.semi()
+	g.nl()
+}
+
+func (g *Builder) deferArgsTypeField(d *stg.Defer) {
+	if len(d.Params) == 0 && !d.Uncertain {
+		return
+	}
+
+	g.indent()
+	g.puts("struct {")
+	g.nl()
+	g.inc()
+
+	for i, p := range d.Params {
+		g.indent()
+		g.TypeSpec(p.Type)
+		g.puts(" arg")
+		g.putn(uint64(i))
+		g.semi()
+		g.nl()
+	}
+	if d.Uncertain {
+		g.indent()
+		g.puts("bool call;")
+		g.nl()
+	}
+
+	g.dec()
+	g.indent()
+	g.puts("}")
+	g.space()
+	g.puts("defer")
+	g.putn(uint64(d.Index))
+	g.semi()
+	g.nl()
+}
+
+func (g *Builder) getDeferArgsTypeName(unitSymbolName string) string {
+	return g.prefix + "DeferArgs_" + unitSymbolName
+}
+
+func (g *Builder) funDefersWrapper(s *stg.Symbol, deferArgsTypeName string) {
+	def := s.Def.(*stg.FunDef)
+
 	g.puts("static ")
 	g.TypeSpec(def.Result)
 	g.nl()
 	g.SymbolName(s)
 	g.FunParams(def.Params)
 	g.space()
-	g.funDefersWrapperBody(def)
+	g.funDefersWrapperBody(def, deferArgsTypeName)
 }
 
-func (g *Builder) funDefersWrapperBody(def *stg.FunDef) {
+func (g *Builder) funDefersWrapperBody(def *stg.FunDef, deferArgsTypeName string) {
 	g.puts("{")
 	g.nl()
 	g.inc()
 
 	g.indent()
-	g.puts("<defer args type name>")
-	g.puts("ku_defer_args;")
+	g.puts(deferArgsTypeName)
+	g.puts(" ku_defer_args;")
 	g.nl()
 
 	g.indent()
@@ -99,7 +166,7 @@ func (g *Builder) callDefer(d *stg.Defer) {
 
 func (g *Builder) callCertainDefer(d *stg.Defer) {
 	g.indent()
-	g.puts("<defer call name>")
+	g.SymbolName(d.Symbol)
 	g.deferCallArgs(d)
 	g.semi()
 }
