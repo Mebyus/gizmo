@@ -8,7 +8,7 @@ import (
 	"github.com/mebyus/gizmo/stg"
 )
 
-func (g *Builder) Expression(expr stg.Expression) {
+func (g *Builder) Exp(expr stg.Expression) {
 	if expr == nil {
 		panic("nil expression")
 	}

@@ -48,11 +48,36 @@ func (g *Builder) funDefWithDefers(s *stg.Symbol) {
 
 	unitSymbolName := g.getUnitSymbolName(s)
 	deferArgsTypeName := g.getDeferArgsTypeName(unitSymbolName)
+	setupDefersFunName := g.getSetupDefersFunName(unitSymbolName)
 
 	g.funDeferArgsType(def.Defers, deferArgsTypeName)
 	g.nl()
 
-	g.funDefersWrapper(s, deferArgsTypeName)
+	g.funSetupDefers(s, deferArgsTypeName, setupDefersFunName)
+	g.nl()
+
+	g.funDefersWrapper(s, deferArgsTypeName, setupDefersFunName)
+}
+
+func (g *Builder) funSetupDefers(s *stg.Symbol, deferArgsTypeName, setupDefersFunName string) {
+	def := s.Def.(*stg.FunDef)
+
+	g.puts("static ")
+	g.TypeSpec(def.Result)
+	g.nl()
+	g.puts(setupDefersFunName)
+
+	g.puts("(")
+	for _, p := range def.Params {
+		g.FunParam(p)
+		g.puts(", ")
+	}
+	g.puts(deferArgsTypeName)
+	g.puts(" *ku_defer_args")
+	g.puts(")")
+
+	g.space()
+	g.Block(&def.Body)
 }
 
 func (g *Builder) funDeferArgsType(defers []stg.Defer, deferArgsTypeName string) {
@@ -110,7 +135,11 @@ func (g *Builder) getDeferArgsTypeName(unitSymbolName string) string {
 	return g.prefix + "DeferArgs_" + unitSymbolName
 }
 
-func (g *Builder) funDefersWrapper(s *stg.Symbol, deferArgsTypeName string) {
+func (g *Builder) getSetupDefersFunName(unitSymbolName string) string {
+	return g.prefix + "setup_defers_" + unitSymbolName
+}
+
+func (g *Builder) funDefersWrapper(s *stg.Symbol, deferArgsTypeName, setupDefersFunName string) {
 	def := s.Def.(*stg.FunDef)
 
 	g.puts("static ")
@@ -119,10 +148,10 @@ func (g *Builder) funDefersWrapper(s *stg.Symbol, deferArgsTypeName string) {
 	g.SymbolName(s)
 	g.FunParams(def.Params)
 	g.space()
-	g.funDefersWrapperBody(def, deferArgsTypeName)
+	g.funDefersWrapperBody(def, deferArgsTypeName, setupDefersFunName)
 }
 
-func (g *Builder) funDefersWrapperBody(def *stg.FunDef, deferArgsTypeName string) {
+func (g *Builder) funDefersWrapperBody(def *stg.FunDef, deferArgsTypeName, setupDefersFunName string) {
 	g.puts("{")
 	g.nl()
 	g.inc()
@@ -133,7 +162,11 @@ func (g *Builder) funDefersWrapperBody(def *stg.FunDef, deferArgsTypeName string
 	g.nl()
 
 	g.indent()
-	g.puts("<function with defer args setup>")
+	if def.Result != nil {
+		g.TypeSpec(def.Result)
+		g.puts(" r = ")
+	}
+	g.puts(setupDefersFunName)
 	g.puts("(")
 	for _, p := range def.Params {
 		g.SymbolName(p)
@@ -147,6 +180,12 @@ func (g *Builder) funDefersWrapperBody(def *stg.FunDef, deferArgsTypeName string
 	for i := range len(def.Defers) {
 		d := &def.Defers[len(def.Defers)-i-1] // reverse order when defer is actually performed
 		g.callDefer(d)
+		g.nl()
+	}
+
+	if def.Result != nil {
+		g.indent()
+		g.puts("return r;")
 		g.nl()
 	}
 

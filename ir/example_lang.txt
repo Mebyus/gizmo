@@ -1,0 +1,48 @@
+// prefix $s. means struct definition
+$s.MyStructType 32 { // number 32 specifies struct size in bytes, MyStructType - struct name
+    field1: (int, 0, 4), // int - integer, 0 - offset from struct start, 4 - field size in bytes
+    
+    other_struct.ptr: (ptr, 4, 8),  // other_struct.ptr - compound field name from nested struct, ptr - pointer
+    other_struct.len: (int, 12, 8),
+
+    last_field: (byte, 20, 12), // plain array of bytes
+}
+
+// prefix $g. means global variable
+$g.state: (int, 8) = 0x1A;
+
+// prefix $m. means message - static (constant) string stored in translation result (binary file)
+$m.hello: (byte, 13) = "Hello, world!";
+
+// prefix $f. means function
+$f.fmt.parse_dec_u64 [ // return type is always specified, fmt - unit (namespace) name (could be mangled), parse_dec_u64 - function name
+    // all variables must be allocated before function body
+    $v.i: (int, 8); // variable stack allocation, prefix $v. means variable, i (after prefix) - variable name, size in bytes
+    ret: (void);
+] {
+    ret; // return must always be present at the end of function
+}
+
+$f.math.add_i32 [ // prefix $p. means function parameter
+    $p.a: (int, 4); // params and local variables allocation
+    $p.b: (int, 4); // prefix $p. means function parameter
+    $v.r: (int, 4);
+    ret: (int, 4);
+] {
+    $v.r = s32_add($p.a, $p.b); // only one operation per set statement is allowed
+    ret $v.r; // only variables and parameters can be used directly in ret statement
+}
+
+$f.use_flag [
+    $v.r: (int, 4);
+    $c.flag: (bool, 1); // prefix $c. means test/true/condition variable
+    ret: (int, 4);
+] {
+    clear $v.r; // set all bytes to zero in memory region occupied by this variable
+    if $c.flag {
+        $v.r = 0x5;
+    } else {
+        $v.r = 0xab;
+    }
+    ret $v.r;
+}

@@ -243,6 +243,7 @@ type DeferStatement struct {
 
 	Args []Expression
 
+	// defer index (among all defers inside the function)
 	Index uint32
 
 	Uncertain bool

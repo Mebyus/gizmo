@@ -106,7 +106,7 @@ func (g *Builder) Constant(s *stg.Symbol) {
 	g.nl()
 	g.SymbolName(s)
 	g.puts(" = ")
-	g.Expression(def.Exp)
+	g.Exp(def.Exp)
 	g.semi()
 	g.nl()
 }

@@ -9,8 +9,6 @@ import (
 )
 
 func (g *Builder) Statement(node stg.Statement) {
-	g.indent()
-
 	switch node.Kind() {
 	case stm.Return:
 		g.returnStatement(node.(*stg.ReturnStatement))
@@ -35,6 +33,9 @@ func (g *Builder) Statement(node stg.Statement) {
 		return
 	case stm.Match:
 		g.matchStatement(node.(*stg.MatchStatement))
+		return
+	case stm.Defer:
+		g.deferStatement(node.(*stg.DeferStatement))
 		return
 	default:
 		panic(fmt.Sprintf("%s statement not implemented", node.Kind().String()))
@@ -63,12 +64,40 @@ func (g *Builder) Block(block *stg.Block) {
 	g.nl()
 }
 
+func (g *Builder) deferStatement(node *stg.DeferStatement) {
+	if len(node.Args) == 0 && !node.Uncertain {
+		return
+	}
+
+	for i, arg := range node.Args {
+		g.indent()
+		g.puts("ku_defer_args->defer")
+		g.putn(uint64(node.Index))
+		g.puts(".arg")
+		g.putn(uint64(i))
+		g.puts(" = ")
+		g.Exp(arg)
+		g.semi()
+		g.nl()
+	}
+
+	if node.Uncertain {
+		g.indent()
+		g.puts("ku_defer_args->defer")
+		g.putn(uint64(node.Index))
+		g.puts(".call = true;")
+		g.nl()
+	}
+}
+
 func (g *Builder) neverStatement(node *stg.NeverStatement) {
+	g.indent()
 	// TODO: use node position to supply panic argument
 	g.puts("ku_panic_never(0)")
 }
 
 func (g *Builder) matchStatement(node *stg.MatchStatement) {
+	g.indent()
 	g.puts("switch (")
 	g.exp(node.Exp)
 	g.puts(") {")
@@ -118,16 +147,18 @@ func (g *Builder) matchElseCase(c *stg.Block) {
 }
 
 func (g *Builder) loopStatement(node *stg.LoopStatement) {
+	g.indent()
 	g.puts("while (true) ")
 	g.Block(&node.Body)
 }
 
 func (g *Builder) assignStatement(node *stg.AssignStatement) {
+	g.indent()
 	g.ChainOperandTarget(node.Target)
 	g.space()
 	g.puts(node.Operation.String())
 	g.space()
-	g.Expression(node.Expr)
+	g.Exp(node.Expr)
 }
 
 // generate target expression for assignment
@@ -153,24 +184,28 @@ func (g *Builder) ChainOperandTarget(node stg.ChainOperand) {
 }
 
 func (g *Builder) whileStatement(node *stg.WhileStatement) {
+	g.indent()
 	g.puts("while (")
-	g.Expression(node.Condition)
+	g.Exp(node.Condition)
 	g.puts(") ")
 	g.Block(&node.Body)
 }
 
 func (g *Builder) simpleIfStatement(node *stg.SimpleIfStatement) {
+	g.indent()
 	g.puts("if (")
-	g.Expression(node.Condition)
+	g.Exp(node.Condition)
 	g.puts(") ")
 	g.Block(&node.Body)
 }
 
 func (g *Builder) callStatement(node *stg.CallStatement) {
+	g.indent()
 	g.CallExp(node.Call)
 }
 
 func (g *Builder) varStatement(node *stg.VarStatement) {
+	g.indent()
 	g.TypeSpec(node.Sym.Type)
 	g.space()
 	g.SymbolName(node.Sym)
@@ -178,22 +213,24 @@ func (g *Builder) varStatement(node *stg.VarStatement) {
 		return
 	}
 	g.puts(" = ")
-	g.Expression(node.Expr)
+	g.Exp(node.Expr)
 }
 
 func (g *Builder) letStatement(node *stg.LetStatement) {
+	g.indent()
 	g.TypeSpec(node.Sym.Type)
 	g.space()
 	g.SymbolName(node.Sym)
 	g.puts(" = ")
-	g.Expression(node.Expr)
+	g.Exp(node.Expr)
 }
 
 func (g *Builder) returnStatement(node *stg.ReturnStatement) {
+	g.indent()
 	g.puts("return")
 	if node.Expr == nil {
 		return
 	}
 	g.space()
-	g.Expression(node.Expr)
+	g.Exp(node.Expr)
 }
