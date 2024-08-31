@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 var warningFlags = []string{
@@ -29,9 +30,10 @@ var warningFlags = []string{
 	"-Wno-unused-function",
 }
 
-var genFlags = []string{
+var codegenFlags = []string{
 	"-fwrapv",
 	"-fno-asynchronous-unwind-tables",
+	"-funsigned-char",
 }
 
 var customEntryLinkFlags = []string{
@@ -63,6 +65,17 @@ func optzFlag(v string) string {
 	return "-O" + v
 }
 
+func linkerFlagsViaCC(flags []string) string {
+	if len(flags) == 0 {
+		return ""
+	}
+	return "-Wl," + strings.Join(flags, ",")
+}
+
+func linkerEntryPointFlag(entry string) string {
+	return "-e" + entry
+}
+
 // func (g *Builder) Link(objs []string, entry string, out string) error {
 // 	if len(objs) == 0 {
 // 		panic("empty object files list")
@@ -88,8 +101,8 @@ func optzFlag(v string) string {
 // }
 
 func Compile(src string, out string) error {
-	args := make([]string, 0, 10+len(genFlags)+len(warningFlags)+len(otherFlags))
-	args = append(args, genFlags...)
+	args := make([]string, 0, 10+len(codegenFlags)+len(warningFlags)+len(otherFlags))
+	args = append(args, codegenFlags...)
 	args = append(args, maxCompilerErrorsFlag)
 	args = append(args, warningFlags...)
 	args = append(args, otherFlags...)

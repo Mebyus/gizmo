@@ -1,0 +1,20 @@
+bag Reader {
+    read(buf: []u8) => (n: uint, err: error),
+}
+
+// TODO: maybe with this syntax we do not define a new typr Writer
+// but just a shorthand for a specific bag{Writer}
+//
+// we could still allow syntax type Writer bag {...}
+bag Writer {
+    write(buf: []u8) => (n: uint, err: error),
+}
+
+fun copy(w: bag Writer, r: bag Reader) => (n: uint, err: error) {
+
+}
+
+// short syntax for accepting "any" bag type.
+fun accept_any_bag(a: bag) {
+
+}

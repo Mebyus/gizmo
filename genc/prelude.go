@@ -30,9 +30,17 @@ typedef uint pint;
 #define false 0
 
 typedef struct {
-	u8   *ptr;
-	uint  len;
+	const u8 *ptr;
+	uint len;
 } str;
+
+static str
+ku_static_string(const u8 *ptr, uint len) {
+    str s;
+    s.ptr = ptr;
+    s.len = len;
+    return s;
+}
 
 _Noreturn static void
 ku_trap_unreachable() {
@@ -54,7 +62,7 @@ ku_panic_never(u64 pos) {
 	ku_trap_unreachable();
 }
 
-#define KU_SYSCALL_AMD64_LINUX_WRITE 1
+#define KU_AMD64_LINUX_SYSCALL_WRITE 1
 
 static sint
 ku_syscall_write(u32 fd, const void *buf, uint size)
@@ -68,7 +76,7 @@ ku_syscall_write(u32 fd, const void *buf, uint size)
         : "=a" (ret)
 
 		// RAX
-        : "0"(KU_SYSCALL_AMD64_LINUX_WRITE), 
+        : "0"(KU_AMD64_LINUX_SYSCALL_WRITE), 
         //  RDI      RSI       RDX
 			"D"(fd), "S"(buf), "d"(size)
 
@@ -79,11 +87,48 @@ ku_syscall_write(u32 fd, const void *buf, uint size)
     return ret;
 }
 
+#define KU_AMD64_LINUX_SYSCALL_EXIT 60
+
+_Noreturn static void
+ku_syscall_exit(uint c) {
+    sint ret;
+    __asm__ volatile
+    (
+        "syscall"
+		
+		// outputs
+		// RAX
+        : "=a" (ret)
+		
+		// inputs
+		// RAX
+        : "0"(KU_AMD64_LINUX_SYSCALL_EXIT), 
+        //  RDI     
+			"D"(c)
+
+		// clobbers
+		// two registers are clobbered after system call
+        : "rcx", "r11"
+    );
+	__builtin_unreachable();
+}
+
 #define KU_LINUX_STDOUT 1
 
 static void
-print(str s) {
-	ku_syscall_write(KU_LINUX_STDOUT, s.ptr, s.len);
+ku_print(str s) {
+	if (s.len == 0) {
+		return;
+	}
+
+	uint i = 0;
+	while (i < s.len) {
+		sint n = ku_syscall_write(KU_LINUX_STDOUT, s.ptr, s.len);
+		if (n < 0) {
+			return;
+		}
+		i += n;
+	}
 }
 
 `

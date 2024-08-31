@@ -29,6 +29,16 @@ const (
 	// Runtime function or method parameter
 	Param
 
+	// Parameter which name is omitted. Such symbols are used in cases:
+	//
+	//	- function forward or external declaration
+	//	- underscore "_" parameter in function
+	//	- parameters of builtin (global) functions
+	//
+	// Such symbols always have empty Symbol.Name field and are not
+	// added to scope.
+	OmitParam
+
 	// Type, function or method parameter for which argument value must be known at
 	// buildtime
 	StaticParam
@@ -46,6 +56,9 @@ var text = [...]string{
 	Let:    "let",
 	Var:    "var",
 	Import: "import",
+	Param:  "param",
+
+	OmitParam: "param.omit",
 }
 
 func (k Kind) String() string {

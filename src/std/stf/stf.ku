@@ -1,0 +1,49 @@
+/*
+STF - Standard Testing Framework
+*/
+
+type LogBuffer struct {
+	// Buffer for accumulating bytes, before writing them somewhere else.
+	b: []u8,
+
+	// Buffer write position.
+	p: uint,
+}
+
+fun [*LogBuffer] put(s: str) {
+	// g.p += copy(b[g.p:], s);
+}
+
+fun [*LogBuffer] reset() {
+	g.p = 0;
+}
+
+fun [*LogBuffer] flush() {
+	if g.p == 0 {
+		return;
+	}
+	print(cast(str, g.b[:g.p]));
+	g.p = 0;
+}
+
+type Test struct {
+	buf: LogBuffer,
+
+	// First error occured in test.
+	err: str,
+}
+
+fun [*Test] log(text: str) {
+
+}
+
+fun [*Test] flush_logs() {
+
+}
+
+fun [*Test] fail(err: str) {
+	if g.err != "" {
+		return;
+	}
+	g.err = err;
+}

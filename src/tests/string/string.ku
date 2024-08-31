@@ -1,0 +1,10 @@
+fun print(s: str) {
+
+}
+
+fun print_string() {
+    var s: str = "Hello, world!\n";
+    var s2: str = "Привет Ku! Тест non-ASCII строки\n";
+    print(s);
+    print(s2);
+}

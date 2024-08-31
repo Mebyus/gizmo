@@ -21,6 +21,8 @@ func (g *Builder) exp(exp stg.Expression) {
 
 	case exn.Integer:
 		g.Integer(exp.(stg.Integer))
+	case exn.String:
+		g.String(exp.(stg.String))
 	case exn.True:
 		g.True()
 	case exn.False:
@@ -50,6 +52,14 @@ func (g *Builder) exp(exp stg.Expression) {
 	default:
 		panic(fmt.Sprintf("%s expression not implemented", exp.Kind().String()))
 	}
+}
+
+func (g *Builder) String(exp stg.String) {
+	g.puts("ku_static_string((const u8*)(u8\"")
+	g.puts(exp.Val)
+	g.puts("\"), ")
+	g.putn(exp.Size)
+	g.puts(")")
 }
 
 func (g *Builder) True() {

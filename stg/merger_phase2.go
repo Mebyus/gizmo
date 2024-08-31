@@ -318,6 +318,8 @@ func (m *Merger) scanFunBody(def *FunDef, statements []ast.Statement) error {
 	def.Refs = ctx.ref.Elems()
 	def.Defers = ctx.defers
 
+	def.DropContext()
+
 	// TODO: remove debug print
 	if len(def.Defers) != 0 {
 		fmt.Printf("found defers at %s\n", def.Body.Pos)

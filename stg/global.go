@@ -135,6 +135,15 @@ func (s *Scope) addTrivialType() {
 	// s.Types.tm[]
 }
 
+func (s *Scope) addBuiltinFunctionBySignature(name string, signature Signature) {
+	s.Bind(&Symbol{
+		Name:  name,
+		Scope: s,
+		Kind:  smk.Fun,
+		Def:   &FunDef{Signature: signature},
+	})
+}
+
 func NewGlobalScope() *Scope {
 	s := NewScope(scp.Global, nil, nil)
 
@@ -157,6 +166,16 @@ func NewGlobalScope() *Scope {
 	s.addBooleanType()
 	s.addStringType()
 	s.addTypeSymbol("rune", RuneType)
+
+	s.addBuiltinFunctionBySignature("print", Signature{
+		Params: []*Symbol{
+			{
+				Kind:  smk.OmitParam,
+				Scope: s,
+				Type:  StrType,
+			},
+		},
+	})
 
 	return s
 }

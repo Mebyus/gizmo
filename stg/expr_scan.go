@@ -623,7 +623,7 @@ func scanBasicLiteral(lit ast.BasicLiteral) Literal {
 	case token.BinaryInteger, token.OctalInteger, token.DecimalInteger, token.HexadecimalInteger:
 		return Integer{Pos: pos, Val: lit.Token.Val, typ: PerfectIntegerType}
 	case token.String:
-		return String{Pos: pos, Val: lit.Token.Lit}
+		return String{Pos: pos, Val: lit.Token.Lit, Size: lit.Token.Val}
 	case token.Rune:
 		// TODO: separate basic literals into classes in AST level,
 		// parser should also verify and transform literals for this nodes

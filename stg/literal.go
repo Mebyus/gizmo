@@ -100,7 +100,11 @@ type String struct {
 
 	Pos source.Pos
 
+	// Text inside string literal in escaped form.
 	Val string
+
+	// Binary size of the string in unescaped form.
+	Size uint64
 }
 
 // Explicit interface implementation check

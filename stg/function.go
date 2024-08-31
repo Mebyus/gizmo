@@ -17,6 +17,10 @@ type FunDef struct {
 	ctx *Context
 }
 
+func (d *FunDef) DropContext() {
+	d.ctx = nil
+}
+
 // Explicit interface implementation check.
 var _ SymDef = &FunDef{}
 
