@@ -1,20 +1,105 @@
-bag Reader {
+// This variant of bag syntax behaves as interface and
+// contains a pointer to underlying value at runtime.
+//
+// Values of this type have fixed size and layout.
+//
+//  struct {
+//      id: typeid,
+//      ptr: *any,
+//  }
+//
+// Type (and size) of value pointed by ptr is determined by stored typeid.
+// By default (in zeroed state) it contains nil value.
+type Reader bag {
     read(buf: []u8) => (n: uint, err: error),
 }
 
-// TODO: maybe with this syntax we do not define a new typr Writer
-// but just a shorthand for a specific bag{Writer}
-//
-// we could still allow syntax type Writer bag {...}
-bag Writer {
+type Writer bag {
     write(buf: []u8) => (n: uint, err: error),
 }
 
+// Bag prefix before type name is optional and serves
+// mostly documentation and awareness purposes. It also
+// provides compile time check that specified type is indeed a bag type.
 fun copy(w: bag Writer, r: bag Reader) => (n: uint, err: error) {
-
+    // dummy implementation
+    return 0, nil
 }
 
-// short syntax for accepting "any" bag type.
-fun accept_any_bag(a: bag) {
+// Short syntax for accepting "any" bag type.
+fun accept_any_bag(a: bag) {}
 
+type Identifier struct {}
+type Integer struct {}
+
+// This variant of bag syntax behaves as tagged union and
+// contains value of exactly one of the specified type.
+// It cannot have nil value (even as default).
+//
+//  struct {
+//      val: union {
+//          0: Identifier, // used if x == 0
+//          1: Integer,    // used if x == 1
+//      }
+//      x: u8, // integer with minimal storage size is used
+//  }
+//
+// For untagged union use property #[ union ]#
+type Token bag (Identifier, Integer)
+
+// This syntax for type defining new type MyWriter provides compile
+// time check that MyWriter implements all methods specified in Writer bag.
+type MyWriter in (Writer) struct {}
+
+fun [*MyWriter] write(buf: []u8) => (n: uint, err: error) {
+    // dummy implementation
+    return 0, nil
+}
+
+// This variant of bag syntax also behaves as tagged union,
+// but can have nil value (which is assigned by default and in zeroed state).
+//
+//  struct {
+//      val: union {
+//          0: nil,        // if x == 0
+//          1: Identifier, // used if x == 1
+//          2: Integer,    // used if x == 2
+//      }
+//      x: u8,
+//  }
+//
+// It also ensures that each type (specified as possible content of the bag)
+// implements all methods from list in { ... }.
+type Node bag (nil, Identifier, Integer) {
+    next() => Node,
+}
+
+fun unwrap_bag(a: bag Node) {
+    // Syntax for unwrapping value (by its type) stored inside the bag.
+    integer := a->Integer; // panics if stored value is not of Integer type.
+
+    // Sadly in its current state this syntax has an ambiguous
+    // cornercase.
+    //
+    // Construct below could be parsed both as a simple if statement
+    //  if <exp> {
+    //      ...
+    //  }
+    //
+    // and as a bag type match statement:
+    //
+    //  if a
+    //  -> bool { ... }
+    //
+    // We could implement a little parsing magic here:
+    //  - check line numbers of tokens "a" and "->"
+    //  - check whitespace (via column numbers) between tokens "a" and "->"
+    //  - check other case are present
+    //
+    // Or maybe we should abandon naked "a->..." expression syntax altogether.
+    //
+    if a
+    -> Integer { ... }
+    -> Identifier { ... }
+    else { ... }
 }

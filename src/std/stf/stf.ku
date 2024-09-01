@@ -11,7 +11,7 @@ type LogBuffer struct {
 }
 
 fun [*LogBuffer] put(s: str) {
-	// g.p += copy(b[g.p:], s);
+	g.p += copy(b[g.p:], s);
 }
 
 fun [*LogBuffer] reset() {

@@ -127,7 +127,7 @@ ku_print(str s) {
 		if (n < 0) {
 			return;
 		}
-		i += n;
+		i += (uint)(n);
 	}
 }
 

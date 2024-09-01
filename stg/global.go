@@ -79,7 +79,7 @@ func newPerfectIntegerType() *Type {
 	return t
 }
 
-func newRawMemoryPointerType() *Type {
+func newAnyPointerType() *Type {
 	t := &Type{
 		Kind:  tpk.RawMemoryPointer,
 		Size:  8, // TODO: adjust uint size based on target arch
@@ -98,7 +98,7 @@ var (
 	// and their evaluations.
 	PerfectIntegerType = newPerfectIntegerType()
 
-	RawMemoryPointerType = newRawMemoryPointerType()
+	AnyPointerType = newAnyPointerType()
 
 	StaticFloat   = newStaticType(tpk.StaticFloat)
 	StaticString  = newStaticType(tpk.StaticString)

@@ -101,21 +101,21 @@ func (t PointerType) Pin() source.Pos {
 	return t.Pos
 }
 
-// <RawMemoryPointerType> = "*" "rawmem"
-type RawMemoryPointerType struct {
+// <AnyPointerType> = "*" "any"
+type AnyPointerType struct {
 	nodeTypeSpec
 
 	Pos source.Pos
 }
 
 // Explicit interface implementation check
-var _ TypeSpec = RawMemoryPointerType{}
+var _ TypeSpec = AnyPointerType{}
 
-func (RawMemoryPointerType) Kind() tps.Kind {
-	return tps.RawMemoryPointer
+func (AnyPointerType) Kind() tps.Kind {
+	return tps.AnyPointer
 }
 
-func (t RawMemoryPointerType) Pin() source.Pos {
+func (t AnyPointerType) Pin() source.Pos {
 	return t.Pos
 }
 

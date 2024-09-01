@@ -1,0 +1,4 @@
+fun accept_any(p: *any) => [*]u8 {
+    var ptr: [*]u8 = cast([*]u8, p);
+    return ptr;
+}

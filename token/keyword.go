@@ -5,6 +5,7 @@ import "fmt"
 var words = map[string]Kind{
 	"import": Import,
 	"fun":    Fun,
+	"test":   Test,
 	"jump":   Jump,
 	"return": Return,
 	"for":    For,
@@ -33,7 +34,7 @@ var words = map[string]Kind{
 	"mcast": MemCast,
 	"msize": MemSize,
 
-	"rawmem": RawMem,
+	"any": Any,
 }
 
 const (

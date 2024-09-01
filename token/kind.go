@@ -92,6 +92,7 @@ const (
 	Defer
 	Fun
 	Import
+	Test
 
 	Bag
 
@@ -121,7 +122,7 @@ const (
 	MemCast
 	MemSize
 
-	RawMem   // designator to use as *rawmem (void* analog)
+	Any      // designator to use as *rawmem (void* analog)
 	Receiver // method receiver, consists of one letter "g"
 
 	LabelNext // @.next

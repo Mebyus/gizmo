@@ -20,6 +20,9 @@ func (g *Builder) getTypeSpec(t *stg.Type) string {
 	if t == nil {
 		return "void"
 	}
+	if t == stg.AnyPointerType {
+		return "void*"
+	}
 	if t.PerfectInteger() {
 		return "s64"
 	}

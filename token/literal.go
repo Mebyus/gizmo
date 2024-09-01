@@ -78,6 +78,7 @@ var Literal = [...]string{
 	In:     "in",
 	Var:    "var",
 	Type:   "type",
+	Test:   "test",
 	Enum:   "enum",
 	Struct: "struct",
 	Union:  "union",
@@ -98,7 +99,7 @@ var Literal = [...]string{
 	MemCast: "mcast",
 	MemSize: "msize",
 
-	RawMem:   "rawmem",
+	Any:      "any",
 	Receiver: "g",
 
 	LabelNext: "@.next",

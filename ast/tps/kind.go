@@ -13,7 +13,7 @@ const (
 	ImportName
 	Struct
 	Pointer
-	RawMemoryPointer
+	AnyPointer
 	Array
 	ArrayPointer
 	Chunk
@@ -40,7 +40,7 @@ var text = [...]string{
 	Function:     "function",
 	Tuple:        "tuple",
 
-	RawMemoryPointer: "pointer.rawmem",
+	AnyPointer: "pointer.any",
 }
 
 func (k Kind) String() string {
