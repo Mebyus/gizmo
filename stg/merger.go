@@ -7,6 +7,7 @@ import (
 	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/source/origin"
+	"github.com/mebyus/gizmo/stg/scp"
 )
 
 // Merger is a high-level algorithm driver that gathers multiple ASTs of unit's atoms
@@ -61,6 +62,7 @@ func New(ctx UnitContext) *Merger {
 		u = &Unit{Name: ctx.Name}
 	}
 	u.Scope = NewUnitScope(u, ctx.Global)
+	u.TestsScope = NewScope(scp.UnitTests, u.Scope, nil)
 
 	return &Merger{
 		resolver: ctx.Resolver,
@@ -91,6 +93,7 @@ func Merge(ctx UnitContext, atoms []*ast.Atom) (*Unit, error) {
 type NodesBox struct {
 	Funs      []ast.TopFun
 	Vars      []ast.TopVar
+	Tests     []ast.TopFun
 	Types     []ast.TopType
 	Methods   []ast.Method
 	Constants []ast.TopLet
@@ -104,6 +107,7 @@ func (n *NodesBox) prealloc(atoms []*ast.Atom) {
 	var (
 		funs      int
 		vars      int
+		tests     int
 		types     int
 		methods   int
 		constants int
@@ -111,6 +115,7 @@ func (n *NodesBox) prealloc(atoms []*ast.Atom) {
 	for _, a := range atoms {
 		funs += len(a.Funs)
 		vars += len(a.Vars)
+		tests += len(a.Tests)
 		types += len(a.Types)
 		methods += len(a.Methods)
 		constants += len(a.Constants)
@@ -121,6 +126,9 @@ func (n *NodesBox) prealloc(atoms []*ast.Atom) {
 	}
 	if vars != 0 {
 		n.Vars = make([]ast.TopVar, 0, vars)
+	}
+	if tests != 0 {
+		n.Tests = make([]ast.TopFun, 0, tests)
 	}
 	if types != 0 {
 		n.Types = make([]ast.TopType, 0, types)
@@ -160,6 +168,12 @@ func (n *NodesBox) addVar(node ast.TopVar) astIndexSymDef {
 func (n *NodesBox) addMethod(node ast.Method) astIndexSymDef {
 	i := len(n.Methods)
 	n.Methods = append(n.Methods, node)
+	return astIndexSymDef(i)
+}
+
+func (n *NodesBox) addTest(node ast.TopFun) astIndexSymDef {
+	i := len(n.Tests)
+	n.Tests = append(n.Tests, node)
 	return astIndexSymDef(i)
 }
 
@@ -226,7 +240,7 @@ func (m *Merger) Add(atom *ast.Atom) error {
 	if err != nil {
 		return err
 	}
-	err = m.addLets(atom.Constants)
+	err = m.addConstants(atom.Constants)
 	if err != nil {
 		return err
 	}
@@ -239,6 +253,10 @@ func (m *Merger) Add(atom *ast.Atom) error {
 		return err
 	}
 	err = m.addMethods(atom.Methods)
+	if err != nil {
+		return err
+	}
+	err = m.addTests(atom.Tests)
 	if err != nil {
 		return err
 	}
@@ -275,9 +293,9 @@ func (m *Merger) addTypes(types []ast.TopType) error {
 	return nil
 }
 
-func (m *Merger) addLets(cons []ast.TopLet) error {
-	for _, con := range cons {
-		err := m.addLet(con)
+func (m *Merger) addConstants(constants []ast.TopLet) error {
+	for _, c := range constants {
+		err := m.addConstant(c)
 		if err != nil {
 			return err
 		}
@@ -286,8 +304,8 @@ func (m *Merger) addLets(cons []ast.TopLet) error {
 }
 
 func (m *Merger) addFuns(funs []ast.TopFun) error {
-	for _, fun := range funs {
-		err := m.addFun(fun)
+	for _, f := range funs {
+		err := m.addFun(f)
 		if err != nil {
 			return err
 		}
@@ -305,9 +323,19 @@ func (m *Merger) addVars(vars []ast.TopVar) error {
 	return nil
 }
 
-func (m *Merger) addMethods(meds []ast.Method) error {
-	for _, med := range meds {
-		err := m.addMethod(med)
+func (m *Merger) addMethods(methods []ast.Method) error {
+	for _, md := range methods {
+		err := m.addMethod(md)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Merger) addTests(tests []ast.TopFun) error {
+	for _, t := range tests {
+		err := m.addTest(t)
 		if err != nil {
 			return err
 		}
@@ -324,14 +352,23 @@ func (m *Merger) Merge() (*Unit, error) {
 	return m.unit, nil
 }
 
-// add top-level symbol to unit
-func (m *Merger) add(s *Symbol) {
+// add unit level symbol to scope
+func (m *Merger) addSymbol(s *Symbol) {
 	m.unit.Scope.Bind(s)
+}
+
+func (m *Merger) addTestSymbol(s *Symbol) {
+	m.unit.TestsScope.Bind(s)
 }
 
 // check if top-level symbol with a given name already exists in unit
 func (m *Merger) has(name string) bool {
 	s := m.unit.Scope.sym(name)
+	return s != nil
+}
+
+func (m *Merger) hasTest(name string) bool {
+	s := m.unit.TestsScope.sym(name)
 	return s != nil
 }
 
@@ -359,7 +396,7 @@ func (m *Merger) addImport(bind ast.ImportBind) error {
 		Pub:  bind.Pub,
 		Def:  ImportSymDef{Unit: u},
 	}
-	m.add(s)
+	m.addSymbol(s)
 	return nil
 }
 
@@ -378,7 +415,7 @@ func (m *Merger) addFun(top ast.TopFun) error {
 		Pub:  top.Pub,
 		Def:  m.nodes.addFun(top),
 	}
-	m.add(s)
+	m.addSymbol(s)
 	m.unit.addFun(s)
 	return nil
 }
@@ -398,12 +435,12 @@ func (m *Merger) addType(top ast.TopType) error {
 		Pub:  top.Pub,
 		Def:  m.nodes.addType(top),
 	}
-	m.add(s)
+	m.addSymbol(s)
 	m.unit.addType(s)
 	return nil
 }
 
-func (m *Merger) addLet(top ast.TopLet) error {
+func (m *Merger) addConstant(top ast.TopLet) error {
 	name := top.Name.Lit
 	pos := top.Name.Pos
 
@@ -418,7 +455,7 @@ func (m *Merger) addLet(top ast.TopLet) error {
 		Pub:  top.Pub,
 		Def:  m.nodes.addConstant(top),
 	}
-	m.add(s)
+	m.addSymbol(s)
 	m.unit.addConstant(s)
 	return nil
 }
@@ -438,7 +475,7 @@ func (m *Merger) addVar(top ast.TopVar) error {
 		Pub:  top.Pub,
 		Def:  m.nodes.addVar(top),
 	}
-	m.add(s)
+	m.addSymbol(s)
 	m.unit.addVar(s)
 	return nil
 }
@@ -460,7 +497,26 @@ func (m *Merger) addMethod(top ast.Method) error {
 		Pub:  top.Pub,
 		Def:  m.nodes.addMethod(top),
 	}
-	m.add(s)
+	m.addSymbol(s)
 	m.unit.addMethod(s)
+	return nil
+}
+
+func (m *Merger) addTest(top ast.TopFun) error {
+	name := top.Name.Lit
+	pos := top.Name.Pos
+
+	if m.hasTest(name) {
+		return m.errMultDef(name, pos)
+	}
+
+	s := &Symbol{
+		Kind: smk.Test,
+		Name: name,
+		Pos:  pos,
+		Def:  m.nodes.addTest(top),
+	}
+	m.addTestSymbol(s)
+	m.unit.addTest(s)
 	return nil
 }

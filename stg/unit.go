@@ -22,6 +22,8 @@ type UnitImports struct {
 type Unit struct {
 	Imports UnitImports
 
+	// TODO: prealloc symbols slices after ast nodes gathering
+
 	// List of all unit level function symbols defined in unit.
 	Funs []*Symbol
 
@@ -30,6 +32,9 @@ type Unit struct {
 
 	// List of all unit level custom type symbols defined in unit.
 	Types []*Symbol
+
+	// List of all unit test symbols defined in unit.
+	Tests []*Symbol
 
 	// List of all unit level variable symbols defined in unit.
 	Vars []*Symbol
@@ -47,6 +52,11 @@ type Unit struct {
 	//
 	// This field is always not nil and Scope.Kind is always equal to scp.Unit.
 	Scope *Scope
+
+	// Scope that holds all unit test symbols from all unit atoms.
+	//
+	// This field is always not nil and Scope.Kind is always equal to scp.UnitTests.
+	TestsScope *Scope
 
 	// Unit index assigned by order in which units are discovered
 	// during unit discovery phase (uwalk).
@@ -95,6 +105,10 @@ func (u *Unit) addVar(s *Symbol) {
 
 func (u *Unit) addMethod(s *Symbol) {
 	u.Methods = append(u.Methods, s)
+}
+
+func (u *Unit) addTest(s *Symbol) {
+	u.Tests = append(u.Tests, s)
 }
 
 // UnitFromDir scans given directory for source files, processes them as

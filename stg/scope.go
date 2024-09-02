@@ -42,9 +42,12 @@ type Scope struct {
 	// implies that first levels are dependant on Kind:
 	//
 	//	// kind => level
-	//	- global => 0
-	//	- unit   => 1
-	//	- top    => 2
+	//	- global     => 0
+	//	- unit       => 1
+	//	- fun        => 2
+	//	- method     => 2
+	//	- unit.tests => 2
+	//	- test       => 3
 	//
 	// Subsequent levels are created inside function and method bodies by means of
 	// various language constructs.
@@ -68,10 +71,19 @@ func NewScope(kind scp.Kind, parent *Scope, pos *source.Pos) *Scope {
 	if kind == scp.Unit && parent.Kind != scp.Global {
 		panic("parent of unit scope must always be global scope")
 	}
-	if kind == scp.Top && parent.Kind != scp.Unit {
-		panic("parent of top-level scope must always be unit scope")
+	if kind == scp.Fun && parent.Kind != scp.Unit {
+		panic("parent of fun scope must always be unit scope")
 	}
-	if kind >= scp.Top && pos == nil {
+	if kind == scp.Method && parent.Kind != scp.Unit {
+		panic("parent of method scope must always be unit scope")
+	}
+	if kind == scp.UnitTests && parent.Kind != scp.Unit {
+		panic("parent of unit tests scope must always be unit scope")
+	}
+	if kind == scp.Test && parent.Kind != scp.UnitTests {
+		panic("parent of test scope must always be unit tests scope")
+	}
+	if kind > scp.Unit && kind != scp.UnitTests && pos == nil {
 		panic("scope parent inclusion position is not specified")
 	}
 	s := &Scope{
@@ -115,7 +127,7 @@ func NewUnitScope(unit *Unit, global *Scope) *Scope {
 }
 
 func NewTopScope(parent *Scope, pos *source.Pos) *Scope {
-	return NewScope(scp.Top, parent, pos)
+	return NewScope(scp.Fun, parent, pos)
 }
 
 func (s *Scope) nextLevel() uint32 {
@@ -156,12 +168,16 @@ func (s *Scope) lookup(name string, pos uint32) *Symbol {
 		// parent of any unit scope is always the global scope
 		return s.Parent.sym(name)
 	}
+	if s.Kind == scp.UnitTests {
+		// symbol lookup inside unit tests scope is skipped
+		return s.Parent.lookup(name, pos)
+	}
 
 	sym := s.Sym(name, pos)
 	if sym != nil {
 		return sym
 	}
-	return s.Parent.Lookup(name, pos)
+	return s.Parent.lookup(name, pos)
 }
 
 // Sym tries to lookup a symbol by its name inside local scope

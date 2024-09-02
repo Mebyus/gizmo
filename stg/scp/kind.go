@@ -9,17 +9,28 @@ const (
 	// Mostly a trick to detect places where Kind is left unspecified.
 	empty Kind = iota
 
-	// Scope with global program-wide access. Holds builtin language symbols
+	// Scope with global program-wide access. Holds builtin language symbols.
 	Global
 
-	// Scope with unit-wide access (across all unit atoms)
+	// Scope with unit-wide access (across all unit atoms).
+	//
+	// Does not include unit tests.
 	Unit
 
-	// Scope created by top-level function or method
-	Top
+	// Scope created by unit level function (inside function body).
+	Fun
+
+	// Scope created by method (inside method body).
+	Method
+
+	// Scope that holds collection of all tests inside a unit.
+	UnitTests
+
+	// Scope created by unit test function.
+	Test
 
 	// Scope created by function literal (with or without closure).
-	FnLit
+	FunLit
 
 	Block
 	Loop
@@ -33,13 +44,15 @@ var text = [...]string{
 
 	Global: "global",
 	Unit:   "unit",
-	Top:    "top",
-	FnLit:  "fnlit",
+	Fun:    "fun",
+	FunLit: "fnlit",
 	Block:  "block",
 	Loop:   "loop",
 	If:     "if",
 	Else:   "else",
 	Case:   "case",
+
+	UnitTests: "unit.tests",
 }
 
 func (k Kind) String() string {

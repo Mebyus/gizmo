@@ -9,11 +9,14 @@ const (
 	// Mostly a trick to detect places where Kind is left unspecified.
 	empty Kind = iota
 
-	// Function (produced from declaration or definition)
+	// Function (produced from declaration or definition).
 	Fun
 
-	// Method (produced from declaration or definition)
+	// Method (produced from declaration or definition).
 	Method
+
+	// Unit test.
+	Test
 
 	// Custom type definition.
 	Type
@@ -52,6 +55,7 @@ var text = [...]string{
 
 	Fun:    "fun",
 	Method: "method",
+	Test:   "test",
 	Type:   "type",
 	Let:    "let",
 	Var:    "var",
