@@ -10,7 +10,7 @@ func (p *Parser) topFun(traits ast.Traits) error {
 		return p.method(traits)
 	}
 
-	p.advance() // consume "fn"
+	p.advance() // consume "fun"
 
 	if p.tok.Kind != token.Identifier {
 		return p.unexpected(p.tok)
@@ -44,6 +44,38 @@ func (p *Parser) topFun(traits ast.Traits) error {
 		Traits:    traits,
 	}
 	p.atom.Funs = append(p.atom.Funs, f)
+	return nil
+}
+
+func (p *Parser) topTest(traits ast.Traits) error {
+	p.advance() // consume "test"
+
+	if p.tok.Kind != token.Identifier {
+		return p.unexpected(p.tok)
+	}
+	name := p.idn()
+	p.advance() // consume test name identifier
+
+	signature, err := p.functionSignature()
+	if err != nil {
+		return err
+	}
+
+	if p.tok.Kind != token.LeftCurly {
+		return p.unexpected(p.tok)
+	}
+
+	body, err := p.Block()
+	if err != nil {
+		return err
+	}
+	f := ast.TopFun{
+		Signature: signature,
+		Name:      name,
+		Body:      body,
+		Traits:    traits,
+	}
+	p.atom.Tests = append(p.atom.Tests, f)
 	return nil
 }
 

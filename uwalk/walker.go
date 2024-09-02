@@ -21,6 +21,8 @@ type Walker struct {
 
 	// Not nil if main unit is found.
 	Main *stg.Unit
+
+	IncludeTestFiles bool
 }
 
 func (w *Walker) WalkFrom(path origin.Path) error {
@@ -54,7 +56,7 @@ func (w *Walker) AnalyzeHeaders(path origin.Path) (*stg.Unit, error) {
 	if err != nil {
 		return nil, err
 	}
-	files, err := source.LoadUnitFiles(dir)
+	files, err := source.LoadUnitFiles(dir, w.IncludeTestFiles)
 	if err != nil {
 		return nil, err
 	}

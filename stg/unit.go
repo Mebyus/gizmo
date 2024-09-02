@@ -26,7 +26,7 @@ type Unit struct {
 	Funs []*Symbol
 
 	// List of all unit level constant symbols defined in unit.
-	Lets []*Symbol
+	Constants []*Symbol
 
 	// List of all unit level custom type symbols defined in unit.
 	Types []*Symbol
@@ -36,7 +36,7 @@ type Unit struct {
 
 	// List of all method symbols defined in unit.
 	// Methods can only be defined at unit level.
-	Meds []*Symbol
+	Methods []*Symbol
 
 	// Import path of this unit.
 	Path origin.Path
@@ -81,8 +81,8 @@ func (u *Unit) addFun(s *Symbol) {
 	u.Funs = append(u.Funs, s)
 }
 
-func (u *Unit) addLet(s *Symbol) {
-	u.Lets = append(u.Lets, s)
+func (u *Unit) addConstant(s *Symbol) {
+	u.Constants = append(u.Constants, s)
 }
 
 func (u *Unit) addType(s *Symbol) {
@@ -93,8 +93,8 @@ func (u *Unit) addVar(s *Symbol) {
 	u.Vars = append(u.Vars, s)
 }
 
-func (u *Unit) addMed(s *Symbol) {
-	u.Meds = append(u.Meds, s)
+func (u *Unit) addMethod(s *Symbol) {
+	u.Methods = append(u.Methods, s)
 }
 
 // UnitFromDir scans given directory for source files, processes them as
@@ -102,7 +102,7 @@ func (u *Unit) addMed(s *Symbol) {
 //
 // Given directory path should be cleaned by the client.
 func UnitFromDir(resolver Resolver, dir string) (*Unit, error) {
-	files, err := source.LoadUnitFiles(dir)
+	files, err := source.LoadUnitFiles(dir, false)
 	if err != nil {
 		return nil, err
 	}

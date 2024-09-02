@@ -23,7 +23,7 @@ type Atom struct {
 	Types []TopType
 
 	// List of top constant definition nodes.
-	Lets []TopLet
+	Constants []TopLet
 
 	// List of top variable definition nodes.
 	Vars []TopVar
@@ -31,11 +31,14 @@ type Atom struct {
 	// List of top function definition nodes.
 	Funs []TopFun
 
+	// List of unit test functions.
+	Tests []TopFun
+
 	// List of top function declaration nodes.
 	Decs []TopDec
 
 	// List of method nodes.
-	Meds []Method
+	Methods []Method
 }
 
 // AtomHeader stores info about atom that affects build-time decisions.

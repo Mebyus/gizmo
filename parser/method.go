@@ -72,6 +72,6 @@ func (p *Parser) method(traits ast.Traits) error {
 		Body:      body,
 		Traits:    traits,
 	}
-	p.atom.Meds = append(p.atom.Meds, m)
+	p.atom.Methods = append(p.atom.Methods, m)
 	return nil
 }

@@ -28,14 +28,14 @@ func (g *Builder) Gen(u *stg.Unit) {
 }
 
 func (g *Builder) MethodDefs(u *stg.Unit) {
-	if len(u.Meds) == 0 {
+	if len(u.Methods) == 0 {
 		return
 	}
 
 	g.nl()
 	g.BlockTitle(u.Name, "method definitions")
 	g.nl()
-	for _, s := range u.Meds {
+	for _, s := range u.Methods {
 		g.SymbolSourceComment(s)
 		g.MethodDef(s)
 		g.nl()
@@ -58,14 +58,14 @@ func (g *Builder) FunDefs(u *stg.Unit) {
 }
 
 func (g *Builder) MethodDecs(u *stg.Unit) {
-	if len(u.Meds) == 0 {
+	if len(u.Methods) == 0 {
 		return
 	}
 
 	g.nl()
 	g.BlockTitle(u.Name, "method declarations")
 	g.nl()
-	for _, s := range u.Meds {
+	for _, s := range u.Methods {
 		g.MethodDec(s)
 		g.nl()
 	}
@@ -85,13 +85,13 @@ func (g *Builder) FunDecs(u *stg.Unit) {
 }
 
 func (g *Builder) Constants(u *stg.Unit) {
-	if len(u.Lets) == 0 {
+	if len(u.Constants) == 0 {
 		return
 	}
 
 	g.BlockTitle(u.Name, "constants")
 	g.nl()
-	for _, s := range u.Lets {
+	for _, s := range u.Constants {
 		g.Constant(s)
 		g.nl()
 	}

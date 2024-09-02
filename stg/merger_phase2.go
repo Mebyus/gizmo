@@ -113,14 +113,14 @@ func (m *Merger) merge() error {
 // Checks that each method has a custom type receiver defined in unit.
 // Binds each method to its own receiver (based on receiver name).
 func (m *Merger) bindMethods() error {
-	if len(m.nodes.Meds) != len(m.unit.Meds) {
+	if len(m.nodes.Methods) != len(m.unit.Methods) {
 		panic(fmt.Sprintf("inconsistent number of method nodes (%d) and symbols (%d)",
-			len(m.nodes.Meds), len(m.unit.Meds)))
+			len(m.nodes.Methods), len(m.unit.Methods)))
 	}
 
-	for j := 0; j < len(m.unit.Meds); j += 1 {
+	for j := 0; j < len(m.unit.Methods); j += 1 {
 		i := astIndexSymDef(j)
-		med := m.nodes.Med(i)
+		med := m.nodes.Method(i)
 
 		rname := med.Receiver.Name.Lit
 		pos := med.Receiver.Name.Pos
@@ -167,7 +167,7 @@ func (m *Merger) shallowScanMethods() error {
 
 func (m *Merger) shallowScanMethod(t *Type, s *Symbol) error {
 	scope := m.unit.Scope
-	node := m.nodes.Med(s.Def.(astIndexSymDef))
+	node := m.nodes.Method(s.Def.(astIndexSymDef))
 	ctx := m.newMethodCtx()
 
 	params, err := newParamSymbols(ctx, scope, node.Signature.Params)
@@ -332,7 +332,7 @@ func (m *Merger) scanFunBody(def *FunDef, statements []ast.Statement) error {
 }
 
 func (m *Merger) scanMethods() error {
-	for i, s := range m.unit.Meds {
+	for i, s := range m.unit.Methods {
 		err := m.scanMethod(s, astIndexSymDef(i))
 		if err != nil {
 			return err
@@ -342,7 +342,7 @@ func (m *Merger) scanMethods() error {
 }
 
 func (m *Merger) scanMethod(s *Symbol, i astIndexSymDef) error {
-	body := m.nodes.Med(i).Body
+	body := m.nodes.Method(i).Body
 	def := s.Def.(*MethodDef)
 	return m.scanMethodBody(def, body.Statements)
 }

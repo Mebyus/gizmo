@@ -65,7 +65,9 @@ func (p *Parser) top() error {
 	case token.Fun:
 		return p.topFun(traits)
 	case token.Let:
-		return p.topLet(traits)
+		return p.topConstant(traits)
+	case token.Test:
+		return p.topTest(traits)
 	case token.Pub:
 		traits.Pub = true
 		return p.topPub(traits)
@@ -88,7 +90,7 @@ func (p *Parser) topVar(traits ast.Traits) error {
 	return nil
 }
 
-func (p *Parser) topLet(traits ast.Traits) error {
+func (p *Parser) topConstant(traits ast.Traits) error {
 	s, err := p.letStatement()
 	if err != nil {
 		return err
@@ -98,7 +100,7 @@ func (p *Parser) topLet(traits ast.Traits) error {
 		Let:    s.Let,
 		Traits: traits,
 	}
-	p.atom.Lets = append(p.atom.Lets, c)
+	p.atom.Constants = append(p.atom.Constants, c)
 	return nil
 }
 
@@ -111,7 +113,7 @@ func (p *Parser) topPub(traits ast.Traits) error {
 	case token.Fun:
 		return p.topFun(traits)
 	case token.Let:
-		return p.topLet(traits)
+		return p.topConstant(traits)
 	default:
 		return p.unexpected(p.tok)
 	}

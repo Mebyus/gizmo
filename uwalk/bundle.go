@@ -56,12 +56,18 @@ type Config struct {
 
 	// Root directory for searching local units (from project being built).
 	LocalDir string
+
+	// When false files with suffix ".test.ku" are excluded
+	// from unit when loading files.
+	IncludeTestFiles bool
 }
 
 func Walk(cfg *Config, path origin.Path) (*Bundle, error) {
 	w := Walker{
 		StdDir:   cfg.StdDir,
 		LocalDir: cfg.LocalDir,
+
+		IncludeTestFiles: cfg.IncludeTestFiles,
 	}
 	err := w.WalkFrom(path)
 	if err != nil {

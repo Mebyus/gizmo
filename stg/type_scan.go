@@ -219,7 +219,7 @@ func (m *Merger) inspect() error {
 		g.Add(s, ctx.Links.Elems())
 	}
 
-	for _, s := range m.unit.Lets {
+	for _, s := range m.unit.Constants {
 		ctx := NewSymbolContext(s)
 		err := m.inspectConstant(ctx)
 		if err != nil {
@@ -261,7 +261,7 @@ func (m *Merger) shallowScanType(ctx *SymbolContext, i astIndexSymDef) error {
 }
 
 func (m *Merger) shallowScanStructType(ctx *SymbolContext, spec ast.StructType) error {
-	methods := m.nodes.MedsByReceiver[ctx.Symbol.Name]
+	methods := m.nodes.MethodsByReceiver[ctx.Symbol.Name]
 	ctx.members.Init(len(spec.Fields) + len(methods))
 
 	for _, field := range spec.Fields {
@@ -282,7 +282,7 @@ func (m *Merger) shallowScanStructType(ctx *SymbolContext, spec ast.StructType) 
 }
 
 func (m *Merger) shallowScanTypeMethod(ctx *SymbolContext, i astIndexSymDef) error {
-	method := m.nodes.Med(i)
+	method := m.nodes.Method(i)
 	name := method.Name.Lit
 	pos := method.Name.Pos
 

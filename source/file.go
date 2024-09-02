@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -240,7 +241,7 @@ func SortAndOrder(files []*File) {
 
 const MaxFileSize = 1 << 26
 
-func LoadUnitFiles(dir string) ([]*File, error) {
+func LoadUnitFiles(dir string, includeTestFiles bool) ([]*File, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -257,6 +258,9 @@ func LoadUnitFiles(dir string) ([]*File, error) {
 
 		name := entry.Name()
 		if filepath.Ext(name) != ".ku" {
+			continue
+		}
+		if !includeTestFiles && strings.HasSuffix(name, ".test.ku") {
 			continue
 		}
 

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/butler"
 	"github.com/mebyus/gizmo/cmd/ku/env"
 	"github.com/mebyus/gizmo/genc"
@@ -144,24 +145,19 @@ func makeProgram(config *Config, bundle *uwalk.Bundle) (*uwalk.Program, error) {
 				panic("no unit parsers")
 			}
 
-			m := stg.New(stg.UnitContext{
-				Resolver: resolver,
-				Global:   bundle.Global,
-				Unit:     u,
-			})
+			atoms := make([]*ast.Atom, 0, len(parsers))
 			for _, p := range parsers {
 				atom, err := p.Parse()
 				if err != nil {
 					return nil, err
 				}
-				// TODO: pass all units to merger at once
-				// as a slice
-				err = m.Add(atom)
-				if err != nil {
-					return nil, err
-				}
+				atoms = append(atoms, atom)
 			}
-			_, err := m.Merge()
+			_, err := stg.Merge(stg.UnitContext{
+				Resolver: resolver,
+				Global:   bundle.Global,
+				Unit:     u,
+			}, atoms)
 			if err != nil {
 				return nil, err
 			}

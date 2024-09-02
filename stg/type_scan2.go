@@ -67,7 +67,7 @@ func (m *Merger) evalNode(n *GraphNode) error {
 
 func (m *Merger) evalConstant(s *Symbol) error {
 	scope := m.unit.Scope
-	node := m.nodes.Con(s.Index())
+	node := m.nodes.Constant(s.Index())
 
 	ctx := m.newConstCtx()
 	t, err := scope.Types.Lookup(ctx, node.Type)
@@ -147,13 +147,13 @@ func (m *Merger) evalRecursiveType(s *Symbol) {
 }
 
 func (m *Merger) getReceiverMethods(name string) []*Symbol {
-	ii := m.nodes.MedsByReceiver[name]
+	ii := m.nodes.MethodsByReceiver[name]
 	if len(ii) == 0 {
 		return nil
 	}
 	symbols := make([]*Symbol, 0, len(ii))
 	for _, i := range ii {
-		symbols = append(symbols, m.unit.Meds[i])
+		symbols = append(symbols, m.unit.Methods[i])
 	}
 	return symbols
 }

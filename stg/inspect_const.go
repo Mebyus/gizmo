@@ -14,7 +14,7 @@ import (
 // necessary for constructing dependency graph between symbols
 func (m *Merger) inspectConstant(ctx *SymbolContext) error {
 	i := ctx.Symbol.Index()
-	node := m.nodes.Con(i)
+	node := m.nodes.Constant(i)
 	err := m.inspectConstTypeSpec(ctx, node.Type)
 	if err != nil {
 		return err

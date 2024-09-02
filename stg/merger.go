@@ -22,98 +22,16 @@ import (
 //   - 6 (static eval) - eval and finalize all properties of unit level types and constants
 //   - 7 (block scan) - recursively scan statements and expressions inside functions
 type Merger struct {
-	// Unit that is currently being built by merger.
-	unit *Unit
-
-	ctx UnitContext
-
 	nodes NodesBox
 
 	Warns []Warn
 
+	resolver Resolver
+
+	// Unit that is currently being built by merger.
+	unit *Unit
+
 	graph *Graph
-}
-
-type NodesBox struct {
-	Funs  []ast.TopFun
-	Cons  []ast.TopLet
-	Vars  []ast.TopVar
-	Meds  []ast.Method
-	Types []ast.TopType
-
-	// Maps custom type receiver name to a list of
-	// its method indices inside Meds slice.
-	MedsByReceiver map[string][]astIndexSymDef
-}
-
-func (n *NodesBox) addType(node ast.TopType) astIndexSymDef {
-	i := len(n.Types)
-	n.Types = append(n.Types, node)
-	return astIndexSymDef(i)
-}
-
-func (n *NodesBox) addFun(node ast.TopFun) astIndexSymDef {
-	i := len(n.Funs)
-	n.Funs = append(n.Funs, node)
-	return astIndexSymDef(i)
-}
-
-func (n *NodesBox) addCon(node ast.TopLet) astIndexSymDef {
-	i := len(n.Cons)
-	n.Cons = append(n.Cons, node)
-	return astIndexSymDef(i)
-}
-
-func (n *NodesBox) addVar(node ast.TopVar) astIndexSymDef {
-	i := len(n.Vars)
-	n.Vars = append(n.Vars, node)
-	return astIndexSymDef(i)
-}
-
-func (n *NodesBox) addMed(node ast.Method) astIndexSymDef {
-	i := len(n.Meds)
-	n.Meds = append(n.Meds, node)
-	return astIndexSymDef(i)
-}
-
-func (n *NodesBox) bindMethod(rname string, i astIndexSymDef) {
-	n.MedsByReceiver[rname] = append(n.MedsByReceiver[rname], i)
-}
-
-func (n *NodesBox) Type(i astIndexSymDef) ast.TopType {
-	return n.Types[i]
-}
-
-func (n *NodesBox) Fun(i astIndexSymDef) ast.TopFun {
-	return n.Funs[i]
-}
-
-func (n *NodesBox) Con(i astIndexSymDef) ast.TopLet {
-	return n.Cons[i]
-}
-
-func (n *NodesBox) Var(i astIndexSymDef) ast.TopVar {
-	return n.Vars[i]
-}
-
-func (n *NodesBox) Med(i astIndexSymDef) ast.Method {
-	return n.Meds[i]
-}
-
-func New(ctx UnitContext) *Merger {
-	u := ctx.Unit
-	if u == nil {
-		u = &Unit{Name: ctx.Name}
-	}
-	u.Scope = NewUnitScope(u, ctx.Global)
-
-	return &Merger{
-		ctx:  ctx,
-		unit: u,
-		nodes: NodesBox{
-			MedsByReceiver: make(map[string][]astIndexSymDef),
-		},
-	}
 }
 
 // UnitContext is a reference data structure that contains type and symbol information
@@ -132,6 +50,141 @@ type UnitContext struct {
 
 	// Could be nil when constructing merger.
 	Unit *Unit
+}
+
+func New(ctx UnitContext) *Merger {
+	if ctx.Global == nil {
+		panic("nil global scope")
+	}
+	u := ctx.Unit
+	if u == nil {
+		u = &Unit{Name: ctx.Name}
+	}
+	u.Scope = NewUnitScope(u, ctx.Global)
+
+	return &Merger{
+		resolver: ctx.Resolver,
+		unit:     u,
+		nodes: NodesBox{
+			MethodsByReceiver: make(map[string][]astIndexSymDef),
+		},
+	}
+}
+
+func Merge(ctx UnitContext, atoms []*ast.Atom) (*Unit, error) {
+	if len(atoms) == 0 {
+		panic("no atoms")
+	}
+	m := New(ctx)
+
+	m.nodes.prealloc(atoms)
+	for _, a := range atoms {
+		err := m.Add(a)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return m.Merge()
+}
+
+type NodesBox struct {
+	Funs      []ast.TopFun
+	Vars      []ast.TopVar
+	Types     []ast.TopType
+	Methods   []ast.Method
+	Constants []ast.TopLet
+
+	// Maps custom type receiver name to a list of
+	// its method indices inside Meds slice.
+	MethodsByReceiver map[ /* receiver type name */ string][]astIndexSymDef
+}
+
+func (n *NodesBox) prealloc(atoms []*ast.Atom) {
+	var (
+		funs      int
+		vars      int
+		types     int
+		methods   int
+		constants int
+	)
+	for _, a := range atoms {
+		funs += len(a.Funs)
+		vars += len(a.Vars)
+		types += len(a.Types)
+		methods += len(a.Methods)
+		constants += len(a.Constants)
+	}
+
+	if funs != 0 {
+		n.Funs = make([]ast.TopFun, 0, funs)
+	}
+	if vars != 0 {
+		n.Vars = make([]ast.TopVar, 0, vars)
+	}
+	if types != 0 {
+		n.Types = make([]ast.TopType, 0, types)
+	}
+	if methods != 0 {
+		n.Methods = make([]ast.Method, 0, methods)
+	}
+	if constants != 0 {
+		n.Constants = make([]ast.TopLet, 0, constants)
+	}
+}
+
+func (n *NodesBox) addType(node ast.TopType) astIndexSymDef {
+	i := len(n.Types)
+	n.Types = append(n.Types, node)
+	return astIndexSymDef(i)
+}
+
+func (n *NodesBox) addFun(node ast.TopFun) astIndexSymDef {
+	i := len(n.Funs)
+	n.Funs = append(n.Funs, node)
+	return astIndexSymDef(i)
+}
+
+func (n *NodesBox) addConstant(node ast.TopLet) astIndexSymDef {
+	i := len(n.Constants)
+	n.Constants = append(n.Constants, node)
+	return astIndexSymDef(i)
+}
+
+func (n *NodesBox) addVar(node ast.TopVar) astIndexSymDef {
+	i := len(n.Vars)
+	n.Vars = append(n.Vars, node)
+	return astIndexSymDef(i)
+}
+
+func (n *NodesBox) addMethod(node ast.Method) astIndexSymDef {
+	i := len(n.Methods)
+	n.Methods = append(n.Methods, node)
+	return astIndexSymDef(i)
+}
+
+func (n *NodesBox) bindMethod(rname string, i astIndexSymDef) {
+	n.MethodsByReceiver[rname] = append(n.MethodsByReceiver[rname], i)
+}
+
+func (n *NodesBox) Type(i astIndexSymDef) ast.TopType {
+	return n.Types[i]
+}
+
+func (n *NodesBox) Fun(i astIndexSymDef) ast.TopFun {
+	return n.Funs[i]
+}
+
+func (n *NodesBox) Constant(i astIndexSymDef) ast.TopLet {
+	return n.Constants[i]
+}
+
+func (n *NodesBox) Var(i astIndexSymDef) ast.TopVar {
+	return n.Vars[i]
+}
+
+func (n *NodesBox) Method(i astIndexSymDef) ast.Method {
+	return n.Methods[i]
 }
 
 // Resolver gives access to other units by their origin path.
@@ -173,7 +226,7 @@ func (m *Merger) Add(atom *ast.Atom) error {
 	if err != nil {
 		return err
 	}
-	err = m.addLets(atom.Lets)
+	err = m.addLets(atom.Constants)
 	if err != nil {
 		return err
 	}
@@ -185,7 +238,7 @@ func (m *Merger) Add(atom *ast.Atom) error {
 	if err != nil {
 		return err
 	}
-	err = m.addMethods(atom.Meds)
+	err = m.addMethods(atom.Methods)
 	if err != nil {
 		return err
 	}
@@ -287,7 +340,7 @@ func (m *Merger) errMultDef(name string, pos source.Pos) error {
 }
 
 func (m *Merger) addImport(bind ast.ImportBind) error {
-	u := m.ctx.Resolver.Resolve(bind.Path)
+	u := m.resolver.Resolve(bind.Path)
 	if u == nil {
 		panic("impossible due to previous checks")
 	}
@@ -363,10 +416,10 @@ func (m *Merger) addLet(top ast.TopLet) error {
 		Name: name,
 		Pos:  pos,
 		Pub:  top.Pub,
-		Def:  m.nodes.addCon(top),
+		Def:  m.nodes.addConstant(top),
 	}
 	m.add(s)
-	m.unit.addLet(s)
+	m.unit.addConstant(s)
 	return nil
 }
 
@@ -405,9 +458,9 @@ func (m *Merger) addMethod(top ast.Method) error {
 		Name: name,
 		Pos:  pos,
 		Pub:  top.Pub,
-		Def:  m.nodes.addMed(top),
+		Def:  m.nodes.addMethod(top),
 	}
 	m.add(s)
-	m.unit.addMed(s)
+	m.unit.addMethod(s)
 	return nil
 }
