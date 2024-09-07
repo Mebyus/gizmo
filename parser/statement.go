@@ -31,8 +31,6 @@ func (p *Parser) Statement() (ast.Statement, error) {
 		return p.neverStatement()
 	case token.Defer:
 		return p.deferStatement()
-	case token.Receiver:
-		return p.receiverStartStatement()
 	case token.Identifier:
 		return p.identifierStartStatement()
 	default:
@@ -44,19 +42,14 @@ func (p *Parser) deferStatement() (ast.DeferStatement, error) {
 	pos := p.pos()
 	p.advance() // skip "defer"
 
-	if p.tok.Kind != token.Identifier && p.tok.Kind != token.Receiver {
+	if p.tok.Kind != token.Identifier {
 		return ast.DeferStatement{}, p.unexpected(p.tok)
 	}
 
 	var chain ast.ChainOperand
-	if p.tok.Kind == token.Identifier {
-		identifier := p.idn()
-		p.advance() // skip identifier
-		chain = identifier.AsChainOperand()
-	} else {
-		r := p.receiver()
-		chain = r.AsChainOperand()
-	}
+	identifier := p.idn()
+	p.advance() // skip identifier
+	chain = identifier.AsChainOperand()
 
 	err := p.chainOperand(&chain)
 	if err != nil {
@@ -483,11 +476,6 @@ func (p *Parser) ifClause() (clause ast.IfClause, err error) {
 	}, nil
 }
 
-func (p *Parser) receiverStartStatement() (ast.Statement, error) {
-	r := p.receiver()
-	return p.chainStartStatement(r.AsIdentifier())
-}
-
 func (p *Parser) identifierStartStatement() (ast.Statement, error) {
 	idn := p.idn()
 	p.advance() // skip identifier
@@ -511,7 +499,7 @@ func (p *Parser) chainStartStatement(identifier ast.Identifier) (ast.Statement, 
 
 func (p *Parser) assignStatement(op aop.Kind, target ast.ChainOperand) (ast.AssignStatement, error) {
 	switch target.Last() {
-	case exn.Call, exn.Address, exn.Slice, exn.Receiver:
+	case exn.Call, exn.Address, exn.Slice:
 		return ast.AssignStatement{}, fmt.Errorf("%s: cannot assign to %s operand",
 			target.Pin().String(), target.Last().String())
 	}

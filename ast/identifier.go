@@ -8,10 +8,6 @@ import (
 // <Identifier> = <Word>
 type Identifier struct {
 	Pos source.Pos
-
-	// TODO: make empty string here to be a signal for "g" receiver usage
-	// and remove separate Receiver expression after that. Maybe we can
-	// integrate this magic directly into lexer.
 	Lit string
 }
 

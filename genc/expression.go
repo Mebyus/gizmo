@@ -29,8 +29,6 @@ func (g *Builder) exp(exp stg.Expression) {
 		g.False()
 	case exn.Symbol:
 		g.SymbolExp(exp.(*stg.SymbolExpression))
-	case exn.Receiver:
-		g.puts("g")
 	case exn.Binary:
 		g.BinaryExp(exp.(*stg.BinaryExpression))
 	case exn.Unary:
@@ -120,10 +118,6 @@ func (g *Builder) ChainOperand(exp stg.ChainOperand) {
 }
 
 func (g *Builder) ChainSymbol(exp *stg.ChainSymbol) {
-	if exp.Sym == nil {
-		g.puts("g")
-		return
-	}
 	g.SymbolName(exp.Sym)
 }
 

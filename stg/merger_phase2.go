@@ -204,6 +204,12 @@ func (m *Merger) shallowScanMethod(t *Type, s *Symbol) error {
 	}
 
 	def.Body.Scope = NewTopScope(m.unit.Scope, &def.Body.Pos)
+	def.Body.Scope.Bind(&Symbol{
+		Pos:  node.Receiver.Name.Pos,
+		Name: "g",
+		Type: receiver,
+		Kind: smk.Receiver,
+	})
 	for _, param := range params {
 		name := param.Name
 		p := def.Body.Scope.sym(name)

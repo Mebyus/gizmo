@@ -20,7 +20,6 @@ const (
 
 	// direct substitution of identifier operand
 	Symbol
-	Receiver
 
 	// incomplete name usage
 	IncompName
@@ -54,9 +53,6 @@ const (
 
 	Enum
 
-	// Template instance
-	Instance
-
 	// Integer literal
 	Integer
 
@@ -73,18 +69,16 @@ const (
 var text = [...]string{
 	empty: "<nil>",
 
-	Basic:    "basic",
-	Object:   "object",
-	List:     "list",
-	Symbol:   "symbol",
-	Unary:    "unary",
-	Binary:   "binary",
-	Cast:     "cast",
-	Tint:     "tint",
-	MemCast:  "mcast",
-	Paren:    "paren",
-	Receiver: "receiver",
-	Instance: "instance",
+	Basic:   "basic",
+	Object:  "object",
+	List:    "list",
+	Symbol:  "symbol",
+	Unary:   "unary",
+	Binary:  "binary",
+	Cast:    "cast",
+	Tint:    "tint",
+	MemCast: "mcast",
+	Paren:   "paren",
 
 	Chain:          "chain",
 	Member:         "member",

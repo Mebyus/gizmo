@@ -122,8 +122,7 @@ const (
 	MemCast
 	MemSize
 
-	Any      // designator to use as *rawmem (void* analog)
-	Receiver // method receiver, consists of one letter "g"
+	Any // designator to use as *any (void* analog)
 
 	LabelNext // @.next
 	LabelEnd  // @.end

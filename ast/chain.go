@@ -29,9 +29,6 @@ func (o ChainOperand) Kind() exn.Kind {
 
 func (o ChainOperand) Last() exn.Kind {
 	if len(o.Parts) == 0 {
-		if o.Identifier.Lit == "" {
-			return exn.Receiver
-		}
 		return exn.Symbol
 	}
 	return o.Parts[len(o.Parts)-1].Kind()

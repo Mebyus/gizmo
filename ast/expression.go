@@ -74,31 +74,6 @@ func (e IncompNameExp) Pin() source.Pos {
 	return e.Identifier.Pos
 }
 
-// <Receiver> = "g"
-type Receiver struct {
-	nodeOperand
-
-	Pos source.Pos
-}
-
-var _ Operand = Receiver{}
-
-func (Receiver) Kind() exn.Kind {
-	return exn.Receiver
-}
-
-func (r Receiver) Pin() source.Pos {
-	return r.Pos
-}
-
-func (r Receiver) AsIdentifier() Identifier {
-	return Identifier{Pos: r.Pos}
-}
-
-func (r Receiver) AsChainOperand() ChainOperand {
-	return ChainOperand{Identifier: r.AsIdentifier()}
-}
-
 // <ParenthesizedExpression> = "(" <Expression> ")"
 type ParenthesizedExpression struct {
 	nodeOperand

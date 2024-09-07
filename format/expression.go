@@ -12,8 +12,6 @@ func (g *Noder) Expression(expr ast.Expression) {
 	switch expr.Kind() {
 	case exn.Symbol:
 		g.SymbolExpression(expr.(ast.SymbolExp))
-	case exn.Receiver:
-		g.ReceiverExpression(expr.(ast.Receiver))
 	case exn.Basic:
 		g.BasicLiteral(expr.(ast.BasicLiteral))
 	case exn.Binary:
@@ -28,11 +26,7 @@ func (g *Noder) Expression(expr ast.Expression) {
 }
 
 func (g *Noder) ChainOperand(expr ast.ChainOperand) {
-	if expr.Identifier.Lit == "" {
-		g.genpos(token.Receiver, expr.Identifier.Pos)
-	} else {
-		g.idn(expr.Identifier)
-	}
+	g.idn(expr.Identifier)
 
 	for _, part := range expr.Parts {
 		g.chainPart(part)
@@ -104,10 +98,6 @@ func (g *Noder) BinaryExpression(expr ast.BinaryExpression) {
 
 func (g *Noder) BasicLiteral(lit ast.BasicLiteral) {
 	g.tok(lit.Token)
-}
-
-func (g *Noder) ReceiverExpression(expr ast.Receiver) {
-	g.genpos(token.Receiver, expr.Pos)
 }
 
 func (g *Noder) SymbolExpression(expr ast.SymbolExp) {

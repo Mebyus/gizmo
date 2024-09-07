@@ -40,8 +40,6 @@ func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
 		return s.scanCastExp(ctx, expr.(ast.CastExp))
 	case exn.Tint:
 		return s.scanTintExp(ctx, expr.(ast.TintExp))
-	case exn.Receiver:
-		return s.scanReceiverExp(ctx, expr.(ast.Receiver))
 	case exn.IncompName:
 		return s.scanIncompNameExp(ctx, expr.(ast.IncompNameExp))
 	// case exn.BitCast:
@@ -73,19 +71,6 @@ func (s *Scope) scanIncompNameExp(ctx *Context, exp ast.IncompNameExp) (*EnumExp
 		Pos:   pos,
 		Enum:  enum,
 		Entry: entry,
-	}, nil
-}
-
-func (s *Scope) scanReceiverExp(ctx *Context, exp ast.Receiver) (*ReceiverExpression, error) {
-	pos := exp.Pos
-
-	if ctx.rv == nil {
-		return nil, fmt.Errorf("%s: receiver used in regular function", pos.String())
-	}
-
-	return &ReceiverExpression{
-		Pos: pos,
-		typ: ctx.rv,
 	}, nil
 }
 

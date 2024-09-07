@@ -73,7 +73,7 @@ func (m *Merger) inspectExp(ctx *SymbolContext, exp ast.Expression) error {
 		return m.inspectBinaryExp(ctx, exp.(ast.BinaryExpression))
 	case exn.Paren:
 		return m.inspectParenExp(ctx, exp.(ast.ParenthesizedExpression))
-	case exn.Address, exn.Chain, exn.Indirect, exn.Receiver:
+	case exn.Address, exn.Chain, exn.Indirect:
 		return fmt.Errorf("%s: %s is not allowed in constant expression", exp.Pin(), exp.Kind())
 	default:
 		panic(fmt.Sprintf("%s expressions not implemented", exp.Kind()))

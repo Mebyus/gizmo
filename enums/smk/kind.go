@@ -29,8 +29,11 @@ const (
 	// Variable definition (name + type + initial value).
 	Var
 
-	// Runtime function or method parameter
+	// Runtime function or method parameter.
 	Param
+
+	// Method receiver.
+	Receiver
 
 	// Parameter which name is omitted. Such symbols are used in cases:
 	//

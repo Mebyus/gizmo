@@ -246,9 +246,12 @@ func (s *Scope) CheckUsage(ctx *Context) error {
 	var list []*Symbol
 	for _, symbol := range s.Symbols {
 		if symbol.RefNum == 0 {
-			if symbol.Kind == smk.Param {
+			switch symbol.Kind {
+			case smk.Param:
 				ctx.m.warn(symbol.Pos, fmt.Sprintf("unused function parameter \"%s\"", symbol.Name))
-			} else {
+			case smk.Receiver:
+				// do nothing
+			default:
 				list = append(list, symbol)
 			}
 		}

@@ -328,8 +328,6 @@ func (p *Parser) operand() (ast.Operand, error) {
 		return p.objectLiteral()
 	case token.Identifier:
 		return p.identifierStartOperand()
-	case token.Receiver:
-		return p.receiverStartOperand()
 	case token.LeftParentheses:
 		return p.paren()
 	case token.LeftSquare:
@@ -341,26 +339,6 @@ func (p *Parser) operand() (ast.Operand, error) {
 	default:
 		return nil, p.unexpected(p.tok)
 	}
-}
-
-func (p *Parser) receiver() ast.Receiver {
-	pos := p.pos()
-	p.advance() // skip "g"
-	return ast.Receiver{Pos: pos}
-}
-
-func (p *Parser) receiverStartOperand() (ast.Operand, error) {
-	r := p.receiver()
-	if !isChainOperandToken(p.tok.Kind) {
-		return r, nil
-	}
-
-	chain := ast.ChainOperand{Identifier: r.AsIdentifier()}
-	err := p.chainOperand(&chain)
-	if err != nil {
-		return nil, err
-	}
-	return chain, nil
 }
 
 func isChainOperandToken(kind token.Kind) bool {

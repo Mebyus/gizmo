@@ -105,9 +105,7 @@ func (lx *Lexer) word() (tok token.Token) {
 		c := lx.C
 		lx.Advance() // skip character
 
-		if c == 'g' {
-			tok.Kind = token.Receiver
-		} else if c == '_' {
+		if c == '_' {
 			tok.Kind = token.Underscore
 		} else {
 			tok.Kind = token.Identifier
