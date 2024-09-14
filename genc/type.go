@@ -63,6 +63,9 @@ func (g *Builder) getChunkTypeName(t *stg.Type) string {
 }
 
 func (g *Builder) getChunkTypeNameByElem(elem *stg.Type) string {
+	if elem == stg.Uint8Type {
+		return "ku_bc"
+	}
 	return g.prefix + "Chunk_" + g.getSymbolName(elem.Symbol())
 }
 
@@ -269,8 +272,11 @@ func (g *Builder) genBuiltinChunkTypes() {
 	for _, t := range builtinTypes {
 		c, ok := g.chunks[t]
 		if ok {
-			g.ChunkTypeDef(c, t)
-			g.nl()
+			// bytes chunk is defined manually in C prelude
+			if t != stg.Uint8Type {
+				g.ChunkTypeDef(c, t)
+				g.nl()
+			}
 			g.ChunkTypeMethods(c, t)
 			g.nl()
 		}

@@ -29,7 +29,7 @@ const (
 
 	Cast
 	Tint
-	MemCast
+	MemCast // TODO: maybe rename this to "punc" = "pun cast"
 
 	// parenthesized expression
 	Paren

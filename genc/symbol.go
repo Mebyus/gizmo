@@ -10,6 +10,12 @@ import (
 
 func (g *Builder) getSymbolName(s *stg.Symbol) string {
 	if s.Scope.Kind == scp.Global {
+		if s.Name == "print" {
+			return "ku_print"
+		}
+		if s.Name == "str" {
+			return "ku_str"
+		}
 		return s.Name
 	}
 	if s.Scope.Kind == scp.Unit {

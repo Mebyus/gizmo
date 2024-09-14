@@ -22,33 +22,55 @@ func (s *Scope) Scan(ctx *Context, expr ast.Expression) (Expression, error) {
 	return s.scan(ctx, expr)
 }
 
-func (s *Scope) scan(ctx *Context, expr ast.Expression) (Expression, error) {
-	switch expr.Kind() {
+func (s *Scope) scan(ctx *Context, exp ast.Expression) (Expression, error) {
+	switch exp.Kind() {
 	case exn.Basic:
-		return scanBasicLiteral(expr.(ast.BasicLiteral)), nil
+		return scanBasicLiteral(exp.(ast.BasicLiteral)), nil
 	case exn.Symbol:
-		return s.scanSymbolExpression(ctx, expr.(ast.SymbolExp))
+		return s.scanSymbolExpression(ctx, exp.(ast.SymbolExp))
 	case exn.Chain:
-		return s.scanChainOperand(ctx, expr.(ast.ChainOperand))
+		return s.scanChainOperand(ctx, exp.(ast.ChainOperand))
 	case exn.Unary:
-		return s.scanUnaryExpression(ctx, expr.(*ast.UnaryExpression))
+		return s.scanUnaryExpression(ctx, exp.(*ast.UnaryExpression))
 	case exn.Binary:
-		return s.scanBinaryExpression(ctx, expr.(ast.BinaryExpression))
+		return s.scanBinaryExpression(ctx, exp.(ast.BinaryExpression))
 	case exn.Paren:
-		return s.scanParenthesizedExpression(ctx, expr.(ast.ParenthesizedExpression))
+		return s.scanParenthesizedExpression(ctx, exp.(ast.ParenthesizedExpression))
 	case exn.Cast:
-		return s.scanCastExp(ctx, expr.(ast.CastExp))
+		return s.scanCastExp(ctx, exp.(ast.CastExp))
 	case exn.Tint:
-		return s.scanTintExp(ctx, expr.(ast.TintExp))
+		return s.scanTintExp(ctx, exp.(ast.TintExp))
 	case exn.IncompName:
-		return s.scanIncompNameExp(ctx, expr.(ast.IncompNameExp))
+		return s.scanIncompNameExp(ctx, exp.(ast.IncompNameExp))
+	case exn.MemCast:
+		return s.scanMemCastExp(ctx, exp.(ast.MemCastExpression))
 	// case exn.BitCast:
 	// 	// g.BitCastExpression(expr.(ast.BitCastExpression))
 	// case exn.Object:
 	// 	// g.ObjectLiteral(expr.(ast.ObjectLiteral))
 	default:
-		panic(fmt.Sprintf("not implemented for %s expression", expr.Kind().String()))
+		panic(fmt.Sprintf("not implemented for %s expression", exp.Kind().String()))
 	}
+}
+
+func (s *Scope) scanMemCastExp(ctx *Context, exp ast.MemCastExpression) (*MemCastExp, error) {
+	// TODO: check that types have the same size
+
+	target, err := s.scan(ctx, exp.Target)
+	if err != nil {
+		return nil, err
+	}
+	t, err := s.Types.lookup(ctx, exp.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: perform types compatibility check
+
+	return &MemCastExp{
+		Target:   target,
+		DestType: t,
+	}, nil
 }
 
 func (s *Scope) scanIncompNameExp(ctx *Context, exp ast.IncompNameExp) (*EnumExp, error) {
@@ -477,7 +499,7 @@ func (s *Scope) scanTintExp(ctx *Context, exp ast.TintExp) (*TintExp, error) {
 	}, nil
 }
 
-func (s *Scope) scanCastExp(ctx *Context, expr ast.CastExp) (*CastExpression, error) {
+func (s *Scope) scanCastExp(ctx *Context, expr ast.CastExp) (*CastExp, error) {
 	target, err := s.scan(ctx, expr.Target)
 	if err != nil {
 		return nil, err
@@ -489,7 +511,7 @@ func (s *Scope) scanCastExp(ctx *Context, expr ast.CastExp) (*CastExpression, er
 
 	// TODO: perform types compatibility check
 
-	return &CastExpression{
+	return &CastExp{
 		// Pos: expr.,
 		Target:   target,
 		DestType: t,

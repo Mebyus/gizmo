@@ -178,7 +178,7 @@ func (e *ParenthesizedExpression) Type() *Type {
 	return e.Inner.Type()
 }
 
-type CastExpression struct {
+type CastExp struct {
 	nodeOperand
 
 	Pos source.Pos
@@ -190,17 +190,17 @@ type CastExpression struct {
 }
 
 // Explicit interface implementation check
-var _ Operand = &CastExpression{}
+var _ Operand = &CastExp{}
 
-func (*CastExpression) Kind() exn.Kind {
+func (*CastExp) Kind() exn.Kind {
 	return exn.Cast
 }
 
-func (e *CastExpression) Pin() source.Pos {
+func (e *CastExp) Pin() source.Pos {
 	return e.Pos
 }
 
-func (e *CastExpression) Type() *Type {
+func (e *CastExp) Type() *Type {
 	return e.DestType
 }
 
@@ -227,5 +227,31 @@ func (e *TintExp) Pin() source.Pos {
 }
 
 func (e *TintExp) Type() *Type {
+	return e.DestType
+}
+
+type MemCastExp struct {
+	nodeOperand
+
+	Pos source.Pos
+
+	Target Expression
+
+	// Type after cast is performed.
+	DestType *Type
+}
+
+// Explicit interface implementation check
+var _ Operand = &MemCastExp{}
+
+func (*MemCastExp) Kind() exn.Kind {
+	return exn.MemCast
+}
+
+func (e *MemCastExp) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *MemCastExp) Type() *Type {
 	return e.DestType
 }

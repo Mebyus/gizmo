@@ -61,6 +61,10 @@ func GenProgram(w io.Writer, p *uwalk.Program) error {
 		}
 	}
 
+	if true { // TODO: make this as p.Main != nil
+		g.entrypoint()
+	}
+
 	_, err := w.Write(g.Bytes())
 	return err
 }

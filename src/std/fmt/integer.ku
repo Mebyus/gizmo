@@ -19,6 +19,7 @@ let MAX_U64_DEC_LENGTH := 20;
 // Returns zero if formatted number does not fit into chunk.
 // In the latter case implementation guarantees that given
 // chunk remains untouched, even temporarily.
+pub
 fun dec_u64(buf: []u8, x: u64) => uint {
 	// buffer for digits in reverse order
 	var b: [MAX_U64_DEC_LENGTH]u8 = dirty;

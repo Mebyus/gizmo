@@ -47,6 +47,8 @@ func (g *Builder) ArrayTypeMethods(a, elem *stg.Type) {
 	g.ArrayTypeElemMethod(a, elem)
 	g.nl()
 	g.ArrayTypeHeadSliceMethod(a, elem)
+	g.nl()
+	g.ArrayTypeFullSliceMethod(a, elem)
 }
 
 func (g *Builder) ChunkTypeIndexMethodName(elem *stg.Type) {
@@ -75,6 +77,14 @@ func (g *Builder) ArrayTypeHeadSliceMethodName(t *stg.Type) {
 	g.puts("_")
 	g.TypeSpec(t.ElemType())
 	g.puts("_head_slice")
+}
+
+func (g *Builder) ArrayTypeFullSliceMethodName(t *stg.Type) {
+	g.puts("ku_array")
+	g.putn(t.Def.(stg.ArrayTypeDef).Len)
+	g.puts("_")
+	g.TypeSpec(t.ElemType())
+	g.puts("_full_slice")
 }
 
 func (g *Builder) ChunkTypeIndexMethod(c, elem *stg.Type) {
@@ -197,6 +207,43 @@ func (g *Builder) ArrayTypeHeadSliceMethod(a, elem *stg.Type) {
 
 	g.indent()
 	g.puts("s.len = i;")
+	g.nl()
+
+	g.indent()
+	g.puts("return s;")
+	g.nl()
+
+	g.dec()
+	g.puts("}")
+	g.nl()
+}
+
+func (g *Builder) ArrayTypeFullSliceMethod(a, elem *stg.Type) {
+	g.puts("static ")
+	g.puts(g.getChunkTypeNameByElem(elem))
+	g.nl()
+	g.ArrayTypeFullSliceMethodName(a)
+
+	g.puts("(")
+
+	g.puts(g.getArrayTypeName(a))
+	g.puts("* a) {")
+	g.nl()
+	g.inc()
+
+	g.indent()
+	g.puts(g.getChunkTypeNameByElem(elem))
+	g.puts(" s;")
+	g.nl()
+
+	g.indent()
+	g.puts("s.ptr = a->arr;")
+	g.nl()
+
+	g.indent()
+	g.puts("s.len = ")
+	g.putn(a.Def.(stg.ArrayTypeDef).Len)
+	g.semi()
 	g.nl()
 
 	g.indent()

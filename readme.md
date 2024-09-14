@@ -10,7 +10,7 @@ Currently Ku is transpiled to a very restricted subset of C
 
 ```ku
 // Loop over builtin iterator range
-fn for_each_loop_example(k: sint) => sint {
+fun for_each_loop_example(k: sint) => sint {
     var s: sint = 0;
     for i in range(k) {
         s += i;
@@ -23,7 +23,7 @@ type Stack struct {
     p: uint,
 }
 
-fn make_empty_stack() => Stack {
+fun make_empty_stack() => Stack {
     let s: Stack = {
         s: dirty,
         p: 0,
@@ -33,13 +33,13 @@ fn make_empty_stack() => Stack {
 }
 
 // builtin symbol rv (short for method receiver) resolves to object instance
-fn [*Stack] push(x: s32) {
+fun [*Stack] push(x: s32) {
     g.s[s.p] = x;
     g.p += 1;
 }
 
 // under the hood it is just a function with one extra argument
-fn compiler_expanded_method_push(g: *Stack, x: s32) {
+fun compiler_expanded_method_push(g: *Stack, x: s32) {
     g.s[g.p] = x;
     g.p += 1;
 }

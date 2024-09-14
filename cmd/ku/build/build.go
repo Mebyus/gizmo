@@ -10,6 +10,8 @@ import (
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/butler"
 	"github.com/mebyus/gizmo/cmd/ku/env"
+	"github.com/mebyus/gizmo/compiler/build"
+	"github.com/mebyus/gizmo/compiler/cc"
 	"github.com/mebyus/gizmo/genc"
 	"github.com/mebyus/gizmo/source/origin"
 	"github.com/mebyus/gizmo/stg"
@@ -104,7 +106,7 @@ func execute(r *butler.Lackey, targets []string) error {
 	config := r.Params.(*Config)
 	config.RootDir = root
 
-	err = build(config, targets[0])
+	err = buildTarget(config, targets[0])
 	if err != nil {
 		return err
 	}
@@ -168,7 +170,7 @@ func makeProgram(config *Config, bundle *uwalk.Bundle) (*uwalk.Program, error) {
 	return bundle.Program(), nil
 }
 
-func build(config *Config, path string) error {
+func buildTarget(config *Config, path string) error {
 	bundle, err := makeUnitsBundle(config, path)
 	if err != nil {
 		return err
@@ -185,8 +187,17 @@ func build(config *Config, path string) error {
 	if err != nil {
 		return err
 	}
-	outbin := filepath.Join("build/.cache", base+".o")
-	return compile(outbin, outc)
+	outobj := filepath.Join("build/.cache", base+".o")
+	err = compile(outobj, outc)
+	if err != nil {
+		return err
+	}
+	if false { // TODO: make this program.Main == nil
+		return nil
+	}
+
+	outbin := filepath.Join("build/bin", base)
+	return link(outbin, outobj)
 }
 
 func genCode(out string, p *uwalk.Program) error {
@@ -209,11 +220,22 @@ func genCode(out string, p *uwalk.Program) error {
 
 func compile(out string, cfile string) error {
 	start := time.Now()
-	err := Compile(cfile, out)
+	err := cc.CompileObj(build.Debug, out, cfile)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("cc: %s\n", time.Since(start))
+	fmt.Printf("cc (obj): %s\n", time.Since(start))
+	return nil
+}
+
+func link(out string, obj string) error {
+	start := time.Now()
+	err := cc.Link(build.Debug, out, "_start", []string{obj})
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("cc (link): %s\n", time.Since(start))
 	return nil
 }

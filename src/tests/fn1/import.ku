@@ -1,7 +1,12 @@
 unit gentest
 
-/*
 import std {
-    alpha => "text/alpha"
+    fmt => "fmt"
 }
-*/
+
+fun print_u64(x: u64) {
+    var buf: [20]u8 = dirty;
+    var n: uint = fmt.dec_u64(buf[:], x);
+    var s: str = cast(str, buf[:n]);
+    print(s);
+}

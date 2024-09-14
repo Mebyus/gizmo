@@ -36,7 +36,9 @@ func (g *Builder) exp(exp stg.Expression) {
 	case exn.Paren:
 		g.ParenExp(exp.(*stg.ParenthesizedExpression))
 	case exn.Cast:
-		g.CastExp(exp.(*stg.CastExpression))
+		g.CastExp(exp.(*stg.CastExp))
+	case exn.MemCast:
+		g.MemCastExp(exp.(*stg.MemCastExp))
 	case exn.Tint:
 		g.TintExp(exp.(*stg.TintExp))
 	case exn.Enum:
@@ -82,11 +84,30 @@ func (g *Builder) TintExp(exp *stg.TintExp) {
 	g.puts(")")
 }
 
-func (g *Builder) CastExp(expr *stg.CastExpression) {
+func (g *Builder) CastExp(exp *stg.CastExp) {
+	if exp.DestType == stg.StrType {
+		g.CastStringFromChunk(exp)
+		return
+	}
+
 	g.puts("(")
-	g.TypeSpec(expr.DestType)
+	g.TypeSpec(exp.DestType)
 	g.puts(")(")
-	g.exp(expr.Target)
+	g.exp(exp.Target)
+	g.puts(")")
+}
+
+func (g *Builder) CastStringFromChunk(exp *stg.CastExp) {
+	g.puts("ku_str_from_chunk(")
+	g.exp(exp.Target)
+	g.puts(")")
+}
+
+func (g *Builder) MemCastExp(exp *stg.MemCastExp) {
+	g.puts("__builtin_bit_cast(") // TODO: this does not work in C
+	g.TypeSpec(exp.DestType)
+	g.puts(", ")
+	g.exp(exp.Target)
 	g.puts(")")
 }
 
@@ -123,8 +144,8 @@ func (g *Builder) ChainSymbol(exp *stg.ChainSymbol) {
 
 func (g *Builder) ArraySliceExp(exp *stg.ArraySliceExp) {
 	if exp.Start == nil && exp.End == nil {
-		// full array slice
-		panic("not implemented")
+		g.arrayFullSliceExp(exp)
+		return
 	}
 	if exp.Start == nil && exp.End != nil {
 		g.arrayHeadSliceExp(exp)
@@ -148,6 +169,13 @@ func (g *Builder) arrayHeadSliceExp(exp *stg.ArraySliceExp) {
 	g.exp(exp.Target)
 	g.puts(", ")
 	g.exp(exp.End)
+	g.puts(")")
+}
+
+func (g *Builder) arrayFullSliceExp(exp *stg.ArraySliceExp) {
+	g.ArrayTypeFullSliceMethodName(exp.Target.Type())
+	g.puts("(&")
+	g.exp(exp.Target)
 	g.puts(")")
 }
 

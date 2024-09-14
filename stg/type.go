@@ -503,6 +503,8 @@ func typeCheckExp(want *Type, exp Expression) error {
 	case tpk.Custom:
 		panic("not implemented")
 	default:
+		fmt.Println("want ", want)
+		fmt.Println("got t", t)
 		panic(fmt.Errorf("%s param types not implemented", want.Kind.String()))
 	}
 

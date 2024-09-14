@@ -166,33 +166,36 @@ func (p *Parser) cast() (exp ast.CastExp, err error) {
 	}, nil
 }
 
-func (p *Parser) memcast() (ast.MemCastExpression, error) {
+func (p *Parser) memcast() (exp ast.MemCastExpression, err error) {
 	p.advance() // skip "mcast"
 
-	if p.tok.Kind != token.LeftSquare {
-		return ast.MemCastExpression{}, p.unexpected(p.tok)
-	}
-	p.advance() // skip "["
-
-	target, err := p.expr()
+	err = p.expect(token.LeftParentheses)
 	if err != nil {
-		return ast.MemCastExpression{}, err
+		return
 	}
-
-	if p.tok.Kind != token.Colon {
-		return ast.MemCastExpression{}, p.unexpected(p.tok)
-	}
-	p.advance() // skip ":"
+	p.advance() // skip "("
 
 	spec, err := p.typeSpecifier()
 	if err != nil {
-		return ast.MemCastExpression{}, p.unexpected(p.tok)
+		return
 	}
 
-	if p.tok.Kind != token.RightSquare {
-		return ast.MemCastExpression{}, p.unexpected(p.tok)
+	err = p.expect(token.Comma)
+	if err != nil {
+		return
 	}
-	p.advance() // skip "]"
+	p.advance() // skip ","
+
+	target, err := p.expr()
+	if err != nil {
+		return
+	}
+
+	err = p.expect(token.RightParentheses)
+	if err != nil {
+		return
+	}
+	p.advance() // skip ")"
 
 	return ast.MemCastExpression{
 		Target: target,

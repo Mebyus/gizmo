@@ -7,6 +7,7 @@ import (
 	"github.com/mebyus/gizmo/butler"
 	"github.com/mebyus/gizmo/cmd/ku/atom"
 	"github.com/mebyus/gizmo/cmd/ku/build"
+	"github.com/mebyus/gizmo/cmd/ku/cc"
 	"github.com/mebyus/gizmo/cmd/ku/clean"
 	"github.com/mebyus/gizmo/cmd/ku/format"
 	"github.com/mebyus/gizmo/cmd/ku/gen"
@@ -46,6 +47,7 @@ var root = &butler.Lackey{
 		vm.VM,
 		symlink.Symlink,
 		rbs.ReBuildSelf,
+		cc.CC,
 	},
 }
 
