@@ -1,10 +1,17 @@
-fun print(s: str) {
-
-}
-
 fun print_string() {
     var s: str = "Hello, world!\n";
     var s2: str = "Привет Ku! Тест non-ASCII строки\n";
     print(s);
     print(s2);
+}
+
+let raw_string := #"raw strings
+can span 
+multiple lines and include \
+backslashes with no escaping
+";
+
+fun use_string_interpolation() {
+    var x: s32 = -15;
+    print($"Result of x * 2 = ${x * 2}, and (10 - x) * x = ${(10 - x) * x}");
 }

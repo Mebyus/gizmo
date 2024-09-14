@@ -106,15 +106,17 @@ var Literal = [...]string{
 
 	// Non static literals
 
-	Illegal:            "ILG",
-	Identifier:         "IDN",
-	String:             "STR",
-	Rune:               "RUNE",
-	BinaryInteger:      "INT.BIN",
-	OctalInteger:       "INT.OCT",
-	DecimalInteger:     "INT.DEC",
-	HexadecimalInteger: "INT.HEX",
-	DecimalFloat:       "FLT.DEC",
+	Illegal:    "ILG",
+	Identifier: "IDN",
+	String:     "STR",
+	RawString:  "STR.RAW",
+	FillString: "STR.FILL",
+	Rune:       "RUNE",
+	BinInteger: "INT.BIN",
+	OctInteger: "INT.OCT",
+	DecInteger: "INT.DEC",
+	HexInteger: "INT.HEX",
+	DecFloat:   "FLT.DEC",
 
 	// Comments
 

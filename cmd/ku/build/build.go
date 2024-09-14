@@ -41,15 +41,17 @@ type Config struct {
 
 	// Compiler root directory.
 	RootDir string
+
+	kind build.Kind
 }
 
 func (c *Config) Apply(p *butler.Param) error {
 	switch p.Name {
 	case "":
 		panic("param with empty name")
-	case "output":
+	case "o":
 		c.OutputFile = p.Str()
-	case "kind":
+	case "k":
 		c.BuildKind = p.Str()
 	case "file":
 		c.BuildFile = p.Str()
@@ -64,14 +66,14 @@ func (c *Config) Apply(p *butler.Param) error {
 func (c *Config) Recipe() []butler.Param {
 	return []butler.Param{
 		{
-			Name:        "kind",
+			Name:        "k",
 			Kind:        butler.String,
 			Def:         "debug",
 			ValidValues: []string{"debug", "test", "safe", "fast"},
 			Desc:        "select build kind (optimizations, some defaults, etc.)",
 		},
 		{
-			Name: "output",
+			Name: "o",
 			Kind: butler.String,
 			Def:  "",
 			Desc: "specify output file path",
@@ -104,14 +106,24 @@ func execute(r *butler.Lackey, targets []string) error {
 	}
 
 	config := r.Params.(*Config)
+	kind, err := build.Parse(config.BuildKind)
+	if err != nil {
+		return err
+	}
+
+	config.kind = kind
 	config.RootDir = root
 
-	err = buildTarget(config, targets[0])
+	outexe, err := buildTarget(config, targets[0])
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("total: %s\n", time.Since(start))
+	if outexe != "" {
+		fmt.Println()
+		fmt.Println("exe:", outexe)
+	}
 	return nil
 }
 
@@ -167,37 +179,43 @@ func makeProgram(config *Config, bundle *uwalk.Bundle) (*uwalk.Program, error) {
 	}
 
 	fmt.Printf("stg: %s\n", time.Since(start))
-	return bundle.Program(), nil
+	return bundle.Program()
 }
 
-func buildTarget(config *Config, path string) error {
+// returns path to resulting executable if any
+func buildTarget(config *Config, path string) (string, error) {
 	bundle, err := makeUnitsBundle(config, path)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	program, err := makeProgram(config, bundle)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	base := filepath.Base(path)
 	outc := filepath.Join("build/.cache", base+".gen.c")
 	err = genCode(outc, program)
 	if err != nil {
-		return err
+		return "", err
 	}
 	outobj := filepath.Join("build/.cache", base+".o")
 	err = compile(outobj, outc)
 	if err != nil {
-		return err
+		return "", err
 	}
-	if false { // TODO: make this program.Main == nil
-		return nil
+	if program.Main == nil {
+		// skip making executable if there is no main unit
+		return "", nil
 	}
 
-	outbin := filepath.Join("build/bin", base)
-	return link(outbin, outobj)
+	outexe := filepath.Join("build/bin", base)
+	err = link(outexe, outobj)
+	if err != nil {
+		return "", err
+	}
+	return outexe, nil
 }
 
 func genCode(out string, p *uwalk.Program) error {

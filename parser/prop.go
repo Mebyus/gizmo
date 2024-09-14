@@ -130,7 +130,7 @@ func (p *Parser) propValue() (ast.PropValue, error) {
 	p.advance()
 
 	switch tok.Kind {
-	case token.DecimalInteger:
+	case token.DecInteger:
 		return ast.PropValueInteger{Pos: tok.Pos, Val: tok.Val}, nil
 	case token.String:
 		return ast.PropValueString{Pos: tok.Pos, Val: tok.Lit}, nil

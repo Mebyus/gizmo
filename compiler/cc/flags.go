@@ -101,7 +101,7 @@ func buildKindFlags(k build.Kind) []string {
 			// linkTimeOptimization,
 		}
 	case build.Fast:
-		return []string{optzFlag(fastCompilerOptimizations)}// wholeProgramOptimizations, linkTimeOptimization,
+		return []string{optzFlag(fastCompilerOptimizations)} // wholeProgramOptimizations, linkTimeOptimization,
 
 	default:
 		panic(fmt.Sprintf("%s (%d) build not implemented", k, k))

@@ -61,7 +61,7 @@ func GenProgram(w io.Writer, p *uwalk.Program) error {
 		}
 	}
 
-	if true { // TODO: make this as p.Main != nil
+	if p.Main != nil {
 		g.entrypoint()
 	}
 

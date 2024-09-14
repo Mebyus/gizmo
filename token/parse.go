@@ -161,7 +161,7 @@ func Parse(line string) (Token, error) {
 		lit = fields[2]
 		var err error
 		switch k {
-		case DecimalInteger:
+		case DecInteger:
 			val, err = strconv.ParseUint(lit, 10, 64)
 			if err != nil {
 				return Token{}, err

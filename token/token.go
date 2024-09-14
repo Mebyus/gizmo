@@ -75,15 +75,15 @@ func (t Token) Literal() string {
 			return "<overflow>"
 		}
 		return "=[ " + t.Lit + " ]="
-	case BinaryInteger:
+	case BinInteger:
 		return "0b" + strconv.FormatUint(t.Val, 2)
-	case OctalInteger:
+	case OctInteger:
 		return "0o" + strconv.FormatUint(t.Val, 8)
-	case DecimalInteger:
+	case DecInteger:
 		return strconv.FormatUint(t.Val, 10)
-	case HexadecimalInteger:
+	case HexInteger:
 		return "0x" + strconv.FormatUint(t.Val, 16)
-	case DecimalFloat:
+	case DecFloat:
 		return t.Lit
 	case Rune:
 		if t.Lit != "" {
@@ -104,6 +104,10 @@ func (t Token) Literal() string {
 		return "'" + string(rune(t.Val)) + "'"
 	case String:
 		return "\"" + t.Lit + "\""
+	case RawString:
+		return "#\"" + t.Lit + "\""
+	case FillString:
+		return "$\"" + t.Lit + "\""
 	case Nil:
 		return "nil"
 	case True:

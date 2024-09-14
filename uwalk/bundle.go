@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/source/origin"
 	"github.com/mebyus/gizmo/stg"
 )
@@ -37,13 +38,27 @@ type Program struct {
 	Global *stg.Scope
 }
 
-func (b *Bundle) Program() *Program {
-	return &Program{
+func (b *Bundle) Program() (*Program, error) {
+	p := &Program{
 		Graph:  b.Graph,
 		Units:  b.Units,
 		Main:   b.Main,
 		Global: b.Global,
 	}
+
+	if p.Main == nil {
+		return p, nil
+	}
+
+	mfun := p.Main.Scope.Lookup("main", 0)
+	if mfun == nil {
+		return nil, fmt.Errorf("main unit must define \"main\" function")
+	}
+	if mfun.Kind != smk.Fun {
+		return nil, fmt.Errorf("%s: main unit contains symbol \"main\" which is a %s not a function",
+			mfun.Pos, mfun.Kind)
+	}
+	return p, nil
 }
 
 func (b *Bundle) GetUnitParsers(unit *stg.Unit) ParserSet {
@@ -87,9 +102,6 @@ func Walk(cfg *Config, path origin.Path) (*Bundle, error) {
 		}
 		return nil, fmt.Errorf("import cycle")
 	}
-
-	// TODO: remove debug prints
-	printGraph(&b.Graph)
 
 	b.Global = stg.NewGlobalScope()
 	return &b, nil

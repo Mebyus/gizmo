@@ -627,7 +627,7 @@ func scanBasicLiteral(lit ast.BasicLiteral) Literal {
 		return True{Pos: pos}
 	case token.False:
 		return False{Pos: pos}
-	case token.BinaryInteger, token.OctalInteger, token.DecimalInteger, token.HexadecimalInteger:
+	case token.BinInteger, token.OctInteger, token.DecInteger, token.HexInteger:
 		return Integer{Pos: pos, Val: lit.Token.Val, typ: PerfectIntegerType}
 	case token.String:
 		return String{Pos: pos, Val: lit.Token.Lit, Size: lit.Token.Val}

@@ -9,7 +9,7 @@ ku_start(void *stack_start) {
 	args.len = MAX_PROC_ARGS;
 
 	ku_read_proc_args(&args, stack_start);
-	ku_print(ku_static_string((const u8*)(u8"\nHello, world!\n"), 15));
+	ku_main_main();
 	ku_syscall_exit(0);
 }
 

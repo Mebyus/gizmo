@@ -42,7 +42,7 @@ func TestParse(t *testing.T) {
 			name: "5 decimal integer",
 			line: "101:22   INT.DEC     4510",
 			want: Token{
-				Kind: DecimalInteger,
+				Kind: DecInteger,
 				Pos:  pos(101, 22),
 				Val:  4510,
 			},
@@ -68,7 +68,7 @@ func TestParse(t *testing.T) {
 			name: "8 float",
 			line: "101:22   FLT.DEC     4.51",
 			want: Token{
-				Kind: DecimalFloat,
+				Kind: DecFloat,
 				Pos:  pos(101, 22),
 				Lit:  "4.51",
 			},

@@ -22,14 +22,14 @@ func lit(kind token.Kind, lit string) ast.BasicLiteral {
 func dec(v uint64) ast.BasicLiteral {
 	return ast.BasicLiteral{
 		Token: token.Token{
-			Kind: token.DecimalInteger,
+			Kind: token.DecInteger,
 			Val:  v,
 		},
 	}
 }
 
 func flt(l string) ast.BasicLiteral {
-	return lit(token.DecimalFloat, l)
+	return lit(token.DecFloat, l)
 }
 
 func idn(name string) ast.Identifier {

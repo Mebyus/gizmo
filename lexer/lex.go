@@ -54,6 +54,14 @@ func (lx *Lexer) codeToken() token.Token {
 		return lx.runeLiteral()
 	}
 
+	if lx.C == '$' && lx.Next == '"' {
+		return lx.fillStringLiteral()
+	}
+
+	if lx.C == '#' && lx.Next == '"' {
+		return lx.rawStringLiteral()
+	}
+
 	if lx.C == '@' && lx.Next == '.' {
 		return lx.label()
 	}
@@ -165,7 +173,7 @@ func (lx *Lexer) binNumber() (tok token.Token) {
 		return
 	}
 
-	tok.Kind = token.BinaryInteger
+	tok.Kind = token.BinInteger
 	if lx.Len() > 64 {
 		lit, ok := lx.Take()
 		if !ok {
@@ -210,7 +218,7 @@ func (lx *Lexer) octNumber() (tok token.Token) {
 		return
 	}
 
-	tok.Kind = token.OctalInteger
+	tok.Kind = token.OctInteger
 	if lx.Len() > 21 {
 		lit, ok := lx.Take()
 		if !ok {
@@ -266,12 +274,12 @@ func (lx *Lexer) decNumber() (tok token.Token) {
 	if !scannedOnePeriod {
 		// decimal integer
 		// TODO: handle numbers which do not fit into 64 bits
-		tok.Kind = token.DecimalInteger
+		tok.Kind = token.DecInteger
 		tok.Val = char.ParseDecDigits(lx.View())
 		return
 	}
 
-	tok.Kind = token.DecimalFloat
+	tok.Kind = token.DecFloat
 	tok.Lit, _ = lx.Take()
 	return
 }
@@ -307,7 +315,7 @@ func (lx *Lexer) hexNumber() (tok token.Token) {
 		return
 	}
 
-	tok.Kind = token.HexadecimalInteger
+	tok.Kind = token.HexInteger
 	if lx.Len() > 16 {
 		lit, ok := lx.Take()
 		if !ok {
@@ -347,7 +355,7 @@ func (lx *Lexer) number() (tok token.Token) {
 	}
 
 	tok = token.Token{
-		Kind: token.DecimalInteger,
+		Kind: token.DecInteger,
 		Pos:  lx.pos(),
 		Val:  0,
 	}
@@ -355,10 +363,114 @@ func (lx *Lexer) number() (tok token.Token) {
 	return
 }
 
+func (lx *Lexer) rawStringLiteral() (tok token.Token) {
+	tok.Pos = lx.pos()
+
+	lx.Advance() // skip '#'
+	lx.Advance() // skip quote
+
+	if lx.C == '"' {
+		// common case of empty string literal
+		lx.Advance()
+		tok.Kind = token.String
+		return
+	}
+
+	lx.Start()
+	for !lx.EOF && lx.C != '"' {
+		lx.Advance()
+	}
+
+	if lx.C != '"' {
+		lit, ok := lx.Take()
+		if ok {
+			tok.SetIllegalError(token.MalformedString)
+			tok.Lit = lit
+		} else {
+			tok.SetIllegalError(token.LengthOverflow)
+		}
+		return
+	}
+
+	lit, _ := lx.Take() // raw strings cannot overflow
+
+	lx.Advance() // skip quote
+
+	tok.Lit = lit
+	tok.Kind = token.RawString
+	tok.Val = uint64(len(lit))
+	return
+}
+
+func (lx *Lexer) fillStringLiteral() (tok token.Token) {
+	tok.Pos = lx.pos()
+
+	lx.Advance() // skip '$'
+	lx.Advance() // skip quote
+
+	if lx.C == '"' {
+		// common case of empty string literal
+		lx.Advance()
+		tok.Kind = token.String
+		return
+	}
+
+	var count uint64 // number of fill places inside the string
+	lx.Start()
+	for !lx.EOF && lx.C != '"' {
+		if lx.C == '\\' && lx.Next == '"' {
+			// do not stop if we encounter escape sequence
+			lx.Advance() // skip "\"
+			lx.Advance() // skip quote
+		} else if lx.C == '$' && lx.Next == '{' {
+			count += 1
+			lx.Advance() // skip "$"
+			lx.Advance() // skip "{"
+		} else {
+			lx.Advance()
+		}
+	}
+
+	if lx.C != '"' {
+		lit, ok := lx.Take()
+		if ok {
+			tok.SetIllegalError(token.MalformedString)
+			tok.Lit = lit
+		} else {
+			tok.SetIllegalError(token.LengthOverflow)
+		}
+		return
+	}
+
+	lit, _ := lx.Take() // fill strings cannot overflow
+
+	lx.Advance() // skip quote
+
+	if count == 0 {
+		// there were no fill places inside fill string,
+		// therefore we can treat it just like a regular string
+
+		size, ok := token.ScanStringByteSize(lit)
+		if !ok {
+			tok.SetIllegalError(token.BadEscapeInString)
+			return
+		}
+
+		tok.Lit = lit
+		tok.Kind = token.String
+		tok.Val = size
+		return
+	}
+
+	tok.Lit = lit
+	tok.Kind = token.FillString
+	return
+}
+
 func (lx *Lexer) stringLiteral() (tok token.Token) {
 	tok.Pos = lx.pos()
 
-	lx.Advance() // skip '"'
+	lx.Advance() // skip quote
 
 	if lx.C == '"' {
 		// common case of empty string literal

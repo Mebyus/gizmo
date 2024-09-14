@@ -132,14 +132,16 @@ const (
 	Illegal // any byte sequence unknown to lexer
 
 	// Identifiers and basic type literals
-	Identifier         // myvar, main, Line, print
-	BinaryInteger      // 0b1101100001
-	OctalInteger       // 0o43671
-	DecimalInteger     // 5367, 43432, 1000097
-	HexadecimalInteger // 0x43da1
-	DecimalFloat       // 123.45
-	Rune               // 'a', '\t', 'p'
-	String             // "abc", "", "\t\n  42Hello\n"
+	Identifier // myvar, main, Line, print
+	BinInteger // 0b1101100001
+	OctInteger // 0o43671
+	DecInteger // 5367, 43432, 1000097
+	HexInteger // 0x43da1
+	DecFloat   // 123.45
+	Rune       // 'a', '\t', 'p'
+	String     // "abc", "", "\t\n  42Hello\n"
+	RawString  // #"raw string literal"
+	FillString // $"string with ${10 + 1} interpolated ${a - b} expressions"
 
 	// Comments
 	LineComment  // Line comment starts with //
@@ -177,8 +179,8 @@ func (k Kind) IsLeftPar() bool {
 func (k Kind) IsLit() bool {
 	switch k {
 	case
-		String, Rune, DecimalInteger, DecimalFloat, BinaryInteger,
-		OctalInteger, HexadecimalInteger, True, False, Nil:
+		String, Rune, DecInteger, DecFloat, BinInteger,
+		OctInteger, HexInteger, True, False, Nil:
 
 		return true
 	default:

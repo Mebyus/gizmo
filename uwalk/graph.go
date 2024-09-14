@@ -178,7 +178,7 @@ func (b *Bundle) makeGraph() *Cycle {
 	return rankGraphOrFindCycle(&b.Graph)
 }
 
-func printGraph(g *Graph) {
+func PrintGraph(g *Graph) {
 	for i, n := range g.Nodes {
 		fmt.Printf("%-3d =>  [%s]\n", i, n.Unit.Path)
 	}
