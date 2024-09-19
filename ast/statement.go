@@ -369,3 +369,24 @@ func (DeferStatement) Kind() stm.Kind {
 func (s DeferStatement) Pin() source.Pos {
 	return s.Pos
 }
+
+// <ShortInitStatement> = <Name> ":=" <Init> ";"
+// <Name> = <Identifier>
+// <Init> = <Exp>
+type ShortInitStatement struct {
+	nodeStatement
+
+	Name Identifier
+
+	Init Expression
+}
+
+var _ Statement = ShortInitStatement{}
+
+func (ShortInitStatement) Kind() stm.Kind {
+	return stm.ShortInit
+}
+
+func (s ShortInitStatement) Pin() source.Pos {
+	return s.Name.Pos
+}

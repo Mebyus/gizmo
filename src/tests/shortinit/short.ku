@@ -1,0 +1,4 @@
+fun example_short_init(x: sint) => sint {
+    a := 2 + x;
+    return a;
+}

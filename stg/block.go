@@ -86,6 +86,8 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 		return b.addCall(ctx, statement.(ast.CallStatement))
 	case stm.Assign:
 		return b.addAssign(ctx, statement.(ast.AssignStatement))
+	case stm.ShortInit:
+		return b.addShortInit(ctx, statement.(ast.ShortInitStatement))
 	case stm.For:
 		return b.addFor(ctx, statement.(ast.ForStatement))
 	case stm.ForCond:
@@ -105,6 +107,38 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	default:
 		panic(fmt.Sprintf("not implemented for %s statement", statement.Kind().String()))
 	}
+}
+
+func (b *Block) addShortInit(ctx *Context, stmt ast.ShortInitStatement) error {
+	name := stmt.Name.Lit
+	pos := stmt.Name.Pos
+	s := b.Scope.Sym(name, pos.Num)
+	exp, err := b.Scope.scan(ctx, stmt.Init)
+	if err != nil {
+		return err
+	}
+	if s == nil {
+		t := exp.Type()
+		s = &Symbol{
+			Pos:  pos,
+			Name: name,
+			Type: t,
+			Kind: smk.Var,
+		}
+
+		// bind occurs after expression scan, because variable
+		// that is being defined must not be visible in init expression
+		b.Scope.Bind(s)
+
+		b.addNode(&VarStatement{
+			Sym:  s,
+			Expr: exp,
+		})
+		return nil
+	}
+
+	ctx.m.warn(pos, "short init statement used for assignment")
+	panic("assign via short init not implemented")
 }
 
 func (b *Block) addDefer(ctx *Context, stmt ast.DeferStatement) error {

@@ -74,7 +74,7 @@ func (t Token) Literal() string {
 		if t.Val == LengthOverflow {
 			return "<overflow>"
 		}
-		return "=[ " + t.Lit + " ]="
+		return "[[" + t.Lit + "]]"
 	case BinInteger:
 		return "0b" + strconv.FormatUint(t.Val, 2)
 	case OctInteger:
@@ -101,13 +101,11 @@ func (t Token) Literal() string {
 		case '\r':
 			return `'\r'`
 		}
-		return "'" + string(rune(t.Val)) + "'"
+		return "'" + string([]rune{rune(t.Val)}) + "'"
 	case String:
 		return "\"" + t.Lit + "\""
-	case RawString:
+	case RawString, FillString:
 		return "#\"" + t.Lit + "\""
-	case FillString:
-		return "$\"" + t.Lit + "\""
 	case Nil:
 		return "nil"
 	case True:

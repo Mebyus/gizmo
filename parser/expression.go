@@ -12,13 +12,13 @@ import (
 // ParseExpression is a pure function for usage in unit tests
 func ParseExpression(str string) (ast.Expression, error) {
 	p := New(lexer.NoPos(lexer.FromString(str)))
-	return p.expr()
+	return p.exp()
 }
 
 // Parse arbitrary expression (no expression will result in error).
 //
 // Parsing is done via Pratt's recursive descent algorithm variant.
-func (p *Parser) expr() (ast.Expression, error) {
+func (p *Parser) exp() (ast.Expression, error) {
 	return p.pratt(0)
 }
 
@@ -109,7 +109,7 @@ func (p *Parser) tint() (exp ast.TintExp, err error) {
 	}
 	p.advance() // skip ","
 
-	target, err := p.expr()
+	target, err := p.exp()
 	if err != nil {
 		return
 	}
@@ -148,7 +148,7 @@ func (p *Parser) cast() (exp ast.CastExp, err error) {
 	}
 	p.advance() // skip ","
 
-	target, err := p.expr()
+	target, err := p.exp()
 	if err != nil {
 		return
 	}
@@ -186,7 +186,7 @@ func (p *Parser) memcast() (exp ast.MemCastExpression, err error) {
 	}
 	p.advance() // skip ","
 
-	target, err := p.expr()
+	target, err := p.exp()
 	if err != nil {
 		return
 	}
@@ -215,7 +215,7 @@ func (p *Parser) objectField() (ast.ObjectField, error) {
 	}
 	p.advance() // skip ":"
 
-	value, err := p.expr()
+	value, err := p.exp()
 	if err != nil {
 		return ast.ObjectField{}, err
 	}
@@ -260,7 +260,7 @@ func (p *Parser) paren() (ast.ParenthesizedExpression, error) {
 	pos := p.pos()
 
 	p.advance() // skip "("
-	expr, err := p.expr()
+	expr, err := p.exp()
 	if err != nil {
 		return ast.ParenthesizedExpression{}, err
 	}
@@ -287,7 +287,7 @@ func (p *Parser) list() (ast.ListLiteral, error) {
 			return list, nil
 		}
 
-		expr, err := p.expr()
+		expr, err := p.exp()
 		if err != nil {
 			return ast.ListLiteral{}, err
 		}
@@ -467,7 +467,7 @@ func (p *Parser) indirectIndexPart() (ast.IndirectIndexPart, error) {
 	pos := p.pos()
 
 	p.advance() // skip ".["
-	index, err := p.expr()
+	index, err := p.exp()
 	if err != nil {
 		return ast.IndirectIndexPart{}, err
 	}
@@ -492,7 +492,7 @@ func (p *Parser) leftSquarePart() (ast.ChainPart, error) {
 			return ast.SlicePart{Pos: pos}, nil
 		}
 
-		expr, err := p.expr()
+		expr, err := p.exp()
 		if err != nil {
 			return nil, err
 		}
@@ -507,7 +507,7 @@ func (p *Parser) leftSquarePart() (ast.ChainPart, error) {
 		}, nil
 	}
 
-	expr, err := p.expr()
+	expr, err := p.exp()
 	if err != nil {
 		return nil, err
 	}
@@ -520,7 +520,7 @@ func (p *Parser) leftSquarePart() (ast.ChainPart, error) {
 				Start: expr,
 			}, nil
 		}
-		end, err := p.expr()
+		end, err := p.exp()
 		if err != nil {
 			return nil, err
 		}
@@ -558,7 +558,7 @@ func (p *Parser) callArguments() ([]ast.Expression, error) {
 			return args, nil
 		}
 
-		expr, err := p.expr()
+		expr, err := p.exp()
 		if err != nil {
 			return nil, err
 		}

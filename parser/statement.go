@@ -189,7 +189,7 @@ func (p *Parser) caseExpList() ([]ast.Expression, error) {
 			return list, nil
 		}
 
-		expr, err := p.expr()
+		expr, err := p.exp()
 		if err != nil {
 			return nil, err
 		}
@@ -241,7 +241,7 @@ func (p *Parser) matchBoolCase() (ast.MatchBoolCase, error) {
 	pos := p.pos()
 	p.advance() // skip "case"
 
-	exp, err := p.expr()
+	exp, err := p.exp()
 	if err != nil {
 		return ast.MatchBoolCase{}, err
 	}
@@ -310,7 +310,7 @@ func (p *Parser) forEachStatement() (ast.ForEachStatement, error) {
 	}
 	p.advance() // skip "in"
 
-	expr, err := p.expr()
+	expr, err := p.exp()
 	if err != nil {
 		return ast.ForEachStatement{}, err
 	}
@@ -336,7 +336,7 @@ func (p *Parser) forWithConditionStatement() (ast.ForConditionStatement, error) 
 
 	p.advance() // skip "for"
 
-	condition, err := p.expr()
+	condition, err := p.exp()
 	if err != nil {
 		return ast.ForConditionStatement{}, err
 	}
@@ -365,7 +365,7 @@ func (p *Parser) returnStatement() (statement ast.ReturnStatement, err error) {
 		return ast.ReturnStatement{Pos: pos}, nil
 	}
 
-	expression, err := p.expr()
+	expression, err := p.exp()
 	if err != nil {
 		return
 	}
@@ -390,7 +390,7 @@ func (p *Parser) ifStatement() (statement ast.Statement, err error) {
 	pos := p.tok.Pos
 	p.advance() // skip "if"
 
-	exp, err := p.expr()
+	exp, err := p.exp()
 	if err != nil {
 		return
 	}
@@ -456,7 +456,7 @@ func (p *Parser) ifClause() (clause ast.IfClause, err error) {
 	pos := p.tok.Pos
 
 	p.advance() // skip "if"
-	expression, err := p.expr()
+	expression, err := p.exp()
 	if err != nil {
 		return
 	}
@@ -477,9 +477,35 @@ func (p *Parser) ifClause() (clause ast.IfClause, err error) {
 }
 
 func (p *Parser) identifierStartStatement() (ast.Statement, error) {
+	if p.next.Kind == token.Walrus {
+		return p.shortInitStatement()
+	}
+
 	idn := p.idn()
 	p.advance() // skip identifier
 	return p.chainStartStatement(idn)
+}
+
+func (p *Parser) shortInitStatement() (ast.ShortInitStatement, error) {
+	name := p.idn()
+	p.advance() // skip name identifier
+
+	p.advance() // skip ":="
+
+	exp, err := p.exp()
+	if err != nil {
+		return ast.ShortInitStatement{}, err
+	}
+
+	if p.tok.Kind != token.Semicolon {
+		return ast.ShortInitStatement{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip ";"
+
+	return ast.ShortInitStatement{
+		Name: name,
+		Init: exp,
+	}, nil
 }
 
 func (p *Parser) chainStartStatement(identifier ast.Identifier) (ast.Statement, error) {
@@ -504,7 +530,7 @@ func (p *Parser) assignStatement(op aop.Kind, target ast.ChainOperand) (ast.Assi
 			target.Pin().String(), target.Last().String())
 	}
 
-	expr, err := p.expr()
+	expr, err := p.exp()
 	if err != nil {
 		return ast.AssignStatement{}, err
 	}
@@ -578,7 +604,7 @@ func (p *Parser) varStatement() (statement ast.VarStatement, err error) {
 			},
 		}, nil
 	}
-	expr, err := p.expr()
+	expr, err := p.exp()
 	if err != nil {
 		return
 	}
@@ -603,7 +629,7 @@ func (p *Parser) letWalrusStatement() (statement ast.LetStatement, err error) {
 	p.advance() // skip let name identifier
 	p.advance() // skip ":="
 
-	expression, err := p.expr()
+	expression, err := p.exp()
 	if err != nil {
 		return
 	}
@@ -647,7 +673,7 @@ func (p *Parser) letStatement() (statement ast.LetStatement, err error) {
 		return
 	}
 	p.advance() // skip "="
-	expression, err := p.expr()
+	expression, err := p.exp()
 	if err != nil {
 		return
 	}

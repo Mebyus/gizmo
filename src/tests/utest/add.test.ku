@@ -2,12 +2,12 @@
 // of a unit and instead are only considered when unit tests are run via
 // "ku test ..." command.
 
-// All test entrypoints start with the keyword "test". They must have
+// All test entrypoints start with keyword "test". They must have
 // fixed signature as in example below:
 //
 // Unit level symbols are not created via keyword "test".
-// Instead this symbols are gathered in a separate namespace.
-// They cannot be referenced by their name alone (even inside the same unit of file).
+// Instead these symbols are gathered in a separate scope.
+// They cannot be referenced by their name alone (even inside the same unit or file).
 test add(t: *stf.Test) {
     v := add(5, 7); // this uses unit level function add 
     if v != 12 {
@@ -15,5 +15,5 @@ test add(t: *stf.Test) {
         return;
     }
     // test implicitly passes (considered as "OK") upon exit without call
-    // method "fail"
+    // to method "fail"
 }

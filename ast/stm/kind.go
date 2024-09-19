@@ -25,6 +25,8 @@ const (
 	Jump
 	Never
 
+	ShortInit
+
 	// Defer function or method call
 	Defer
 
@@ -53,6 +55,8 @@ var text = [...]string{
 	Defer:   "defer",
 	Jump:    "jump",
 	Never:   "never",
+
+	ShortInit: "var.init.short",
 
 	MatchBool: "match.bool",
 

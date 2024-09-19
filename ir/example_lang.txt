@@ -23,7 +23,7 @@ $f.fmt.parse_dec_u64 [ // return type is always specified, fmt - unit (namespace
     ret; // return must always be present at the end of function
 }
 
-$f.math.add_i32 [ // prefix $p. means function parameter
+$f.math.add_i32 [
     $p.a: (int, 4); // params and local variables allocation
     $p.b: (int, 4); // prefix $p. means function parameter
     $v.r: (int, 4);
@@ -45,4 +45,18 @@ $f.use_flag [
         $v.r = 0xab;
     }
     ret $v.r;
+}
+
+$a.use_flag.ret [
+    $p.r: (int, 4);
+    ret: (int, 4);
+] {
+    ret $p.r;
+} // prefix $a. means atom - basic code block, which can only have brancing at the end of block 
+
+$a.use_flag.1 [
+    $v.r: (int, 4);
+    pass: (int, 4); // pass ends basic block by passing specified variables to the next block
+] {
+
 }

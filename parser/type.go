@@ -267,7 +267,7 @@ func (p *Parser) enumEntry() (ast.EnumEntry, error) {
 
 	p.advance() // skip "="
 
-	expr, err := p.expr()
+	expr, err := p.exp()
 	if err != nil {
 		return ast.EnumEntry{}, err
 	}
@@ -310,7 +310,7 @@ func (p *Parser) arrayType() (ast.ArrayType, error) {
 
 	p.advance() // skip "["
 
-	size, err := p.expr()
+	size, err := p.exp()
 	if err != nil {
 		return ast.ArrayType{}, err
 	}

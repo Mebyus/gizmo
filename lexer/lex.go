@@ -54,10 +54,6 @@ func (lx *Lexer) codeToken() token.Token {
 		return lx.runeLiteral()
 	}
 
-	if lx.C == '$' && lx.Next == '"' {
-		return lx.fillStringLiteral()
-	}
-
 	if lx.C == '#' && lx.Next == '"' {
 		return lx.rawStringLiteral()
 	}
@@ -402,71 +398,6 @@ func (lx *Lexer) rawStringLiteral() (tok token.Token) {
 	return
 }
 
-func (lx *Lexer) fillStringLiteral() (tok token.Token) {
-	tok.Pos = lx.pos()
-
-	lx.Advance() // skip '$'
-	lx.Advance() // skip quote
-
-	if lx.C == '"' {
-		// common case of empty string literal
-		lx.Advance()
-		tok.Kind = token.String
-		return
-	}
-
-	var count uint64 // number of fill places inside the string
-	lx.Start()
-	for !lx.EOF && lx.C != '"' {
-		if lx.C == '\\' && lx.Next == '"' {
-			// do not stop if we encounter escape sequence
-			lx.Advance() // skip "\"
-			lx.Advance() // skip quote
-		} else if lx.C == '$' && lx.Next == '{' {
-			count += 1
-			lx.Advance() // skip "$"
-			lx.Advance() // skip "{"
-		} else {
-			lx.Advance()
-		}
-	}
-
-	if lx.C != '"' {
-		lit, ok := lx.Take()
-		if ok {
-			tok.SetIllegalError(token.MalformedString)
-			tok.Lit = lit
-		} else {
-			tok.SetIllegalError(token.LengthOverflow)
-		}
-		return
-	}
-
-	lit, _ := lx.Take() // fill strings cannot overflow
-
-	lx.Advance() // skip quote
-
-	if count == 0 {
-		// there were no fill places inside fill string,
-		// therefore we can treat it just like a regular string
-
-		size, ok := token.ScanStringByteSize(lit)
-		if !ok {
-			tok.SetIllegalError(token.BadEscapeInString)
-			return
-		}
-
-		tok.Lit = lit
-		tok.Kind = token.String
-		tok.Val = size
-		return
-	}
-
-	tok.Lit = lit
-	tok.Kind = token.FillString
-	return
-}
-
 func (lx *Lexer) stringLiteral() (tok token.Token) {
 	tok.Pos = lx.pos()
 
@@ -479,12 +410,17 @@ func (lx *Lexer) stringLiteral() (tok token.Token) {
 		return
 	}
 
+	var fills uint64 // number of fill places inside the string
 	lx.Start()
 	for !lx.EOF && lx.C != '"' && lx.C != '\n' {
 		if lx.C == '\\' && lx.Next == '"' {
 			// do not stop if we encounter escape sequence
 			lx.Advance() // skip "\"
 			lx.Advance() // skip quote
+		} else if lx.C == '$' && lx.Next == '{' {
+			fills += 1
+			lx.Advance() // skip "$"
+			lx.Advance() // skip "{"
 		} else {
 			lx.Advance()
 		}
@@ -508,6 +444,12 @@ func (lx *Lexer) stringLiteral() (tok token.Token) {
 	}
 
 	lx.Advance() // skip quote
+
+	if fills != 0 {
+		tok.Lit = lit
+		tok.Kind = token.FillString
+		return
+	}
 
 	size, ok := token.ScanStringByteSize(lit)
 	if !ok {

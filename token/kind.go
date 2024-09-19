@@ -141,7 +141,7 @@ const (
 	Rune       // 'a', '\t', 'p'
 	String     // "abc", "", "\t\n  42Hello\n"
 	RawString  // #"raw string literal"
-	FillString // $"string with ${10 + 1} interpolated ${a - b} expressions"
+	FillString // "string with ${10 + 1} interpolated ${a - b} expressions"
 
 	// Comments
 	LineComment  // Line comment starts with //
