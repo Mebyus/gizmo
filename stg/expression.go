@@ -6,7 +6,7 @@ import (
 	"github.com/mebyus/gizmo/source"
 )
 
-type Expression interface {
+type Exp interface {
 	Node
 
 	// dummy discriminator method
@@ -27,7 +27,7 @@ func (nodeExpression) Expression() {}
 func (nodeExpression) Kind() exn.Kind { return 0 }
 
 type Operand interface {
-	Expression
+	Exp
 
 	// dummy discriminator method
 	Operand()
@@ -100,13 +100,13 @@ type UnaryExpression struct {
 	nodeExpression
 
 	Operator UnaryOperator
-	Inner    Expression
+	Inner    Exp
 
 	typ *Type
 }
 
 // Explicit interface implementation check
-var _ Expression = &UnaryExpression{}
+var _ Exp = &UnaryExpression{}
 
 func (*UnaryExpression) Kind() exn.Kind {
 	return exn.Unary
@@ -126,28 +126,28 @@ func (e *UnaryExpression) Type() *Type {
 
 type BinaryOperator ast.BinaryOperator
 
-type BinaryExpression struct {
+type BinExp struct {
 	nodeExpression
 
 	Operator BinaryOperator
-	Left     Expression
-	Right    Expression
+	Left     Exp
+	Right    Exp
 
 	typ *Type
 }
 
 // Explicit interface implementation check
-var _ Expression = &BinaryExpression{}
+var _ Exp = &BinExp{}
 
-func (*BinaryExpression) Kind() exn.Kind {
+func (*BinExp) Kind() exn.Kind {
 	return exn.Binary
 }
 
-func (e *BinaryExpression) Pin() source.Pos {
+func (e *BinExp) Pin() source.Pos {
 	return e.Left.Pin()
 }
 
-func (e *BinaryExpression) Type() *Type {
+func (e *BinExp) Type() *Type {
 	if e.typ != nil {
 		return e.typ
 	}
@@ -160,7 +160,7 @@ type ParenthesizedExpression struct {
 
 	Pos source.Pos
 
-	Inner Expression
+	Inner Exp
 }
 
 // Explicit interface implementation check
@@ -183,7 +183,7 @@ type CastExp struct {
 
 	Pos source.Pos
 
-	Target Expression
+	Target Exp
 
 	// Type after cast is performed.
 	DestType *Type
@@ -209,7 +209,7 @@ type TintExp struct {
 
 	Pos source.Pos
 
-	Target Expression
+	Target Exp
 
 	// Type after cast is performed.
 	DestType *Type
@@ -235,7 +235,7 @@ type MemCastExp struct {
 
 	Pos source.Pos
 
-	Target Expression
+	Target Exp
 
 	// Type after cast is performed.
 	DestType *Type

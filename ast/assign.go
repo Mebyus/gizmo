@@ -10,12 +10,12 @@ import (
 //
 // <Target> = <ChainOperand>
 type AssignStatement struct {
-	nodeStatement
+	NodeS
 
 	// cannot be call expression
 	Target ChainOperand
 
-	Expression Expression
+	Expression Exp
 
 	Operator aop.Kind
 }

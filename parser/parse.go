@@ -7,7 +7,7 @@ import (
 )
 
 // create identifier from current token
-func (p *Parser) idn() ast.Identifier {
+func (p *Parser) word() ast.Identifier {
 	return ast.Identifier{
 		Pos: p.tok.Pos,
 		Lit: p.tok.Lit,
@@ -18,7 +18,7 @@ func (p *Parser) identifier() (ast.Identifier, error) {
 	if p.tok.Kind != token.Identifier {
 		return ast.Identifier{}, p.unexpected(p.tok)
 	}
-	identifier := p.idn()
+	identifier := p.word()
 	p.advance()
 	return identifier, nil
 }
@@ -44,7 +44,7 @@ func (p *Parser) unit() (*ast.UnitClause, error) {
 	if p.tok.Kind != token.Identifier {
 		return nil, p.unexpected(p.tok)
 	}
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip unit name identifier
 
 	return &ast.UnitClause{Name: name}, nil

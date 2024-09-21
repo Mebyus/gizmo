@@ -14,7 +14,7 @@ import (
 
 // Scan constructs expression from a given AST. Uses current scope for symbol
 // resolution.
-func (s *Scope) Scan(ctx *Context, expr ast.Expression) (Expression, error) {
+func (s *Scope) Scan(ctx *Context, expr ast.Exp) (Exp, error) {
 	if expr == nil {
 		return nil, nil
 	}
@@ -22,7 +22,7 @@ func (s *Scope) Scan(ctx *Context, expr ast.Expression) (Expression, error) {
 	return s.scan(ctx, expr)
 }
 
-func (s *Scope) scan(ctx *Context, exp ast.Expression) (Expression, error) {
+func (s *Scope) scan(ctx *Context, exp ast.Exp) (Exp, error) {
 	switch exp.Kind() {
 	case exn.Basic:
 		return scanBasicLiteral(exp.(ast.BasicLiteral)), nil
@@ -33,7 +33,7 @@ func (s *Scope) scan(ctx *Context, exp ast.Expression) (Expression, error) {
 	case exn.Unary:
 		return s.scanUnaryExpression(ctx, exp.(*ast.UnaryExpression))
 	case exn.Binary:
-		return s.scanBinaryExpression(ctx, exp.(ast.BinaryExpression))
+		return s.scanBinExp(ctx, exp.(ast.BinExp))
 	case exn.Paren:
 		return s.scanParenthesizedExpression(ctx, exp.(ast.ParenthesizedExpression))
 	case exn.Cast:
@@ -403,10 +403,10 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 type CallDetails struct {
 	Signature
 
-	Args []Expression
+	Args []Exp
 
 	// Not nil only for method calls.
-	Receiver Expression
+	Receiver Exp
 
 	// What symbol is being called. One of:
 	//
@@ -531,7 +531,7 @@ func (s *Scope) scanParenthesizedExpression(ctx *Context, expr ast.Parenthesized
 	}, nil
 }
 
-func (s *Scope) scanCallArgs(ctx *Context, pos source.Pos, params []*Symbol, args []ast.Expression) ([]Expression, error) {
+func (s *Scope) scanCallArgs(ctx *Context, pos source.Pos, params []*Symbol, args []ast.Exp) ([]Exp, error) {
 	if len(args) < len(params) {
 		return nil, fmt.Errorf("%s: not enough arguments (got %d) to call \"%s\" function (want %d)",
 			pos.String(), len(args), "???", len(params)) // TODO: provide call context to supply a name here
@@ -549,7 +549,7 @@ func (s *Scope) scanCallArgs(ctx *Context, pos source.Pos, params []*Symbol, arg
 		return nil, nil
 	}
 
-	aa := make([]Expression, 0, n)
+	aa := make([]Exp, 0, n)
 	for i := 0; i < n; i += 1 {
 		arg := args[i]
 		param := params[i]
@@ -602,21 +602,27 @@ func (s *Scope) scanUnaryExpression(ctx *Context, expr *ast.UnaryExpression) (*U
 	}, nil
 }
 
-func (s *Scope) scanBinaryExpression(ctx *Context, expr ast.BinaryExpression) (*BinaryExpression, error) {
-	left, err := s.scan(ctx, expr.Left)
+func (s *Scope) scanBinExp(ctx *Context, exp ast.BinExp) (*BinExp, error) {
+	left, err := s.scan(ctx, exp.Left)
 	if err != nil {
 		return nil, err
 	}
-	right, err := s.scan(ctx, expr.Right)
+	right, err := s.scan(ctx, exp.Right)
 	if err != nil {
 		return nil, err
 	}
-
-	return &BinaryExpression{
-		Operator: BinaryOperator(expr.Operator),
+	bin := &BinExp{
+		Operator: BinaryOperator(exp.Operator),
 		Left:     left,
 		Right:    right,
-	}, nil
+	}
+
+	t, err := typeCheckBinExp(bin)
+	if err != nil {
+		return nil, err
+	}
+	bin.typ = t
+	return bin, nil
 }
 
 func scanBasicLiteral(lit ast.BasicLiteral) Literal {

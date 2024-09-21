@@ -449,7 +449,7 @@ func newEnumType(base *Type, entries []EnumEntry) (*Type, error) {
 }
 
 // returns an error if argument type does not match parameter type
-func typeCheckExp(want *Type, exp Expression) error {
+func typeCheckExp(want *Type, exp Exp) error {
 	t := exp.Type()
 	if t == want {
 		return nil
@@ -622,5 +622,5 @@ type EnumEntry struct {
 
 	// Can be nil before complete type is constructed
 	// if entry does not have explicit assigned value.
-	Exp Expression
+	Exp Exp
 }

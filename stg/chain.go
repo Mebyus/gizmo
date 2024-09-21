@@ -125,7 +125,7 @@ type CallExpression struct {
 
 	Pos source.Pos
 
-	Arguments []Expression
+	Arguments []Exp
 
 	Callee ChainOperand
 
@@ -183,7 +183,7 @@ type IndirectIndexExpression struct {
 
 	Target ChainOperand
 
-	Index Expression
+	Index Exp
 
 	typ *Type
 }
@@ -210,7 +210,7 @@ type ChunkIndexExpression struct {
 
 	Target ChainOperand
 
-	Index Expression
+	Index Exp
 
 	typ *Type
 }
@@ -237,7 +237,7 @@ type ArrayIndexExp struct {
 
 	Target ChainOperand
 
-	Index Expression
+	Index Exp
 
 	typ *Type
 }
@@ -265,10 +265,10 @@ type ArraySliceExp struct {
 	Target ChainOperand
 
 	// Can be nil if expression is omitted.
-	Start Expression
+	Start Exp
 
 	// Can be nil if expression is omitted.
-	End Expression
+	End Exp
 
 	typ *Type
 }
@@ -296,10 +296,10 @@ type ChunkSliceExp struct {
 	Target ChainOperand
 
 	// Can be nil if expression is omitted.
-	Start Expression
+	Start Exp
 
 	// Can be nil if expression is omitted.
-	End Expression
+	End Exp
 
 	typ *Type
 }

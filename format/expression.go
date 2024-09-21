@@ -8,14 +8,14 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-func (g *Noder) Expression(expr ast.Expression) {
+func (g *Noder) Expression(expr ast.Exp) {
 	switch expr.Kind() {
 	case exn.Symbol:
 		g.SymbolExpression(expr.(ast.SymbolExp))
 	case exn.Basic:
 		g.BasicLiteral(expr.(ast.BasicLiteral))
 	case exn.Binary:
-		g.BinaryExpression(expr.(ast.BinaryExpression))
+		g.BinaryExpression(expr.(ast.BinExp))
 	case exn.Paren:
 		g.ParenthesizedExpression(expr.(ast.ParenthesizedExpression))
 	case exn.Chain:
@@ -88,7 +88,7 @@ func (g *Noder) indexPart(expr ast.IndexPart) {
 	g.gen(token.RightSquare)
 }
 
-func (g *Noder) BinaryExpression(expr ast.BinaryExpression) {
+func (g *Noder) BinaryExpression(expr ast.BinExp) {
 	g.Expression(expr.Left)
 	g.space()
 	g.bop(expr.Operator)

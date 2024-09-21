@@ -4,7 +4,7 @@ type ConstDef struct {
 	nodeSymDef
 
 	// Always not nil.
-	Exp Expression
+	Exp Exp
 
 	// List of top-level unit symbols which are used in constant definition.
 	// Only applicable for top-level unit constants. For constants inside

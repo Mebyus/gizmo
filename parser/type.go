@@ -15,7 +15,7 @@ func (p *Parser) topType(traits ast.Traits) error {
 		return p.unexpected(p.tok)
 	}
 
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip name identifier
 
 	spec, err := p.DefTypeSpecifier()
@@ -138,7 +138,7 @@ func (p *Parser) bagMethodSpec() (ast.BagMethodSpec, error) {
 	if p.tok.Kind != token.Identifier {
 		return ast.BagMethodSpec{}, p.unexpected(p.tok)
 	}
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip method name
 
 	signature, err := p.functionSignature()
@@ -187,14 +187,14 @@ func (p *Parser) fnType() (ast.FunctionType, error) {
 }
 
 func (p *Parser) importType() (ast.ImportType, error) {
-	unit := p.idn()
+	unit := p.word()
 	p.advance() // skip unit name
 	p.advance() // skip "."
 
 	if p.tok.Kind != token.Identifier {
 		return ast.ImportType{}, p.unexpected(p.tok)
 	}
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip type name
 
 	return ast.ImportType{
@@ -204,7 +204,7 @@ func (p *Parser) importType() (ast.ImportType, error) {
 }
 
 func (p *Parser) typeName() (ast.TypeName, error) {
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip type name identifier
 
 	return ast.TypeName{Name: name}, nil
@@ -257,7 +257,7 @@ func (p *Parser) enumEntry() (ast.EnumEntry, error) {
 	if p.tok.Kind != token.Identifier {
 		return ast.EnumEntry{}, p.unexpected(p.tok)
 	}
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip entry name identifier
 
 	if p.tok.Kind != token.Assign {

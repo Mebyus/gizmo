@@ -23,7 +23,7 @@ func (p *Parser) methodReceiver() (ast.ReceiverTypeSpec, error) {
 	if p.tok.Kind != token.Identifier {
 		return ast.ReceiverTypeSpec{}, p.unexpected(p.tok)
 	}
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip receiver type name
 
 	if p.tok.Kind != token.RightSquare {
@@ -48,7 +48,7 @@ func (p *Parser) method(traits ast.Traits) error {
 	if p.tok.Kind != token.Identifier {
 		return p.unexpected(p.tok)
 	}
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip method name
 
 	signature, err := p.functionSignature()

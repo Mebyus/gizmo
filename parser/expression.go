@@ -10,7 +10,7 @@ import (
 )
 
 // ParseExpression is a pure function for usage in unit tests
-func ParseExpression(str string) (ast.Expression, error) {
+func ParseExpression(str string) (ast.Exp, error) {
 	p := New(lexer.NoPos(lexer.FromString(str)))
 	return p.exp()
 }
@@ -18,11 +18,11 @@ func ParseExpression(str string) (ast.Expression, error) {
 // Parse arbitrary expression (no expression will result in error).
 //
 // Parsing is done via Pratt's recursive descent algorithm variant.
-func (p *Parser) exp() (ast.Expression, error) {
+func (p *Parser) exp() (ast.Exp, error) {
 	return p.pratt(0)
 }
 
-func (p *Parser) pratt(power int) (ast.Expression, error) {
+func (p *Parser) pratt(power int) (ast.Exp, error) {
 	left, err := p.primary()
 	if err != nil {
 		return nil, err
@@ -46,15 +46,15 @@ func (p *Parser) pratt(power int) (ast.Expression, error) {
 	return left, nil
 }
 
-func bex(op ast.BinaryOperator, left, right ast.Expression) ast.BinaryExpression {
-	return ast.BinaryExpression{
+func bex(op ast.BinaryOperator, left, right ast.Exp) ast.BinExp {
+	return ast.BinExp{
 		Operator: op,
 		Left:     left,
 		Right:    right,
 	}
 }
 
-func (p *Parser) primary() (ast.Expression, error) {
+func (p *Parser) primary() (ast.Exp, error) {
 	if p.tok.Kind.IsUnaryOperator() {
 		unary, err := p.unary()
 		if err != nil {
@@ -207,7 +207,7 @@ func (p *Parser) objectField() (ast.ObjectField, error) {
 	if p.tok.Kind != token.Identifier {
 		return ast.ObjectField{}, p.unexpected(p.tok)
 	}
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip field name
 
 	if p.tok.Kind != token.Colon {
@@ -362,7 +362,7 @@ func (p *Parser) incompNameOperand() (ast.IncompNameExp, error) {
 		return ast.IncompNameExp{}, p.unexpected(p.tok)
 	}
 
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip name identifier
 
 	return ast.IncompNameExp{Identifier: name}, nil
@@ -370,7 +370,7 @@ func (p *Parser) incompNameOperand() (ast.IncompNameExp, error) {
 
 // SymbolExpression, SelectorExpression, IndexExpression, CallExpression or InstanceExpression
 func (p *Parser) identifierStartOperand() (ast.Operand, error) {
-	idn := p.idn()
+	idn := p.word()
 	p.advance() // skip identifier
 
 	if !isChainOperandToken(p.tok.Kind) {
@@ -405,7 +405,7 @@ func (p *Parser) memberPart() (ast.MemberPart, error) {
 	if err != nil {
 		return ast.MemberPart{}, err
 	}
-	member := p.idn()
+	member := p.word()
 	p.advance() // skip identifier
 
 	return ast.MemberPart{Member: member}, nil
@@ -548,10 +548,10 @@ func (p *Parser) leftSquarePart() (ast.ChainPart, error) {
 	}, nil
 }
 
-func (p *Parser) callArguments() ([]ast.Expression, error) {
+func (p *Parser) callArguments() ([]ast.Exp, error) {
 	p.advance() // skip "("
 
-	var args []ast.Expression
+	var args []ast.Exp
 	for {
 		if p.tok.Kind == token.RightParentheses {
 			p.advance() // skip ")"

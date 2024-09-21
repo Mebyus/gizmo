@@ -18,8 +18,9 @@ const (
 	If
 	Call
 	For
-	ForCond
-	ForEach
+	While
+	ForIn
+	ForRange
 	Match
 	MatchBool
 	Jump
@@ -40,21 +41,22 @@ const (
 var text = [...]string{
 	empty: "<nil>",
 
-	Block:   "block",
-	Assign:  "assign",
-	Return:  "return",
-	Const:   "const",
-	Let:     "let",
-	Var:     "var",
-	If:      "if",
-	Call:    "call",
-	For:     "for",
-	ForCond: "for_cond",
-	ForEach: "for_each",
-	Match:   "match",
-	Defer:   "defer",
-	Jump:    "jump",
-	Never:   "never",
+	Block:    "block",
+	Assign:   "assign",
+	Return:   "return",
+	Const:    "const",
+	Let:      "let",
+	Var:      "var",
+	If:       "if",
+	Call:     "call",
+	For:      "for",
+	While:    "while",
+	ForIn:    "for.in",
+	ForRange: "for.range",
+	Match:    "match",
+	Defer:    "defer",
+	Jump:     "jump",
+	Never:    "never",
 
 	ShortInit: "var.init.short",
 

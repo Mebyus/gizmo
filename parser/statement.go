@@ -24,7 +24,7 @@ func (p *Parser) Statement() (ast.Statement, error) {
 	case token.Return:
 		return p.returnStatement()
 	case token.For:
-		return p.forStatement()
+		return p.forStm()
 	case token.Jump:
 		return p.jumpStatement()
 	case token.Never:
@@ -47,7 +47,7 @@ func (p *Parser) deferStatement() (ast.DeferStatement, error) {
 	}
 
 	var chain ast.ChainOperand
-	identifier := p.idn()
+	identifier := p.word()
 	p.advance() // skip identifier
 	chain = identifier.AsChainOperand()
 
@@ -177,10 +177,10 @@ func (p *Parser) fillMatchCases(node *ast.MatchStatement) error {
 // parse list of expressions in case
 //
 //	case <Exp>, <Exp>, <Exp>, ... {}
-func (p *Parser) caseExpList() ([]ast.Expression, error) {
+func (p *Parser) caseExpList() ([]ast.Exp, error) {
 	p.advance() // skip "=>"
 
-	var list []ast.Expression
+	var list []ast.Exp
 	for {
 		if p.tok.Kind == token.LeftCurly {
 			if len(list) == 0 {
@@ -225,7 +225,7 @@ func (p *Parser) matchCase() (ast.MatchCase, error) {
 	}, nil
 }
 
-func (p *Parser) matchStatement(pos source.Pos, exp ast.Expression) (ast.MatchStatement, error) {
+func (p *Parser) matchStatement(pos source.Pos, exp ast.Exp) (ast.MatchStatement, error) {
 	var node ast.MatchStatement
 	err := p.fillMatchCases(&node)
 	if err != nil {
@@ -263,95 +263,124 @@ func (p *Parser) matchElse() (ast.Block, error) {
 	return p.Block()
 }
 
-func (p *Parser) forStatement() (ast.Statement, error) {
+func (p *Parser) forStm() (ast.Statement, error) {
 	if p.next.Kind == token.LeftCurly {
-		return p.forSimpleStatement()
+		return p.forSimple()
 	}
-	if p.next.Kind == token.Let {
-		return p.forEachStatement()
+
+	p.advance() // skip "for"
+	if p.tok.Kind == token.Identifier && (p.next.Kind == token.In || p.next.Kind == token.Colon) {
+		return p.forIn()
 	}
-	return p.forWithConditionStatement()
+	return p.forIf()
 }
 
-func (p *Parser) forSimpleStatement() (ast.ForStatement, error) {
+func (p *Parser) forSimple() (ast.For, error) {
 	pos := p.pos()
 
 	p.advance() // skip "for"
 
 	body, err := p.Block()
 	if err != nil {
-		return ast.ForStatement{}, err
+		return ast.For{}, err
 	}
 	if len(body.Statements) == 0 {
-		return ast.ForStatement{}, fmt.Errorf("%s for loop without condition cannot have empty body", pos.Short())
+		return ast.For{}, fmt.Errorf("%s for loop without condition cannot have empty body", pos.Short())
 	}
 
-	return ast.ForStatement{
+	return ast.For{
 		Pos:  pos,
 		Body: body,
 	}, nil
 }
 
-func (p *Parser) forEachStatement() (ast.ForEachStatement, error) {
-	pos := p.pos()
-
-	p.advance() // skip "for"
-	p.advance() // skip "let"
-
+func (p *Parser) forIn() (ast.Statement, error) {
 	if p.tok.Kind != token.Identifier {
-		return ast.ForEachStatement{}, p.unexpected(p.tok)
+		return nil, p.unexpected(p.tok)
 	}
 
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip name identifier
 
+	if p.tok.Kind == token.Colon {
+		panic("for in loop with custom types not implemented")
+	}
+
 	if p.tok.Kind != token.In {
-		return ast.ForEachStatement{}, p.unexpected(p.tok)
+		return nil, p.unexpected(p.tok)
 	}
 	p.advance() // skip "in"
 
-	expr, err := p.exp()
+	if p.tok.Kind == token.Identifier && p.tok.Lit == "range" {
+		return p.forRange(name)
+	}
+
+	exp, err := p.exp()
 	if err != nil {
-		return ast.ForEachStatement{}, err
+		return nil, err
 	}
 
 	if p.tok.Kind != token.LeftCurly {
-		return ast.ForEachStatement{}, p.unexpected(p.tok)
+		return nil, p.unexpected(p.tok)
 	}
 	body, err := p.Block()
 	if err != nil {
-		return ast.ForEachStatement{}, err
+		return nil, err
 	}
 
-	return ast.ForEachStatement{
-		Pos:      pos,
+	return ast.ForIn{
 		Name:     name,
-		Iterator: expr,
+		Iterator: exp,
 		Body:     body,
 	}, nil
 }
 
-func (p *Parser) forWithConditionStatement() (ast.ForConditionStatement, error) {
-	pos := p.pos()
+func (p *Parser) forRange(name ast.Identifier) (ast.ForRange, error) {
+	p.advance() // skip "range"
 
-	p.advance() // skip "for"
+	if p.tok.Kind != token.LeftParentheses {
+		return ast.ForRange{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip "("
 
+	exp, err := p.exp()
+	if err != nil {
+		return ast.ForRange{}, nil
+	}
+
+	if p.tok.Kind != token.RightParentheses {
+		return ast.ForRange{}, p.unexpected(p.tok)
+	}
+	p.advance() // skip ")"
+
+	body, err := p.Block()
+	if err != nil {
+		return ast.ForRange{}, nil
+	}
+
+	return ast.ForRange{
+		Name:  name,
+		Range: exp,
+		Body:  body,
+	}, nil
+}
+
+func (p *Parser) forIf() (ast.ForIf, error) {
 	condition, err := p.exp()
 	if err != nil {
-		return ast.ForConditionStatement{}, err
+		return ast.ForIf{}, err
 	}
 	if p.tok.Kind != token.LeftCurly {
-		return ast.ForConditionStatement{}, p.unexpected(p.tok)
+		return ast.ForIf{}, p.unexpected(p.tok)
 	}
 	body, err := p.Block()
 	if err != nil {
-		return ast.ForConditionStatement{}, err
+		return ast.ForIf{}, err
 	}
 
-	return ast.ForConditionStatement{
-		Pos:       pos,
-		Condition: condition,
-		Body:      body,
+	return ast.ForIf{
+		If:   condition,
+		Body: body,
 	}, nil
 }
 
@@ -481,13 +510,13 @@ func (p *Parser) identifierStartStatement() (ast.Statement, error) {
 		return p.shortInitStatement()
 	}
 
-	idn := p.idn()
+	idn := p.word()
 	p.advance() // skip identifier
 	return p.chainStartStatement(idn)
 }
 
 func (p *Parser) shortInitStatement() (ast.ShortInitStatement, error) {
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip name identifier
 
 	p.advance() // skip ":="
@@ -570,7 +599,7 @@ func (p *Parser) varStatement() (statement ast.VarStatement, err error) {
 	if err != nil {
 		return
 	}
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip identifier
 
 	err = p.expect(token.Colon)
@@ -625,7 +654,7 @@ func (p *Parser) varStatement() (statement ast.VarStatement, err error) {
 }
 
 func (p *Parser) letWalrusStatement() (statement ast.LetStatement, err error) {
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip let name identifier
 	p.advance() // skip ":="
 
@@ -656,7 +685,7 @@ func (p *Parser) letStatement() (statement ast.LetStatement, err error) {
 	if p.next.Kind == token.Walrus {
 		return p.letWalrusStatement()
 	}
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip let name identifier
 
 	err = p.expect(token.Colon)

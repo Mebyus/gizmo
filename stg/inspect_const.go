@@ -61,7 +61,7 @@ func (m *Merger) inspectConstTypeName(ctx *SymbolContext, spec ast.TypeName) err
 	return nil
 }
 
-func (m *Merger) inspectExp(ctx *SymbolContext, exp ast.Expression) error {
+func (m *Merger) inspectExp(ctx *SymbolContext, exp ast.Exp) error {
 	switch exp.Kind() {
 	case exn.Basic:
 		return nil
@@ -70,7 +70,7 @@ func (m *Merger) inspectExp(ctx *SymbolContext, exp ast.Expression) error {
 	case exn.Unary:
 		return m.inspectUnaryExp(ctx, exp.(*ast.UnaryExpression))
 	case exn.Binary:
-		return m.inspectBinaryExp(ctx, exp.(ast.BinaryExpression))
+		return m.inspectBinaryExp(ctx, exp.(ast.BinExp))
 	case exn.Paren:
 		return m.inspectParenExp(ctx, exp.(ast.ParenthesizedExpression))
 	case exn.Address, exn.Chain, exn.Indirect:
@@ -103,7 +103,7 @@ func (m *Merger) inspectParenExp(ctx *SymbolContext, exp ast.ParenthesizedExpres
 	return m.inspectExp(ctx, exp.Inner)
 }
 
-func (m *Merger) inspectBinaryExp(ctx *SymbolContext, exp ast.BinaryExpression) error {
+func (m *Merger) inspectBinaryExp(ctx *SymbolContext, exp ast.BinExp) error {
 	err := m.inspectExp(ctx, exp.Left)
 	if err != nil {
 		return err

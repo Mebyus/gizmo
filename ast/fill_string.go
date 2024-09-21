@@ -3,7 +3,7 @@ package ast
 import "github.com/mebyus/gizmo/source"
 
 type FillString struct {
-	nodeOperand
+	NodeO
 
 	// Always has at least one element.
 	Parts []FillPart
@@ -21,7 +21,7 @@ type FillPartString struct {
 func (FillPartString) FillPart() {}
 
 type FillPartExp struct {
-	Exp Expression
+	Exp Exp
 }
 
 func (FillPartExp) FillPart() {}

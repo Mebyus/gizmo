@@ -70,7 +70,7 @@ func (p *Parser) importOrigin() (origin.Origin, error) {
 		return origin.Loc, nil
 	}
 
-	name := p.idn()
+	name := p.word()
 	p.advance() //  skip import origin name
 
 	origin, ok := origin.Parse(name.Lit)
@@ -85,7 +85,7 @@ func (p *Parser) importSpec() (ast.ImportSpec, error) {
 	if err != nil {
 		return ast.ImportSpec{}, err
 	}
-	name := p.idn()
+	name := p.word()
 	p.advance() // skip import name identifier
 
 	err = p.expect(token.RightArrow)

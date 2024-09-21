@@ -8,14 +8,14 @@ import (
 	"github.com/mebyus/gizmo/ast/uop"
 )
 
-func (s *Scope) evalStaticExp(exp Expression) (Expression, error) {
+func (s *Scope) evalStaticExp(exp Exp) (Exp, error) {
 	if !exp.Type().Static() {
 		return nil, fmt.Errorf("%s: expression is not static", exp.Pin())
 	}
 	return s.evalExp(exp)
 }
 
-func (s *Scope) evalExp(exp Expression) (Expression, error) {
+func (s *Scope) evalExp(exp Exp) (Exp, error) {
 	switch exp.Kind() {
 	case exn.Integer:
 		return exp, nil
@@ -28,13 +28,13 @@ func (s *Scope) evalExp(exp Expression) (Expression, error) {
 	case exn.Unary:
 		return s.evalUnaryExp(exp.(*UnaryExpression))
 	case exn.Binary:
-		return s.evalBinaryExp(exp.(*BinaryExpression))
+		return s.evalBinExp(exp.(*BinExp))
 	default:
 		panic(fmt.Sprintf("unexpected %s expression", exp.Kind()))
 	}
 }
 
-func (s *Scope) evalBinaryExp(exp *BinaryExpression) (Expression, error) {
+func (s *Scope) evalBinExp(exp *BinExp) (Exp, error) {
 	l, err := s.evalExp(exp.Left)
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (s *Scope) evalBinaryExp(exp *BinaryExpression) (Expression, error) {
 	panic(fmt.Sprintf("not implemented for %s and %s expressions", l.Kind(), r.Kind()))
 }
 
-func (s *Scope) evalUnaryExp(exp *UnaryExpression) (Expression, error) {
+func (s *Scope) evalUnaryExp(exp *UnaryExpression) (Exp, error) {
 	inner, err := s.evalExp(exp.Inner)
 	if err != nil {
 		return nil, err

@@ -22,18 +22,18 @@ type Statement interface {
 // This is dummy implementation of Statement interface.
 //
 // Used for embedding into other (non-dummy) statement nodes.
-type nodeStatement struct{}
+type NodeS struct{}
 
-func (nodeStatement) Statement() {}
+func (NodeS) Statement() {}
 
 type VarStatement struct {
-	nodeStatement
+	NodeS
 
 	// Symbol created by this statement.
 	Sym *Symbol
 
 	// Equals nil if init expression is dirty.
-	Expr Expression
+	Exp Exp
 }
 
 // Explicit interface implementation check
@@ -48,13 +48,13 @@ func (s *VarStatement) Kind() stm.Kind {
 }
 
 type LetStatement struct {
-	nodeStatement
+	NodeS
 
 	// Symbol created by this statement.
 	Sym *Symbol
 
 	// Init expression for created symbol. Always not nil.
-	Expr Expression
+	Expr Exp
 }
 
 // Explicit interface implementation check
@@ -69,12 +69,12 @@ func (s *LetStatement) Kind() stm.Kind {
 }
 
 type ReturnStatement struct {
-	nodeStatement
+	NodeS
 
 	Pos source.Pos
 
 	// Equals nil if return does not have expression.
-	Expr Expression
+	Expr Exp
 }
 
 // Explicit interface implementation check
@@ -89,7 +89,7 @@ func (s *ReturnStatement) Kind() stm.Kind {
 }
 
 type NeverStatement struct {
-	nodeStatement
+	NodeS
 
 	Pos source.Pos
 }
@@ -106,13 +106,13 @@ func (s *NeverStatement) Kind() stm.Kind {
 }
 
 type AssignStatement struct {
-	nodeStatement
+	NodeS
 
 	// Target of the assignment.
 	Target ChainOperand
 
 	// Assigned expression. Always not nil.
-	Expr Expression
+	Expr Exp
 
 	Operation aop.Kind
 }
@@ -129,12 +129,12 @@ func (s *AssignStatement) Kind() stm.Kind {
 }
 
 type SimpleIfStatement struct {
-	nodeStatement
+	NodeS
 
 	Pos source.Pos
 
 	// Always not nil.
-	Condition Expression
+	Condition Exp
 
 	Body Block
 }
@@ -150,11 +150,11 @@ func (s *SimpleIfStatement) Pin() source.Pos {
 }
 
 type MatchStatement struct {
-	nodeStatement
+	NodeS
 
 	Pos source.Pos
 
-	Exp Expression
+	Exp Exp
 
 	Cases []MatchCase
 
@@ -164,7 +164,7 @@ type MatchStatement struct {
 type MatchCase struct {
 	Pos source.Pos
 
-	ExpList []Expression
+	ExpList []Exp
 
 	Body Block
 }
@@ -179,47 +179,8 @@ func (s *MatchStatement) Pin() source.Pos {
 	return s.Pos
 }
 
-type WhileStatement struct {
-	nodeStatement
-
-	Pos source.Pos
-
-	// Always not nil.
-	Condition Expression
-
-	Body Block
-}
-
-var _ Statement = &WhileStatement{}
-
-func (*WhileStatement) Kind() stm.Kind {
-	return stm.ForCond
-}
-
-func (s *WhileStatement) Pin() source.Pos {
-	return s.Pos
-}
-
-type LoopStatement struct {
-	nodeStatement
-
-	Pos source.Pos
-
-	Body Block
-}
-
-var _ Statement = &LoopStatement{}
-
-func (*LoopStatement) Kind() stm.Kind {
-	return stm.For
-}
-
-func (s *LoopStatement) Pin() source.Pos {
-	return s.Pos
-}
-
 type CallStatement struct {
-	nodeStatement
+	NodeS
 
 	Pos source.Pos
 
@@ -237,11 +198,11 @@ func (s *CallStatement) Pin() source.Pos {
 }
 
 type DeferStatement struct {
-	nodeStatement
+	NodeS
 
 	Pos source.Pos
 
-	Args []Expression
+	Args []Exp
 
 	// defer index (among all defers inside the function)
 	Index uint32

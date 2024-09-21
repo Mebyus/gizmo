@@ -15,7 +15,7 @@ func (p *Parser) topFun(traits ast.Traits) error {
 	if p.tok.Kind != token.Identifier {
 		return p.unexpected(p.tok)
 	}
-	name := p.idn()
+	name := p.word()
 	p.advance() // consume function name identifier
 
 	signature, err := p.functionSignature()
@@ -53,7 +53,7 @@ func (p *Parser) topTest(traits ast.Traits) error {
 	if p.tok.Kind != token.Identifier {
 		return p.unexpected(p.tok)
 	}
-	name := p.idn()
+	name := p.word()
 	p.advance() // consume test name identifier
 
 	signature, err := p.functionSignature()
@@ -145,7 +145,7 @@ func (p *Parser) field() (field ast.FieldDefinition, err error) {
 	if err != nil {
 		return
 	}
-	field.Name = p.idn()
+	field.Name = p.word()
 	p.advance() // skip identifier
 
 	err = p.expect(token.Colon)

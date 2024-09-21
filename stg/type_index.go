@@ -157,7 +157,7 @@ func (x *TypeIndex) store(a *Type) *Type {
 	return t
 }
 
-func (x *TypeIndex) lookupArray(ctx *Context, spec ast.TypeSpec, length ast.Expression) (*Type, error) {
+func (x *TypeIndex) lookupArray(ctx *Context, spec ast.TypeSpec, length ast.Exp) (*Type, error) {
 	elem, err := x.lookup(ctx, spec)
 	if err != nil {
 		return nil, err

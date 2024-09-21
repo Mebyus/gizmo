@@ -1,0 +1,7 @@
+fun example_for_range(x: uint) => uint {
+    var s: uint = 0;
+    for i in range(x) {
+        s += i;
+    }
+    return s;
+}

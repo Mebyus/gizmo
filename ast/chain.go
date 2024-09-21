@@ -7,7 +7,7 @@ import (
 
 // <ChainOperand> = <Receiver> | <Identifier> | <CallExpression> | <SelectorExpression> | <IndexExpression> | <IndirectExpression>
 type ChainOperand struct {
-	nodeOperand
+	NodeO
 
 	// Start of chain operand. Field Identifier.Lit can be empty in this
 	// context, if this is the case, then it is receiver, not identifier.
@@ -46,15 +46,15 @@ type ChainPart interface {
 // of discriminator ChainPart() method.
 //
 // Used for embedding into other (non-dummy) chain part nodes.
-type nodeChainPart struct{}
+type NodeP struct{}
 
-func (nodeChainPart) ChainPart() {}
+func (NodeP) ChainPart() {}
 
 // <MemberPart> = "." <Member>
 //
 // <Member> = <Identifier>
 type MemberPart struct {
-	nodeChainPart
+	NodeP
 
 	Member Identifier
 }
@@ -71,11 +71,11 @@ func (p MemberPart) Pin() source.Pos {
 
 // <CallPart> = "(" { <Expression> "," } ")"
 type CallPart struct {
-	nodeChainPart
+	NodeP
 
 	Pos source.Pos
 
-	Args []Expression
+	Args []Exp
 }
 
 var _ ChainPart = CallPart{}
@@ -90,10 +90,10 @@ func (p CallPart) Pin() source.Pos {
 
 // <IndexPart> = "[" <Expression> "]"
 type IndexPart struct {
-	nodeChainPart
+	NodeP
 
 	Pos   source.Pos
-	Index Expression
+	Index Exp
 }
 
 var _ ChainPart = IndexPart{}
@@ -108,7 +108,7 @@ func (p IndexPart) Pin() source.Pos {
 
 // <IndirectPart> = ".@"
 type IndirectPart struct {
-	nodeChainPart
+	NodeP
 
 	Pos source.Pos
 }
@@ -125,7 +125,7 @@ func (p IndirectPart) Pin() source.Pos {
 
 // <AddressPart> = ".&"
 type AddressPart struct {
-	nodeChainPart
+	NodeP
 
 	Pos source.Pos
 }
@@ -144,11 +144,11 @@ func (p AddressPart) Pin() source.Pos {
 //
 // <Index> = <Expression>
 type IndirectIndexPart struct {
-	nodeChainPart
+	NodeP
 
 	Pos source.Pos
 
-	Index Expression
+	Index Exp
 }
 
 var _ ChainPart = IndirectIndexPart{}
@@ -163,15 +163,15 @@ func (p IndirectIndexPart) Pin() source.Pos {
 
 // <SlicePart> = "[" [ <Start> ] ":" [ <End> ] "]"
 type SlicePart struct {
-	nodeChainPart
+	NodeP
 
 	Pos source.Pos
 
 	// Part before ":". Can be nil if expression is omitted
-	Start Expression
+	Start Exp
 
 	// Part after ":". Can be nil if expression is omitted
-	End Expression
+	End Exp
 }
 
 var _ ChainPart = SlicePart{}

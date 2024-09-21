@@ -21,12 +21,12 @@ type Statement interface {
 // Dummy provides quick, easy to use implementation of discriminator Statement() method
 //
 // Used for embedding into other (non-dummy) statement nodes
-type nodeStatement struct{}
+type NodeS struct{}
 
-func (nodeStatement) Statement() {}
+func (NodeS) Statement() {}
 
 type Block struct {
-	nodeStatement
+	NodeS
 
 	// starting position of block
 	Pos source.Pos
@@ -47,12 +47,12 @@ func (s Block) Pin() source.Pos {
 
 // <ReturnStatement> = "return" [ <Expression> ] ";"
 type ReturnStatement struct {
-	nodeStatement
+	NodeS
 
 	Pos source.Pos
 
 	// Equals nil if return does not have expression.
-	Expression Expression
+	Expression Exp
 }
 
 var _ Statement = ReturnStatement{}
@@ -67,7 +67,7 @@ func (s ReturnStatement) Pin() source.Pos {
 
 // <NeverStatement> = "never"
 type NeverStatement struct {
-	nodeStatement
+	NodeS
 
 	Pos source.Pos
 }
@@ -90,11 +90,11 @@ type Var struct {
 	Type TypeSpec
 
 	// Equals nil if init expression is dirty
-	Exp Expression
+	Exp Exp
 }
 
 type VarStatement struct {
-	nodeStatement
+	NodeS
 
 	Var
 }
@@ -111,7 +111,7 @@ func (s VarStatement) Pin() source.Pos {
 
 // <IfStatement> = <IfClause> { <ElseIfClause> } [ <ElseClause> ]
 type IfStatement struct {
-	nodeStatement
+	NodeS
 
 	If IfClause
 
@@ -127,7 +127,7 @@ type IfClause struct {
 	Pos source.Pos
 
 	// Always not nil
-	Condition Expression
+	Condition Exp
 	Body      Block
 }
 
@@ -136,7 +136,7 @@ type ElseIfClause struct {
 	Pos source.Pos
 
 	// Always not nil
-	Condition Expression
+	Condition Exp
 
 	Body Block
 }
@@ -160,7 +160,7 @@ func (s IfStatement) Pin() source.Pos {
 
 // <CallStatement> = <ChainOperand> ";"
 type CallStatement struct {
-	nodeStatement
+	NodeS
 
 	// Must be call operand.
 	Call ChainOperand
@@ -176,54 +176,13 @@ func (s CallStatement) Pin() source.Pos {
 	return s.Call.Pin()
 }
 
-// <ForStatement> = "for" <BlockStatement>
-type ForStatement struct {
-	nodeStatement
-
-	Pos source.Pos
-
-	Body Block
-}
-
-var _ Statement = ForStatement{}
-
-func (ForStatement) Kind() stm.Kind {
-	return stm.For
-}
-
-func (s ForStatement) Pin() source.Pos {
-	return s.Pos
-}
-
-// <ForConditionStatement> = "for" <Expression> <BlockStatement>
-type ForConditionStatement struct {
-	nodeStatement
-
-	Pos source.Pos
-
-	// Always not nil.
-	Condition Expression
-
-	Body Block
-}
-
-var _ Statement = ForConditionStatement{}
-
-func (ForConditionStatement) Kind() stm.Kind {
-	return stm.ForCond
-}
-
-func (s ForConditionStatement) Pin() source.Pos {
-	return s.Pos
-}
-
 type MatchStatement struct {
-	nodeStatement
+	NodeS
 
 	Pos source.Pos
 
 	// Exp at the top of match statement that is being matched.
-	Exp Expression
+	Exp Exp
 
 	// Match cases in order they appear.
 	Cases []MatchCase
@@ -236,7 +195,7 @@ type MatchCase struct {
 	Pos source.Pos
 
 	// Always has at least one element.
-	ExpList []Expression
+	ExpList []Exp
 
 	Body Block
 }
@@ -252,7 +211,7 @@ func (s MatchStatement) Pin() source.Pos {
 }
 
 type MatchBoolStatement struct {
-	nodeStatement
+	NodeS
 
 	Pos source.Pos
 
@@ -267,7 +226,7 @@ type MatchBoolCase struct {
 	Pos source.Pos
 
 	// Always not nil.
-	Exp Expression
+	Exp Exp
 
 	Body Block
 }
@@ -283,7 +242,7 @@ func (s MatchBoolStatement) Pin() source.Pos {
 }
 
 type JumpStatement struct {
-	nodeStatement
+	NodeS
 
 	Label Label
 }
@@ -299,31 +258,6 @@ func (s JumpStatement) Pin() source.Pos {
 	return s.Label.Pin()
 }
 
-// <ForEachStatement> = "for" <Name> "in" <Expression> <BlockStatement>
-type ForEachStatement struct {
-	nodeStatement
-
-	Pos source.Pos
-
-	Name Identifier
-
-	// Always not nil
-	Iterator Expression
-
-	// must contain at least one statement
-	Body Block
-}
-
-var _ Statement = ForEachStatement{}
-
-func (ForEachStatement) Kind() stm.Kind {
-	return stm.ForEach
-}
-
-func (s ForEachStatement) Pin() source.Pos {
-	return s.Pos
-}
-
 type Let struct {
 	Name Identifier
 
@@ -331,11 +265,11 @@ type Let struct {
 	Type TypeSpec
 
 	// Expression that defines constant value. Always not nil.
-	Exp Expression
+	Exp Exp
 }
 
 type LetStatement struct {
-	nodeStatement
+	NodeS
 
 	Let
 }
@@ -352,7 +286,7 @@ func (s LetStatement) Pin() source.Pos {
 
 // <DeferStatement> = "defer" <CallExpression> ";"
 type DeferStatement struct {
-	nodeStatement
+	NodeS
 
 	Pos source.Pos
 
@@ -374,11 +308,11 @@ func (s DeferStatement) Pin() source.Pos {
 // <Name> = <Identifier>
 // <Init> = <Exp>
 type ShortInitStatement struct {
-	nodeStatement
+	NodeS
 
 	Name Identifier
 
-	Init Expression
+	Init Exp
 }
 
 var _ Statement = ShortInitStatement{}

@@ -8,8 +8,8 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-// <Expression> = <PrimaryOperand> | <BinaryExpression>
-type Expression interface {
+// <Exp> = <PrimaryOperand> | <BinaryExpression>
+type Exp interface {
 	Node
 
 	// dummy discriminator method
@@ -18,9 +18,9 @@ type Expression interface {
 	Kind() exn.Kind
 }
 
-type nodeExpression struct{}
+type NodeE struct{}
 
-func (nodeExpression) Expression() {}
+func (NodeE) Expression() {}
 
 // <PrimaryOperand> = <Operand> | <UnaryExpression>
 type PrimaryOperand any
@@ -28,7 +28,7 @@ type PrimaryOperand any
 // <Operand> = <Literal> | <SubsExpression> | <ParenthesizedExpression> | <SelectorExpression> |
 // <IndexExpression> | <CallExpression> | <AddressExpression> | <CastExpression>
 type Operand interface {
-	Expression
+	Exp
 
 	// dummy discriminator method
 	Operand()
@@ -37,13 +37,13 @@ type Operand interface {
 // Dummy operand node provides quick, easy to use implementation of discriminator Operand() method
 //
 // Used for embedding into other (non-dummy) operand nodes
-type nodeOperand struct{ nodeExpression }
+type NodeO struct{ NodeE }
 
-func (nodeOperand) Operand() {}
+func (NodeO) Operand() {}
 
 // <SymbolExp> = <Identifier>
 type SymbolExp struct {
-	nodeOperand
+	NodeO
 
 	Identifier Identifier
 }
@@ -59,7 +59,7 @@ func (e SymbolExp) Pin() source.Pos {
 }
 
 type IncompNameExp struct {
-	nodeOperand
+	NodeO
 
 	Identifier Identifier
 }
@@ -76,11 +76,11 @@ func (e IncompNameExp) Pin() source.Pos {
 
 // <ParenthesizedExpression> = "(" <Expression> ")"
 type ParenthesizedExpression struct {
-	nodeOperand
+	NodeO
 
 	Pos source.Pos
 
-	Inner Expression
+	Inner Exp
 }
 
 var _ Operand = ParenthesizedExpression{}
@@ -97,13 +97,13 @@ func (e ParenthesizedExpression) Pin() source.Pos {
 //
 // <UnaryOperand> = <Operand> | <UnaryExpression>
 type UnaryExpression struct {
-	nodeExpression
+	NodeE
 
 	Operator UnaryOperator
-	Inner    Expression
+	Inner    Exp
 }
 
-var _ Expression = UnaryExpression{}
+var _ Exp = UnaryExpression{}
 
 func (UnaryExpression) Kind() exn.Kind {
 	return exn.Unary
@@ -113,36 +113,36 @@ func (e UnaryExpression) Pin() source.Pos {
 	return e.Operator.Pos
 }
 
-// <BinaryExpression> = <Expression> <BinaryOperator> <Expression>
-type BinaryExpression struct {
-	nodeExpression
+// <BinExp> = <Expression> <BinaryOperator> <Expression>
+type BinExp struct {
+	NodeE
 
 	Operator BinaryOperator
-	Left     Expression
-	Right    Expression
+	Left     Exp
+	Right    Exp
 }
 
-var _ Expression = BinaryExpression{}
+var _ Exp = BinExp{}
 
-func (BinaryExpression) Kind() exn.Kind {
+func (BinExp) Kind() exn.Kind {
 	return exn.Binary
 }
 
-func (e BinaryExpression) Pin() source.Pos {
+func (e BinExp) Pin() source.Pos {
 	return e.Left.Pin()
 }
 
 // <CastExp> = "cast" "(" <TypeSpec> "," <Exp> ")"
 type CastExp struct {
-	nodeOperand
+	NodeO
 
 	Pos    source.Pos
-	Target Expression
+	Target Exp
 	Type   TypeSpec
 }
 
 // Explicit interface implementation check.
-var _ Expression = CastExp{}
+var _ Exp = CastExp{}
 
 func (CastExp) Kind() exn.Kind {
 	return exn.Cast
@@ -154,14 +154,14 @@ func (e CastExp) Pin() source.Pos {
 
 // <TintExp> = "tint" "(" <TypeSpec> "," <Exp> ")"
 type TintExp struct {
-	nodeOperand
+	NodeO
 
 	Pos    source.Pos
-	Target Expression
+	Target Exp
 	Type   TypeSpec
 }
 
-var _ Expression = TintExp{}
+var _ Exp = TintExp{}
 
 func (TintExp) Kind() exn.Kind {
 	return exn.Tint
@@ -173,13 +173,13 @@ func (e TintExp) Pin() source.Pos {
 
 // <MemCastExpression> = "mcast" "(" <TypeSpecifier> "," <Expression> ")"
 type MemCastExpression struct {
-	nodeOperand
+	NodeO
 
-	Target Expression
+	Target Exp
 	Type   TypeSpec
 }
 
-var _ Expression = MemCastExpression{}
+var _ Exp = MemCastExpression{}
 
 func (MemCastExpression) Kind() exn.Kind {
 	return exn.MemCast

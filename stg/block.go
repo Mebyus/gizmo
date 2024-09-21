@@ -12,7 +12,7 @@ import (
 )
 
 type Block struct {
-	nodeStatement
+	NodeS
 
 	// Position where block starts.
 	Pos source.Pos
@@ -89,9 +89,11 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	case stm.ShortInit:
 		return b.addShortInit(ctx, statement.(ast.ShortInitStatement))
 	case stm.For:
-		return b.addFor(ctx, statement.(ast.ForStatement))
-	case stm.ForCond:
-		return b.addForCond(ctx, statement.(ast.ForConditionStatement))
+		return b.addFor(ctx, statement.(ast.For))
+	case stm.While:
+		return b.addForCond(ctx, statement.(ast.ForIf))
+	case stm.ForRange:
+		return b.addForRange(ctx, statement.(ast.ForRange))
 	case stm.Match:
 		return b.addMatch(ctx, statement.(ast.MatchStatement))
 	case stm.Never:
@@ -107,6 +109,37 @@ func (b *Block) add(ctx *Context, statement ast.Statement) error {
 	default:
 		panic(fmt.Sprintf("not implemented for %s statement", statement.Kind().String()))
 	}
+}
+
+func (b *Block) addForRange(ctx *Context, stmt ast.ForRange) error {
+	exp, err := b.Scope.scan(ctx, stmt.Range)
+	if err != nil {
+		return err
+	}
+	if !exp.Type().IsIntegerType() {
+		return fmt.Errorf("%s: expression inside \"range\" must result in integer type", exp.Pin())
+	}
+
+	node := &ForRange{
+		Range: exp,
+		Body:  Block{Pos: stmt.Body.Pos},
+		Sym: &Symbol{
+			Pos:  stmt.Name.Pos,
+			Name: stmt.Name.Lit,
+			Type: UintType,
+			Kind: smk.Let,
+		},
+	}
+	node.Body.Scope = NewScope(scp.Loop, b.Scope, &node.Body.Pos)
+	node.Body.Scope.Bind(node.Sym)
+
+	err = node.Body.Fill(ctx, stmt.Body.Statements)
+	if err != nil {
+		return err
+	}
+
+	b.addNode(node)
+	return nil
 }
 
 func (b *Block) addShortInit(ctx *Context, stmt ast.ShortInitStatement) error {
@@ -131,8 +164,8 @@ func (b *Block) addShortInit(ctx *Context, stmt ast.ShortInitStatement) error {
 		b.Scope.Bind(s)
 
 		b.addNode(&VarStatement{
-			Sym:  s,
-			Expr: exp,
+			Sym: s,
+			Exp: exp,
 		})
 		return nil
 	}
@@ -227,7 +260,7 @@ func (b *Block) fillMatchCase(ctx *Context, want *Type, mc ast.MatchCase) (Match
 		panic("empty list")
 	}
 
-	list := make([]Expression, 0, len(mc.ExpList))
+	list := make([]Exp, 0, len(mc.ExpList))
 	for _, exp := range mc.ExpList {
 		e, err := b.Scope.scan(ctx, exp)
 		if err != nil {
@@ -271,8 +304,8 @@ func (b *Block) fillElseCase(ctx *Context, c *ast.Block) (*Block, error) {
 	return &block, nil
 }
 
-func (b *Block) addFor(ctx *Context, stmt ast.ForStatement) error {
-	node := &LoopStatement{
+func (b *Block) addFor(ctx *Context, stmt ast.For) error {
+	node := &Loop{
 		Pos:  stmt.Pos,
 		Body: Block{Pos: stmt.Body.Pos},
 	}
@@ -301,19 +334,18 @@ func (b *Block) addCall(ctx *Context, stmt ast.CallStatement) error {
 	return nil
 }
 
-func (b *Block) addForCond(ctx *Context, stmt ast.ForConditionStatement) error {
-	if stmt.Condition == nil {
+func (b *Block) addForCond(ctx *Context, stmt ast.ForIf) error {
+	if stmt.If == nil {
 		panic("nil condition in for statement")
 	}
-	condition, err := b.Scope.Scan(ctx, stmt.Condition)
+	condition, err := b.Scope.Scan(ctx, stmt.If)
 	if err != nil {
 		return err
 	}
 
-	node := &WhileStatement{
-		Pos:       stmt.Pos,
-		Condition: condition,
-		Body:      Block{Pos: stmt.Body.Pos},
+	node := &While{
+		Exp:  condition,
+		Body: Block{Pos: stmt.Body.Pos},
 	}
 	node.Body.Scope = NewScope(scp.Loop, b.Scope, &node.Body.Pos)
 
@@ -456,8 +488,8 @@ func (b *Block) addVar(ctx *Context, stmt ast.VarStatement) error {
 	b.Scope.Bind(s)
 
 	b.addNode(&VarStatement{
-		Sym:  s,
-		Expr: exp,
+		Sym: s,
+		Exp: exp,
 	})
 	return nil
 }

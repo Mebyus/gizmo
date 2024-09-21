@@ -12,7 +12,7 @@ import (
 //
 // token.Kind is DecimalInteger, DecimalFloat, Character, String, Nil, True, False
 type BasicLiteral struct {
-	nodeOperand
+	NodeO
 
 	Token token.Token
 }
@@ -29,11 +29,11 @@ func (l BasicLiteral) Pin() source.Pos {
 
 // <ListLiteral> = "[" [ <Expression> { "," <Expression> } [ "," ] ] "]"
 type ListLiteral struct {
-	nodeOperand
+	NodeO
 
 	Pos source.Pos
 
-	Elems []Expression
+	Elems []Exp
 }
 
 func (ListLiteral) Kind() exn.Kind {
@@ -49,12 +49,12 @@ func (l ListLiteral) Pin() source.Pos {
 // <Name> = <Identifier>
 type ObjectField struct {
 	Name  Identifier
-	Value Expression
+	Value Exp
 }
 
 // <ObjectLiteral> = "{" [ <ObjectField> { "," <ObjectField> } [ "," ] ] "}"
 type ObjectLiteral struct {
-	nodeOperand
+	NodeO
 
 	Pos source.Pos
 

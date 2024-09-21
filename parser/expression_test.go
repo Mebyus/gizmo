@@ -40,67 +40,67 @@ func sym(name string) ast.SymbolExp {
 	return ast.SymbolExp{Identifier: idn(name)}
 }
 
-func par(x ast.Expression) ast.ParenthesizedExpression {
+func par(x ast.Exp) ast.ParenthesizedExpression {
 	return ast.ParenthesizedExpression{Inner: x}
 }
 
-func not(expr ast.Expression) *ast.UnaryExpression {
+func not(expr ast.Exp) *ast.UnaryExpression {
 	return uex(uop.Not, expr)
 }
 
-func plus(expr ast.Expression) *ast.UnaryExpression {
+func plus(expr ast.Exp) *ast.UnaryExpression {
 	return uex(uop.Plus, expr)
 }
 
-func neg(expr ast.Expression) *ast.UnaryExpression {
+func neg(expr ast.Exp) *ast.UnaryExpression {
 	return uex(uop.Minus, expr)
 }
 
-func uex(kind uop.Kind, expr ast.Expression) *ast.UnaryExpression {
+func uex(kind uop.Kind, expr ast.Exp) *ast.UnaryExpression {
 	return &ast.UnaryExpression{
 		Operator: ast.UnaryOperator{Kind: kind},
 		Inner:    expr,
 	}
 }
 
-func sub(left ast.Expression, right ast.Expression) ast.BinaryExpression {
+func sub(left ast.Exp, right ast.Exp) ast.BinExp {
 	return bin(bop.Sub, left, right)
 }
 
-func add(left ast.Expression, right ast.Expression) ast.BinaryExpression {
+func add(left ast.Exp, right ast.Exp) ast.BinExp {
 	return bin(bop.Add, left, right)
 }
 
-func mul(left ast.Expression, right ast.Expression) ast.BinaryExpression {
+func mul(left ast.Exp, right ast.Exp) ast.BinExp {
 	return bin(bop.Mul, left, right)
 }
 
-func and(left ast.Expression, right ast.Expression) ast.BinaryExpression {
+func and(left ast.Exp, right ast.Exp) ast.BinExp {
 	return bin(bop.And, left, right)
 }
 
-func eq(left ast.Expression, right ast.Expression) ast.BinaryExpression {
+func eq(left ast.Exp, right ast.Exp) ast.BinExp {
 	return bin(bop.Equal, left, right)
 }
 
-func neq(left ast.Expression, right ast.Expression) ast.BinaryExpression {
+func neq(left ast.Exp, right ast.Exp) ast.BinExp {
 	return bin(bop.NotEqual, left, right)
 }
 
-func gr(left ast.Expression, right ast.Expression) ast.BinaryExpression {
+func gr(left ast.Exp, right ast.Exp) ast.BinExp {
 	return bin(bop.Greater, left, right)
 }
 
-func ls(left ast.Expression, right ast.Expression) ast.BinaryExpression {
+func ls(left ast.Exp, right ast.Exp) ast.BinExp {
 	return bin(bop.Less, left, right)
 }
 
-func leq(left ast.Expression, right ast.Expression) ast.BinaryExpression {
+func leq(left ast.Exp, right ast.Exp) ast.BinExp {
 	return bin(bop.LessOrEqual, left, right)
 }
 
-func bin(kind bop.Kind, left ast.Expression, right ast.Expression) ast.BinaryExpression {
-	return ast.BinaryExpression{
+func bin(kind bop.Kind, left ast.Exp, right ast.Exp) ast.BinExp {
+	return ast.BinExp{
 		Operator: ast.BinaryOperator{Kind: kind},
 		Left:     left,
 		Right:    right,
@@ -125,7 +125,7 @@ func mbr(name string) ast.MemberPart {
 	return ast.MemberPart{Member: idn(name)}
 }
 
-func idx(index ast.Expression) ast.IndexPart {
+func idx(index ast.Exp) ast.IndexPart {
 	return ast.IndexPart{Index: index}
 }
 
@@ -133,7 +133,7 @@ func TestParseExpression(t *testing.T) {
 	tests := []struct {
 		name    string
 		str     string
-		want    ast.Expression
+		want    ast.Exp
 		wantErr bool
 	}{
 		{

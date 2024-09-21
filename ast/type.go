@@ -167,7 +167,7 @@ type ArrayType struct {
 
 	ElemType TypeSpec
 
-	Size Expression
+	Size Exp
 }
 
 // Explicit interface implementation check
@@ -196,7 +196,7 @@ type EnumEntry struct {
 	Name Identifier
 
 	// Can be nil if entry does not have explicit assigned value
-	Expression Expression
+	Expression Exp
 }
 
 // Explicit interface implementation check

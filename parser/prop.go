@@ -104,7 +104,7 @@ func (p *Parser) propKey() (string, error) {
 	if p.tok.Kind != token.Identifier {
 		return "", p.unexpected(p.tok)
 	}
-	identifier := p.idn()
+	identifier := p.word()
 	p.advance() // skip identifier
 
 	s := identifier.Lit
@@ -118,7 +118,7 @@ func (p *Parser) propKey() (string, error) {
 		if p.tok.Kind != token.Identifier {
 			return "", p.unexpected(p.tok)
 		}
-		identifier := p.idn()
+		identifier := p.word()
 		p.advance() // skip identifier
 
 		s += "." + identifier.Lit

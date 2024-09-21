@@ -8,7 +8,7 @@ import (
 	"github.com/mebyus/gizmo/stg"
 )
 
-func (g *Builder) Exp(expr stg.Expression) {
+func (g *Builder) Exp(expr stg.Exp) {
 	if expr == nil {
 		panic("nil expression")
 	}
@@ -16,7 +16,7 @@ func (g *Builder) Exp(expr stg.Expression) {
 	g.exp(expr)
 }
 
-func (g *Builder) exp(exp stg.Expression) {
+func (g *Builder) exp(exp stg.Exp) {
 	switch exp.Kind() {
 
 	case exn.Integer:
@@ -30,7 +30,7 @@ func (g *Builder) exp(exp stg.Expression) {
 	case exn.Symbol:
 		g.SymbolExp(exp.(*stg.SymbolExpression))
 	case exn.Binary:
-		g.BinaryExp(exp.(*stg.BinaryExpression))
+		g.BinaryExp(exp.(*stg.BinExp))
 	case exn.Unary:
 		g.UnaryExp(exp.(*stg.UnaryExpression))
 	case exn.Paren:
@@ -262,7 +262,7 @@ func (g *Builder) Integer(exp stg.Integer) {
 	g.puts(strconv.FormatUint(exp.Val, 10))
 }
 
-func (g *Builder) CallArgs(args []stg.Expression) {
+func (g *Builder) CallArgs(args []stg.Exp) {
 	if len(args) == 0 {
 		g.puts("()")
 		return
@@ -282,7 +282,7 @@ func (g *Builder) CallExp(expr *stg.CallExpression) {
 	g.CallArgs(expr.Arguments)
 }
 
-func (g *Builder) BinaryExp(expr *stg.BinaryExpression) {
+func (g *Builder) BinaryExp(expr *stg.BinExp) {
 	g.exp(expr.Left)
 	g.space()
 	g.puts(expr.Operator.Kind.String())

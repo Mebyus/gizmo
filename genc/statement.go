@@ -26,10 +26,13 @@ func (g *Builder) Statement(node stg.Statement) {
 		g.simpleIfStatement(node.(*stg.SimpleIfStatement))
 		return
 	case stm.For:
-		g.loopStatement(node.(*stg.LoopStatement))
+		g.loopStatement(node.(*stg.Loop))
 		return
-	case stm.ForCond:
-		g.whileStatement(node.(*stg.WhileStatement))
+	case stm.While:
+		g.whileStatement(node.(*stg.While))
+		return
+	case stm.ForRange:
+		g.forRange(node.(*stg.ForRange))
 		return
 	case stm.Match:
 		g.matchStatement(node.(*stg.MatchStatement))
@@ -146,12 +149,6 @@ func (g *Builder) matchElseCase(c *stg.Block) {
 	g.Block(c)
 }
 
-func (g *Builder) loopStatement(node *stg.LoopStatement) {
-	g.indent()
-	g.puts("while (true) ")
-	g.Block(&node.Body)
-}
-
 func (g *Builder) assignStatement(node *stg.AssignStatement) {
 	g.indent()
 	g.ChainOperandTarget(node.Target)
@@ -183,14 +180,6 @@ func (g *Builder) ChainOperandTarget(node stg.ChainOperand) {
 	}
 }
 
-func (g *Builder) whileStatement(node *stg.WhileStatement) {
-	g.indent()
-	g.puts("while (")
-	g.Exp(node.Condition)
-	g.puts(") ")
-	g.Block(&node.Body)
-}
-
 func (g *Builder) simpleIfStatement(node *stg.SimpleIfStatement) {
 	g.indent()
 	g.puts("if (")
@@ -209,11 +198,11 @@ func (g *Builder) varStatement(node *stg.VarStatement) {
 	g.TypeSpec(node.Sym.Type)
 	g.space()
 	g.SymbolName(node.Sym)
-	if node.Expr == nil {
+	if node.Exp == nil {
 		return
 	}
 	g.puts(" = ")
-	g.Exp(node.Expr)
+	g.Exp(node.Exp)
 }
 
 func (g *Builder) letStatement(node *stg.LetStatement) {
