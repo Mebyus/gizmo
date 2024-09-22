@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/butler"
-	"github.com/mebyus/gizmo/cmd/ku/env"
 	"github.com/mebyus/gizmo/compiler/build"
 	"github.com/mebyus/gizmo/compiler/cc"
 	"github.com/mebyus/gizmo/genc"
@@ -25,10 +23,10 @@ var Build = &butler.Lackey{
 	Usage: "ku build [options] <targets>",
 
 	Exec:   execute,
-	Params: &Config{},
+	Params: &Params{},
 }
 
-type Config struct {
+type Params struct {
 	OutputFile string
 
 	BuildKind string
@@ -45,25 +43,25 @@ type Config struct {
 	kind build.Kind
 }
 
-func (c *Config) Apply(p *butler.Param) error {
-	switch p.Name {
+func (p *Params) Apply(param *butler.Param) error {
+	switch param.Name {
 	case "":
 		panic("param with empty name")
 	case "o":
-		c.OutputFile = p.Str()
+		p.OutputFile = param.Str()
 	case "k":
-		c.BuildKind = p.Str()
+		p.BuildKind = param.Str()
 	case "file":
-		c.BuildFile = p.Str()
+		p.BuildFile = param.Str()
 	case "env":
-		c.EnvFile = p.Str()
+		p.EnvFile = param.Str()
 	default:
-		panic(fmt.Sprintf("unexpected param: {%s}", p.Name))
+		panic(fmt.Sprintf("unexpected param: {%s}", param.Name))
 	}
 	return nil
 }
 
-func (c *Config) Recipe() []butler.Param {
+func (p *Params) Recipe() []butler.Param {
 	return []butler.Param{
 		{
 			Name:        "k",
@@ -100,21 +98,13 @@ func execute(r *butler.Lackey, targets []string) error {
 
 	start := time.Now()
 
-	root, err := env.RootDir()
+	params := r.Params.(*Params)
+	config, err := NewConfigFromParams(params, targets[0])
 	if err != nil {
 		return err
 	}
 
-	config := r.Params.(*Config)
-	kind, err := build.Parse(config.BuildKind)
-	if err != nil {
-		return err
-	}
-
-	config.kind = kind
-	config.RootDir = root
-
-	outexe, err := buildTarget(config, targets[0])
+	outexe, err := buildTarget(config)
 	if err != nil {
 		return err
 	}
@@ -127,18 +117,15 @@ func execute(r *butler.Lackey, targets []string) error {
 	return nil
 }
 
-func makeUnitsBundle(config *Config, path string) (*uwalk.Bundle, error) {
-	path = filepath.Clean(path)
-
-	// TODO: remove this hack
-	// it is here only for convenient development with autocomplete
-	path = strings.TrimPrefix(path, "src/")
-
+func makeUnitsBundle(config *Config) (*uwalk.Bundle, error) {
 	start := time.Now()
 	bundle, err := uwalk.Walk(&uwalk.Config{
 		StdDir:   filepath.Join(config.RootDir, "src/std"),
 		LocalDir: "src",
-	}, origin.Local(path))
+	}, uwalk.QueueItem{
+		Path:             origin.Local(config.InitPath),
+		IncludeTestFiles: config.Test,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -183,8 +170,8 @@ func makeProgram(config *Config, bundle *uwalk.Bundle) (*uwalk.Program, error) {
 }
 
 // returns path to resulting executable if any
-func buildTarget(config *Config, path string) (string, error) {
-	bundle, err := makeUnitsBundle(config, path)
+func buildTarget(config *Config) (string, error) {
+	bundle, err := makeUnitsBundle(config)
 	if err != nil {
 		return "", err
 	}
@@ -194,7 +181,7 @@ func buildTarget(config *Config, path string) (string, error) {
 		return "", err
 	}
 
-	base := filepath.Base(path)
+	base := filepath.Base(config.InitPath)
 	outc := filepath.Join("build/.cache", base+".gen.c")
 	err = genCode(outc, program)
 	if err != nil {
@@ -205,12 +192,21 @@ func buildTarget(config *Config, path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if config.Test {
+		// TODO: build test executable and return it
+		panic("not implemented")
+	}
 	if program.Main == nil {
 		// skip making executable if there is no main unit
 		return "", nil
 	}
 
-	outexe := filepath.Join("build/bin", base)
+	var outexe string
+	if config.OutFile == "" {
+		outexe = filepath.Join("build/bin", base)
+	} else {
+		outexe = config.OutFile
+	}
 	err = link(outexe, outobj)
 	if err != nil {
 		return "", err

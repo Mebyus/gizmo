@@ -40,6 +40,7 @@ var root = &butler.Lackey{
 		lex.Lex,
 		gen.Gen,
 		build.Build,
+		build.Test,
 		clean.Clean,
 		atom.Atom,
 		unit.Unit,

@@ -116,7 +116,7 @@ func (u *Unit) addTest(s *Symbol) {
 //
 // Given directory path should be cleaned by the client.
 func UnitFromDir(resolver Resolver, dir string) (*Unit, error) {
-	files, err := source.LoadUnitFiles(dir, false)
+	files, err := source.LoadUnitFiles(&source.UnitParams{Dir: dir})
 	if err != nil {
 		return nil, err
 	}

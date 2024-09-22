@@ -22,41 +22,51 @@ type Walker struct {
 	// Not nil if main unit is found.
 	Main *stg.Unit
 
-	IncludeTestFiles bool
+	IncludeTestFilesForAllItems bool
 }
 
-func (w *Walker) WalkFrom(path origin.Path) error {
+func (w *Walker) WalkFrom(init QueueItem) error {
 	q := NewUnitQueue()
-	q.AddPath(path)
+	q.RaiseIncludeTestFilesFlagsForAllItems = w.IncludeTestFilesForAllItems
+
+	q.Add(init)
 
 	for {
-		p := q.NextPath()
-		if p.IsEmpty() {
+		var item QueueItem
+		if !q.Next(&item) {
 			w.Units = q.Sorted()
 			return nil
 		}
 
-		u, err := w.AnalyzeHeaders(p)
+		u, err := w.AnalyzeHeaders(item)
 		if err != nil {
 			return err
 		}
 
+		q.AddUnit(u)
 		if u.Name == "main" {
-			if w.Main != nil {
+			if u.DiscoveryIndex != 0 {
 				return fmt.Errorf("main unit [%s] cannot be imported", u.Path)
+			}
+			if w.Main != nil {
+				panic("multiple main units in uwalk graph")
 			}
 			w.Main = u
 		}
-		q.AddUnit(u)
 	}
 }
 
-func (w *Walker) AnalyzeHeaders(path origin.Path) (*stg.Unit, error) {
+func (w *Walker) AnalyzeHeaders(item QueueItem) (*stg.Unit, error) {
+	path := item.Path
+
 	dir, err := w.Resolve(path)
 	if err != nil {
 		return nil, err
 	}
-	files, err := source.LoadUnitFiles(dir, w.IncludeTestFiles)
+	files, err := source.LoadUnitFiles(&source.UnitParams{
+		Dir:              dir,
+		IncludeTestFiles: item.IncludeTestFiles,
+	})
 	if err != nil {
 		return nil, err
 	}

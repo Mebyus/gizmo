@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"time"
 )
 
@@ -68,9 +67,8 @@ type File struct {
 
 	// File extension, including dot character. Examples:
 	//
-	//	- ".gm"
-	//	- ".cc"
-	//	- ".cpp"
+	//	- ".ku"
+	//	- ".c"
 	//	- ".asm"
 	//
 	// This field will be empty if file does not have extension in its name
@@ -237,58 +235,4 @@ func SortAndOrder(files []*File) {
 	for i := 0; i < len(files); i += 1 {
 		files[i].Num = uint32(i)
 	}
-}
-
-const MaxFileSize = 1 << 26
-
-func LoadUnitFiles(dir string, includeTestFiles bool) ([]*File, error) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, err
-	}
-	if len(entries) == 0 {
-		return nil, fmt.Errorf("directory \"%s\" is empty", dir)
-	}
-
-	var files []*File
-	for _, entry := range entries {
-		if !entry.Type().IsRegular() {
-			continue
-		}
-
-		name := entry.Name()
-		if filepath.Ext(name) != ".ku" {
-			continue
-		}
-		if !includeTestFiles && strings.HasSuffix(name, ".test.ku") {
-			continue
-		}
-
-		info, err := entry.Info()
-		if err != nil {
-			return nil, err
-		}
-
-		if !info.Mode().IsRegular() {
-			continue
-		}
-
-		size := info.Size()
-		if size > MaxFileSize {
-			return nil, fmt.Errorf("file \"%s\" is larger than max allowed size (64mb)", name)
-		}
-
-		path := filepath.Join(dir, name)
-		file, err := Load(path)
-		if err != nil {
-			return nil, err
-		}
-		files = append(files, file)
-	}
-	if len(files) == 0 {
-		return nil, fmt.Errorf("directory \"%s\" does not contain gizmo source files", dir)
-	}
-	SortAndOrder(files)
-
-	return files, nil
 }

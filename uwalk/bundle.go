@@ -16,6 +16,7 @@ type Bundle struct {
 	Units []*stg.Unit
 
 	// Index in this slice corresponds to Unit.DiscoveryIndex.
+	// Every parser in this slice has only its header parsed.
 	Source []ParserSet
 
 	Map map[origin.Path]*stg.Unit
@@ -32,6 +33,9 @@ type Program struct {
 	// List of all program units sorted by import path.
 	Units []*stg.Unit
 
+	// Total number of test symbols in all units.
+	TestCount uint64
+
 	// Not nil if program has main unit.
 	Main *stg.Unit
 
@@ -39,11 +43,18 @@ type Program struct {
 }
 
 func (b *Bundle) Program() (*Program, error) {
+	var tests uint64
+	for _, u := range b.Units {
+		tests += uint64(len(u.Tests))
+	}
+
 	p := &Program{
 		Graph:  b.Graph,
 		Units:  b.Units,
 		Main:   b.Main,
 		Global: b.Global,
+
+		TestCount: tests,
 	}
 
 	if p.Main == nil {
@@ -77,14 +88,12 @@ type Config struct {
 	IncludeTestFiles bool
 }
 
-func Walk(cfg *Config, path origin.Path) (*Bundle, error) {
+func Walk(cfg *Config, init QueueItem) (*Bundle, error) {
 	w := Walker{
 		StdDir:   cfg.StdDir,
 		LocalDir: cfg.LocalDir,
-
-		IncludeTestFiles: cfg.IncludeTestFiles,
 	}
-	err := w.WalkFrom(path)
+	err := w.WalkFrom(init)
 	if err != nil {
 		return nil, err
 	}
