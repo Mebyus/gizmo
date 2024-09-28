@@ -15,7 +15,7 @@ type Literal interface {
 // This is dummy implementation of Literal interface.
 //
 // Used for embedding into other (non-dummy) operand nodes.
-type nodeLiteral struct{ nodeOperand }
+type nodeLiteral struct{ NodeO }
 
 func (nodeLiteral) Literal() {}
 

@@ -15,12 +15,12 @@ type ChainOperand interface {
 // of discriminator ChainOperand() method.
 //
 // Used for embedding into other (non-dummy) chain part nodes.
-type nodeChain struct{ nodeOperand }
+type NodeC struct{ NodeO }
 
-func (nodeChain) ChainOperand() {}
+func (NodeC) ChainOperand() {}
 
 type ChainSymbol struct {
-	nodeChain
+	NodeC
 
 	Pos source.Pos
 
@@ -45,8 +45,8 @@ func (s *ChainSymbol) Type() *Type {
 	return s.typ
 }
 
-type IndirectExpression struct {
-	nodeChain
+type IndirectExp struct {
+	NodeC
 
 	Pos source.Pos
 
@@ -56,22 +56,22 @@ type IndirectExpression struct {
 }
 
 // Explicit interface implementation check.
-var _ ChainOperand = &IndirectExpression{}
+var _ ChainOperand = &IndirectExp{}
 
-func (*IndirectExpression) Kind() exk.Kind {
+func (*IndirectExp) Kind() exk.Kind {
 	return exk.Indirect
 }
 
-func (e *IndirectExpression) Pin() source.Pos {
+func (e *IndirectExp) Pin() source.Pos {
 	return e.Pos
 }
 
-func (e *IndirectExpression) Type() *Type {
+func (e *IndirectExp) Type() *Type {
 	return e.typ
 }
 
-type MemberExpression struct {
-	nodeChain
+type MemberExp struct {
+	NodeC
 
 	Pos source.Pos
 
@@ -81,22 +81,22 @@ type MemberExpression struct {
 }
 
 // Explicit interface implementation check.
-var _ ChainOperand = &MemberExpression{}
+var _ ChainOperand = &MemberExp{}
 
-func (*MemberExpression) Kind() exk.Kind {
+func (*MemberExp) Kind() exk.Kind {
 	return exk.Member
 }
 
-func (e *MemberExpression) Pin() source.Pos {
+func (e *MemberExp) Pin() source.Pos {
 	return e.Pos
 }
 
-func (e *MemberExpression) Type() *Type {
+func (e *MemberExp) Type() *Type {
 	return e.Member.Type
 }
 
-type IndirectMemberExpression struct {
-	nodeChain
+type IndirectMemberExp struct {
+	NodeC
 
 	Pos source.Pos
 
@@ -106,22 +106,22 @@ type IndirectMemberExpression struct {
 }
 
 // Explicit interface implementation check.
-var _ ChainOperand = &IndirectMemberExpression{}
+var _ ChainOperand = &IndirectMemberExp{}
 
-func (*IndirectMemberExpression) Kind() exk.Kind {
+func (*IndirectMemberExp) Kind() exk.Kind {
 	return exk.IndirectMember
 }
 
-func (e *IndirectMemberExpression) Pin() source.Pos {
+func (e *IndirectMemberExp) Pin() source.Pos {
 	return e.Pos
 }
 
-func (e *IndirectMemberExpression) Type() *Type {
+func (e *IndirectMemberExp) Type() *Type {
 	return e.Member.Type
 }
 
-type CallExpression struct {
-	nodeChain
+type CallExp struct {
+	NodeC
 
 	Pos source.Pos
 
@@ -137,22 +137,22 @@ type CallExpression struct {
 }
 
 // Explicit interface implementation check
-var _ ChainOperand = &CallExpression{}
+var _ ChainOperand = &CallExp{}
 
-func (*CallExpression) Kind() exk.Kind {
+func (*CallExp) Kind() exk.Kind {
 	return exk.Call
 }
 
-func (e *CallExpression) Pin() source.Pos {
+func (e *CallExp) Pin() source.Pos {
 	return e.Pos
 }
 
-func (e *CallExpression) Type() *Type {
+func (e *CallExp) Type() *Type {
 	return e.typ
 }
 
-type AddressExpression struct {
-	nodeChain
+type AddressExp struct {
+	NodeC
 
 	Pos source.Pos
 
@@ -162,22 +162,22 @@ type AddressExpression struct {
 }
 
 // Explicit interface implementation check.
-var _ ChainOperand = &AddressExpression{}
+var _ ChainOperand = &AddressExp{}
 
-func (*AddressExpression) Kind() exk.Kind {
+func (*AddressExp) Kind() exk.Kind {
 	return exk.Address
 }
 
-func (e *AddressExpression) Pin() source.Pos {
+func (e *AddressExp) Pin() source.Pos {
 	return e.Pos
 }
 
-func (e *AddressExpression) Type() *Type {
+func (e *AddressExp) Type() *Type {
 	return e.typ
 }
 
-type IndirectIndexExpression struct {
-	nodeChain
+type IndirectIndexExp struct {
+	NodeC
 
 	Pos source.Pos
 
@@ -189,22 +189,22 @@ type IndirectIndexExpression struct {
 }
 
 // Explicit interface implementation check.
-var _ ChainOperand = &IndirectIndexExpression{}
+var _ ChainOperand = &IndirectIndexExp{}
 
-func (*IndirectIndexExpression) Kind() exk.Kind {
+func (*IndirectIndexExp) Kind() exk.Kind {
 	return exk.IndirectIndex
 }
 
-func (e *IndirectIndexExpression) Pin() source.Pos {
+func (e *IndirectIndexExp) Pin() source.Pos {
 	return e.Pos
 }
 
-func (e *IndirectIndexExpression) Type() *Type {
+func (e *IndirectIndexExp) Type() *Type {
 	return e.typ
 }
 
-type ChunkIndexExpression struct {
-	nodeChain
+type ChunkIndexExp struct {
+	NodeC
 
 	Pos source.Pos
 
@@ -216,22 +216,22 @@ type ChunkIndexExpression struct {
 }
 
 // Explicit interface implementation check.
-var _ ChainOperand = &ChunkIndexExpression{}
+var _ ChainOperand = &ChunkIndexExp{}
 
-func (*ChunkIndexExpression) Kind() exk.Kind {
+func (*ChunkIndexExp) Kind() exk.Kind {
 	return exk.ChunkIndex
 }
 
-func (e *ChunkIndexExpression) Pin() source.Pos {
+func (e *ChunkIndexExp) Pin() source.Pos {
 	return e.Pos
 }
 
-func (e *ChunkIndexExpression) Type() *Type {
+func (e *ChunkIndexExp) Type() *Type {
 	return e.typ
 }
 
 type ArrayIndexExp struct {
-	nodeChain
+	NodeC
 
 	Pos source.Pos
 
@@ -258,7 +258,7 @@ func (e *ArrayIndexExp) Type() *Type {
 }
 
 type ArraySliceExp struct {
-	nodeChain
+	NodeC
 
 	Pos source.Pos
 
@@ -289,7 +289,7 @@ func (e *ArraySliceExp) Type() *Type {
 }
 
 type ChunkSliceExp struct {
-	nodeChain
+	NodeC
 
 	Pos source.Pos
 
@@ -319,8 +319,8 @@ func (e *ChunkSliceExp) Type() *Type {
 	return e.typ
 }
 
-type ChunkMemberExpression struct {
-	nodeChain
+type ChunkMemberExp struct {
+	NodeC
 
 	Pos source.Pos
 
@@ -335,16 +335,16 @@ type ChunkMemberExpression struct {
 }
 
 // Explicit interface implementation check.
-var _ ChainOperand = &ChunkMemberExpression{}
+var _ ChainOperand = &ChunkMemberExp{}
 
-func (*ChunkMemberExpression) Kind() exk.Kind {
+func (*ChunkMemberExp) Kind() exk.Kind {
 	return exk.ChunkMember
 }
 
-func (e *ChunkMemberExpression) Pin() source.Pos {
+func (e *ChunkMemberExp) Pin() source.Pos {
 	return e.Pos
 }
 
-func (e *ChunkMemberExpression) Type() *Type {
+func (e *ChunkMemberExp) Type() *Type {
 	return e.typ
 }

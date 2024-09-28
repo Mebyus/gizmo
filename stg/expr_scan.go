@@ -259,7 +259,7 @@ func (s *Scope) scanIndexPart(ctx *Context, tip ChainOperand, part ast.IndexPart
 	case tpk.Custom:
 		panic("not implemented")
 	case tpk.Chunk:
-		return &ChunkIndexExpression{
+		return &ChunkIndexExp{
 			Pos:    pos,
 			Target: tip,
 			Index:  index,
@@ -278,7 +278,7 @@ func (s *Scope) scanIndexPart(ctx *Context, tip ChainOperand, part ast.IndexPart
 }
 
 func (s *Scope) scanAddressPart(ctx *Context, tip ChainOperand, part ast.AddressPart) (ChainOperand, error) {
-	return &AddressExpression{
+	return &AddressExp{
 		Pos:    part.Pos,
 		Target: tip,
 		typ:    s.Types.storePointer(tip.Type()),
@@ -299,7 +299,7 @@ func (s *Scope) scanIndirectIndexPart(ctx *Context, tip ChainOperand, part ast.I
 
 	// TODO: check that index is of integer type
 
-	return &IndirectIndexExpression{
+	return &IndirectIndexExp{
 		Pos:    part.Pos,
 		Target: tip,
 		Index:  index,
@@ -314,7 +314,7 @@ func (s *Scope) scanIndirectPart(ctx *Context, tip ChainOperand, part ast.Indire
 		return nil, fmt.Errorf("%s: cannot indirect %s operand of %s type",
 			part.Pos.String(), tip.Kind().String(), t.Kind.String())
 	}
-	return &IndirectExpression{
+	return &IndirectExp{
 		Pos:    part.Pos,
 		Target: tip,
 		typ:    t.Def.(PointerTypeDef).RefType,
@@ -347,7 +347,7 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 			return nil, fmt.Errorf("%s: type %s no member \"%s\"",
 				pos.String(), t.Kind.String(), name)
 		}
-		return &MemberExpression{
+		return &MemberExp{
 			Pos:    pos,
 			Target: tip,
 			Member: m,
@@ -364,7 +364,7 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 			return nil, fmt.Errorf("%s: type %s no member \"%s\"",
 				pos.String(), t.Kind.String(), name)
 		}
-		return &IndirectMemberExpression{
+		return &IndirectMemberExp{
 			Pos:    pos,
 			Target: tip,
 			Member: m,
@@ -373,14 +373,14 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 		name := part.Member.Lit
 		switch name {
 		case "len":
-			return &ChunkMemberExpression{
+			return &ChunkMemberExp{
 				Pos:    pos,
 				Target: tip,
 				Name:   "len",
 				typ:    UintType,
 			}, nil
 		case "ptr":
-			return &ChunkMemberExpression{
+			return &ChunkMemberExp{
 				Pos:    pos,
 				Target: tip,
 				Name:   "ptr",
@@ -463,7 +463,7 @@ func (s *Scope) scanCallPart(ctx *Context, tip ChainOperand, part ast.CallPart) 
 	if err != nil {
 		return nil, err
 	}
-	return &CallExpression{
+	return &CallExp{
 		Pos:       pos,
 		Arguments: aa,
 		Callee:    tip,
@@ -518,14 +518,14 @@ func (s *Scope) scanCastExp(ctx *Context, expr ast.CastExp) (*CastExp, error) {
 	}, nil
 }
 
-func (s *Scope) scanParenthesizedExpression(ctx *Context, expr ast.ParenthesizedExpression) (*ParenthesizedExpression, error) {
+func (s *Scope) scanParenthesizedExpression(ctx *Context, expr ast.ParenthesizedExpression) (*ParenExp, error) {
 	pos := expr.Pos
 	inner, err := s.scan(ctx, expr.Inner)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ParenthesizedExpression{
+	return &ParenExp{
 		Pos:   pos,
 		Inner: inner,
 	}, nil
@@ -573,7 +573,7 @@ func (s *Scope) scanCallArgs(ctx *Context, pos source.Pos, params []*Symbol, arg
 	return aa, nil
 }
 
-func (s *Scope) scanSymbolExpression(ctx *Context, expr ast.SymbolExp) (*SymbolExpression, error) {
+func (s *Scope) scanSymbolExpression(ctx *Context, expr ast.SymbolExp) (*SymbolExp, error) {
 	name := expr.Identifier.Lit
 	pos := expr.Identifier.Pos
 	symbol := s.Lookup(name, pos.Num)
@@ -584,19 +584,19 @@ func (s *Scope) scanSymbolExpression(ctx *Context, expr ast.SymbolExp) (*SymbolE
 		ctx.ref.Add(symbol)
 	}
 
-	return &SymbolExpression{
+	return &SymbolExp{
 		Pos: pos,
 		Sym: symbol,
 	}, nil
 }
 
-func (s *Scope) scanUnaryExpression(ctx *Context, expr *ast.UnaryExpression) (*UnaryExpression, error) {
+func (s *Scope) scanUnaryExpression(ctx *Context, expr *ast.UnaryExpression) (*UnaryExp, error) {
 	inner, err := s.scan(ctx, expr.Inner)
 	if err != nil {
 		return nil, err
 	}
 
-	return &UnaryExpression{
+	return &UnaryExp{
 		Operator: UnaryOperator(expr.Operator),
 		Inner:    inner,
 	}, nil

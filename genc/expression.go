@@ -28,13 +28,13 @@ func (g *Builder) exp(exp stg.Exp) {
 	case exk.False:
 		g.False()
 	case exk.Symbol:
-		g.SymbolExp(exp.(*stg.SymbolExpression))
+		g.SymbolExp(exp.(*stg.SymbolExp))
 	case exk.Binary:
 		g.BinaryExp(exp.(*stg.BinExp))
 	case exk.Unary:
-		g.UnaryExp(exp.(*stg.UnaryExpression))
+		g.UnaryExp(exp.(*stg.UnaryExp))
 	case exk.Paren:
-		g.ParenExp(exp.(*stg.ParenthesizedExpression))
+		g.ParenExp(exp.(*stg.ParenExp))
 	case exk.Cast:
 		g.CastExp(exp.(*stg.CastExp))
 	case exk.MemCast:
@@ -116,21 +116,21 @@ func (g *Builder) ChainOperand(exp stg.ChainOperand) {
 	case exk.Chain:
 		g.ChainSymbol(exp.(*stg.ChainSymbol))
 	case exk.Member:
-		g.MemberExp(exp.(*stg.MemberExpression))
+		g.MemberExp(exp.(*stg.MemberExp))
 	case exk.Address:
-		g.AddressExp(exp.(*stg.AddressExpression))
+		g.AddressExp(exp.(*stg.AddressExp))
 	case exk.Indirect:
-		g.IndirectExp(exp.(*stg.IndirectExpression))
+		g.IndirectExp(exp.(*stg.IndirectExp))
 	case exk.IndirectIndex:
-		g.IndirectIndexExp(exp.(*stg.IndirectIndexExpression))
+		g.IndirectIndexExp(exp.(*stg.IndirectIndexExp))
 	case exk.Call:
-		g.CallExp(exp.(*stg.CallExpression))
+		g.CallExp(exp.(*stg.CallExp))
 	case exk.IndirectMember:
-		g.IndirectMemberExp(exp.(*stg.IndirectMemberExpression))
+		g.IndirectMemberExp(exp.(*stg.IndirectMemberExp))
 	case exk.ChunkMember:
-		g.ChunkMemberExp(exp.(*stg.ChunkMemberExpression))
+		g.ChunkMemberExp(exp.(*stg.ChunkMemberExp))
 	case exk.ChunkIndex:
-		g.ChunkIndexExp(exp.(*stg.ChunkIndexExpression))
+		g.ChunkIndexExp(exp.(*stg.ChunkIndexExp))
 	case exk.ArraySlice:
 		g.ArraySliceExp(exp.(*stg.ArraySliceExp))
 	default:
@@ -179,7 +179,7 @@ func (g *Builder) arrayFullSliceExp(exp *stg.ArraySliceExp) {
 	g.puts(")")
 }
 
-func (g *Builder) ChunkIndexExp(exp *stg.ChunkIndexExpression) {
+func (g *Builder) ChunkIndexExp(exp *stg.ChunkIndexExp) {
 	g.ChunkTypeIndexMethodName(exp.Type())
 	g.puts("(")
 	g.exp(exp.Target)
@@ -188,7 +188,7 @@ func (g *Builder) ChunkIndexExp(exp *stg.ChunkIndexExpression) {
 	g.puts(")")
 }
 
-func (g *Builder) ChunkIndirectElemExp(exp *stg.ChunkIndexExpression) {
+func (g *Builder) ChunkIndirectElemExp(exp *stg.ChunkIndexExp) {
 	g.puts("*(")
 	g.ChunkTypeElemMethodName(exp.Type())
 	g.puts("(")
@@ -208,48 +208,48 @@ func (g *Builder) ArrayIndirectElemExp(exp *stg.ArrayIndexExp) {
 	g.puts("))")
 }
 
-func (g *Builder) ChunkMemberExp(exp *stg.ChunkMemberExpression) {
+func (g *Builder) ChunkMemberExp(exp *stg.ChunkMemberExp) {
 	g.exp(exp.Target)
 	g.puts(".")
 	g.puts(exp.Name)
 }
 
-func (g *Builder) ParenExp(exp *stg.ParenthesizedExpression) {
+func (g *Builder) ParenExp(exp *stg.ParenExp) {
 	g.puts("(")
 	g.exp(exp.Inner)
 	g.puts(")")
 }
 
-func (g *Builder) UnaryExp(exp *stg.UnaryExpression) {
+func (g *Builder) UnaryExp(exp *stg.UnaryExp) {
 	g.puts(exp.Operator.Kind.String())
 	g.exp(exp.Inner)
 }
 
-func (g *Builder) IndirectIndexExp(exp *stg.IndirectIndexExpression) {
+func (g *Builder) IndirectIndexExp(exp *stg.IndirectIndexExp) {
 	g.ChainOperand(exp.Target)
 	g.puts("[")
 	g.exp(exp.Index)
 	g.puts("]")
 }
 
-func (g *Builder) IndirectExp(exp *stg.IndirectExpression) {
+func (g *Builder) IndirectExp(exp *stg.IndirectExp) {
 	g.puts("*(")
 	g.ChainOperand(exp.Target)
 	g.puts(")")
 }
 
-func (g *Builder) AddressExp(exp *stg.AddressExpression) {
+func (g *Builder) AddressExp(exp *stg.AddressExp) {
 	g.puts("&")
 	g.ChainOperand(exp.Target)
 }
 
-func (g *Builder) MemberExp(exp *stg.MemberExpression) {
+func (g *Builder) MemberExp(exp *stg.MemberExp) {
 	g.ChainOperand(exp.Target)
 	g.puts(".")
 	g.puts(exp.Member.Name)
 }
 
-func (g *Builder) IndirectMemberExp(exp *stg.IndirectMemberExpression) {
+func (g *Builder) IndirectMemberExp(exp *stg.IndirectMemberExp) {
 	g.ChainOperand(exp.Target)
 	g.puts("->")
 	g.puts(exp.Member.Name)
@@ -277,7 +277,7 @@ func (g *Builder) CallArgs(args []stg.Exp) {
 	g.puts(")")
 }
 
-func (g *Builder) CallExp(expr *stg.CallExpression) {
+func (g *Builder) CallExp(expr *stg.CallExp) {
 	g.ChainOperand(expr.Callee)
 	g.CallArgs(expr.Arguments)
 }
@@ -290,6 +290,6 @@ func (g *Builder) BinaryExp(expr *stg.BinExp) {
 	g.exp(expr.Right)
 }
 
-func (g *Builder) SymbolExp(expr *stg.SymbolExpression) {
+func (g *Builder) SymbolExp(expr *stg.SymbolExp) {
 	g.SymbolName(expr.Sym)
 }

@@ -184,7 +184,7 @@ type CallStatement struct {
 
 	Pos source.Pos
 
-	Call *CallExpression
+	Call *CallExp
 }
 
 var _ Statement = &CallStatement{}

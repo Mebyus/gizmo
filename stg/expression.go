@@ -20,11 +20,9 @@ type Exp interface {
 // This is dummy implementation of Expression interface.
 //
 // Used for embedding into other (non-dummy) expression nodes.
-type nodeExpression struct{}
+type NodeE struct{}
 
-func (nodeExpression) Expression() {}
-
-func (nodeExpression) Kind() exk.Kind { return 0 }
+func (NodeE) Expression() {}
 
 type Operand interface {
 	Exp
@@ -36,16 +34,16 @@ type Operand interface {
 // This is dummy implementation of Operand interface.
 //
 // Used for embedding into other (non-dummy) operand nodes.
-type nodeOperand struct{ nodeExpression }
+type NodeO struct{ NodeE }
 
-func (nodeOperand) Operand() {}
+func (NodeO) Operand() {}
 
-// SymbolExpression is an operand expression which represents direct symbol usage.
+// SymbolExp is an operand expression which represents direct symbol usage.
 // Example:
 //
-//	10 + a // in this expression operand "a" is SymbolExpression
-type SymbolExpression struct {
-	nodeOperand
+//	10 + a // in this expression operand "a" is SymbolExp
+type SymbolExp struct {
+	NodeO
 
 	Pos source.Pos
 
@@ -54,23 +52,23 @@ type SymbolExpression struct {
 }
 
 // Explicit interface implementation check
-var _ Operand = &SymbolExpression{}
+var _ Operand = &SymbolExp{}
 
-func (*SymbolExpression) Kind() exk.Kind {
+func (*SymbolExp) Kind() exk.Kind {
 	return exk.Symbol
 }
 
-func (e *SymbolExpression) Pin() source.Pos {
+func (e *SymbolExp) Pin() source.Pos {
 	return e.Pos
 }
 
-func (e *SymbolExpression) Type() *Type {
+func (e *SymbolExp) Type() *Type {
 	return e.Sym.Type
 }
 
 // EnumExp direct usage of enum entry as value.
 type EnumExp struct {
-	nodeOperand
+	NodeO
 
 	Pos source.Pos
 
@@ -96,8 +94,8 @@ func (e *EnumExp) Type() *Type {
 
 type UnaryOperator ast.UnaryOperator
 
-type UnaryExpression struct {
-	nodeExpression
+type UnaryExp struct {
+	NodeE
 
 	Operator UnaryOperator
 	Inner    Exp
@@ -106,17 +104,17 @@ type UnaryExpression struct {
 }
 
 // Explicit interface implementation check
-var _ Exp = &UnaryExpression{}
+var _ Exp = &UnaryExp{}
 
-func (*UnaryExpression) Kind() exk.Kind {
+func (*UnaryExp) Kind() exk.Kind {
 	return exk.Unary
 }
 
-func (e *UnaryExpression) Pin() source.Pos {
+func (e *UnaryExp) Pin() source.Pos {
 	return e.Operator.Pos
 }
 
-func (e *UnaryExpression) Type() *Type {
+func (e *UnaryExp) Type() *Type {
 	if e.typ != nil {
 		return e.typ
 	}
@@ -127,7 +125,7 @@ func (e *UnaryExpression) Type() *Type {
 type BinaryOperator ast.BinaryOperator
 
 type BinExp struct {
-	nodeExpression
+	NodeE
 
 	Operator BinaryOperator
 	Left     Exp
@@ -155,8 +153,8 @@ func (e *BinExp) Type() *Type {
 	return e.typ
 }
 
-type ParenthesizedExpression struct {
-	nodeOperand
+type ParenExp struct {
+	NodeO
 
 	Pos source.Pos
 
@@ -164,22 +162,22 @@ type ParenthesizedExpression struct {
 }
 
 // Explicit interface implementation check
-var _ Operand = &ParenthesizedExpression{}
+var _ Operand = &ParenExp{}
 
-func (*ParenthesizedExpression) Kind() exk.Kind {
+func (*ParenExp) Kind() exk.Kind {
 	return exk.Paren
 }
 
-func (e *ParenthesizedExpression) Pin() source.Pos {
+func (e *ParenExp) Pin() source.Pos {
 	return e.Pos
 }
 
-func (e *ParenthesizedExpression) Type() *Type {
+func (e *ParenExp) Type() *Type {
 	return e.Inner.Type()
 }
 
 type CastExp struct {
-	nodeOperand
+	NodeO
 
 	Pos source.Pos
 
@@ -205,7 +203,7 @@ func (e *CastExp) Type() *Type {
 }
 
 type TintExp struct {
-	nodeOperand
+	NodeO
 
 	Pos source.Pos
 
@@ -231,7 +229,7 @@ func (e *TintExp) Type() *Type {
 }
 
 type MemCastExp struct {
-	nodeOperand
+	NodeO
 
 	Pos source.Pos
 

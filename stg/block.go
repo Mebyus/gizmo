@@ -184,7 +184,7 @@ func (b *Block) addDefer(ctx *Context, stmt ast.DeferStatement) error {
 	if err != nil {
 		return err
 	}
-	call := exp.(*CallExpression)
+	call := exp.(*CallExp)
 	details, err := getCallDetails(call.Callee)
 	if err != nil {
 		return err
@@ -329,7 +329,7 @@ func (b *Block) addCall(ctx *Context, stmt ast.CallStatement) error {
 	pos := stmt.Call.Identifier.Pos
 	b.addNode(&CallStatement{
 		Pos:  pos,
-		Call: o.(*CallExpression),
+		Call: o.(*CallExp),
 	})
 	return nil
 }

@@ -20,13 +20,13 @@ func (s *Scope) evalExp(exp Exp) (Exp, error) {
 	case exk.Integer:
 		return exp, nil
 	case exk.Symbol:
-		s := exp.(*SymbolExpression).Sym
+		s := exp.(*SymbolExp).Sym
 		c := s.Def.(*ConstDef)
 		return c.Exp, nil
 	case exk.Paren:
-		return exp.(*ParenthesizedExpression).Inner, nil
+		return exp.(*ParenExp).Inner, nil
 	case exk.Unary:
-		return s.evalUnaryExp(exp.(*UnaryExpression))
+		return s.evalUnaryExp(exp.(*UnaryExp))
 	case exk.Binary:
 		return s.evalBinExp(exp.(*BinExp))
 	default:
@@ -62,7 +62,7 @@ func (s *Scope) evalBinExp(exp *BinExp) (Exp, error) {
 	panic(fmt.Sprintf("not implemented for %s and %s expressions", l.Kind(), r.Kind()))
 }
 
-func (s *Scope) evalUnaryExp(exp *UnaryExpression) (Exp, error) {
+func (s *Scope) evalUnaryExp(exp *UnaryExp) (Exp, error) {
 	inner, err := s.evalExp(exp.Inner)
 	if err != nil {
 		return nil, err

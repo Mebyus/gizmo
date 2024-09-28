@@ -164,15 +164,15 @@ func (g *Builder) ChainOperandTarget(node stg.ChainOperand) {
 	case exk.Chain:
 		g.ChainSymbol(node.(*stg.ChainSymbol))
 	case exk.Member:
-		g.MemberExp(node.(*stg.MemberExpression))
+		g.MemberExp(node.(*stg.MemberExp))
 	case exk.Indirect:
-		g.IndirectExp(node.(*stg.IndirectExpression))
+		g.IndirectExp(node.(*stg.IndirectExp))
 	case exk.IndirectIndex:
-		g.IndirectIndexExp(node.(*stg.IndirectIndexExpression))
+		g.IndirectIndexExp(node.(*stg.IndirectIndexExp))
 	case exk.IndirectMember:
-		g.IndirectMemberExp(node.(*stg.IndirectMemberExpression))
+		g.IndirectMemberExp(node.(*stg.IndirectMemberExp))
 	case exk.ChunkIndex:
-		g.ChunkIndirectElemExp(node.(*stg.ChunkIndexExpression))
+		g.ChunkIndirectElemExp(node.(*stg.ChunkIndexExp))
 	case exk.ArrayIndex:
 		g.ArrayIndirectElemExp(node.(*stg.ArrayIndexExp))
 	default:
