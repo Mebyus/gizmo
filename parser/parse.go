@@ -16,7 +16,7 @@ func (p *Parser) word() ast.Identifier {
 
 func (p *Parser) identifier() (ast.Identifier, error) {
 	if p.tok.Kind != token.Identifier {
-		return ast.Identifier{}, p.unexpected(p.tok)
+		return ast.Identifier{}, p.unexpected()
 	}
 	identifier := p.word()
 	p.advance()
@@ -36,13 +36,13 @@ func (p *Parser) expect(k token.Kind) error {
 	if p.tok.Kind == k {
 		return nil
 	}
-	return p.unexpected(p.tok)
+	return p.unexpected()
 }
 
 func (p *Parser) unit() (*ast.UnitClause, error) {
 	p.advance() // skip "unit"
 	if p.tok.Kind != token.Identifier {
-		return nil, p.unexpected(p.tok)
+		return nil, p.unexpected()
 	}
 	name := p.word()
 	p.advance() // skip unit name identifier
@@ -72,7 +72,7 @@ func (p *Parser) top() error {
 		traits.Pub = true
 		return p.topPub(traits)
 	default:
-		return p.unexpected(p.tok)
+		return p.unexpected()
 	}
 }
 
@@ -115,6 +115,6 @@ func (p *Parser) topPub(traits ast.Traits) error {
 	case token.Let:
 		return p.topConstant(traits)
 	default:
-		return p.unexpected(p.tok)
+		return p.unexpected()
 	}
 }

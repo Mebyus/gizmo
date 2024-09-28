@@ -6,16 +6,14 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
-var ErrTODO = fmt.Errorf("stub error (please implement me)")
-
 type UnexpectedTokenError struct {
 	Token token.Token
 }
 
-func (u *UnexpectedTokenError) Error() string {
-	return fmt.Sprintf("unexpected token %s at %s", u.Token.Kind.String(), u.Token.Pos.String())
+func (e *UnexpectedTokenError) Error() string {
+	return fmt.Sprintf("%s: unexpected token %s", e.Token.Pos, e.Token.Kind)
 }
 
-func (p *Parser) unexpected(tok token.Token) error {
-	return &UnexpectedTokenError{Token: tok}
+func (p *Parser) unexpected() error {
+	return &UnexpectedTokenError{Token: p.tok}
 }

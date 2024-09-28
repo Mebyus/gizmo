@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mebyus/gizmo/gencpp"
 	"github.com/mebyus/gizmo/parser"
 	"github.com/mebyus/gizmo/source"
 )
@@ -471,7 +470,7 @@ func (w *Worker) gizmoGenout(buf *bytes.Buffer, task *BuildTask, name string) (s
 		w.debug("compile \"%s\"", src.Path)
 	}
 
-	atom, err := parser.ParseSource(src)
+	_, err = parser.ParseSource(src)
 	if err != nil {
 		return "", err
 	}
@@ -481,20 +480,5 @@ func (w *Worker) gizmoGenout(buf *bytes.Buffer, task *BuildTask, name string) (s
 		entryPoint = "main"
 	}
 
-	genConfig := gencpp.Config{
-		Size:             len(src.Bytes),
-		DefaultNamespace: task.dep.BuildInfo.DefaultNamespace,
-
-		GlobalNamespacePrefix:  w.cfg.BaseNamespace,
-		SourceLocationComments: w.cfg.BuildKind == BuildDebug,
-	}
-	start := buf.Len()
-	err = gencpp.Gen(buf, &genConfig, atom)
-	if err != nil {
-		return "", err
-	}
-	genout = buf.Bytes()[start:]
-	w.cache.SaveFileGenout(p, src, genout)
-	w.cache.SaveUnitFileToMap(p, src)
 	return entryPoint, nil
 }

@@ -2,7 +2,7 @@ package stg
 
 import (
 	"github.com/mebyus/gizmo/ast"
-	"github.com/mebyus/gizmo/ast/exn"
+	"github.com/mebyus/gizmo/enums/exk"
 	"github.com/mebyus/gizmo/source"
 )
 
@@ -12,7 +12,7 @@ type Exp interface {
 	// dummy discriminator method
 	Expression()
 
-	Kind() exn.Kind
+	Kind() exk.Kind
 
 	Type() *Type
 }
@@ -24,7 +24,7 @@ type nodeExpression struct{}
 
 func (nodeExpression) Expression() {}
 
-func (nodeExpression) Kind() exn.Kind { return 0 }
+func (nodeExpression) Kind() exk.Kind { return 0 }
 
 type Operand interface {
 	Exp
@@ -56,8 +56,8 @@ type SymbolExpression struct {
 // Explicit interface implementation check
 var _ Operand = &SymbolExpression{}
 
-func (*SymbolExpression) Kind() exn.Kind {
-	return exn.Symbol
+func (*SymbolExpression) Kind() exk.Kind {
+	return exk.Symbol
 }
 
 func (e *SymbolExpression) Pin() source.Pos {
@@ -82,8 +82,8 @@ type EnumExp struct {
 // Explicit interface implementation check
 var _ Operand = &EnumExp{}
 
-func (*EnumExp) Kind() exn.Kind {
-	return exn.Enum
+func (*EnumExp) Kind() exk.Kind {
+	return exk.Enum
 }
 
 func (e *EnumExp) Pin() source.Pos {
@@ -108,8 +108,8 @@ type UnaryExpression struct {
 // Explicit interface implementation check
 var _ Exp = &UnaryExpression{}
 
-func (*UnaryExpression) Kind() exn.Kind {
-	return exn.Unary
+func (*UnaryExpression) Kind() exk.Kind {
+	return exk.Unary
 }
 
 func (e *UnaryExpression) Pin() source.Pos {
@@ -139,8 +139,8 @@ type BinExp struct {
 // Explicit interface implementation check
 var _ Exp = &BinExp{}
 
-func (*BinExp) Kind() exn.Kind {
-	return exn.Binary
+func (*BinExp) Kind() exk.Kind {
+	return exk.Binary
 }
 
 func (e *BinExp) Pin() source.Pos {
@@ -166,8 +166,8 @@ type ParenthesizedExpression struct {
 // Explicit interface implementation check
 var _ Operand = &ParenthesizedExpression{}
 
-func (*ParenthesizedExpression) Kind() exn.Kind {
-	return exn.Paren
+func (*ParenthesizedExpression) Kind() exk.Kind {
+	return exk.Paren
 }
 
 func (e *ParenthesizedExpression) Pin() source.Pos {
@@ -192,8 +192,8 @@ type CastExp struct {
 // Explicit interface implementation check
 var _ Operand = &CastExp{}
 
-func (*CastExp) Kind() exn.Kind {
-	return exn.Cast
+func (*CastExp) Kind() exk.Kind {
+	return exk.Cast
 }
 
 func (e *CastExp) Pin() source.Pos {
@@ -218,8 +218,8 @@ type TintExp struct {
 // Explicit interface implementation check
 var _ Operand = &TintExp{}
 
-func (*TintExp) Kind() exn.Kind {
-	return exn.Tint
+func (*TintExp) Kind() exk.Kind {
+	return exk.Tint
 }
 
 func (e *TintExp) Pin() source.Pos {
@@ -244,8 +244,8 @@ type MemCastExp struct {
 // Explicit interface implementation check
 var _ Operand = &MemCastExp{}
 
-func (*MemCastExp) Kind() exn.Kind {
-	return exn.MemCast
+func (*MemCastExp) Kind() exk.Kind {
+	return exk.MemCast
 }
 
 func (e *MemCastExp) Pin() source.Pos {

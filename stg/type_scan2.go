@@ -3,7 +3,7 @@ package stg
 import (
 	"fmt"
 
-	"github.com/mebyus/gizmo/ast/exn"
+	"github.com/mebyus/gizmo/enums/exk"
 	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/enums/tpk"
 )
@@ -89,7 +89,7 @@ func (m *Merger) evalConstant(s *Symbol) error {
 	}
 
 	// TODO: remove debug print
-	if e2.Kind() == exn.Integer {
+	if e2.Kind() == exk.Integer {
 		i := e2.(Integer)
 		sign := ""
 		if i.Neg {

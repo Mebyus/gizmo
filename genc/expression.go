@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/mebyus/gizmo/ast/exn"
+	"github.com/mebyus/gizmo/enums/exk"
 	"github.com/mebyus/gizmo/stg"
 )
 
@@ -19,33 +19,33 @@ func (g *Builder) Exp(expr stg.Exp) {
 func (g *Builder) exp(exp stg.Exp) {
 	switch exp.Kind() {
 
-	case exn.Integer:
+	case exk.Integer:
 		g.Integer(exp.(stg.Integer))
-	case exn.String:
+	case exk.String:
 		g.String(exp.(stg.String))
-	case exn.True:
+	case exk.True:
 		g.True()
-	case exn.False:
+	case exk.False:
 		g.False()
-	case exn.Symbol:
+	case exk.Symbol:
 		g.SymbolExp(exp.(*stg.SymbolExpression))
-	case exn.Binary:
+	case exk.Binary:
 		g.BinaryExp(exp.(*stg.BinExp))
-	case exn.Unary:
+	case exk.Unary:
 		g.UnaryExp(exp.(*stg.UnaryExpression))
-	case exn.Paren:
+	case exk.Paren:
 		g.ParenExp(exp.(*stg.ParenthesizedExpression))
-	case exn.Cast:
+	case exk.Cast:
 		g.CastExp(exp.(*stg.CastExp))
-	case exn.MemCast:
+	case exk.MemCast:
 		g.MemCastExp(exp.(*stg.MemCastExp))
-	case exn.Tint:
+	case exk.Tint:
 		g.TintExp(exp.(*stg.TintExp))
-	case exn.Enum:
+	case exk.Enum:
 		g.EnumExp(exp.(*stg.EnumExp))
 
-	case exn.Chain, exn.Member, exn.Address, exn.Indirect, exn.IndirectIndex,
-		exn.Call, exn.IndirectMember, exn.ChunkMember, exn.ChunkIndex, exn.ChunkSlice, exn.ArraySlice:
+	case exk.Chain, exk.Member, exk.Address, exk.Indirect, exk.IndirectIndex,
+		exk.Call, exk.IndirectMember, exk.ChunkMember, exk.ChunkIndex, exk.ChunkSlice, exk.ArraySlice:
 
 		g.ChainOperand(exp.(stg.ChainOperand))
 
@@ -113,25 +113,25 @@ func (g *Builder) MemCastExp(exp *stg.MemCastExp) {
 
 func (g *Builder) ChainOperand(exp stg.ChainOperand) {
 	switch exp.Kind() {
-	case exn.Chain:
+	case exk.Chain:
 		g.ChainSymbol(exp.(*stg.ChainSymbol))
-	case exn.Member:
+	case exk.Member:
 		g.MemberExp(exp.(*stg.MemberExpression))
-	case exn.Address:
+	case exk.Address:
 		g.AddressExp(exp.(*stg.AddressExpression))
-	case exn.Indirect:
+	case exk.Indirect:
 		g.IndirectExp(exp.(*stg.IndirectExpression))
-	case exn.IndirectIndex:
+	case exk.IndirectIndex:
 		g.IndirectIndexExp(exp.(*stg.IndirectIndexExpression))
-	case exn.Call:
+	case exk.Call:
 		g.CallExp(exp.(*stg.CallExpression))
-	case exn.IndirectMember:
+	case exk.IndirectMember:
 		g.IndirectMemberExp(exp.(*stg.IndirectMemberExpression))
-	case exn.ChunkMember:
+	case exk.ChunkMember:
 		g.ChunkMemberExp(exp.(*stg.ChunkMemberExpression))
-	case exn.ChunkIndex:
+	case exk.ChunkIndex:
 		g.ChunkIndexExp(exp.(*stg.ChunkIndexExpression))
-	case exn.ArraySlice:
+	case exk.ArraySlice:
 		g.ArraySliceExp(exp.(*stg.ArraySliceExp))
 	default:
 		panic(fmt.Sprintf("%s operand not implemented", exp.Kind().String()))

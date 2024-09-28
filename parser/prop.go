@@ -40,7 +40,7 @@ func (p *Parser) prop() (ast.Prop, error) {
 	}
 
 	if p.tok.Kind != token.Assign {
-		return ast.Prop{}, p.unexpected(p.tok)
+		return ast.Prop{}, p.unexpected()
 	}
 	p.advance() // skip "="
 
@@ -50,7 +50,7 @@ func (p *Parser) prop() (ast.Prop, error) {
 	}
 
 	if p.tok.Kind != token.RightSquare {
-		return ast.Prop{}, p.unexpected(p.tok)
+		return ast.Prop{}, p.unexpected()
 	}
 	p.advance() // skip "]"
 
@@ -95,14 +95,14 @@ func (p *Parser) tagsList() ([]ast.Identifier, error) {
 		} else if p.tok.Kind == token.RightSquare {
 			// will be skipped at next iteration
 		} else {
-			return nil, p.unexpected(p.tok)
+			return nil, p.unexpected()
 		}
 	}
 }
 
 func (p *Parser) propKey() (string, error) {
 	if p.tok.Kind != token.Identifier {
-		return "", p.unexpected(p.tok)
+		return "", p.unexpected()
 	}
 	identifier := p.word()
 	p.advance() // skip identifier
@@ -116,7 +116,7 @@ func (p *Parser) propKey() (string, error) {
 		p.advance() // skip "."
 
 		if p.tok.Kind != token.Identifier {
-			return "", p.unexpected(p.tok)
+			return "", p.unexpected()
 		}
 		identifier := p.word()
 		p.advance() // skip identifier
@@ -139,7 +139,7 @@ func (p *Parser) propValue() (ast.PropValue, error) {
 	case token.False:
 		return ast.PropValueBool{Pos: tok.Pos, Val: false}, nil
 	default:
-		return nil, p.unexpected(tok)
+		return nil, p.unexpected()
 	}
 }
 

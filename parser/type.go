@@ -12,7 +12,7 @@ func (p *Parser) topType(traits ast.Traits) error {
 	p.advance() // skip "type"
 
 	if p.tok.Kind != token.Identifier {
-		return p.unexpected(p.tok)
+		return p.unexpected()
 	}
 
 	name := p.word()
@@ -103,7 +103,7 @@ func (p *Parser) bagType() (ast.BagType, error) {
 	p.advance() // skip "bag"
 
 	if p.tok.Kind != token.LeftCurly {
-		return ast.BagType{}, p.unexpected(p.tok)
+		return ast.BagType{}, p.unexpected()
 	}
 	p.advance() // skip "{"
 
@@ -129,14 +129,14 @@ func (p *Parser) bagType() (ast.BagType, error) {
 		} else if p.tok.Kind == token.RightCurly {
 			// will be skipped at next iteration
 		} else {
-			return ast.BagType{}, p.unexpected(p.tok)
+			return ast.BagType{}, p.unexpected()
 		}
 	}
 }
 
 func (p *Parser) bagMethodSpec() (ast.BagMethodSpec, error) {
 	if p.tok.Kind != token.Identifier {
-		return ast.BagMethodSpec{}, p.unexpected(p.tok)
+		return ast.BagMethodSpec{}, p.unexpected()
 	}
 	name := p.word()
 	p.advance() // skip method name
@@ -192,7 +192,7 @@ func (p *Parser) importType() (ast.ImportType, error) {
 	p.advance() // skip "."
 
 	if p.tok.Kind != token.Identifier {
-		return ast.ImportType{}, p.unexpected(p.tok)
+		return ast.ImportType{}, p.unexpected()
 	}
 	name := p.word()
 	p.advance() // skip type name
@@ -221,7 +221,7 @@ func (p *Parser) enumType() (ast.EnumType, error) {
 	}
 
 	if p.tok.Kind != token.LeftCurly {
-		return ast.EnumType{}, p.unexpected(p.tok)
+		return ast.EnumType{}, p.unexpected()
 	}
 	p.advance() // skip "{"
 
@@ -248,14 +248,14 @@ func (p *Parser) enumType() (ast.EnumType, error) {
 		} else if p.tok.Kind == token.RightCurly {
 			// will be skipped at next iteration
 		} else {
-			return ast.EnumType{}, p.unexpected(p.tok)
+			return ast.EnumType{}, p.unexpected()
 		}
 	}
 }
 
 func (p *Parser) enumEntry() (ast.EnumEntry, error) {
 	if p.tok.Kind != token.Identifier {
-		return ast.EnumEntry{}, p.unexpected(p.tok)
+		return ast.EnumEntry{}, p.unexpected()
 	}
 	name := p.word()
 	p.advance() // skip entry name identifier
@@ -316,7 +316,7 @@ func (p *Parser) arrayType() (ast.ArrayType, error) {
 	}
 
 	if p.tok.Kind != token.RightSquare {
-		return ast.ArrayType{}, p.unexpected(p.tok)
+		return ast.ArrayType{}, p.unexpected()
 	}
 	p.advance() // skip "]"
 
@@ -366,7 +366,7 @@ func (p *Parser) structType() (ast.StructType, error) {
 
 func (p *Parser) structFields() ([]ast.FieldDefinition, error) {
 	if p.tok.Kind != token.LeftCurly {
-		return nil, p.unexpected(p.tok)
+		return nil, p.unexpected()
 	}
 	p.advance() // skip "{"
 
@@ -388,7 +388,7 @@ func (p *Parser) structFields() ([]ast.FieldDefinition, error) {
 		} else if p.tok.Kind == token.RightCurly {
 			// will be skipped at next iteration
 		} else {
-			return nil, p.unexpected(p.tok)
+			return nil, p.unexpected()
 		}
 	}
 }

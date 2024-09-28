@@ -1,7 +1,7 @@
 package stg
 
 import (
-	"github.com/mebyus/gizmo/ast/exn"
+	"github.com/mebyus/gizmo/enums/exk"
 	"github.com/mebyus/gizmo/source"
 )
 
@@ -29,8 +29,8 @@ type True struct {
 // Explicit interface implementation check
 var _ Literal = True{}
 
-func (True) Kind() exn.Kind {
-	return exn.True
+func (True) Kind() exk.Kind {
+	return exk.True
 }
 
 func (t True) Pin() source.Pos {
@@ -51,8 +51,8 @@ type False struct {
 // Explicit interface implementation check
 var _ Literal = False{}
 
-func (False) Kind() exn.Kind {
-	return exn.False
+func (False) Kind() exk.Kind {
+	return exk.False
 }
 
 func (f False) Pin() source.Pos {
@@ -82,8 +82,8 @@ type Integer struct {
 // Explicit interface implementation check
 var _ Literal = Integer{}
 
-func (Integer) Kind() exn.Kind {
-	return exn.Integer
+func (Integer) Kind() exk.Kind {
+	return exk.Integer
 }
 
 func (n Integer) Pin() source.Pos {
@@ -110,8 +110,8 @@ type String struct {
 // Explicit interface implementation check
 var _ Literal = String{}
 
-func (String) Kind() exn.Kind {
-	return exn.String
+func (String) Kind() exk.Kind {
+	return exk.String
 }
 
 func (s String) Pin() source.Pos {

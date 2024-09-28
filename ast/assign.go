@@ -20,7 +20,7 @@ type AssignStatement struct {
 	Operator aop.Kind
 }
 
-// Explicit interface implementation check
+// Explicit interface implementation check.
 var _ Statement = AssignStatement{}
 
 func (AssignStatement) Kind() stm.Kind {

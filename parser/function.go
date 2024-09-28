@@ -13,7 +13,7 @@ func (p *Parser) topFun(traits ast.Traits) error {
 	p.advance() // consume "fun"
 
 	if p.tok.Kind != token.Identifier {
-		return p.unexpected(p.tok)
+		return p.unexpected()
 	}
 	name := p.word()
 	p.advance() // consume function name identifier
@@ -51,7 +51,7 @@ func (p *Parser) topTest(traits ast.Traits) error {
 	p.advance() // consume "test"
 
 	if p.tok.Kind != token.Identifier {
-		return p.unexpected(p.tok)
+		return p.unexpected()
 	}
 	name := p.word()
 	p.advance() // consume test name identifier
@@ -62,7 +62,7 @@ func (p *Parser) topTest(traits ast.Traits) error {
 	}
 
 	if p.tok.Kind != token.LeftCurly {
-		return p.unexpected(p.tok)
+		return p.unexpected()
 	}
 
 	body, err := p.Block()
@@ -135,7 +135,7 @@ func (p *Parser) functionParams() ([]ast.FieldDefinition, error) {
 		} else if p.tok.Kind == token.RightParentheses {
 			// will be skipped at next iteration
 		} else {
-			return nil, p.unexpected(p.tok)
+			return nil, p.unexpected()
 		}
 	}
 }

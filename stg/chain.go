@@ -1,7 +1,7 @@
 package stg
 
 import (
-	"github.com/mebyus/gizmo/ast/exn"
+	"github.com/mebyus/gizmo/enums/exk"
 	"github.com/mebyus/gizmo/source"
 )
 
@@ -33,8 +33,8 @@ type ChainSymbol struct {
 // Explicit interface implementation check.
 var _ ChainOperand = &ChainSymbol{}
 
-func (s *ChainSymbol) Kind() exn.Kind {
-	return exn.Chain
+func (s *ChainSymbol) Kind() exk.Kind {
+	return exk.Chain
 }
 
 func (s *ChainSymbol) Pin() source.Pos {
@@ -58,8 +58,8 @@ type IndirectExpression struct {
 // Explicit interface implementation check.
 var _ ChainOperand = &IndirectExpression{}
 
-func (*IndirectExpression) Kind() exn.Kind {
-	return exn.Indirect
+func (*IndirectExpression) Kind() exk.Kind {
+	return exk.Indirect
 }
 
 func (e *IndirectExpression) Pin() source.Pos {
@@ -83,8 +83,8 @@ type MemberExpression struct {
 // Explicit interface implementation check.
 var _ ChainOperand = &MemberExpression{}
 
-func (*MemberExpression) Kind() exn.Kind {
-	return exn.Member
+func (*MemberExpression) Kind() exk.Kind {
+	return exk.Member
 }
 
 func (e *MemberExpression) Pin() source.Pos {
@@ -108,8 +108,8 @@ type IndirectMemberExpression struct {
 // Explicit interface implementation check.
 var _ ChainOperand = &IndirectMemberExpression{}
 
-func (*IndirectMemberExpression) Kind() exn.Kind {
-	return exn.IndirectMember
+func (*IndirectMemberExpression) Kind() exk.Kind {
+	return exk.IndirectMember
 }
 
 func (e *IndirectMemberExpression) Pin() source.Pos {
@@ -139,8 +139,8 @@ type CallExpression struct {
 // Explicit interface implementation check
 var _ ChainOperand = &CallExpression{}
 
-func (*CallExpression) Kind() exn.Kind {
-	return exn.Call
+func (*CallExpression) Kind() exk.Kind {
+	return exk.Call
 }
 
 func (e *CallExpression) Pin() source.Pos {
@@ -164,8 +164,8 @@ type AddressExpression struct {
 // Explicit interface implementation check.
 var _ ChainOperand = &AddressExpression{}
 
-func (*AddressExpression) Kind() exn.Kind {
-	return exn.Address
+func (*AddressExpression) Kind() exk.Kind {
+	return exk.Address
 }
 
 func (e *AddressExpression) Pin() source.Pos {
@@ -191,8 +191,8 @@ type IndirectIndexExpression struct {
 // Explicit interface implementation check.
 var _ ChainOperand = &IndirectIndexExpression{}
 
-func (*IndirectIndexExpression) Kind() exn.Kind {
-	return exn.IndirectIndex
+func (*IndirectIndexExpression) Kind() exk.Kind {
+	return exk.IndirectIndex
 }
 
 func (e *IndirectIndexExpression) Pin() source.Pos {
@@ -218,8 +218,8 @@ type ChunkIndexExpression struct {
 // Explicit interface implementation check.
 var _ ChainOperand = &ChunkIndexExpression{}
 
-func (*ChunkIndexExpression) Kind() exn.Kind {
-	return exn.ChunkIndex
+func (*ChunkIndexExpression) Kind() exk.Kind {
+	return exk.ChunkIndex
 }
 
 func (e *ChunkIndexExpression) Pin() source.Pos {
@@ -245,8 +245,8 @@ type ArrayIndexExp struct {
 // Explicit interface implementation check.
 var _ ChainOperand = &ArrayIndexExp{}
 
-func (*ArrayIndexExp) Kind() exn.Kind {
-	return exn.ArrayIndex
+func (*ArrayIndexExp) Kind() exk.Kind {
+	return exk.ArrayIndex
 }
 
 func (e *ArrayIndexExp) Pin() source.Pos {
@@ -276,8 +276,8 @@ type ArraySliceExp struct {
 // Explicit interface implementation check.
 var _ ChainOperand = &ArraySliceExp{}
 
-func (*ArraySliceExp) Kind() exn.Kind {
-	return exn.ArraySlice
+func (*ArraySliceExp) Kind() exk.Kind {
+	return exk.ArraySlice
 }
 
 func (e *ArraySliceExp) Pin() source.Pos {
@@ -307,8 +307,8 @@ type ChunkSliceExp struct {
 // Explicit interface implementation check.
 var _ ChainOperand = &ChunkSliceExp{}
 
-func (*ChunkSliceExp) Kind() exn.Kind {
-	return exn.ChunkSlice
+func (*ChunkSliceExp) Kind() exk.Kind {
+	return exk.ChunkSlice
 }
 
 func (e *ChunkSliceExp) Pin() source.Pos {
@@ -337,8 +337,8 @@ type ChunkMemberExpression struct {
 // Explicit interface implementation check.
 var _ ChainOperand = &ChunkMemberExpression{}
 
-func (*ChunkMemberExpression) Kind() exn.Kind {
-	return exn.ChunkMember
+func (*ChunkMemberExpression) Kind() exk.Kind {
+	return exk.ChunkMember
 }
 
 func (e *ChunkMemberExpression) Pin() source.Pos {

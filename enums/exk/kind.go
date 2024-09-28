@@ -1,4 +1,4 @@
-package exn
+package exk
 
 // Kind indicates expression kind
 type Kind uint32
@@ -43,6 +43,7 @@ const (
 	Indirect
 	Address
 	Slice
+	Test
 	IndirectIndex
 	IndirectMember
 	ChunkMember

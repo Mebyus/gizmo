@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/ast"
-	"github.com/mebyus/gizmo/ast/exn"
+	"github.com/mebyus/gizmo/enums/exk"
 	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/enums/tpk"
 	"github.com/mebyus/gizmo/source"
@@ -24,29 +24,29 @@ func (s *Scope) Scan(ctx *Context, expr ast.Exp) (Exp, error) {
 
 func (s *Scope) scan(ctx *Context, exp ast.Exp) (Exp, error) {
 	switch exp.Kind() {
-	case exn.Basic:
+	case exk.Basic:
 		return scanBasicLiteral(exp.(ast.BasicLiteral)), nil
-	case exn.Symbol:
+	case exk.Symbol:
 		return s.scanSymbolExpression(ctx, exp.(ast.SymbolExp))
-	case exn.Chain:
+	case exk.Chain:
 		return s.scanChainOperand(ctx, exp.(ast.ChainOperand))
-	case exn.Unary:
+	case exk.Unary:
 		return s.scanUnaryExpression(ctx, exp.(*ast.UnaryExpression))
-	case exn.Binary:
+	case exk.Binary:
 		return s.scanBinExp(ctx, exp.(ast.BinExp))
-	case exn.Paren:
+	case exk.Paren:
 		return s.scanParenthesizedExpression(ctx, exp.(ast.ParenthesizedExpression))
-	case exn.Cast:
+	case exk.Cast:
 		return s.scanCastExp(ctx, exp.(ast.CastExp))
-	case exn.Tint:
+	case exk.Tint:
 		return s.scanTintExp(ctx, exp.(ast.TintExp))
-	case exn.IncompName:
+	case exk.IncompName:
 		return s.scanIncompNameExp(ctx, exp.(ast.IncompNameExp))
-	case exn.MemCast:
+	case exk.MemCast:
 		return s.scanMemCastExp(ctx, exp.(ast.MemCastExpression))
-	// case exn.BitCast:
+	// case exk.BitCast:
 	// 	// g.BitCastExpression(expr.(ast.BitCastExpression))
-	// case exn.Object:
+	// case exk.Object:
 	// 	// g.ObjectLiteral(expr.(ast.ObjectLiteral))
 	default:
 		panic(fmt.Sprintf("not implemented for %s expression", exp.Kind().String()))
@@ -154,7 +154,7 @@ func (s *Scope) scanImportExp(ctx *Context, pos source.Pos, imp *Symbol, parts [
 
 	part := parts[0]
 	switch part.Kind() {
-	case exn.Member:
+	case exk.Member:
 		unit := imp.Def.(ImportSymDef).Unit
 		m := part.(ast.MemberPart).Member
 		name := m.Lit
@@ -181,19 +181,19 @@ func (s *Scope) scanImportExp(ctx *Context, pos source.Pos, imp *Symbol, parts [
 
 func (s *Scope) scanChainPart(ctx *Context, tip ChainOperand, part ast.ChainPart) (ChainOperand, error) {
 	switch part.Kind() {
-	case exn.Address:
+	case exk.Address:
 		return s.scanAddressPart(ctx, tip, part.(ast.AddressPart))
-	case exn.Indirect:
+	case exk.Indirect:
 		return s.scanIndirectPart(ctx, tip, part.(ast.IndirectPart))
-	case exn.Member:
+	case exk.Member:
 		return s.scanMemberPart(ctx, tip, part.(ast.MemberPart))
-	case exn.Call:
+	case exk.Call:
 		return s.scanCallPart(ctx, tip, part.(ast.CallPart))
-	case exn.IndirectIndex:
+	case exk.IndirectIndex:
 		return s.scanIndirectIndexPart(ctx, tip, part.(ast.IndirectIndexPart))
-	case exn.Index:
+	case exk.Index:
 		return s.scanIndexPart(ctx, tip, part.(ast.IndexPart))
-	case exn.Slice:
+	case exk.Slice:
 		return s.scanSlicePart(ctx, tip, part.(ast.SlicePart))
 	default:
 		panic(fmt.Sprintf("not implemented for %s expression", part.Kind().String()))
@@ -442,7 +442,7 @@ func getCallDetailsByChainSymbol(c *ChainSymbol) (*CallDetails, error) {
 // TODO: refactor this to accept CallExpression.
 func getCallDetails(o ChainOperand) (*CallDetails, error) {
 	switch o.Kind() {
-	case exn.Chain:
+	case exk.Chain:
 		return getCallDetailsByChainSymbol(o.(*ChainSymbol))
 	default:
 		panic(fmt.Sprintf("%s: %s operands not implemented", o.Pin().String(), o.Kind().String()))

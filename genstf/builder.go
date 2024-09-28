@@ -1,15 +1,10 @@
-package genc
+package genstf
 
 import (
 	"strconv"
-
-	"github.com/mebyus/gizmo/stg"
 )
 
 type Builder struct {
-	// Mangled unit name. Index corresponds to Unit.Index.
-	unames []string
-
 	buf []byte
 
 	// Indentation buffer.
@@ -17,37 +12,10 @@ type Builder struct {
 	// Stores sequence of bytes which is used for indenting current line
 	// in output. When a new line starts this buffer is used to add indentation.
 	ib []byte
-
-	// global name prefix for generated symbols.
-	prefix string
-
-	// cached type specs.
-	specs map[*stg.Type]string
-
-	// from type index.
-	arrays map[*stg.Type][]*stg.Type
-
-	// from type index.
-	chunks map[*stg.Type]*stg.Type
 }
 
 func (g *Builder) Bytes() []byte {
 	return g.buf
-}
-
-func (g *Builder) LineComment(s string) {
-	g.puts("// ")
-	g.puts(s)
-	g.nl()
-}
-
-func (g *Builder) BlockTitle(unit string, s string) {
-	g.puts("/* ===== ")
-	g.puts(unit)
-	g.puts(": ")
-	g.puts(s)
-	g.puts(" ===== */")
-	g.nl()
 }
 
 // put decimal formatted integer into output buffer

@@ -9,7 +9,7 @@ import (
 // second return value will be nil slice
 func (p *Parser) methodReceiver() (ast.ReceiverTypeSpec, error) {
 	if p.tok.Kind != token.LeftSquare {
-		return ast.ReceiverTypeSpec{}, p.unexpected(p.tok)
+		return ast.ReceiverTypeSpec{}, p.unexpected()
 	}
 	p.advance() // skip "["
 
@@ -21,13 +21,13 @@ func (p *Parser) methodReceiver() (ast.ReceiverTypeSpec, error) {
 	}
 
 	if p.tok.Kind != token.Identifier {
-		return ast.ReceiverTypeSpec{}, p.unexpected(p.tok)
+		return ast.ReceiverTypeSpec{}, p.unexpected()
 	}
 	name := p.word()
 	p.advance() // skip receiver type name
 
 	if p.tok.Kind != token.RightSquare {
-		return ast.ReceiverTypeSpec{}, p.unexpected(p.tok)
+		return ast.ReceiverTypeSpec{}, p.unexpected()
 	}
 	p.advance() // skip "]"
 
@@ -46,7 +46,7 @@ func (p *Parser) method(traits ast.Traits) error {
 	}
 
 	if p.tok.Kind != token.Identifier {
-		return p.unexpected(p.tok)
+		return p.unexpected()
 	}
 	name := p.word()
 	p.advance() // skip method name
@@ -57,7 +57,7 @@ func (p *Parser) method(traits ast.Traits) error {
 	}
 
 	if p.tok.Kind != token.LeftCurly {
-		return p.unexpected(p.tok)
+		return p.unexpected()
 	}
 
 	body, err := p.Block()

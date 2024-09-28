@@ -11,6 +11,7 @@ import (
 	"github.com/mebyus/gizmo/compiler/build"
 	"github.com/mebyus/gizmo/compiler/cc"
 	"github.com/mebyus/gizmo/genc"
+	"github.com/mebyus/gizmo/genstf"
 	"github.com/mebyus/gizmo/source/origin"
 	"github.com/mebyus/gizmo/stg"
 	"github.com/mebyus/gizmo/uwalk"
@@ -181,6 +182,19 @@ func buildTarget(config *Config) (string, error) {
 		return "", err
 	}
 
+	if config.Test {
+		if program.TestCount == 0 {
+			return "", fmt.Errorf("no tests found")
+		}
+
+		err := genstf.Gen(os.Stdout, program)
+		if err != nil {
+			return "", err
+		}
+		// TODO: build test executable and return it
+		panic("not implemented")
+	}
+
 	base := filepath.Base(config.InitPath)
 	outc := filepath.Join("build/.cache", base+".gen.c")
 	err = genCode(outc, program)
@@ -192,10 +206,7 @@ func buildTarget(config *Config) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if config.Test {
-		// TODO: build test executable and return it
-		panic("not implemented")
-	}
+
 	if program.Main == nil {
 		// skip making executable if there is no main unit
 		return "", nil

@@ -5,8 +5,8 @@ import (
 
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/aop"
-	"github.com/mebyus/gizmo/ast/exn"
 	"github.com/mebyus/gizmo/ast/lbl"
+	"github.com/mebyus/gizmo/enums/exk"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/token"
 )
@@ -34,7 +34,7 @@ func (p *Parser) Statement() (ast.Statement, error) {
 	case token.Identifier:
 		return p.identifierStartStatement()
 	default:
-		return nil, p.unexpected(p.tok)
+		return nil, p.unexpected()
 	}
 }
 
@@ -43,7 +43,7 @@ func (p *Parser) deferStatement() (ast.DeferStatement, error) {
 	p.advance() // skip "defer"
 
 	if p.tok.Kind != token.Identifier {
-		return ast.DeferStatement{}, p.unexpected(p.tok)
+		return ast.DeferStatement{}, p.unexpected()
 	}
 
 	var chain ast.ChainOperand
@@ -55,12 +55,12 @@ func (p *Parser) deferStatement() (ast.DeferStatement, error) {
 	if err != nil {
 		return ast.DeferStatement{}, err
 	}
-	if chain.Last() != exn.Call {
+	if chain.Last() != exk.Call {
 		return ast.DeferStatement{}, fmt.Errorf("%s: only call statements can be deferred", pos.String())
 	}
 
 	if p.tok.Kind != token.Semicolon {
-		return ast.DeferStatement{}, p.unexpected(p.tok)
+		return ast.DeferStatement{}, p.unexpected()
 	}
 	p.advance() // skip ";"
 
@@ -75,7 +75,7 @@ func (p *Parser) neverStatement() (ast.NeverStatement, error) {
 	p.advance() // skip "never"
 
 	if p.tok.Kind != token.Semicolon {
-		return ast.NeverStatement{}, p.unexpected(p.tok)
+		return ast.NeverStatement{}, p.unexpected()
 	}
 	p.advance() // skip ";"
 
@@ -200,7 +200,7 @@ func (p *Parser) caseExpList() ([]ast.Exp, error) {
 		} else if p.tok.Kind == token.LeftCurly {
 			// will cause return at next iteration
 		} else {
-			return nil, p.unexpected(p.tok)
+			return nil, p.unexpected()
 		}
 	}
 }
@@ -296,7 +296,7 @@ func (p *Parser) forSimple() (ast.For, error) {
 
 func (p *Parser) forIn() (ast.Statement, error) {
 	if p.tok.Kind != token.Identifier {
-		return nil, p.unexpected(p.tok)
+		return nil, p.unexpected()
 	}
 
 	name := p.word()
@@ -307,7 +307,7 @@ func (p *Parser) forIn() (ast.Statement, error) {
 	}
 
 	if p.tok.Kind != token.In {
-		return nil, p.unexpected(p.tok)
+		return nil, p.unexpected()
 	}
 	p.advance() // skip "in"
 
@@ -321,7 +321,7 @@ func (p *Parser) forIn() (ast.Statement, error) {
 	}
 
 	if p.tok.Kind != token.LeftCurly {
-		return nil, p.unexpected(p.tok)
+		return nil, p.unexpected()
 	}
 	body, err := p.Block()
 	if err != nil {
@@ -339,7 +339,7 @@ func (p *Parser) forRange(name ast.Identifier) (ast.ForRange, error) {
 	p.advance() // skip "range"
 
 	if p.tok.Kind != token.LeftParentheses {
-		return ast.ForRange{}, p.unexpected(p.tok)
+		return ast.ForRange{}, p.unexpected()
 	}
 	p.advance() // skip "("
 
@@ -349,7 +349,7 @@ func (p *Parser) forRange(name ast.Identifier) (ast.ForRange, error) {
 	}
 
 	if p.tok.Kind != token.RightParentheses {
-		return ast.ForRange{}, p.unexpected(p.tok)
+		return ast.ForRange{}, p.unexpected()
 	}
 	p.advance() // skip ")"
 
@@ -371,7 +371,7 @@ func (p *Parser) forIf() (ast.ForIf, error) {
 		return ast.ForIf{}, err
 	}
 	if p.tok.Kind != token.LeftCurly {
-		return ast.ForIf{}, p.unexpected(p.tok)
+		return ast.ForIf{}, p.unexpected()
 	}
 	body, err := p.Block()
 	if err != nil {
@@ -430,7 +430,7 @@ func (p *Parser) ifStatement() (statement ast.Statement, err error) {
 	case token.LeftCurly:
 		// continue regular if statement
 	default:
-		return nil, p.unexpected(p.tok)
+		return nil, p.unexpected()
 	}
 
 	body, err := p.Block()
@@ -527,7 +527,7 @@ func (p *Parser) shortInitStatement() (ast.ShortInitStatement, error) {
 	}
 
 	if p.tok.Kind != token.Semicolon {
-		return ast.ShortInitStatement{}, p.unexpected(p.tok)
+		return ast.ShortInitStatement{}, p.unexpected()
 	}
 	p.advance() // skip ";"
 
@@ -554,7 +554,7 @@ func (p *Parser) chainStartStatement(identifier ast.Identifier) (ast.Statement, 
 
 func (p *Parser) assignStatement(op aop.Kind, target ast.ChainOperand) (ast.AssignStatement, error) {
 	switch target.Last() {
-	case exn.Call, exn.Address, exn.Slice:
+	case exk.Call, exk.Address, exk.Slice:
 		return ast.AssignStatement{}, fmt.Errorf("%s: cannot assign to %s operand",
 			target.Pin().String(), target.Last().String())
 	}
@@ -577,14 +577,14 @@ func (p *Parser) assignStatement(op aop.Kind, target ast.ChainOperand) (ast.Assi
 }
 
 func (p *Parser) callStatement(chain ast.ChainOperand) (ast.CallStatement, error) {
-	if chain.Last() != exn.Call {
+	if chain.Last() != exk.Call {
 		return ast.CallStatement{},
 			fmt.Errorf("%s: standalone expression in statement must be call expression",
 				chain.Pin().String())
 	}
 
 	if p.tok.Kind != token.Semicolon {
-		return ast.CallStatement{}, p.unexpected(p.tok)
+		return ast.CallStatement{}, p.unexpected()
 	}
 	p.advance() // consume ";"
 

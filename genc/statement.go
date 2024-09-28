@@ -3,8 +3,8 @@ package genc
 import (
 	"fmt"
 
-	"github.com/mebyus/gizmo/ast/exn"
 	"github.com/mebyus/gizmo/ast/stm"
+	"github.com/mebyus/gizmo/enums/exk"
 	"github.com/mebyus/gizmo/stg"
 )
 
@@ -161,19 +161,19 @@ func (g *Builder) assignStatement(node *stg.AssignStatement) {
 // generate target expression for assignment
 func (g *Builder) ChainOperandTarget(node stg.ChainOperand) {
 	switch node.Kind() {
-	case exn.Chain:
+	case exk.Chain:
 		g.ChainSymbol(node.(*stg.ChainSymbol))
-	case exn.Member:
+	case exk.Member:
 		g.MemberExp(node.(*stg.MemberExpression))
-	case exn.Indirect:
+	case exk.Indirect:
 		g.IndirectExp(node.(*stg.IndirectExpression))
-	case exn.IndirectIndex:
+	case exk.IndirectIndex:
 		g.IndirectIndexExp(node.(*stg.IndirectIndexExpression))
-	case exn.IndirectMember:
+	case exk.IndirectMember:
 		g.IndirectMemberExp(node.(*stg.IndirectMemberExpression))
-	case exn.ChunkIndex:
+	case exk.ChunkIndex:
 		g.ChunkIndirectElemExp(node.(*stg.ChunkIndexExpression))
-	case exn.ArrayIndex:
+	case exk.ArrayIndex:
 		g.ArrayIndirectElemExp(node.(*stg.ArrayIndexExp))
 	default:
 		panic(fmt.Sprintf("unexpected %s operand", node.Kind()))

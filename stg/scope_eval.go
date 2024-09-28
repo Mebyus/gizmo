@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/ast/bop"
-	"github.com/mebyus/gizmo/ast/exn"
 	"github.com/mebyus/gizmo/ast/uop"
+	"github.com/mebyus/gizmo/enums/exk"
 )
 
 func (s *Scope) evalStaticExp(exp Exp) (Exp, error) {
@@ -17,17 +17,17 @@ func (s *Scope) evalStaticExp(exp Exp) (Exp, error) {
 
 func (s *Scope) evalExp(exp Exp) (Exp, error) {
 	switch exp.Kind() {
-	case exn.Integer:
+	case exk.Integer:
 		return exp, nil
-	case exn.Symbol:
+	case exk.Symbol:
 		s := exp.(*SymbolExpression).Sym
 		c := s.Def.(*ConstDef)
 		return c.Exp, nil
-	case exn.Paren:
+	case exk.Paren:
 		return exp.(*ParenthesizedExpression).Inner, nil
-	case exn.Unary:
+	case exk.Unary:
 		return s.evalUnaryExp(exp.(*UnaryExpression))
-	case exn.Binary:
+	case exk.Binary:
 		return s.evalBinExp(exp.(*BinExp))
 	default:
 		panic(fmt.Sprintf("unexpected %s expression", exp.Kind()))
@@ -43,7 +43,7 @@ func (s *Scope) evalBinExp(exp *BinExp) (Exp, error) {
 	if err != nil {
 		return nil, err
 	}
-	if l.Kind() == exn.Integer && r.Kind() == exn.Integer {
+	if l.Kind() == exk.Integer && r.Kind() == exk.Integer {
 		a := l.(Integer)
 		b := r.(Integer)
 		o := exp.Operator
@@ -68,7 +68,7 @@ func (s *Scope) evalUnaryExp(exp *UnaryExpression) (Exp, error) {
 		return nil, err
 	}
 	switch inner.Kind() {
-	case exn.Integer:
+	case exk.Integer:
 		i := inner.(Integer)
 		i.Pos = exp.Pin()
 

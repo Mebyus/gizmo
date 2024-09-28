@@ -1,11 +1,11 @@
 package ast
 
 import (
-	"github.com/mebyus/gizmo/ast/exn"
+	"github.com/mebyus/gizmo/enums/exk"
 	"github.com/mebyus/gizmo/source"
 )
 
-// <ChainOperand> = <Receiver> | <Identifier> | <CallExpression> | <SelectorExpression> | <IndexExpression> | <IndirectExpression>
+// <ChainOperand> = <Identifier> | <CallExpression> | <SelectorExpression> | <IndexExpression> | <IndirectExpression>
 type ChainOperand struct {
 	NodeO
 
@@ -17,19 +17,20 @@ type ChainOperand struct {
 	Parts []ChainPart
 }
 
+// Explicit interface implementation check.
 var _ Operand = ChainOperand{}
 
 func (o ChainOperand) Pin() source.Pos {
 	return o.Identifier.Pos
 }
 
-func (o ChainOperand) Kind() exn.Kind {
-	return exn.Chain
+func (o ChainOperand) Kind() exk.Kind {
+	return exk.Chain
 }
 
-func (o ChainOperand) Last() exn.Kind {
+func (o ChainOperand) Last() exk.Kind {
 	if len(o.Parts) == 0 {
-		return exn.Symbol
+		return exk.Symbol
 	}
 	return o.Parts[len(o.Parts)-1].Kind()
 }
@@ -39,7 +40,7 @@ type ChainPart interface {
 
 	ChainPart()
 
-	Kind() exn.Kind
+	Kind() exk.Kind
 }
 
 // Dummy chain part node provides quick, easy to use implementation
@@ -59,10 +60,11 @@ type MemberPart struct {
 	Member Identifier
 }
 
+// Explicit interface implementation check.
 var _ ChainPart = MemberPart{}
 
-func (MemberPart) Kind() exn.Kind {
-	return exn.Member
+func (MemberPart) Kind() exk.Kind {
+	return exk.Member
 }
 
 func (p MemberPart) Pin() source.Pos {
@@ -78,10 +80,11 @@ type CallPart struct {
 	Args []Exp
 }
 
+// Explicit interface implementation check.
 var _ ChainPart = CallPart{}
 
-func (CallPart) Kind() exn.Kind {
-	return exn.Call
+func (CallPart) Kind() exk.Kind {
+	return exk.Call
 }
 
 func (p CallPart) Pin() source.Pos {
@@ -96,10 +99,11 @@ type IndexPart struct {
 	Index Exp
 }
 
+// Explicit interface implementation check.
 var _ ChainPart = IndexPart{}
 
-func (IndexPart) Kind() exn.Kind {
-	return exn.Index
+func (IndexPart) Kind() exk.Kind {
+	return exk.Index
 }
 
 func (p IndexPart) Pin() source.Pos {
@@ -113,10 +117,11 @@ type IndirectPart struct {
 	Pos source.Pos
 }
 
+// Explicit interface implementation check.
 var _ ChainPart = IndirectPart{}
 
-func (IndirectPart) Kind() exn.Kind {
-	return exn.Indirect
+func (IndirectPart) Kind() exk.Kind {
+	return exk.Indirect
 }
 
 func (p IndirectPart) Pin() source.Pos {
@@ -130,10 +135,11 @@ type AddressPart struct {
 	Pos source.Pos
 }
 
+// Explicit interface implementation check.
 var _ ChainPart = AddressPart{}
 
-func (AddressPart) Kind() exn.Kind {
-	return exn.Address
+func (AddressPart) Kind() exk.Kind {
+	return exk.Address
 }
 
 func (p AddressPart) Pin() source.Pos {
@@ -151,10 +157,11 @@ type IndirectIndexPart struct {
 	Index Exp
 }
 
+// Explicit interface implementation check.
 var _ ChainPart = IndirectIndexPart{}
 
-func (IndirectIndexPart) Kind() exn.Kind {
-	return exn.IndirectIndex
+func (IndirectIndexPart) Kind() exk.Kind {
+	return exk.IndirectIndex
 }
 
 func (p IndirectIndexPart) Pin() source.Pos {
@@ -167,19 +174,39 @@ type SlicePart struct {
 
 	Pos source.Pos
 
-	// Part before ":". Can be nil if expression is omitted
+	// Part before ":". Can be nil if expression is omitted.
 	Start Exp
 
-	// Part after ":". Can be nil if expression is omitted
+	// Part after ":". Can be nil if expression is omitted.
 	End Exp
 }
 
+// Explicit interface implementation check.
 var _ ChainPart = SlicePart{}
 
-func (SlicePart) Kind() exn.Kind {
-	return exn.Slice
+func (SlicePart) Kind() exk.Kind {
+	return exk.Slice
 }
 
 func (p SlicePart) Pin() source.Pos {
 	return p.Pos
+}
+
+// <TestPart> => "." "test" "." <Name>
+// <Name> => <Word>
+type TestPart struct {
+	NodeP
+
+	Name Identifier
+}
+
+// Explicit interface implementation check.
+var _ ChainPart = TestPart{}
+
+func (TestPart) Kind() exk.Kind {
+	return exk.Test
+}
+
+func (p TestPart) Pin() source.Pos {
+	return p.Name.Pos
 }

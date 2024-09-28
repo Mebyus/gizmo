@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/ast"
-	"github.com/mebyus/gizmo/ast/exn"
+	"github.com/mebyus/gizmo/enums/exk"
 	"github.com/mebyus/gizmo/lexer"
 	"github.com/mebyus/gizmo/token"
 )
@@ -205,13 +205,13 @@ func (p *Parser) memcast() (exp ast.MemCastExpression, err error) {
 
 func (p *Parser) objectField() (ast.ObjectField, error) {
 	if p.tok.Kind != token.Identifier {
-		return ast.ObjectField{}, p.unexpected(p.tok)
+		return ast.ObjectField{}, p.unexpected()
 	}
 	name := p.word()
 	p.advance() // skip field name
 
 	if p.tok.Kind != token.Colon {
-		return ast.ObjectField{}, p.unexpected(p.tok)
+		return ast.ObjectField{}, p.unexpected()
 	}
 	p.advance() // skip ":"
 
@@ -251,7 +251,7 @@ func (p *Parser) objectLiteral() (ast.ObjectLiteral, error) {
 		} else if p.tok.Kind == token.RightCurly {
 			// will be skipped at next iteration
 		} else {
-			return ast.ObjectLiteral{}, p.unexpected(p.tok)
+			return ast.ObjectLiteral{}, p.unexpected()
 		}
 	}
 }
@@ -298,7 +298,7 @@ func (p *Parser) list() (ast.ListLiteral, error) {
 		} else if p.tok.Kind == token.RightSquare {
 			// will be skipped at next iteration
 		} else {
-			return ast.ListLiteral{}, p.unexpected(p.tok)
+			return ast.ListLiteral{}, p.unexpected()
 		}
 	}
 }
@@ -340,7 +340,7 @@ func (p *Parser) operand() (ast.Operand, error) {
 	case token.Period:
 		return p.incompNameOperand()
 	default:
-		return nil, p.unexpected(p.tok)
+		return nil, p.unexpected()
 	}
 }
 
@@ -359,7 +359,7 @@ func (p *Parser) incompNameOperand() (ast.IncompNameExp, error) {
 	p.advance() // skip "."
 
 	if p.tok.Kind != token.Identifier {
-		return ast.IncompNameExp{}, p.unexpected(p.tok)
+		return ast.IncompNameExp{}, p.unexpected()
 	}
 
 	name := p.word()
@@ -420,7 +420,7 @@ func (p *Parser) indirectPart() ast.IndirectPart {
 
 func (p *Parser) chainOperand(chain *ast.ChainOperand) error {
 	var parts []ast.ChainPart
-	var prev exn.Kind
+	var prev exk.Kind
 	for {
 		var err error
 		var part ast.ChainPart
@@ -429,7 +429,11 @@ func (p *Parser) chainOperand(chain *ast.ChainOperand) error {
 		case token.LeftParentheses:
 			part, err = p.callPart()
 		case token.Period:
-			part, err = p.memberPart()
+			if p.next.Kind == token.Test {
+				part, err = p.testPart()
+			} else {
+				part, err = p.memberPart()
+			}
 		case token.Indirect:
 			part = p.indirectPart()
 		case token.Address:
@@ -450,12 +454,31 @@ func (p *Parser) chainOperand(chain *ast.ChainOperand) error {
 	}
 }
 
-func (p *Parser) addressPart(prev exn.Kind) (ast.AddressPart, error) {
+func (p *Parser) testPart() (ast.TestPart, error) {
+	p.advance() // skip "."
+	p.advance() // skip "test"
+
+	if p.tok.Kind != token.Period {
+		return ast.TestPart{}, p.unexpected()
+	}
+	p.advance() // skip "."
+
+	if p.tok.Kind != token.Identifier {
+		return ast.TestPart{}, p.unexpected()
+	}
+
+	name := p.word()
+	p.advance() // skip test name
+
+	return ast.TestPart{Name: name}, nil
+}
+
+func (p *Parser) addressPart(prev exk.Kind) (ast.AddressPart, error) {
 	pos := p.pos()
 	p.advance() // skip ".&"
 
 	switch prev {
-	case exn.Call, exn.Slice, exn.Address, exn.Indirect:
+	case exk.Call, exk.Slice, exk.Address, exk.Indirect:
 		return ast.AddressPart{}, fmt.Errorf("%s: cannot take address of %s expression",
 			pos.String(), prev.String())
 	}
@@ -472,7 +495,7 @@ func (p *Parser) indirectIndexPart() (ast.IndirectIndexPart, error) {
 		return ast.IndirectIndexPart{}, err
 	}
 	if p.tok.Kind != token.RightSquare {
-		return ast.IndirectIndexPart{}, p.unexpected(p.tok)
+		return ast.IndirectIndexPart{}, p.unexpected()
 	}
 	p.advance() // skip "]"
 	return ast.IndirectIndexPart{
@@ -569,7 +592,7 @@ func (p *Parser) callArguments() ([]ast.Exp, error) {
 		} else if p.tok.Kind == token.RightParentheses {
 			// will be skipped at next iteration
 		} else {
-			return nil, p.unexpected(p.tok)
+			return nil, p.unexpected()
 		}
 	}
 }

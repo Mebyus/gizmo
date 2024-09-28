@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/mebyus/gizmo/ast"
-	"github.com/mebyus/gizmo/ast/exn"
 	"github.com/mebyus/gizmo/ast/tps"
+	"github.com/mebyus/gizmo/enums/exk"
 	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/stg/scp"
 )
@@ -63,17 +63,17 @@ func (m *Merger) inspectConstTypeName(ctx *SymbolContext, spec ast.TypeName) err
 
 func (m *Merger) inspectExp(ctx *SymbolContext, exp ast.Exp) error {
 	switch exp.Kind() {
-	case exn.Basic:
+	case exk.Basic:
 		return nil
-	case exn.Symbol:
+	case exk.Symbol:
 		return m.inspectSymbolExp(ctx, exp.(ast.SymbolExp))
-	case exn.Unary:
+	case exk.Unary:
 		return m.inspectUnaryExp(ctx, exp.(*ast.UnaryExpression))
-	case exn.Binary:
+	case exk.Binary:
 		return m.inspectBinaryExp(ctx, exp.(ast.BinExp))
-	case exn.Paren:
+	case exk.Paren:
 		return m.inspectParenExp(ctx, exp.(ast.ParenthesizedExpression))
-	case exn.Address, exn.Chain, exn.Indirect:
+	case exk.Address, exk.Chain, exk.Indirect:
 		return fmt.Errorf("%s: %s is not allowed in constant expression", exp.Pin(), exp.Kind())
 	default:
 		panic(fmt.Sprintf("%s expressions not implemented", exp.Kind()))

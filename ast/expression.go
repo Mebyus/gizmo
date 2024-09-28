@@ -2,8 +2,8 @@ package ast
 
 import (
 	"github.com/mebyus/gizmo/ast/bop"
-	"github.com/mebyus/gizmo/ast/exn"
 	"github.com/mebyus/gizmo/ast/uop"
+	"github.com/mebyus/gizmo/enums/exk"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/token"
 )
@@ -15,7 +15,7 @@ type Exp interface {
 	// dummy discriminator method
 	Expression()
 
-	Kind() exn.Kind
+	Kind() exk.Kind
 }
 
 type NodeE struct{}
@@ -50,8 +50,8 @@ type SymbolExp struct {
 
 var _ Operand = SymbolExp{}
 
-func (SymbolExp) Kind() exn.Kind {
-	return exn.Symbol
+func (SymbolExp) Kind() exk.Kind {
+	return exk.Symbol
 }
 
 func (e SymbolExp) Pin() source.Pos {
@@ -66,8 +66,8 @@ type IncompNameExp struct {
 
 var _ Operand = IncompNameExp{}
 
-func (IncompNameExp) Kind() exn.Kind {
-	return exn.IncompName
+func (IncompNameExp) Kind() exk.Kind {
+	return exk.IncompName
 }
 
 func (e IncompNameExp) Pin() source.Pos {
@@ -85,8 +85,8 @@ type ParenthesizedExpression struct {
 
 var _ Operand = ParenthesizedExpression{}
 
-func (ParenthesizedExpression) Kind() exn.Kind {
-	return exn.Paren
+func (ParenthesizedExpression) Kind() exk.Kind {
+	return exk.Paren
 }
 
 func (e ParenthesizedExpression) Pin() source.Pos {
@@ -105,8 +105,8 @@ type UnaryExpression struct {
 
 var _ Exp = UnaryExpression{}
 
-func (UnaryExpression) Kind() exn.Kind {
-	return exn.Unary
+func (UnaryExpression) Kind() exk.Kind {
+	return exk.Unary
 }
 
 func (e UnaryExpression) Pin() source.Pos {
@@ -124,8 +124,8 @@ type BinExp struct {
 
 var _ Exp = BinExp{}
 
-func (BinExp) Kind() exn.Kind {
-	return exn.Binary
+func (BinExp) Kind() exk.Kind {
+	return exk.Binary
 }
 
 func (e BinExp) Pin() source.Pos {
@@ -144,8 +144,8 @@ type CastExp struct {
 // Explicit interface implementation check.
 var _ Exp = CastExp{}
 
-func (CastExp) Kind() exn.Kind {
-	return exn.Cast
+func (CastExp) Kind() exk.Kind {
+	return exk.Cast
 }
 
 func (e CastExp) Pin() source.Pos {
@@ -163,8 +163,8 @@ type TintExp struct {
 
 var _ Exp = TintExp{}
 
-func (TintExp) Kind() exn.Kind {
-	return exn.Tint
+func (TintExp) Kind() exk.Kind {
+	return exk.Tint
 }
 
 func (e TintExp) Pin() source.Pos {
@@ -181,8 +181,8 @@ type MemCastExpression struct {
 
 var _ Exp = MemCastExpression{}
 
-func (MemCastExpression) Kind() exn.Kind {
-	return exn.MemCast
+func (MemCastExpression) Kind() exk.Kind {
+	return exk.MemCast
 }
 
 func (e MemCastExpression) Pin() source.Pos {

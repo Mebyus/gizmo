@@ -1,7 +1,7 @@
 package ast
 
 import (
-	"github.com/mebyus/gizmo/ast/exn"
+	"github.com/mebyus/gizmo/enums/exk"
 	"github.com/mebyus/gizmo/source"
 	"github.com/mebyus/gizmo/token"
 )
@@ -19,8 +19,8 @@ type BasicLiteral struct {
 
 var _ Operand = BasicLiteral{}
 
-func (BasicLiteral) Kind() exn.Kind {
-	return exn.Basic
+func (BasicLiteral) Kind() exk.Kind {
+	return exk.Basic
 }
 
 func (l BasicLiteral) Pin() source.Pos {
@@ -36,8 +36,8 @@ type ListLiteral struct {
 	Elems []Exp
 }
 
-func (ListLiteral) Kind() exn.Kind {
-	return exn.List
+func (ListLiteral) Kind() exk.Kind {
+	return exk.List
 }
 
 func (l ListLiteral) Pin() source.Pos {
@@ -61,8 +61,8 @@ type ObjectLiteral struct {
 	Fields []ObjectField
 }
 
-func (ObjectLiteral) Kind() exn.Kind {
-	return exn.Object
+func (ObjectLiteral) Kind() exk.Kind {
+	return exk.Object
 }
 
 func (l ObjectLiteral) Pin() source.Pos {
