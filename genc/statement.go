@@ -199,6 +199,10 @@ func (g *Builder) varStatement(node *stg.VarStatement) {
 	g.space()
 	g.SymbolName(node.Sym)
 	if node.Exp == nil {
+		g.puts(" = {0}")
+		return
+	}
+	if node.Exp.Kind() == exk.Dirty {
 		return
 	}
 	g.puts(" = ")

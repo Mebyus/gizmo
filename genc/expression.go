@@ -8,12 +8,12 @@ import (
 	"github.com/mebyus/gizmo/stg"
 )
 
-func (g *Builder) Exp(expr stg.Exp) {
-	if expr == nil {
+func (g *Builder) Exp(exp stg.Exp) {
+	if exp == nil {
 		panic("nil expression")
 	}
 
-	g.exp(expr)
+	g.exp(exp)
 }
 
 func (g *Builder) exp(exp stg.Exp) {

@@ -12,7 +12,7 @@ func (g *Builder) main(units []*stg.Unit) {
 	g.nl()
 
 	g.indent()
-	g.puts("var t stf.Test;")
+	g.puts("var t: stf.Test;")
 	g.nl()
 
 	g.indent()
@@ -55,7 +55,7 @@ func (g *Builder) test(unit *stg.Unit, t *stg.Symbol) {
 	g.puts(unit.Name)
 	g.puts(".test.")
 	g.puts(t.Name)
-	g.puts("(&t);")
+	g.puts("(t.&);")
 	g.nl()
 
 	g.indent()

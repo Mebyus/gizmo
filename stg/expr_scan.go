@@ -14,12 +14,29 @@ import (
 
 // Scan constructs expression from a given AST. Uses current scope for symbol
 // resolution.
-func (s *Scope) Scan(ctx *Context, expr ast.Exp) (Exp, error) {
-	if expr == nil {
+func (s *Scope) Scan(ctx *Context, exp ast.Exp) (Exp, error) {
+	if exp == nil {
 		return nil, nil
 	}
 
-	return s.scan(ctx, expr)
+	return s.scan(ctx, exp)
+}
+
+// ScanInitExp onstructs expression from a given AST expression node.
+// Uses current scope for symbol resolution.
+//
+// This method is intended only for variable and object literal
+// field init expressions.
+func (s *Scope) ScanInitExp(ctx *Context, exp ast.Exp) (Exp, error) {
+	if exp == nil {
+		return nil, nil
+	}
+	if exp.Kind() == exk.Dirty {
+		pos := exp.(ast.Dirty).Pos
+		return Dirty{Pos: pos}, nil
+	}
+
+	return s.scan(ctx, exp)
 }
 
 func (s *Scope) scan(ctx *Context, exp ast.Exp) (Exp, error) {

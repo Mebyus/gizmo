@@ -54,17 +54,20 @@ const (
 
 	Enum
 
-	// Integer literal
+	// Integer literal.
 	Integer
 
-	// String literal
+	// String literal.
 	String
 
-	// True literal
+	// True literal.
 	True
 
-	// False literal
+	// False literal.
 	False
+
+	// Dirty literal.
+	Dirty
 )
 
 var text = [...]string{
@@ -85,6 +88,7 @@ var text = [...]string{
 	Member:         "member",
 	Indirect:       "indirect",
 	Index:          "index",
+	Test:           "member.test",
 	IndirectIndex:  "index.indirect",
 	ChunkIndex:     "index.chunk",
 	ChunkSlice:     "slice.chunk",
@@ -104,6 +108,7 @@ var text = [...]string{
 	String:  "string",
 	True:    "true",
 	False:   "false",
+	Dirty:   "dirty",
 }
 
 func (k Kind) String() string {

@@ -89,7 +89,10 @@ type Var struct {
 
 	Type TypeSpec
 
-	// Equals nil if init expression is dirty
+	// Specifies variable init value.
+	//
+	// Equals nil if init expression is empty.
+	// In that case default init value is used when variable is created.
 	Exp Exp
 }
 

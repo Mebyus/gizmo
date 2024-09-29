@@ -6,6 +6,31 @@ import (
 	"github.com/mebyus/gizmo/token"
 )
 
+// <Dirty> => "dirty"
+//
+// Dirty literal can only appear as a complete expression when initializing
+// a variable or a field in object literal. It cannot be a part of a bigger
+// expression. For example construct
+//
+//	(dirty)
+//
+// is illegal.
+type Dirty struct {
+	NodeE
+
+	Pos source.Pos
+}
+
+var _ Exp = Dirty{}
+
+func (Dirty) Kind() exk.Kind {
+	return exk.Dirty
+}
+
+func (d Dirty) Pin() source.Pos {
+	return d.Pos
+}
+
 // Expression which consists of usage of a single basic literal
 //
 // <BasicLiteral> = <IntegerLiteral> | <FloatLiteral> | <CharacterLiteral> | <StringLiteral> | <NilLiteral> | <TrueLiteral> | <FalseLiteral>

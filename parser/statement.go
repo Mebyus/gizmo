@@ -611,20 +611,11 @@ func (p *Parser) varStatement() (statement ast.VarStatement, err error) {
 	if err != nil {
 		return
 	}
-	err = p.expect(token.Assign)
-	if err != nil {
-		return
-	}
-	p.advance() // skip "="
-	if p.tok.Kind == token.Dirty {
-		p.advance() // skip "dirty"
 
-		err = p.expect(token.Semicolon)
-		if err != nil {
-			return
-		}
-		p.advance() // consume ";"
+	if p.tok.Kind == token.Semicolon {
+		// empty init expression
 
+		p.advance() // skip ";"
 		return ast.VarStatement{
 			Var: ast.Var{
 				Pos:  pos,
@@ -633,7 +624,14 @@ func (p *Parser) varStatement() (statement ast.VarStatement, err error) {
 			},
 		}, nil
 	}
-	expr, err := p.exp()
+
+	err = p.expect(token.Assign)
+	if err != nil {
+		return
+	}
+	p.advance() // skip "="
+
+	exp, err := p.InitExp()
 	if err != nil {
 		return
 	}
@@ -648,7 +646,7 @@ func (p *Parser) varStatement() (statement ast.VarStatement, err error) {
 			Pos:  pos,
 			Name: name,
 			Type: specifier,
-			Exp:  expr,
+			Exp:  exp,
 		},
 	}, nil
 }

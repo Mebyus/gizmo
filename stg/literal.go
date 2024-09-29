@@ -5,6 +5,27 @@ import (
 	"github.com/mebyus/gizmo/source"
 )
 
+type Dirty struct {
+	NodeE
+
+	Pos source.Pos
+}
+
+// Explicit interface implementation check
+var _ Exp = Dirty{}
+
+func (Dirty) Kind() exk.Kind {
+	return exk.Dirty
+}
+
+func (d Dirty) Pin() source.Pos {
+	return d.Pos
+}
+
+func (Dirty) Type() *Type {
+	return nil
+}
+
 type Literal interface {
 	Operand
 

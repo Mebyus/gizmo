@@ -15,6 +15,17 @@ func ParseExpression(str string) (ast.Exp, error) {
 	return p.exp()
 }
 
+// InitExp parse variable or object literal field init expression.
+func (p *Parser) InitExp() (ast.Exp, error) {
+	if p.tok.Kind == token.Dirty {
+		pos := p.pos()
+		p.advance()
+		return ast.Dirty{Pos: pos}, nil
+	}
+
+	return p.exp()
+}
+
 // Parse arbitrary expression (no expression will result in error).
 //
 // Parsing is done via Pratt's recursive descent algorithm variant.

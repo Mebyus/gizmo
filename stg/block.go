@@ -467,7 +467,7 @@ func (b *Block) addVar(ctx *Context, stmt ast.VarStatement) error {
 	if err != nil {
 		return err
 	}
-	exp, err := b.Scope.Scan(ctx, stmt.Exp)
+	exp, err := b.Scope.ScanInitExp(ctx, stmt.Exp)
 	if err != nil {
 		return err
 	}
