@@ -16,17 +16,17 @@ func Gen(w io.Writer, p *uwalk.Program) error {
 
 	/*
 
-	TODO: generate code like the following
+		TODO: generate code like the following
 
-	import {
-		example => "example"
-	}
+		import {
+			example => "example"
+		}
 
-	var t stf.Test
+		var t stf.Test
 
-	example.test.add(&t) // note special "test" chain part
-	
-	// check t.err, print logs and test result
+		example.test.add(&t) // note special "test" chain part
+
+		// check t.err, print logs and test result
 
 	*/
 

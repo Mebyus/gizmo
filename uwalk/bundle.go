@@ -36,6 +36,8 @@ type Program struct {
 	// Total number of test symbols in all units.
 	TestCount uint64
 
+	Map map[origin.Path]*stg.Unit
+
 	// Not nil if program has main unit.
 	Main *stg.Unit
 
@@ -53,6 +55,7 @@ func (b *Bundle) Program() (*Program, error) {
 		Units:  b.Units,
 		Main:   b.Main,
 		Global: b.Global,
+		Map:    b.Map,
 
 		TestCount: tests,
 	}

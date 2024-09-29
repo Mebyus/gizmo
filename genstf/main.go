@@ -14,7 +14,7 @@ func (g *Builder) main(units []*stg.Unit) {
 	g.indent()
 	g.puts("var t stf.Test;")
 	g.nl()
-	
+
 	g.indent()
 	g.puts("t.init(logbuf);")
 	g.nl()

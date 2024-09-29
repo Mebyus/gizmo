@@ -9,13 +9,17 @@ func (g *Builder) imports(units []*stg.Unit) {
 
 	g.puts("import std {")
 	g.nl()
-
 	g.inc()
+
+	g.indent()
+	g.puts("os => \"os\"")
+	g.nl()
+
 	g.indent()
 	g.puts("stf => \"stf\"")
-	g.dec()
-
 	g.nl()
+
+	g.dec()
 	g.puts("}")
 	g.nl()
 	g.nl()

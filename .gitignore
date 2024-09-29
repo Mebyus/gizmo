@@ -5,6 +5,7 @@
 /build/bin/
 /build/target/
 /build/.cache/
+/build/.test/
 
 /*.cpp
 /*.cc
