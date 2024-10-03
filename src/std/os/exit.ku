@@ -1,0 +1,3 @@
+fun exit(code: uint) => never {
+    print("exit no implemented");
+}

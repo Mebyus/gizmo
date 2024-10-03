@@ -11,7 +11,7 @@ type LogBuffer struct {
 }
 
 fun [*LogBuffer] put(s: str) {
-	g.p += copy(b[g.p:], s);
+	// g.p += copy(b[g.p:], s);
 }
 
 fun [*LogBuffer] reset() {
@@ -26,11 +26,16 @@ fun [*LogBuffer] flush() {
 	g.p = 0;
 }
 
+pub
 type Test struct {
 	buf: LogBuffer,
 
 	// First error occured in test.
 	err: str,
+}
+
+fun [*Test] init(buf: []u8) {
+	g.buf.b = buf;
 }
 
 fun [*Test] log(text: str) {

@@ -68,6 +68,18 @@ const (
 
 	// Dirty literal.
 	Dirty
+
+	// Desugared strings equality comparison.
+	StringsEqual
+
+	// Desugared strings inequality comparison.
+	StringsNotEqual
+
+	// Desugared empty string check.
+	StringEmpty
+
+	// Desugared not empty string check.
+	StringNotEmpty
 )
 
 var text = [...]string{
@@ -109,6 +121,12 @@ var text = [...]string{
 	True:    "true",
 	False:   "false",
 	Dirty:   "dirty",
+
+	StringsEqual:    "eq.str",
+	StringsNotEqual: "neq.str",
+
+	StringEmpty:    "empty.str",
+	StringNotEmpty: "notempty.str",
 }
 
 func (k Kind) String() string {

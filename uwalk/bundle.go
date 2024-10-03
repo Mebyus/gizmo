@@ -91,12 +91,12 @@ type Config struct {
 	IncludeTestFiles bool
 }
 
-func Walk(cfg *Config, init QueueItem) (*Bundle, error) {
+func Walk(cfg *Config, init ...QueueItem) (*Bundle, error) {
 	w := Walker{
 		StdDir:   cfg.StdDir,
 		LocalDir: cfg.LocalDir,
 	}
-	err := w.WalkFrom(init)
+	err := w.WalkFrom(init...)
 	if err != nil {
 		return nil, err
 	}

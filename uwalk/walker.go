@@ -25,11 +25,17 @@ type Walker struct {
 	IncludeTestFilesForAllItems bool
 }
 
-func (w *Walker) WalkFrom(init QueueItem) error {
+func (w *Walker) WalkFrom(init ...QueueItem) error {
+	if len(init) == 0 {
+		panic("no init items")
+	}
+
 	q := NewUnitQueue()
 	q.RaiseIncludeTestFilesFlagsForAllItems = w.IncludeTestFilesForAllItems
 
-	q.Add(init)
+	for _, item := range init {
+		q.Add(item)
+	}
 
 	for {
 		var item QueueItem

@@ -32,7 +32,7 @@ const (
 	//
 	//	s8, s16, s32, s64, s128, sint
 	//
-	// Static integer of arbitrary size is specified as:
+	// Static integer type of arbitrary size is specified as:
 	//
 	//	<int>
 	//
@@ -45,17 +45,41 @@ const (
 	// have Flavors
 	StaticFloat
 
-	// Type for static strings (literals, constants and exressions)
+	// Builtin type which can hold fixed number of bytes. Inner structure
+	// of this type is identical to chunk of bytes []u8. The difference
+	// between these two types is logical, in most cases strings should
+	// hold utf-8 encoded text opposed to arbitrary byte sequence in
+	// chunk of bytes. However this is not a rule and not enforced by the
+	// language in any way. Strings and chunks of bytes can be cast between
+	// each other freely with no runtime overhead.
 	//
-	// There is always only one Type of this category and it cannot
-	// have Flavors
-	StaticString
+	// Type for any strings (literals, constants and exressions).
+	//
+	// Static string type is specified as:
+	//
+	//	<str>
+	//
+	// And this static type has size set to 0.
+	String
 
-	// Type for static boolean values (literals, constants and exressions)
+	// Builtin type which can hold one of two mutually exclusive values:
 	//
-	// There is always only one Type of this category and it cannot
-	// have Flavors
-	StaticBoolean
+	//	- true
+	//	- false
+	//
+	// This type is not a flavor of any integer type. Furthermore boolean
+	// flavors cannot be cast into integer flavors via cast operation.
+	//
+	// Type for any boolean values (literals, constants and exressions)
+	//
+	// Flags specify whether this boolean type is static or runtime type.
+	//
+	// Static boolean type is specified as:
+	//
+	//	<bool>
+	//
+	// And this static type has size set to 0.
+	Boolean
 
 	// Type for static nil value (literal, constants and exressions)
 	//
@@ -63,7 +87,7 @@ const (
 	// have Flavors
 	StaticNil
 
-	RawMemoryPointer
+	AnyPointer
 
 	// Types of symbols, created by importing other unit
 	//
@@ -235,27 +259,6 @@ const (
 	//	f32, f64
 	Float
 
-	// Builtin type which can hold fixed number of bytes. Inner structure
-	// of this type is identical to chunk of bytes []u8. The difference
-	// between these two types is logical, in most cases strings should
-	// hold utf-8 encoded text opposed to arbitrary byte sequence in
-	// chunk of bytes. However this is not a rule and not enforced by the
-	// language in any way. Strings and chunks of bytes can be cast between
-	// each other freely with no runtime overhead.
-	String
-
-	// Builtin type which can hold one of two mutually exclusive values:
-	//
-	//	- true
-	//	- false
-	//
-	// There is always only one Type of this category and it is the Base
-	// of all boolean Flavors
-	//
-	// This Type is not a Flavor of any Integer Type. Furthermore Boolean
-	// Flavors cannot be cast into integer Flavors
-	Boolean
-
 	// Types which can have nil value at runtime
 	Nillable
 )
@@ -263,13 +266,11 @@ const (
 var text = [...]string{
 	empty: "<nil>",
 
-	Integer:       "integer",
-	StaticFloat:   "static.float",
-	StaticString:  "static.string",
-	StaticBoolean: "static.boolean",
-	StaticNil:     "static.nil",
+	Integer:     "integer",
+	StaticFloat: "static.float",
+	StaticNil:   "static.nil",
 
-	RawMemoryPointer: "pointer.rawmem",
+	AnyPointer: "pointer.rawmem",
 
 	Trivial:      "trivial",
 	Custom:       "custom",

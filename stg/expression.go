@@ -131,6 +131,7 @@ type BinExp struct {
 	Left     Exp
 	Right    Exp
 
+	// stored resulting type of expression
 	typ *Type
 }
 
@@ -146,10 +147,9 @@ func (e *BinExp) Pin() source.Pos {
 }
 
 func (e *BinExp) Type() *Type {
-	if e.typ != nil {
-		return e.typ
+	if e.typ == nil {
+		panic("no type")
 	}
-	e.typ = e.Left.Type()
 	return e.typ
 }
 

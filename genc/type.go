@@ -23,7 +23,7 @@ func (g *Builder) getTypeSpec(t *stg.Type) string {
 	if t == stg.AnyPointerType {
 		return "void*"
 	}
-	if t.PerfectInteger() {
+	if t.IsStaticInteger() {
 		return "s64"
 	}
 	if t.Builtin() {
@@ -252,7 +252,7 @@ var builtinTypes = []*stg.Type{
 	stg.SintType,
 
 	stg.StrType,
-	stg.BoolType,
+	stg.BooleanType,
 	stg.RuneType,
 }
 

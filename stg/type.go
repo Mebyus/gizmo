@@ -80,6 +80,11 @@ const (
 	TypeFlagSigned
 )
 
+// Custom returns true for custom (user defined opposed to language builtin) types.
+func (t *Type) Custom() bool {
+	return t.Kind == tpk.Custom
+}
+
 func (t *Type) Static() bool {
 	return t.Flags&TypeFlagStatic != 0
 }
@@ -100,9 +105,19 @@ func (t *Type) Signed() bool {
 	return t.Flags&TypeFlagSigned != 0
 }
 
-// Returns true for perfect integer type.
-func (t *Type) PerfectInteger() bool {
+// Returns true for static integer type.
+func (t *Type) IsStaticInteger() bool {
 	return t.Kind == tpk.Integer && t.Static() && t.Size == 0
+}
+
+// Returns true for static string type.
+func (t *Type) IsStaticString() bool {
+	return t.Kind == tpk.String && t.Static() && t.Size == 0
+}
+
+// Returns true for static boolean type.
+func (t *Type) IsStaticBoolean() bool {
+	return t.Kind == tpk.Boolean && t.Static() && t.Size == 0
 }
 
 func (t *Type) Symbol() *Symbol {
@@ -134,6 +149,28 @@ func (t *Type) IsIntegerType() bool {
 		return true
 	case tpk.Custom:
 		return t.Def.(CustomTypeDef).Base.Kind == tpk.Integer
+	default:
+		return false
+	}
+}
+
+func (t *Type) IsStringType() bool {
+	switch t.Kind {
+	case tpk.String:
+		return true
+	case tpk.Custom:
+		return t.Def.(CustomTypeDef).Base.Kind == tpk.String
+	default:
+		return false
+	}
+}
+
+func (t *Type) IsBooleanType() bool {
+	switch t.Kind {
+	case tpk.Boolean:
+		return true
+	case tpk.Custom:
+		return t.Def.(CustomTypeDef).Base.Kind == tpk.Boolean
 	default:
 		return false
 	}
@@ -208,8 +245,14 @@ func (t *Type) Hash() uint64 {
 }
 
 func (t *Type) computeHash() uint64 {
-	if t.PerfectInteger() {
+	if t.IsStaticInteger() {
 		return uint64(tpk.Integer)
+	}
+	if t.IsStaticString() {
+		return uint64(tpk.String)
+	}
+	if t.IsStaticBoolean() {
+		return uint64(tpk.Boolean)
 	}
 	if t.Builtin() {
 		return HashName(t.Symbol().Name)
@@ -233,12 +276,8 @@ func (t *Type) computeHash() uint64 {
 		return HashStructType(t)
 	case tpk.Array:
 		return HashArrayType(t)
-	case tpk.StaticBoolean:
-		return uint64(tpk.StaticBoolean)
 	case tpk.StaticFloat:
 		return uint64(tpk.StaticFloat)
-	case tpk.StaticString:
-		return uint64(tpk.StaticString)
 	case tpk.StaticNil:
 		return uint64(tpk.StaticNil)
 	default:
@@ -432,7 +471,7 @@ func newEnumType(base *Type, entries []EnumEntry) (*Type, error) {
 		index[name] = e
 		e.Exp = Integer{
 			Val: uint64(i),
-			typ: PerfectIntegerType,
+			typ: StaticIntegerType,
 		}
 	}
 
@@ -462,7 +501,7 @@ func typeCheckExp(want *Type, exp Exp) error {
 				exp.Pin(), t.Kind)
 		}
 
-		if t.PerfectInteger() {
+		if t.IsStaticInteger() {
 			// TODO: check that static integer fits into parameter type max value
 			// and there is no "signedness conflict" between type and value
 			return nil
@@ -497,11 +536,11 @@ func typeCheckExp(want *Type, exp Exp) error {
 			}
 		}
 	case tpk.Boolean:
-		if t.Kind == tpk.StaticBoolean {
+		if t.IsStaticBoolean() {
 			return nil
 		}
 	case tpk.String:
-		if t.Kind == tpk.StaticString {
+		if t.IsStaticString() {
 			return nil
 		}
 	case tpk.Custom:

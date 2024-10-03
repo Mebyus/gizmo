@@ -16,7 +16,7 @@ func (g *Builder) main(units []*stg.Unit) {
 	g.nl()
 
 	g.indent()
-	g.puts("t.init(logbuf);")
+	g.puts("t.init(logbuf[:]);")
 	g.nl()
 
 	for _, u := range units {

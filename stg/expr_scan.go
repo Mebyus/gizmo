@@ -361,7 +361,7 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 		def := t.Def.(*StructTypeDef)
 		m := def.Members.Find(name)
 		if m == nil {
-			return nil, fmt.Errorf("%s: type %s no member \"%s\"",
+			return nil, fmt.Errorf("%s: type %s has no member \"%s\"",
 				pos.String(), t.Kind.String(), name)
 		}
 		return &MemberExp{
@@ -378,7 +378,7 @@ func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPa
 		def := ref.Def.(CustomTypeDef).Base.Def.(*StructTypeDef)
 		m := def.Members.Find(name)
 		if m == nil {
-			return nil, fmt.Errorf("%s: type %s no member \"%s\"",
+			return nil, fmt.Errorf("%s: type %s has no member \"%s\"",
 				pos.String(), t.Kind.String(), name)
 		}
 		return &IndirectMemberExp{
@@ -619,7 +619,7 @@ func (s *Scope) scanUnaryExpression(ctx *Context, expr *ast.UnaryExpression) (*U
 	}, nil
 }
 
-func (s *Scope) scanBinExp(ctx *Context, exp ast.BinExp) (*BinExp, error) {
+func (s *Scope) scanBinExp(ctx *Context, exp ast.BinExp) (Exp, error) {
 	left, err := s.scan(ctx, exp.Left)
 	if err != nil {
 		return nil, err
@@ -634,12 +634,11 @@ func (s *Scope) scanBinExp(ctx *Context, exp ast.BinExp) (*BinExp, error) {
 		Right:    right,
 	}
 
-	t, err := typeCheckBinExp(bin)
+	e, err := typeCheckDesugarBinExp(bin)
 	if err != nil {
 		return nil, err
 	}
-	bin.typ = t
-	return bin, nil
+	return e, nil
 }
 
 func scanBasicLiteral(lit ast.BasicLiteral) Literal {
@@ -651,7 +650,7 @@ func scanBasicLiteral(lit ast.BasicLiteral) Literal {
 	case token.False:
 		return False{Pos: pos}
 	case token.BinInteger, token.OctInteger, token.DecInteger, token.HexInteger:
-		return Integer{Pos: pos, Val: lit.Token.Val, typ: PerfectIntegerType}
+		return Integer{Pos: pos, Val: lit.Token.Val, typ: StaticIntegerType}
 	case token.String:
 		return String{Pos: pos, Val: lit.Token.Lit, Size: lit.Token.Val}
 	case token.Rune:
@@ -660,7 +659,7 @@ func scanBasicLiteral(lit ast.BasicLiteral) Literal {
 		if lit.Token.Lit != "" {
 			panic(fmt.Sprintf("complex runes (%s) not implemented", lit.Token.Lit))
 		}
-		return Integer{Pos: pos, Val: lit.Token.Val, typ: PerfectIntegerType}
+		return Integer{Pos: pos, Val: lit.Token.Val, typ: StaticIntegerType}
 	default:
 		panic(fmt.Sprintf("not implemented for %s literal", lit.Token.Kind.String()))
 	}

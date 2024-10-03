@@ -59,7 +59,7 @@ func (t True) Pin() source.Pos {
 }
 
 func (True) Type() *Type {
-	return StaticBoolean
+	return StaticBooleanType
 }
 
 // False represents "false" literal usage in source code.
@@ -81,7 +81,7 @@ func (f False) Pin() source.Pos {
 }
 
 func (False) Type() *Type {
-	return StaticBoolean
+	return StaticBooleanType
 }
 
 // Integer represents integer literal usage
@@ -95,7 +95,7 @@ type Integer struct {
 
 	typ *Type
 
-	// True if integer if negative.
+	// True if integer is negative.
 	// Only evaluated integer can be negative.
 	Neg bool
 }
@@ -140,5 +140,5 @@ func (s String) Pin() source.Pos {
 }
 
 func (String) Type() *Type {
-	return StaticString
+	return StaticStringType
 }

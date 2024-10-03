@@ -23,7 +23,7 @@ func (s *Scope) addTypeSymbol(name string, t *Type) {
 }
 
 func (s *Scope) addBooleanType() {
-	s.addTypeSymbol("bool", BoolType)
+	s.addTypeSymbol("bool", BooleanType)
 }
 
 func (s *Scope) addStringType() {
@@ -71,7 +71,7 @@ func newSignedType(size uint32) *Type {
 	return t
 }
 
-func newPerfectIntegerType() *Type {
+func newStaticIntegerType() *Type {
 	t := &Type{
 		Kind:  tpk.Integer,
 		Flags: TypeFlagBuiltin | TypeFlagStatic,
@@ -79,10 +79,26 @@ func newPerfectIntegerType() *Type {
 	return t
 }
 
+func newStaticStringType() *Type {
+	t := &Type{
+		Kind:  tpk.String,
+		Flags: TypeFlagBuiltin | TypeFlagStatic,
+	}
+	return t
+}
+
+func newStaticBooleanType() *Type {
+	t := &Type{
+		Kind:  tpk.Boolean,
+		Flags: TypeFlagBuiltin | TypeFlagStatic,
+	}
+	return t
+}
+
 func newAnyPointerType() *Type {
 	t := &Type{
-		Kind:  tpk.RawMemoryPointer,
-		Size:  8, // TODO: adjust uint size based on target arch
+		Kind:  tpk.AnyPointer,
+		Size:  8, // TODO: adjust pointer size based on target arch
 		Flags: TypeFlagBuiltin,
 	}
 	return t
@@ -91,19 +107,30 @@ func newAnyPointerType() *Type {
 var (
 	Trivial = newStaticType(tpk.Trivial)
 
-	// Static integer of arbitrary size. Can hold
+	AnyPointerType = newAnyPointerType()
+
+	// Static integer type of arbitrary size. Can hold
 	// positive, negative and zero values.
 	//
 	// This type implicitly encompasses integer literals
 	// and their evaluations.
-	PerfectIntegerType = newPerfectIntegerType()
+	StaticIntegerType = newStaticIntegerType()
 
-	AnyPointerType = newAnyPointerType()
+	StaticFloat = newStaticType(tpk.StaticFloat)
 
-	StaticFloat   = newStaticType(tpk.StaticFloat)
-	StaticString  = newStaticType(tpk.StaticString)
-	StaticBoolean = newStaticType(tpk.StaticBoolean)
-	StaticNil     = newStaticType(tpk.StaticNil)
+	// Static string type. Can hold any string value known at compile time.
+	//
+	// This type implicitly encompasses string literals
+	// and their evaluations.
+	StaticStringType = newStaticStringType()
+
+	// Static boolean type. Can hold true of false values.
+	//
+	// This type implicitly encompasses boolean literals
+	// and their evaluations.
+	StaticBooleanType = newStaticBooleanType()
+
+	StaticNil = newStaticType(tpk.StaticNil)
 
 	Uint8Type  = newUnsignedType(1)
 	Uint16Type = newUnsignedType(2)
@@ -117,17 +144,17 @@ var (
 	Sint64Type = newSignedType(8)
 	SintType   = newSignedType(8) // TODO: adjust sint size based on target arch
 
-	BoolType = newBooleanType()
-	StrType  = newStringType()
-	RuneType = newUnsignedType(4)
+	BooleanType = newBooleanType()
+	StrType     = newStringType()
+	RuneType    = newUnsignedType(4)
 )
 
 func (s *Scope) addStaticTypes() {
 	// TODO: this is probably redundant
-	s.Types.tm[PerfectIntegerType.Stable()] = PerfectIntegerType
+	s.Types.tm[StaticIntegerType.Stable()] = StaticIntegerType
 	s.Types.tm[StaticFloat.Stable()] = StaticFloat
-	s.Types.tm[StaticString.Stable()] = StaticString
-	s.Types.tm[StaticBoolean.Stable()] = StaticBoolean
+	s.Types.tm[StaticStringType.Stable()] = StaticStringType
+	s.Types.tm[StaticBooleanType.Stable()] = StaticBooleanType
 	s.Types.tm[StaticNil.Stable()] = StaticNil
 }
 

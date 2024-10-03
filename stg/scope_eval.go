@@ -54,6 +54,8 @@ func (s *Scope) evalBinExp(exp *BinExp) (Exp, error) {
 			return addIntegers(a, b)
 		case bop.Sub:
 			return subIntegers(a, b)
+		case bop.LeftShift:
+			return leftShiftInteger(a, b)
 		default:
 			panic(fmt.Sprintf("not implemented for %s operator", o.Kind))
 		}
@@ -90,6 +92,29 @@ func (s *Scope) evalUnaryExp(exp *UnaryExp) (Exp, error) {
 func subIntegers(a, b Integer) (Integer, error) {
 	b.Neg = !b.Neg
 	return addIntegers(a, b)
+}
+
+func leftShiftInteger(a, b Integer) (Integer, error) {
+	if b.Neg {
+		return Integer{}, fmt.Errorf("%s: negative left shift", b.Pos)
+	}
+	if a.Neg {
+		return Integer{}, fmt.Errorf("%s: left shift on negative integer", a.Pos)
+	}
+	if b.Val == 0 {
+		return a, nil
+	}
+	if b.Val >= 64 {
+		panic("not implemented")
+	}
+
+	i := Integer{
+		typ: a.typ,
+		Pos: a.Pos,
+	}
+
+	i.Val = a.Val << b.Val
+	return i, nil
 }
 
 func addIntegers(a, b Integer) (Integer, error) {

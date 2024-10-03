@@ -11,6 +11,7 @@ import (
 	"github.com/mebyus/gizmo/butler"
 	"github.com/mebyus/gizmo/genstf"
 	"github.com/mebyus/gizmo/parser"
+	"github.com/mebyus/gizmo/source/origin"
 	"github.com/mebyus/gizmo/stg"
 	"github.com/mebyus/gizmo/uwalk"
 )
@@ -39,7 +40,7 @@ func executeTest(r *butler.Lackey, targets []string) error {
 	}
 	config.Test = true
 
-	outexe, err := buildTarget(config)
+	outexe, err := buildTestTarget(config)
 	if err != nil {
 		return err
 	}
@@ -54,6 +55,46 @@ func executeTest(r *butler.Lackey, targets []string) error {
 
 	fmt.Printf("total: %s\n", time.Since(start))
 	return nil
+}
+
+// returns path to resulting executable if any
+func buildTestTarget(config *Config) (string, error) {
+	bundle, err := makeUnitsTestBundle(config)
+	if err != nil {
+		return "", err
+	}
+
+	program, err := makeProgram(config, bundle)
+	if err != nil {
+		return "", err
+	}
+
+	return buildTestExe(config, program)
+}
+
+func makeUnitsTestBundle(config *Config) (*uwalk.Bundle, error) {
+	start := time.Now()
+	bundle, err := uwalk.Walk(&uwalk.Config{
+		StdDir:   filepath.Join(config.RootDir, "src/std"),
+		LocalDir: "src",
+	},
+		uwalk.QueueItem{
+			Path:             origin.Local(config.InitPath),
+			IncludeTestFiles: config.Test,
+		},
+		uwalk.QueueItem{
+			Path: origin.Path{Origin: origin.Std, ImpStr: "os"},
+		},
+		uwalk.QueueItem{
+			Path: origin.Path{Origin: origin.Std, ImpStr: "stf"},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("uwalk: %s\n", time.Since(start))
+	return bundle, nil
 }
 
 // returns path to executable

@@ -366,9 +366,13 @@ func (b *Block) addIf(ctx *Context, stmt ast.IfStatement) error {
 	if stmt.If.Condition == nil {
 		panic("nil condition expression in if statement")
 	}
-	condition, err := b.Scope.Scan(ctx, stmt.If.Condition)
+	condition, err := b.Scope.scan(ctx, stmt.If.Condition)
 	if err != nil {
 		return err
+	}
+	t := condition.Type()
+	if !t.IsBooleanType() {
+		return fmt.Errorf("%s: condition must evaluate to a boolean value", stmt.If.Pos)
 	}
 	if len(stmt.If.Body.Statements) == 0 {
 		ctx.m.warn(stmt.If.Body.Pos, "empty if branch")
