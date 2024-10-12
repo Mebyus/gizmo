@@ -1,9 +1,24 @@
-# Mutation model
+# Expressions
 
-From language semantic standpoint not all forms of expressions can be used
-interchangeably in different circumstances.
+## Chain expressions
 
-To illustarate the above statement, consider the following example:
+When it comes to expression design choices many languages tend to analyze and
+structure them based on broad categories of concepts:
+
+- operand
+- unary expression (and operator)
+- binary expression (and operator)
+- function call
+- index expression
+- ...
+
+These forms of expressions serve as building blocks for constructing other expressions
+of arbitrary complexity.
+
+In Ku we decided to separate some operators into a special category. When these
+operators are applied to operands they form what language calls **chain operands**.
+
+Let's look at them in example first:
 
 ```ku
 type A struct {
@@ -39,28 +54,67 @@ fun example() => A {
 }
 ```
 
-Code above is semantically correct (although a bit silly) and contains several
-expressions (in order we encounter them):
+Below we supplied each expression from the snippet with comments which indicate
+chain operands and name some of the operations or expressions:
 
 ```ku
 // from function init()
-b.bar    // 1 - field select
-"mark"   // 2 - string literal
-b.a.foo  // 3 - field select via chain 
-153      // 4 - integer literal
-b        // 5 - symbol usage
+b.bar    // 1 (chain) - field select
+"mark"   // 2         - string literal
+b.a.foo  // 3 (chain) - field select via chain 
+153      // 4         - integer literal
+b        // 5         - symbol usage
 
 // from function example()
 b        // 6
-init()   // 7  - function call
-b.&      // 8  - take variable address
-b.bar    // 9
+init()   // 7  (chain) - function call
+b.&      // 8  (chain) - take variable address
+b.bar    // 9  (chain)
 "hello"  // 10
-p.@      // 11 - indirect on pointer variable
-init()   // 12
-p.a      // 13 - indirect field select
-b.a      // 14
+p.@      // 11 (chain) - indirect on pointer variable
+init()   // 12 (chain)
+p.a      // 13 (chain) - indirect field select
+b.a      // 14 (chain)
 ```
+
+Here the complete list of chain operations with examples:
+
+```ku
+<C> - marks chain operand
+<I> - expression which result can be used as index value
+
+=========================================
+
+1. Field select
+
+<C> => <C> "." <field>
+
+Examples:
+
+    a.foo
+    b.foo.a
+
+=========================================
+
+2. Call // TODO: move calls to chain terminators
+
+<C> => <C> "(" <args> ")" // <args> - call arguments, may be empty
+
+```
+
+## Mutation model
+
+From language semantic standpoint not all forms of expressions can be used
+interchangeably in different circumstances.
+
+To illustarate the above statement, consider the following example:
+
+// TODO: reference example above
+
+Code above is semantically correct (although a bit silly) and contains several
+expressions (in order we encounter them):
+
+
 
 Expressions **6** and **7** result values have the same type `B`. Does that mean
 we could swap them and still have correct code?
@@ -98,17 +152,19 @@ phenomenon. In C++ these two types of expression values are called **lvalue**
 and **rvalue**. We will use different names for them, but the concept stays
 the same.
 
+## Stored and passed values
+
 In Ku programming language expression result value which we could assign to is
 called **stored value**. The name hints to us that this value is stored somewhere
 and thus it can be changed. The other type of values is called **passed value**,
 meaning that such values are only passed around, not stored, and thus could not
 be mutated.
 
-> Where this concept comes from? My uneducated theory is that the need for
+> Where does this concept come from? My uneducated theory is that the need for
 > such distinction between expression values comes from high-level nature of
 > the language. The need to mutate (change) values is integral to any imperative
-> high-level language and with it comes the necessity to differ what could be
-> mutated and what could not.
+> structural high-level language and with it comes the necessity to differ what
+> could be mutated and what could not.
 >
 > On the other hand machine code executed by real processor is free of such
 > limitation, because it operates based on different concepts. In hardware
@@ -211,3 +267,10 @@ int *p = a;
 *(p + 2) = 9;
 ```
 
+## Addressable values
+
+Operator `.&` takes an address of the value that preceeds the operator. Just like
+assignment address operator cannot be used on arbitrary expression. To take an
+address of a value the value must be stored somewhere first. Thus it is somewhat
+obvious from definitions that `.&` can only be applied to stored values which
+we already discussed previously.
