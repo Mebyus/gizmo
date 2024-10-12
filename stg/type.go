@@ -332,24 +332,24 @@ func HashArrayPointerType(ref *Type) uint64 {
 }
 
 func HashStructType(t *Type) uint64 {
-	members := t.Def.(*StructTypeDef).Members.Members
+	fields := t.Def.(*StructTypeDef).Fields
 
 	h := fnv.New64a()
 	var buf [1]byte
 	buf[0] = byte(tpk.Struct)
 	h.Write(buf[:])
-	for i := 0; i < len(members); i += 1 {
-		m := &members[i]
+	for i := range len(fields) {
+		m := &fields[i]
 		hashStructField(h, m)
 	}
 	return h.Sum64()
 }
 
-func hashStructField(h hash.Hash64, m *Member) {
+func hashStructField(h hash.Hash64, field *Field) {
 	var buf [10]byte
-	putUint64(buf[1:], m.Type.Hash())
+	putUint64(buf[1:], field.Type.Hash())
 	h.Write(buf[:])
-	h.Write([]byte(m.Name))
+	h.Write([]byte(field.Name))
 }
 
 type TypeDef interface {
@@ -444,10 +444,10 @@ func newChunkType(elem *Type) *Type {
 	return t
 }
 
-func newStructType(members MembersList) *Type {
+func newStructType(fields []Field) *Type {
 	t := &Type{
 		Kind: tpk.Struct,
-		Def:  &StructTypeDef{Members: members},
+		Def:  &StructTypeDef{Fields: fields},
 	}
 	return t
 }
@@ -555,85 +555,10 @@ func typeCheckExp(want *Type, exp Exp) error {
 		exp.Pin().String(), t.Kind, want.Kind)
 }
 
-type MemberKind uint8
-
-const (
-	memberEmpty MemberKind = iota
-
-	MemberField
-	MemberMethod
-)
-
-var memberText = [...]string{
-	memberEmpty: "<nil>",
-
-	MemberField:  "field",
-	MemberMethod: "method",
-}
-
-func (k MemberKind) String() string {
-	return memberText[k]
-}
-
-type Member struct {
-	// position where this member is defined.
-	Pos source.Pos
-
-	// Field or method name. Cannot be empty.
-	Name string
-
-	Type *Type
-
-	// Always nil for field members.
-	Def *MethodDef
-
-	// Index of member inside the list of members.
-	Index int
-
-	Kind MemberKind
-}
-
-type MembersList struct {
-	Members []Member
-
-	// maps member name to its index inside Members slice
-	index map[string]int
-}
-
-func (l *MembersList) Init(size int) {
-	if size == 0 {
-		return
-	}
-
-	l.Members = make([]Member, 0, size)
-	l.index = make(map[string]int, size)
-}
-
-func (l *MembersList) Find(name string) *Member {
-	i, ok := l.index[name]
-	if !ok {
-		return nil
-	}
-	return &l.Members[i]
-}
-
-func (l *MembersList) Add(member Member) {
-	l.index[member.Name] = len(l.Members)
-	member.Index = len(l.Members)
-	l.Members = append(l.Members, member)
-}
-
 type StructTypeDef struct {
 	nodeTypeDef
 
-	Members MembersList
-}
-
-type NamedTypeDef struct {
-	nodeTypeDef
-
-	// Symbol which was used to define a named type.
-	Symbol *Symbol
+	Fields []Field
 }
 
 type EnumTypeDef struct {

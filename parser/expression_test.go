@@ -32,32 +32,32 @@ func flt(l string) ast.BasicLiteral {
 	return lit(token.DecFloat, l)
 }
 
-func idn(name string) ast.Identifier {
+func word(name string) ast.Identifier {
 	return ast.Identifier{Lit: name}
 }
 
 func sym(name string) ast.SymbolExp {
-	return ast.SymbolExp{Identifier: idn(name)}
+	return ast.SymbolExp{Identifier: word(name)}
 }
 
-func par(x ast.Exp) ast.ParenthesizedExpression {
-	return ast.ParenthesizedExpression{Inner: x}
+func par(x ast.Exp) ast.ParenExp {
+	return ast.ParenExp{Inner: x}
 }
 
-func not(expr ast.Exp) *ast.UnaryExpression {
+func not(expr ast.Exp) *ast.UnaryExp {
 	return uex(uop.Not, expr)
 }
 
-func plus(expr ast.Exp) *ast.UnaryExpression {
+func plus(expr ast.Exp) *ast.UnaryExp {
 	return uex(uop.Plus, expr)
 }
 
-func neg(expr ast.Exp) *ast.UnaryExpression {
+func neg(expr ast.Exp) *ast.UnaryExp {
 	return uex(uop.Minus, expr)
 }
 
-func uex(kind uop.Kind, expr ast.Exp) *ast.UnaryExpression {
-	return &ast.UnaryExpression{
+func uex(kind uop.Kind, expr ast.Exp) *ast.UnaryExp {
+	return &ast.UnaryExp{
 		Operator: ast.UnaryOperator{Kind: kind},
 		Inner:    expr,
 	}
@@ -109,20 +109,13 @@ func bin(kind bop.Kind, left ast.Exp, right ast.Exp) ast.BinExp {
 
 func ch(start string, parts ...ast.ChainPart) ast.ChainOperand {
 	return ast.ChainOperand{
-		Identifier: idn(start),
+		Identifier: word(start),
 		Parts:      parts,
 	}
 }
 
-func chg(parts ...ast.ChainPart) ast.ChainOperand {
-	return ast.ChainOperand{
-		Identifier: idn(""),
-		Parts:      parts,
-	}
-}
-
-func mbr(name string) ast.MemberPart {
-	return ast.MemberPart{Member: idn(name)}
+func sel(name string) ast.SelectPart {
+	return ast.SelectPart{Name: word(name)}
 }
 
 func idx(index ast.Exp) ast.IndexPart {
@@ -237,9 +230,9 @@ func TestParseExpression(t *testing.T) {
 			),
 		},
 		{
-			name: "16 member",
+			name: "16 select",
 			str:  "a.b",
-			want: ch("a", mbr("b")),
+			want: ch("a", sel("b")),
 		},
 		{
 			name: "17 index",
@@ -249,7 +242,7 @@ func TestParseExpression(t *testing.T) {
 		{
 			name: "18 index on member",
 			str:  "a.b[3]",
-			want: ch("a", mbr("b"), idx(dec(3))),
+			want: ch("a", sel("b"), idx(dec(3))),
 		},
 		{
 			name: "19 binary expression with parentheses",
@@ -263,9 +256,9 @@ func TestParseExpression(t *testing.T) {
 			),
 		},
 		{
-			name: "20 member on receiver",
+			name: "20 select on receiver",
 			str:  "g.b",
-			want: chg(mbr("b")),
+			want: ch("g", sel("b")),
 		},
 		{
 			name:    "21 unfinished binary expression",

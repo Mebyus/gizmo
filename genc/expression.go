@@ -44,8 +44,8 @@ func (g *Builder) exp(exp stg.Exp) {
 	case exk.Enum:
 		g.EnumExp(exp.(*stg.EnumExp))
 
-	case exk.Chain, exk.Member, exk.Address, exk.Indirect, exk.IndirectIndex,
-		exk.Call, exk.IndirectMember, exk.ChunkMember, exk.ChunkIndex, exk.ChunkSlice, exk.ArraySlice:
+	case exk.Chain, exk.Field, exk.Address, exk.Indirect, exk.IndirectIndex,
+		exk.Call, exk.IndirectField, exk.ChunkMember, exk.ChunkIndex, exk.ChunkSlice, exk.ArraySlice:
 
 		g.ChainOperand(exp.(stg.ChainOperand))
 
@@ -115,8 +115,8 @@ func (g *Builder) ChainOperand(exp stg.ChainOperand) {
 	switch exp.Kind() {
 	case exk.Chain:
 		g.ChainSymbol(exp.(*stg.ChainSymbol))
-	case exk.Member:
-		g.MemberExp(exp.(*stg.MemberExp))
+	case exk.Field:
+		g.FieldExp(exp.(*stg.FieldExp))
 	case exk.Address:
 		g.AddressExp(exp.(*stg.AddressExp))
 	case exk.Indirect:
@@ -125,8 +125,8 @@ func (g *Builder) ChainOperand(exp stg.ChainOperand) {
 		g.IndirectIndexExp(exp.(*stg.IndirectIndexExp))
 	case exk.Call:
 		g.CallExp(exp.(*stg.CallExp))
-	case exk.IndirectMember:
-		g.IndirectMemberExp(exp.(*stg.IndirectMemberExp))
+	case exk.IndirectField:
+		g.IndirectFieldExp(exp.(*stg.IndirectFieldExp))
 	case exk.ChunkMember:
 		g.ChunkMemberExp(exp.(*stg.ChunkMemberExp))
 	case exk.ChunkIndex:
@@ -243,16 +243,16 @@ func (g *Builder) AddressExp(exp *stg.AddressExp) {
 	g.ChainOperand(exp.Target)
 }
 
-func (g *Builder) MemberExp(exp *stg.MemberExp) {
+func (g *Builder) FieldExp(exp *stg.FieldExp) {
 	g.ChainOperand(exp.Target)
 	g.puts(".")
-	g.puts(exp.Member.Name)
+	g.puts(exp.Field.Name)
 }
 
-func (g *Builder) IndirectMemberExp(exp *stg.IndirectMemberExp) {
+func (g *Builder) IndirectFieldExp(exp *stg.IndirectFieldExp) {
 	g.ChainOperand(exp.Target)
 	g.puts("->")
-	g.puts(exp.Member.Name)
+	g.puts(exp.Field.Name)
 }
 
 func (g *Builder) Integer(exp stg.Integer) {

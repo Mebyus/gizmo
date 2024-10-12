@@ -37,15 +37,32 @@ const (
 	// compound operands
 
 	Chain
-	Member
+
+	// Select chain on expression via construct:
+	//
+	//	exp.name
+	//
+	Select
+
 	Index
 	Call
+
 	Indirect
 	Address
 	Slice
 	Test
 	IndirectIndex
-	IndirectMember
+
+	// Struct field access via select chain.
+	// Analogous to "." operator in C.
+	Field
+
+	// Struct field access with poiter dereference via select chain.
+	// Analogous to "->" operator in C.
+	IndirectField
+
+	BoundMethod
+
 	ChunkMember
 	ChunkIndex
 	ChunkSlice
@@ -96,21 +113,22 @@ var text = [...]string{
 	MemCast: "mcast",
 	Paren:   "paren",
 
-	Chain:          "chain",
-	Member:         "member",
-	Indirect:       "indirect",
-	Index:          "index",
-	Test:           "member.test",
-	IndirectIndex:  "index.indirect",
-	ChunkIndex:     "index.chunk",
-	ChunkSlice:     "slice.chunk",
-	ArrayIndex:     "index.array",
-	ArraySlice:     "slice.array",
-	IndirectMember: "member.indirect",
-	ChunkMember:    "member.chunk",
-	Address:        "address",
-	Slice:          "slice",
-	Call:           "call",
+	Chain:         "chain",
+	Field:         "field",
+	Indirect:      "indirect",
+	Index:         "index",
+	Test:          "member.test",
+	IndirectIndex: "index.indirect",
+	ChunkIndex:    "index.chunk",
+	ChunkSlice:    "slice.chunk",
+	ArrayIndex:    "index.array",
+	ArraySlice:    "slice.array",
+	IndirectField: "field.indirect",
+	BoundMethod:   "method.bound",
+	ChunkMember:   "member.chunk",
+	Address:       "address",
+	Slice:         "slice",
+	Call:          "call",
 
 	IncompName: "name.incomp",
 

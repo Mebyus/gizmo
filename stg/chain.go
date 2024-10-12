@@ -24,7 +24,6 @@ type ChainSymbol struct {
 
 	Pos source.Pos
 
-	// can be nil for receiver
 	Sym *Symbol
 
 	typ *Type
@@ -70,54 +69,54 @@ func (e *IndirectExp) Type() *Type {
 	return e.typ
 }
 
-type MemberExp struct {
+type FieldExp struct {
 	NodeC
 
 	Pos source.Pos
 
 	Target ChainOperand
 
-	Member *Member
+	Field *Field
 }
 
 // Explicit interface implementation check.
-var _ ChainOperand = &MemberExp{}
+var _ ChainOperand = &FieldExp{}
 
-func (*MemberExp) Kind() exk.Kind {
-	return exk.Member
+func (*FieldExp) Kind() exk.Kind {
+	return exk.Field
 }
 
-func (e *MemberExp) Pin() source.Pos {
+func (e *FieldExp) Pin() source.Pos {
 	return e.Pos
 }
 
-func (e *MemberExp) Type() *Type {
-	return e.Member.Type
+func (e *FieldExp) Type() *Type {
+	return e.Field.Type
 }
 
-type IndirectMemberExp struct {
+type IndirectFieldExp struct {
 	NodeC
 
 	Pos source.Pos
 
 	Target ChainOperand
 
-	Member *Member
+	Field *Field
 }
 
 // Explicit interface implementation check.
-var _ ChainOperand = &IndirectMemberExp{}
+var _ ChainOperand = &IndirectFieldExp{}
 
-func (*IndirectMemberExp) Kind() exk.Kind {
-	return exk.IndirectMember
+func (*IndirectFieldExp) Kind() exk.Kind {
+	return exk.IndirectField
 }
 
-func (e *IndirectMemberExp) Pin() source.Pos {
+func (e *IndirectFieldExp) Pin() source.Pos {
 	return e.Pos
 }
 
-func (e *IndirectMemberExp) Type() *Type {
-	return e.Member.Type
+func (e *IndirectFieldExp) Type() *Type {
+	return e.Field.Type
 }
 
 type CallExp struct {
@@ -347,4 +346,40 @@ func (e *ChunkMemberExp) Pin() source.Pos {
 
 func (e *ChunkMemberExp) Type() *Type {
 	return e.typ
+}
+
+// BoundMethodExp method with attached receiver.
+// For example in expression:
+//
+//	t.init(5);
+//
+// Expression "t.init" is a bound method with receiver "t".
+type BoundMethodExp struct {
+	NodeC
+
+	Pos source.Pos
+
+	Receiver ChainOperand
+
+	// Method symbol.
+	Symbol *Symbol
+
+	// If true, then receiver must be passed by pointer to method.
+	Pointer bool
+}
+
+// Explicit interface implementation check.
+var _ ChainOperand = &BoundMethodExp{}
+
+func (*BoundMethodExp) Kind() exk.Kind {
+	return exk.BoundMethod
+}
+
+func (e *BoundMethodExp) Pin() source.Pos {
+	return e.Pos
+}
+
+func (e *BoundMethodExp) Type() *Type {
+	// TODO: create special type for bound methods
+	return nil
 }

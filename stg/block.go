@@ -185,7 +185,7 @@ func (b *Block) addDefer(ctx *Context, stmt ast.DeferStatement) error {
 		return err
 	}
 	call := exp.(*CallExp)
-	details, err := getCallDetails(call.Callee)
+	details, err := b.Scope.getCallDetails(call.Callee)
 	if err != nil {
 		return err
 	}

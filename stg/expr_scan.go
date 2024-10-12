@@ -44,15 +44,15 @@ func (s *Scope) scan(ctx *Context, exp ast.Exp) (Exp, error) {
 	case exk.Basic:
 		return scanBasicLiteral(exp.(ast.BasicLiteral)), nil
 	case exk.Symbol:
-		return s.scanSymbolExpression(ctx, exp.(ast.SymbolExp))
+		return s.scanSymbolExp(ctx, exp.(ast.SymbolExp))
 	case exk.Chain:
 		return s.scanChainOperand(ctx, exp.(ast.ChainOperand))
 	case exk.Unary:
-		return s.scanUnaryExpression(ctx, exp.(*ast.UnaryExpression))
+		return s.scanUnaryExp(ctx, exp.(*ast.UnaryExp))
 	case exk.Binary:
 		return s.scanBinExp(ctx, exp.(ast.BinExp))
 	case exk.Paren:
-		return s.scanParenthesizedExpression(ctx, exp.(ast.ParenthesizedExpression))
+		return s.scanParenExp(ctx, exp.(ast.ParenExp))
 	case exk.Cast:
 		return s.scanCastExp(ctx, exp.(ast.CastExp))
 	case exk.Tint:
@@ -171,11 +171,11 @@ func (s *Scope) scanImportExp(ctx *Context, pos source.Pos, imp *Symbol, parts [
 
 	part := parts[0]
 	switch part.Kind() {
-	case exk.Member:
+	case exk.Select:
 		unit := imp.Def.(ImportSymDef).Unit
-		m := part.(ast.MemberPart).Member
-		name := m.Lit
-		pos := m.Pos
+		member := part.(ast.SelectPart).Name
+		name := member.Lit
+		pos := member.Pos
 		symbol := unit.Scope.sym(name)
 		if symbol == nil {
 			return nil, fmt.Errorf("%s: unit %s has no \"%s\" symbol", pos, unit.Name, name)
@@ -202,8 +202,8 @@ func (s *Scope) scanChainPart(ctx *Context, tip ChainOperand, part ast.ChainPart
 		return s.scanAddressPart(ctx, tip, part.(ast.AddressPart))
 	case exk.Indirect:
 		return s.scanIndirectPart(ctx, tip, part.(ast.IndirectPart))
-	case exk.Member:
-		return s.scanMemberPart(ctx, tip, part.(ast.MemberPart))
+	case exk.Select:
+		return s.scanSelectPart(ctx, tip, part.(ast.SelectPart))
 	case exk.Call:
 		return s.scanCallPart(ctx, tip, part.(ast.CallPart))
 	case exk.IndirectIndex:
@@ -338,82 +338,89 @@ func (s *Scope) scanIndirectPart(ctx *Context, tip ChainOperand, part ast.Indire
 	}, nil
 }
 
-func (s *Scope) scanMemberPart(ctx *Context, tip ChainOperand, part ast.MemberPart) (ChainOperand, error) {
+func (s *Scope) scanSelectPart(ctx *Context, tip ChainOperand, part ast.SelectPart) (ChainOperand, error) {
 	// TODO: add type and symdef for import symbols
 	tt := tip.Type()
 
 	// TODO: think up a better way to lookup members on types,
 	// perhaps we should add a dedicated Type method for this
 
-	var t *Type
-	if tt.Kind == tpk.Custom {
-		// TODO: first search here for possible methods
-		t = tt.Def.(CustomTypeDef).Base
-	} else {
-		t = tt
-	}
+	name := part.Name
 
-	pos := part.Member.Pos
-	name := part.Member.Lit
-
-	switch t.Kind {
-	case tpk.Struct:
-		def := t.Def.(*StructTypeDef)
-		m := def.Members.Find(name)
-		if m == nil {
-			return nil, fmt.Errorf("%s: type %s has no member \"%s\"",
-				pos.String(), t.Kind.String(), name)
+	switch tt.Kind {
+	case tpk.Custom:
+		member, err := tt.Member(name)
+		if err != nil {
+			return nil, err
 		}
-		return &MemberExp{
-			Pos:    pos,
-			Target: tip,
-			Member: m,
-		}, nil
+
+		switch m := member.(type) {
+		case Field:
+			return &FieldExp{
+				Pos:    name.Pos,
+				Target: tip,
+				Field:  &m,
+			}, nil
+		case Method:
+			return &BoundMethodExp{
+				Pos:      name.Pos,
+				Receiver: tip,
+				Symbol:   m.Symbol,
+				Pointer:  m.Symbol.Def.(*MethodDef).Receiver.Kind == tpk.Pointer,
+			}, nil
+		default:
+			panic(fmt.Sprintf("%T unexpected member type", m))
+		}
 	case tpk.Pointer:
-		ref := t.Def.(PointerTypeDef).RefType
-		if ref.Kind != tpk.Custom && ref.Def.(CustomTypeDef).Base.Kind != tpk.Struct {
-			return nil, fmt.Errorf("%s: cannot select a member from %s type",
-				pos.String(), ref.Def.(CustomTypeDef).Base.Kind)
+		rt := tt.Def.(PointerTypeDef).RefType
+		member, err := rt.Member(name)
+		if err != nil {
+			return nil, err
 		}
-		def := ref.Def.(CustomTypeDef).Base.Def.(*StructTypeDef)
-		m := def.Members.Find(name)
-		if m == nil {
-			return nil, fmt.Errorf("%s: type %s has no member \"%s\"",
-				pos.String(), t.Kind.String(), name)
+
+		switch m := member.(type) {
+		case Field:
+			return &IndirectFieldExp{
+				Pos:    name.Pos,
+				Target: tip,
+				Field:  &m,
+			}, nil
+		case Method:
+			return &BoundMethodExp{
+				Pos:      name.Pos,
+				Receiver: tip,
+				Symbol:   m.Symbol,
+			}, nil
+		default:
+			panic(fmt.Sprintf("%T unexpected member type", m))
 		}
-		return &IndirectMemberExp{
-			Pos:    pos,
-			Target: tip,
-			Member: m,
-		}, nil
 	case tpk.Chunk:
-		name := part.Member.Lit
-		switch name {
+		switch name.Lit {
 		case "len":
 			return &ChunkMemberExp{
-				Pos:    pos,
+				Pos:    name.Pos,
 				Target: tip,
 				Name:   "len",
 				typ:    UintType,
 			}, nil
 		case "ptr":
 			return &ChunkMemberExp{
-				Pos:    pos,
+				Pos:    name.Pos,
 				Target: tip,
 				Name:   "ptr",
 
 				// TODO: we probably need to construct this type differently
 				// when it is custom chunk type
-				typ: s.Types.storeArrayPointer(t.Def.(ChunkTypeDef).ElemType),
+				typ: s.Types.storeArrayPointer(tt.Def.(ChunkTypeDef).ElemType),
 			}, nil
 		default:
-			return nil, fmt.Errorf("%s: chunks do not have \"%s\" member", pos.String(), name)
+			return nil, fmt.Errorf("%s: chunks do not have \"%s\" member", name.Pos, name.Lit)
 		}
 	case tpk.Integer, tpk.Boolean, tpk.Float:
 		return nil, fmt.Errorf("%s: cannot select a member from %s type",
-			pos.String(), t.Kind.String())
+			name.Pos, tt.Kind)
 	default:
-		panic(fmt.Sprintf("%s types not implemented", t.Kind.String()))
+		panic(fmt.Sprintf("%s types not implemented", tt.Kind))
 	}
 }
 
@@ -456,18 +463,40 @@ func getCallDetailsByChainSymbol(c *ChainSymbol) (*CallDetails, error) {
 	}
 }
 
+func (s *Scope) getCallDetailsByBoundMethod(m *BoundMethodExp) (*CallDetails, error) {
+	var r Exp
+	if m.Pointer {
+		r = &AddressExp{
+			Pos:    m.Receiver.Pin(),
+			Target: m.Receiver,
+			typ:    s.Types.storePointer(m.Receiver.Type()),
+		}
+	} else {
+		r = m.Receiver
+	}
+	return &CallDetails{
+		Signature: Signature{
+			
+		},
+		Symbol:   m.Symbol,
+		Receiver: r,
+	}, nil
+}
+
 // TODO: refactor this to accept CallExpression.
-func getCallDetails(o ChainOperand) (*CallDetails, error) {
+func (s *Scope) getCallDetails(o ChainOperand) (*CallDetails, error) {
 	switch o.Kind() {
 	case exk.Chain:
 		return getCallDetailsByChainSymbol(o.(*ChainSymbol))
+	case exk.BoundMethod:
+		return s.getCallDetailsByBoundMethod(o.(*BoundMethodExp))
 	default:
 		panic(fmt.Sprintf("%s: %s operands not implemented", o.Pin().String(), o.Kind().String()))
 	}
 }
 
 func (s *Scope) scanCallPart(ctx *Context, tip ChainOperand, part ast.CallPart) (ChainOperand, error) {
-	details, err := getCallDetails(tip)
+	details, err := s.getCallDetails(tip)
 	if err != nil {
 		return nil, err
 	}
@@ -535,7 +564,7 @@ func (s *Scope) scanCastExp(ctx *Context, expr ast.CastExp) (*CastExp, error) {
 	}, nil
 }
 
-func (s *Scope) scanParenthesizedExpression(ctx *Context, expr ast.ParenthesizedExpression) (*ParenExp, error) {
+func (s *Scope) scanParenExp(ctx *Context, expr ast.ParenExp) (*ParenExp, error) {
 	pos := expr.Pos
 	inner, err := s.scan(ctx, expr.Inner)
 	if err != nil {
@@ -590,7 +619,7 @@ func (s *Scope) scanCallArgs(ctx *Context, pos source.Pos, params []*Symbol, arg
 	return aa, nil
 }
 
-func (s *Scope) scanSymbolExpression(ctx *Context, expr ast.SymbolExp) (*SymbolExp, error) {
+func (s *Scope) scanSymbolExp(ctx *Context, expr ast.SymbolExp) (*SymbolExp, error) {
 	name := expr.Identifier.Lit
 	pos := expr.Identifier.Pos
 	symbol := s.Lookup(name, pos.Num)
@@ -607,7 +636,7 @@ func (s *Scope) scanSymbolExpression(ctx *Context, expr ast.SymbolExp) (*SymbolE
 	}, nil
 }
 
-func (s *Scope) scanUnaryExpression(ctx *Context, expr *ast.UnaryExpression) (*UnaryExp, error) {
+func (s *Scope) scanUnaryExp(ctx *Context, expr *ast.UnaryExp) (*UnaryExp, error) {
 	inner, err := s.scan(ctx, expr.Inner)
 	if err != nil {
 		return nil, err

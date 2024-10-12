@@ -76,15 +76,15 @@ func (p *Parser) primary() (ast.Exp, error) {
 	return p.operand()
 }
 
-func (p *Parser) unary() (*ast.UnaryExpression, error) {
-	topExp := &ast.UnaryExpression{
+func (p *Parser) unary() (*ast.UnaryExp, error) {
+	topExp := &ast.UnaryExp{
 		Operator: ast.UnaryOperatorFromToken(p.tok),
 	}
 	p.advance()
 
 	tipExp := topExp
 	for p.tok.Kind.IsUnaryOperator() {
-		nextExp := &ast.UnaryExpression{
+		nextExp := &ast.UnaryExp{
 			Operator: ast.UnaryOperatorFromToken(p.tok),
 		}
 		p.advance()
@@ -267,20 +267,20 @@ func (p *Parser) objectLiteral() (ast.ObjectLiteral, error) {
 	}
 }
 
-func (p *Parser) paren() (ast.ParenthesizedExpression, error) {
+func (p *Parser) paren() (ast.ParenExp, error) {
 	pos := p.pos()
 
 	p.advance() // skip "("
 	expr, err := p.exp()
 	if err != nil {
-		return ast.ParenthesizedExpression{}, err
+		return ast.ParenExp{}, err
 	}
 	err = p.expect(token.RightParentheses)
 	if err != nil {
-		return ast.ParenthesizedExpression{}, err
+		return ast.ParenExp{}, err
 	}
 	p.advance() // skip ")"
-	return ast.ParenthesizedExpression{
+	return ast.ParenExp{
 		Pos:   pos,
 		Inner: expr,
 	}, nil
@@ -410,16 +410,16 @@ func (p *Parser) callPart() (ast.CallPart, error) {
 	}, nil
 }
 
-func (p *Parser) memberPart() (ast.MemberPart, error) {
+func (p *Parser) selectPart() (ast.SelectPart, error) {
 	p.advance() // skip "."
 	err := p.expect(token.Identifier)
 	if err != nil {
-		return ast.MemberPart{}, err
+		return ast.SelectPart{}, err
 	}
-	member := p.word()
-	p.advance() // skip identifier
+	name := p.word()
+	p.advance() // skip name identifier
 
-	return ast.MemberPart{Member: member}, nil
+	return ast.SelectPart{Name: name}, nil
 }
 
 func (p *Parser) indirectPart() ast.IndirectPart {
@@ -443,7 +443,7 @@ func (p *Parser) chainOperand(chain *ast.ChainOperand) error {
 			if p.next.Kind == token.Test {
 				part, err = p.testPart()
 			} else {
-				part, err = p.memberPart()
+				part, err = p.selectPart()
 			}
 		case token.Indirect:
 			part = p.indirectPart()

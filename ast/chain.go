@@ -51,24 +51,24 @@ type NodeP struct{}
 
 func (NodeP) ChainPart() {}
 
-// <MemberPart> = "." <Member>
+// <SelectPart> = "." <Name>
 //
-// <Member> = <Identifier>
-type MemberPart struct {
+// <Name> = <Identifier>
+type SelectPart struct {
 	NodeP
 
-	Member Identifier
+	Name Identifier
 }
 
 // Explicit interface implementation check.
-var _ ChainPart = MemberPart{}
+var _ ChainPart = SelectPart{}
 
-func (MemberPart) Kind() exk.Kind {
-	return exk.Member
+func (SelectPart) Kind() exk.Kind {
+	return exk.Select
 }
 
-func (p MemberPart) Pin() source.Pos {
-	return p.Member.Pos
+func (p SelectPart) Pin() source.Pos {
+	return p.Name.Pos
 }
 
 // <CallPart> = "(" { <Expression> "," } ")"

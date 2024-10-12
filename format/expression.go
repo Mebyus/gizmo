@@ -17,7 +17,7 @@ func (g *Noder) Expression(expr ast.Exp) {
 	case exk.Binary:
 		g.BinaryExpression(expr.(ast.BinExp))
 	case exk.Paren:
-		g.ParenthesizedExpression(expr.(ast.ParenthesizedExpression))
+		g.ParenthesizedExpression(expr.(ast.ParenExp))
 	case exk.Chain:
 		g.ChainOperand(expr.(ast.ChainOperand))
 	default:
@@ -104,7 +104,7 @@ func (g *Noder) SymbolExpression(expr ast.SymbolExp) {
 	g.idn(expr.Identifier)
 }
 
-func (g *Noder) ParenthesizedExpression(expr ast.ParenthesizedExpression) {
+func (g *Noder) ParenthesizedExpression(expr ast.ParenExp) {
 	g.genpos(token.LeftParentheses, expr.Pos)
 	g.sep()
 	g.Expression(expr.Inner)

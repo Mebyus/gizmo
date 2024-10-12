@@ -74,8 +74,8 @@ func (e IncompNameExp) Pin() source.Pos {
 	return e.Identifier.Pos
 }
 
-// <ParenthesizedExpression> = "(" <Expression> ")"
-type ParenthesizedExpression struct {
+// <ParenExp> = "(" <Expression> ")"
+type ParenExp struct {
 	NodeO
 
 	Pos source.Pos
@@ -83,33 +83,33 @@ type ParenthesizedExpression struct {
 	Inner Exp
 }
 
-var _ Operand = ParenthesizedExpression{}
+var _ Operand = ParenExp{}
 
-func (ParenthesizedExpression) Kind() exk.Kind {
+func (ParenExp) Kind() exk.Kind {
 	return exk.Paren
 }
 
-func (e ParenthesizedExpression) Pin() source.Pos {
+func (e ParenExp) Pin() source.Pos {
 	return e.Pos
 }
 
-// <UnaryExpression> = <UnaryOperator> <UnaryOperand>
+// <UnaryExp> = <UnaryOperator> <UnaryOperand>
 //
-// <UnaryOperand> = <Operand> | <UnaryExpression>
-type UnaryExpression struct {
+// <UnaryOperand> = <Operand> | <UnaryExp>
+type UnaryExp struct {
 	NodeE
 
 	Operator UnaryOperator
 	Inner    Exp
 }
 
-var _ Exp = UnaryExpression{}
+var _ Exp = UnaryExp{}
 
-func (UnaryExpression) Kind() exk.Kind {
+func (UnaryExp) Kind() exk.Kind {
 	return exk.Unary
 }
 
-func (e UnaryExpression) Pin() source.Pos {
+func (e UnaryExp) Pin() source.Pos {
 	return e.Operator.Pos
 }
 

@@ -235,24 +235,21 @@ func (x *TypeIndex) lookupStruct(ctx *Context, spec ast.StructType) (*Type, erro
 		return Trivial, nil
 	}
 
-	var members MembersList
-	members.Init(len(spec.Fields))
-
+	fields := make([]Field, 0, len(spec.Fields))
 	for _, f := range spec.Fields {
 		t, err := x.lookup(ctx, f.Type)
 		if err != nil {
 			return nil, err
 		}
 
-		members.Add(Member{
+		fields = append(fields, Field{
 			Pos:  f.Name.Pos,
 			Name: f.Name.Lit,
-			Kind: MemberField,
 			Type: t,
 		})
 	}
 
-	return x.store(newStructType(members)), nil
+	return x.store(newStructType(fields)), nil
 }
 
 func (x *TypeIndex) lookupPointer(ctx *Context, spec ast.TypeSpec) (*Type, error) {

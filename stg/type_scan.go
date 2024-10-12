@@ -170,7 +170,7 @@ func (s LinkSet) Elems() []Link {
 // unit level symbols hoisting, cycled definitions detection, etc.
 type SymbolContext struct {
 	// only used during type inspection
-	members MembersList
+	members map[ /* member name */ string]struct{}
 
 	Links LinkSet
 
@@ -262,7 +262,7 @@ func (m *Merger) shallowScanType(ctx *SymbolContext, i astIndexSymDef) error {
 
 func (m *Merger) shallowScanStructType(ctx *SymbolContext, spec ast.StructType) error {
 	methods := m.nodes.MethodsByReceiver[ctx.Symbol.Name]
-	ctx.members.Init(len(spec.Fields) + len(methods))
+	ctx.members = make(map[string]struct{}, len(spec.Fields)+len(methods))
 
 	for _, field := range spec.Fields {
 		err := m.shallowScanStructField(ctx, field)
@@ -286,17 +286,12 @@ func (m *Merger) shallowScanTypeMethod(ctx *SymbolContext, i astIndexSymDef) err
 	name := method.Name.Lit
 	pos := method.Name.Pos
 
-	r := ctx.members.Find(name)
-	if r != nil {
+	_, ok := ctx.members[name]
+	if ok {
 		return fmt.Errorf("%s: field with name \"%s\" is already present in struct", pos.String(), name)
 	}
 
-	ctx.members.Add(Member{
-		Pos:  pos,
-		Name: name,
-		Kind: MemberMethod,
-	})
-
+	ctx.members[name] = struct{}{}
 	return nil
 }
 
@@ -304,8 +299,8 @@ func (m *Merger) shallowScanStructField(ctx *SymbolContext, field ast.FieldDefin
 	name := field.Name.Lit
 	pos := field.Name.Pos
 
-	r := ctx.members.Find(name)
-	if r != nil {
+	_, ok := ctx.members[name]
+	if ok {
 		return fmt.Errorf("%s: field with name \"%s\" is already present in struct", pos.String(), name)
 	}
 
@@ -314,12 +309,7 @@ func (m *Merger) shallowScanStructField(ctx *SymbolContext, field ast.FieldDefin
 		return err
 	}
 
-	ctx.members.Add(Member{
-		Pos:  pos,
-		Name: name,
-		Kind: MemberField,
-	})
-
+	ctx.members[name] = struct{}{}
 	return nil
 }
 

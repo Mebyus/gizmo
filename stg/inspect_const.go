@@ -68,11 +68,11 @@ func (m *Merger) inspectExp(ctx *SymbolContext, exp ast.Exp) error {
 	case exk.Symbol:
 		return m.inspectSymbolExp(ctx, exp.(ast.SymbolExp))
 	case exk.Unary:
-		return m.inspectUnaryExp(ctx, exp.(*ast.UnaryExpression))
+		return m.inspectUnaryExp(ctx, exp.(*ast.UnaryExp))
 	case exk.Binary:
 		return m.inspectBinaryExp(ctx, exp.(ast.BinExp))
 	case exk.Paren:
-		return m.inspectParenExp(ctx, exp.(ast.ParenthesizedExpression))
+		return m.inspectParenExp(ctx, exp.(ast.ParenExp))
 	case exk.Address, exk.Chain, exk.Indirect:
 		return fmt.Errorf("%s: %s is not allowed in constant expression", exp.Pin(), exp.Kind())
 	default:
@@ -95,11 +95,11 @@ func (m *Merger) inspectSymbolExp(ctx *SymbolContext, exp ast.SymbolExp) error {
 	return nil
 }
 
-func (m *Merger) inspectUnaryExp(ctx *SymbolContext, exp *ast.UnaryExpression) error {
+func (m *Merger) inspectUnaryExp(ctx *SymbolContext, exp *ast.UnaryExp) error {
 	return m.inspectExp(ctx, exp.Inner)
 }
 
-func (m *Merger) inspectParenExp(ctx *SymbolContext, exp ast.ParenthesizedExpression) error {
+func (m *Merger) inspectParenExp(ctx *SymbolContext, exp ast.ParenExp) error {
 	return m.inspectExp(ctx, exp.Inner)
 }
 

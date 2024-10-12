@@ -14,6 +14,8 @@ func typeCheckDesugarBinExp(exp *BinExp) (Exp, error) {
 		return typeCheckDesugarEqualExp(exp)
 	case bop.NotEqual:
 		return typeCheckDesugarNotEqualExp(exp)
+	case bop.Less, bop.LessOrEqual, bop.Greater, bop.GreaterOrEqual:
+		return typeCheckIntegersComparison(exp)
 	default:
 	}
 
@@ -45,7 +47,7 @@ func typeCheckDesugarEqualExp(exp *BinExp) (Exp, error) {
 		return typeCheckIntegersComparison(exp)
 	}
 
-	return nil, nil
+	panic("not implemented")
 }
 
 func typeCheckDesugarNotEqualExp(exp *BinExp) (Exp, error) {
@@ -57,7 +59,7 @@ func typeCheckDesugarNotEqualExp(exp *BinExp) (Exp, error) {
 		return typeCheckIntegersComparison(exp)
 	}
 
-	return nil, nil
+	panic("not implemented")
 }
 
 func typeCheckIntegersComparison(exp *BinExp) (Exp, error) {

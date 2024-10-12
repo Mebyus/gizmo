@@ -207,8 +207,8 @@ func (g *Builder) enumField(name string, entry *stg.EnumEntry) {
 	g.puts(",")
 }
 
-func (g *Builder) structFields(members []stg.Member) {
-	if len(members) == 0 {
+func (g *Builder) structFields(fields []stg.Field) {
+	if len(fields) == 0 {
 		g.puts("{}")
 		return
 	}
@@ -216,26 +216,26 @@ func (g *Builder) structFields(members []stg.Member) {
 	g.puts("{")
 	g.nl()
 	g.inc()
-	for i := 0; i < len(members); i += 1 {
+	for i := range len(fields) {
 		g.indent()
-		g.structField(&members[i])
+		g.structField(&fields[i])
 		g.nl()
 	}
 	g.dec()
 	g.puts("}")
 }
 
-func (g *Builder) structField(member *stg.Member) {
-	g.TypeSpec(member.Type)
+func (g *Builder) structField(field *stg.Field) {
+	g.TypeSpec(field.Type)
 	g.space()
-	g.puts(member.Name)
+	g.puts(field.Name)
 	g.semi()
 }
 
 func (g *Builder) StructType(def *stg.StructTypeDef) {
 	g.puts("struct")
 	g.space()
-	g.structFields(def.Members.Members)
+	g.structFields(def.Fields)
 }
 
 var builtinTypes = []*stg.Type{
