@@ -106,12 +106,8 @@ func (t Token) Literal() string {
 		return "\"" + t.Lit + "\""
 	case RawString, FillString:
 		return "#\"" + t.Lit + "\""
-	case Nil:
-		return "nil"
-	case True:
-		return "true"
-	case False:
-		return "false"
+	case Macro:
+		return "#:" + t.Lit
 	default:
 		panic("must not be invoked with static literal tokens: " + t.Kind.String())
 	}

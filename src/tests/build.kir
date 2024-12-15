@@ -1,0 +1,7 @@
+#if true {
+    #build "1.ku", "2.ku";
+}
+
+#build "str.ku";
+
+#:PINK => 123;

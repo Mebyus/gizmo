@@ -127,6 +127,9 @@ const (
 	LabelNext // @.next
 	LabelOut  // @.out
 
+	DirIf    // #if
+	DirBuild // #build
+
 	noStaticLiteral
 
 	Illegal // any byte sequence unknown to lexer
@@ -142,6 +145,7 @@ const (
 	String     // "abc", "", "\t\n  42Hello\n"
 	RawString  // #"raw string literal"
 	FillString // "string with ${10 + 1} interpolated ${a - b} expressions"
+	Macro      // #:MACRO_NAME
 
 	// Comments
 	LineComment  // Line comment starts with //

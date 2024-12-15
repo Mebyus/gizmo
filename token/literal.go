@@ -104,6 +104,9 @@ var Literal = [...]string{
 	LabelNext: "@.next",
 	LabelOut:  "@.out",
 
+	DirIf:    "#if",
+	DirBuild: "#build",
+
 	// Non static literals
 
 	Illegal:    "ILG",
@@ -117,6 +120,7 @@ var Literal = [...]string{
 	DecInteger: "INT.DEC",
 	HexInteger: "INT.HEX",
 	DecFloat:   "FLT.DEC",
+	Macro:      "MACRO",
 
 	// Comments
 

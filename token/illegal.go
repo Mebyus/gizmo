@@ -11,8 +11,11 @@ const (
 	MalformedDecimalInteger
 	MalformedHexadecimalInteger
 	MalformedBlockComment
+	MalformedMacro
 
 	BadEscapeInString
+
+	UnknownDirective
 )
 
 func (t *Token) SetIllegalError(code uint64) {

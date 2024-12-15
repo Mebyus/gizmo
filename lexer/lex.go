@@ -54,8 +54,20 @@ func (lx *Lexer) codeToken() token.Token {
 		return lx.runeLiteral()
 	}
 
-	if lx.C == '#' && lx.Next == '"' {
-		return lx.rawStringLiteral()
+	if lx.C == '#' {
+		switch lx.Next {
+		case '"':
+			return lx.rawStringLiteral()
+		case '[':
+			return lx.twoBytesToken(token.PropStart)
+		case ':':
+			return lx.macro()
+		default:
+			if char.IsLetterOrUnderscore(lx.Next) {
+				return lx.directive()
+			}
+			return lx.illegalByteToken()
+		}
 	}
 
 	if lx.C == '@' && lx.Next == '.' {
@@ -73,6 +85,56 @@ func (lx *Lexer) create(k token.Kind) token.Token {
 		Kind: k,
 		Pos:  lx.pos(),
 	}
+}
+
+func (lx *Lexer) directive() (tok token.Token) {
+	tok.Pos = lx.pos()
+
+	lx.Advance() // skip '#'
+
+	lx.Start()
+	lx.SkipWord()
+	lit, ok := lx.Take()
+	if !ok {
+		tok.SetIllegalError(token.LengthOverflow)
+		return
+	}
+
+	switch lit {
+	case "if":
+		tok.Kind = token.DirIf
+	case "build":
+		tok.Kind = token.DirBuild
+	default:
+		tok.SetIllegalError(token.UnknownDirective)
+	}
+
+	return
+}
+
+func (lx *Lexer) macro() (tok token.Token) {
+	tok.Pos = lx.pos()
+
+	lx.Advance() // skip '#'
+	lx.Advance() // skip ':'
+
+	if !char.IsLetterOrUnderscore(lx.C) {
+		tok.SetIllegalError(token.MalformedMacro)
+		return
+	}
+
+	lx.Start()
+	lx.SkipWord()
+	lit, ok := lx.Take()
+	if !ok {
+		tok.SetIllegalError(token.LengthOverflow)
+		return
+	}
+
+	tok.Kind = token.Macro
+	tok.Lit = lit
+
+	return
 }
 
 func (lx *Lexer) label() (tok token.Token) {
@@ -747,11 +809,6 @@ func (lx *Lexer) other() token.Token {
 			return lx.twoBytesToken(token.LogicalOr)
 		}
 		return lx.oneByteToken(token.Pipe)
-	case '#':
-		if lx.Next == '[' {
-			return lx.twoBytesToken(token.PropStart)
-		}
-		return lx.illegalByteToken()
 	default:
 		return lx.illegalByteToken()
 	}
