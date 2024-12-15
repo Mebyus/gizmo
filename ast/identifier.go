@@ -2,7 +2,6 @@ package ast
 
 import (
 	"github.com/mebyus/gizmo/source"
-	"github.com/mebyus/gizmo/token"
 )
 
 // <Identifier> = <Word>
@@ -12,15 +11,7 @@ type Identifier struct {
 }
 
 func (n Identifier) AsChainOperand() ChainOperand {
-	return ChainOperand{Identifier: n}
-}
-
-func (n Identifier) Token() token.Token {
-	return token.Token{
-		Kind: token.Identifier,
-		Pos:  n.Pos,
-		Lit:  n.Lit,
-	}
+	return ChainOperand{Start: n}
 }
 
 func (n Identifier) String() string {

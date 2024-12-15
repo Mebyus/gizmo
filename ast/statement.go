@@ -166,7 +166,7 @@ type CallStatement struct {
 	NodeS
 
 	// Must be call operand.
-	Call ChainOperand
+	Call CallExp
 }
 
 var _ Statement = CallStatement{}
@@ -294,7 +294,7 @@ type DeferStatement struct {
 	Pos source.Pos
 
 	// must be call expression
-	Call ChainOperand
+	Call CallExp
 }
 
 var _ Statement = DeferStatement{}

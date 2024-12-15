@@ -3,6 +3,7 @@ package stg
 import (
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/enums/exk"
+	"github.com/mebyus/gizmo/enums/smk"
 	"github.com/mebyus/gizmo/source"
 )
 
@@ -29,6 +30,9 @@ type Operand interface {
 
 	// dummy discriminator method
 	Operand()
+
+	// Returns true if expression results in a stored value.
+	Stored() bool
 }
 
 // This is dummy implementation of Operand interface.
@@ -38,7 +42,12 @@ type NodeO struct{ NodeE }
 
 func (NodeO) Operand() {}
 
+func (NodeO) Stored() bool {
+	return false
+}
+
 // SymbolExp is an operand expression which represents direct symbol usage.
+//
 // Example:
 //
 //	10 + a // in this expression operand "a" is SymbolExp
@@ -51,7 +60,7 @@ type SymbolExp struct {
 	Sym *Symbol
 }
 
-// Explicit interface implementation check
+// Explicit interface implementation check.
 var _ Operand = &SymbolExp{}
 
 func (*SymbolExp) Kind() exk.Kind {
@@ -64,6 +73,10 @@ func (e *SymbolExp) Pin() source.Pos {
 
 func (e *SymbolExp) Type() *Type {
 	return e.Sym.Type
+}
+
+func (e SymbolExp) Stored() bool {
+	return e.Sym.Kind == smk.Var
 }
 
 // EnumExp direct usage of enum entry as value.

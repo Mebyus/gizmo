@@ -26,7 +26,7 @@ func (g *Noder) Expression(expr ast.Exp) {
 }
 
 func (g *Noder) ChainOperand(expr ast.ChainOperand) {
-	g.idn(expr.Identifier)
+	g.idn(expr.Start)
 
 	for _, part := range expr.Parts {
 		g.chainPart(part)
@@ -35,10 +35,6 @@ func (g *Noder) ChainOperand(expr ast.ChainOperand) {
 
 func (g *Noder) chainPart(part ast.ChainPart) {
 	switch part.Kind() {
-	case exk.Call:
-		g.callPart(part.(ast.CallPart))
-	case exk.Address:
-		g.addressPart(part.(ast.AddressPart))
 	case exk.Index:
 		g.indexPart(part.(ast.IndexPart))
 	case exk.Indirect:
@@ -52,12 +48,12 @@ func (g *Noder) indirectPart(expr ast.IndirectPart) {
 	g.genpos(token.Indirect, expr.Pos)
 }
 
-func (g *Noder) addressPart(expr ast.AddressPart) {
-	g.genpos(token.Address, expr.Pos)
+func (g *Noder) addressExp(exp ast.AddressExp) {
+	g.gen(token.Address)
 }
 
-func (g *Noder) callPart(expr ast.CallPart) {
-	args := expr.Args
+func (g *Noder) callPart(exp ast.CallExp) {
+	args := exp.Args
 	if len(args) == 0 {
 		g.gen(token.LeftParentheses)
 		g.gen(token.RightParentheses)

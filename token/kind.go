@@ -125,7 +125,7 @@ const (
 	Any // designator to use as *any (void* analog)
 
 	LabelNext // @.next
-	LabelEnd  // @.end
+	LabelOut  // @.out
 
 	noStaticLiteral
 

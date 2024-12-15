@@ -12,10 +12,9 @@ import (
 type AssignStatement struct {
 	NodeS
 
-	// cannot be call expression
-	Target ChainOperand
+	Chain ChainOperand
 
-	Expression Exp
+	Exp Exp
 
 	Operator aop.Kind
 }
@@ -28,5 +27,5 @@ func (AssignStatement) Kind() stm.Kind {
 }
 
 func (s AssignStatement) Pin() source.Pos {
-	return s.Target.Pin()
+	return s.Chain.Start.Pos
 }

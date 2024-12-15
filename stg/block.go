@@ -180,7 +180,7 @@ func (b *Block) addDefer(ctx *Context, stmt ast.DeferStatement) error {
 		return fmt.Errorf("%s: defer cannot be used inside a loop", pos)
 	}
 
-	exp, err := b.Scope.scanChainOperand(ctx, stmt.Call)
+	exp, err := b.Scope.scanChainOperand(ctx, stmt.Call.Callee)
 	if err != nil {
 		return err
 	}
@@ -321,12 +321,12 @@ func (b *Block) addFor(ctx *Context, stmt ast.For) error {
 }
 
 func (b *Block) addCall(ctx *Context, stmt ast.CallStatement) error {
-	o, err := b.Scope.scanChainOperand(ctx, stmt.Call)
+	o, err := b.Scope.scanChainOperand(ctx, stmt.Call.Callee)
 	if err != nil {
 		return err
 	}
 
-	pos := stmt.Call.Identifier.Pos
+	pos := stmt.Call.Callee.Start.Pos
 	b.addNode(&CallStatement{
 		Pos:  pos,
 		Call: o.(*CallExp),
@@ -439,12 +439,12 @@ func (b *Block) addReturn(ctx *Context, stmt ast.ReturnStatement) error {
 }
 
 func (b *Block) addAssign(ctx *Context, stmt ast.AssignStatement) error {
-	o, err := b.Scope.scanChainOperand(ctx, stmt.Target)
+	o, err := b.Scope.scanChainOperand(ctx, stmt.Chain)
 	if err != nil {
 		return err
 	}
 
-	expr, err := b.Scope.Scan(ctx, stmt.Expression)
+	exp, err := b.Scope.Scan(ctx, stmt.Exp)
 	if err != nil {
 		return err
 	}
@@ -453,7 +453,7 @@ func (b *Block) addAssign(ctx *Context, stmt ast.AssignStatement) error {
 
 	b.addNode(&AssignStatement{
 		Target:    o,
-		Expr:      expr,
+		Expr:      exp,
 		Operation: stmt.Operator,
 	})
 	return nil

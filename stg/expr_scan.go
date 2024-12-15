@@ -114,8 +114,8 @@ func (s *Scope) scanIncompNameExp(ctx *Context, exp ast.IncompNameExp) (*EnumExp
 }
 
 func (s *Scope) scanChainOperand(ctx *Context, exp ast.ChainOperand) (ChainOperand, error) {
-	name := exp.Identifier.Lit
-	pos := exp.Identifier.Pos
+	name := exp.Start.Lit
+	pos := exp.Start.Pos
 
 	var symbol *Symbol
 	var t *Type
@@ -199,25 +199,28 @@ func (s *Scope) scanImportExp(ctx *Context, pos source.Pos, imp *Symbol, parts [
 func (s *Scope) scanChainPart(ctx *Context, tip ChainOperand, part ast.ChainPart) (ChainOperand, error) {
 	switch part.Kind() {
 	case exk.Address:
-		return s.scanAddressPart(ctx, tip, part.(ast.AddressPart))
+		return nil, nil
+		// return s.scanAddressPart(ctx, tip, part.(ast.AddressPart))
 	case exk.Indirect:
 		return s.scanIndirectPart(ctx, tip, part.(ast.IndirectPart))
 	case exk.Select:
 		return s.scanSelectPart(ctx, tip, part.(ast.SelectPart))
 	case exk.Call:
-		return s.scanCallPart(ctx, tip, part.(ast.CallPart))
+		return nil, nil
+		// return s.scanCallPart(ctx, tip, part.(ast.CallPart))
 	case exk.IndirectIndex:
 		return s.scanIndirectIndexPart(ctx, tip, part.(ast.IndirectIndexPart))
 	case exk.Index:
 		return s.scanIndexPart(ctx, tip, part.(ast.IndexPart))
 	case exk.Slice:
-		return s.scanSlicePart(ctx, tip, part.(ast.SlicePart))
+		return nil, nil
+		// return s.scanSlicePart(ctx, tip, part.(ast.SlicePart))
 	default:
 		panic(fmt.Sprintf("not implemented for %s expression", part.Kind().String()))
 	}
 }
 
-func (s *Scope) scanSlicePart(ctx *Context, tip ChainOperand, part ast.SlicePart) (ChainOperand, error) {
+func (s *Scope) scanSlicePart(ctx *Context, tip ChainOperand, part ast.SliceExp) (ChainOperand, error) {
 	start, err := s.Scan(ctx, part.Start)
 	if err != nil {
 		return nil, err
@@ -234,7 +237,7 @@ func (s *Scope) scanSlicePart(ctx *Context, tip ChainOperand, part ast.SlicePart
 		return nil, fmt.Errorf("%s: type %s cannot be used as index", end.Pin(), end.Type().Kind)
 	}
 
-	pos := part.Pos
+	pos := part.Start.Pin()
 	t := tip.Type()
 
 	switch t.Kind {
@@ -270,7 +273,7 @@ func (s *Scope) scanIndexPart(ctx *Context, tip ChainOperand, part ast.IndexPart
 		return nil, fmt.Errorf("%s: type %s cannot be used as index", index.Pin(), index.Type().Kind)
 	}
 
-	pos := part.Pos
+	pos := part.Index.Pin()
 	t := tip.Type()
 	switch t.Kind {
 	case tpk.Custom:
@@ -294,9 +297,9 @@ func (s *Scope) scanIndexPart(ctx *Context, tip ChainOperand, part ast.IndexPart
 	}
 }
 
-func (s *Scope) scanAddressPart(ctx *Context, tip ChainOperand, part ast.AddressPart) (ChainOperand, error) {
+func (s *Scope) scanAddressPart(ctx *Context, tip ChainOperand, part ast.AddressExp) (ChainOperand, error) {
 	return &AddressExp{
-		Pos:    part.Pos,
+		Pos:    part.Pin(),
 		Target: tip,
 		typ:    s.Types.storePointer(tip.Type()),
 	}, nil
@@ -307,7 +310,7 @@ func (s *Scope) scanIndirectIndexPart(ctx *Context, tip ChainOperand, part ast.I
 	// TODO: implement for custom type
 	if t.Kind != tpk.ArrayPointer {
 		return nil, fmt.Errorf("%s: cannot indirect index %s operand of %s type",
-			part.Pos.String(), tip.Kind().String(), t.Kind.String())
+			part.Pin(), tip.Kind().String(), t.Kind.String())
 	}
 	index, err := s.scan(ctx, part.Index)
 	if err != nil {
@@ -317,7 +320,7 @@ func (s *Scope) scanIndirectIndexPart(ctx *Context, tip ChainOperand, part ast.I
 	// TODO: check that index is of integer type
 
 	return &IndirectIndexExp{
-		Pos:    part.Pos,
+		Pos:    part.Pin(),
 		Target: tip,
 		Index:  index,
 		typ:    t.Def.(ArrayPointerTypeDef).RefType,
@@ -475,11 +478,9 @@ func (s *Scope) getCallDetailsByBoundMethod(m *BoundMethodExp) (*CallDetails, er
 		r = m.Receiver
 	}
 	return &CallDetails{
-		Signature: Signature{
-			
-		},
-		Symbol:   m.Symbol,
-		Receiver: r,
+		Signature: Signature{},
+		Symbol:    m.Symbol,
+		Receiver:  r,
 	}, nil
 }
 
@@ -495,13 +496,13 @@ func (s *Scope) getCallDetails(o ChainOperand) (*CallDetails, error) {
 	}
 }
 
-func (s *Scope) scanCallPart(ctx *Context, tip ChainOperand, part ast.CallPart) (ChainOperand, error) {
+func (s *Scope) scanCallPart(ctx *Context, tip ChainOperand, part ast.CallExp) (ChainOperand, error) {
 	details, err := s.getCallDetails(tip)
 	if err != nil {
 		return nil, err
 	}
 
-	pos := part.Pos
+	pos := part.Pin()
 	params := details.Params
 	args := part.Args
 

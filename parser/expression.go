@@ -1,10 +1,7 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/mebyus/gizmo/ast"
-	"github.com/mebyus/gizmo/enums/exk"
 	"github.com/mebyus/gizmo/lexer"
 	"github.com/mebyus/gizmo/token"
 )
@@ -381,32 +378,29 @@ func (p *Parser) incompNameOperand() (ast.IncompNameExp, error) {
 
 // SymbolExpression, SelectorExpression, IndexExpression, CallExpression or InstanceExpression
 func (p *Parser) identifierStartOperand() (ast.Operand, error) {
-	idn := p.word()
+	word := p.word()
 	p.advance() // skip identifier
 
 	if !isChainOperandToken(p.tok.Kind) {
-		return ast.SymbolExp{Identifier: idn}, nil
+		return ast.SymbolExp{Identifier: word}, nil
 	}
 
-	chain := ast.ChainOperand{Identifier: idn}
-	err := p.chainOperand(&chain)
+	exp, err := p.chainExp(word)
 	if err != nil {
 		return nil, err
 	}
-	return chain, nil
+	return exp, nil
 }
 
-func (p *Parser) callPart() (ast.CallPart, error) {
-	pos := p.pos()
-
-	args, err := p.callArguments()
+func (p *Parser) callExp(chain ast.ChainOperand) (ast.CallExp, error) {
+	args, err := p.callArgs()
 	if err != nil {
-		return ast.CallPart{}, err
+		return ast.CallExp{}, err
 	}
 
-	return ast.CallPart{
-		Pos:  pos,
-		Args: args,
+	return ast.CallExp{
+		Callee: chain,
+		Args:   args,
 	}, nil
 }
 
@@ -429,16 +423,15 @@ func (p *Parser) indirectPart() ast.IndirectPart {
 	return ast.IndirectPart{Pos: pos}
 }
 
-func (p *Parser) chainOperand(chain *ast.ChainOperand) error {
-	var parts []ast.ChainPart
-	var prev exk.Kind
+func (p *Parser) chainExp(start ast.Identifier) (ast.Operand, error) {
+	chain := start.AsChainOperand()
 	for {
 		var err error
 		var part ast.ChainPart
 
 		switch p.tok.Kind {
 		case token.LeftParentheses:
-			part, err = p.callPart()
+			return p.callExp(chain)
 		case token.Period:
 			if p.next.Kind == token.Test {
 				part, err = p.testPart()
@@ -448,21 +441,32 @@ func (p *Parser) chainOperand(chain *ast.ChainOperand) error {
 		case token.Indirect:
 			part = p.indirectPart()
 		case token.Address:
-			part, err = p.addressPart(prev)
+			return p.addressExp(chain)
 		case token.IndirectIndex:
 			part, err = p.indirectIndexPart()
 		case token.LeftSquare:
-			part, err = p.leftSquarePart()
+			var m SliceOrIndex
+			m, err = p.sliceOrIndexPart()
+			if err != nil {
+				return nil, err
+			}
+			if !m.Index {
+				return ast.SliceExp{
+					Chain: chain,
+					Start: m.Exp,
+					End:   m.End,
+				}, nil
+			}
+			part = ast.IndexPart{Index: m.Exp}
 		default:
-			chain.Parts = parts
-			return nil
+			return chain, nil
 		}
 		if err != nil {
-			return err
+			return nil, err
 		}
-		prev = part.Kind()
-		parts = append(parts, part)
+		chain.Parts = append(chain.Parts, part)
 	}
+
 }
 
 func (p *Parser) testPart() (ast.TestPart, error) {
@@ -484,22 +488,12 @@ func (p *Parser) testPart() (ast.TestPart, error) {
 	return ast.TestPart{Name: name}, nil
 }
 
-func (p *Parser) addressPart(prev exk.Kind) (ast.AddressPart, error) {
-	pos := p.pos()
+func (p *Parser) addressExp(chain ast.ChainOperand) (ast.AddressExp, error) {
 	p.advance() // skip ".&"
-
-	switch prev {
-	case exk.Call, exk.Slice, exk.Address, exk.Indirect:
-		return ast.AddressPart{}, fmt.Errorf("%s: cannot take address of %s expression",
-			pos.String(), prev.String())
-	}
-
-	return ast.AddressPart{Pos: pos}, nil
+	return ast.AddressExp{Chain: chain}, nil
 }
 
 func (p *Parser) indirectIndexPart() (ast.IndirectIndexPart, error) {
-	pos := p.pos()
-
 	p.advance() // skip ".["
 	index, err := p.exp()
 	if err != nil {
@@ -509,80 +503,80 @@ func (p *Parser) indirectIndexPart() (ast.IndirectIndexPart, error) {
 		return ast.IndirectIndexPart{}, p.unexpected()
 	}
 	p.advance() // skip "]"
-	return ast.IndirectIndexPart{
-		Pos:   pos,
-		Index: index,
-	}, nil
+	return ast.IndirectIndexPart{Index: index}, nil
 }
 
-func (p *Parser) leftSquarePart() (ast.ChainPart, error) {
-	pos := p.pos()
+type SliceOrIndex struct {
+	// Index expression (when Index = true) or start expression.
+	Exp ast.Exp
+
+	// Valid only when field Index = false.
+	End ast.Exp
+
+	// True when this struct carries index expression.
+	Index bool
+}
+
+func (p *Parser) sliceOrIndexPart() (SliceOrIndex, error) {
 	p.advance() // skip "["
 
 	if p.tok.Kind == token.Colon {
 		p.advance() // skip ":"
 		if p.tok.Kind == token.RightSquare {
 			p.advance() // skip "]"
-			return ast.SlicePart{Pos: pos}, nil
+			return SliceOrIndex{}, nil
 		}
 
-		expr, err := p.exp()
+		end, err := p.exp()
 		if err != nil {
-			return nil, err
+			return SliceOrIndex{}, err
 		}
 		err = p.expect(token.RightSquare)
 		if err != nil {
-			return nil, err
+			return SliceOrIndex{}, err
 		}
 		p.advance() // skip "]"
-		return ast.SlicePart{
-			Pos: pos,
-			End: expr,
-		}, nil
+		return SliceOrIndex{End: end}, nil
 	}
 
-	expr, err := p.exp()
+	exp, err := p.exp()
 	if err != nil {
-		return nil, err
+		return SliceOrIndex{}, err
 	}
 	if p.tok.Kind == token.Colon {
 		p.advance() // skip ":"
 		if p.tok.Kind == token.RightSquare {
 			p.advance() // skip "]"
-			return ast.SlicePart{
-				Pos:   pos,
-				Start: expr,
-			}, nil
+			return SliceOrIndex{Exp: exp}, nil
 		}
 		end, err := p.exp()
 		if err != nil {
-			return nil, err
+			return SliceOrIndex{}, err
 		}
 
 		err = p.expect(token.RightSquare)
 		if err != nil {
-			return nil, err
+			return SliceOrIndex{}, err
 		}
 		p.advance() // skip "]"
-		return ast.SlicePart{
-			Pos:   pos,
-			Start: expr,
-			End:   end,
+		return SliceOrIndex{
+			Exp: exp,
+			End: end,
 		}, nil
 	}
 
 	err = p.expect(token.RightSquare)
 	if err != nil {
-		return nil, err
+		return SliceOrIndex{}, err
 	}
 	p.advance() // skip "]"
-	return ast.IndexPart{
-		Pos:   pos,
-		Index: expr,
+	return SliceOrIndex{
+		Exp:   exp,
+		Index: true,
 	}, nil
 }
 
-func (p *Parser) callArguments() ([]ast.Exp, error) {
+func (p *Parser) callArgs() ([]ast.Exp, error) {
 	p.advance() // skip "("
 
 	var args []ast.Exp

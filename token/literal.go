@@ -102,7 +102,7 @@ var Literal = [...]string{
 	Any: "any",
 
 	LabelNext: "@.next",
-	LabelEnd:  "@.end",
+	LabelOut:  "@.out",
 
 	// Non static literals
 

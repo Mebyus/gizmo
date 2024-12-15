@@ -46,16 +46,14 @@ func (p *Parser) deferStatement() (ast.DeferStatement, error) {
 		return ast.DeferStatement{}, p.unexpected()
 	}
 
-	var chain ast.ChainOperand
-	identifier := p.word()
+	start := p.word()
 	p.advance() // skip identifier
-	chain = identifier.AsChainOperand()
 
-	err := p.chainOperand(&chain)
+	exp, err := p.chainExp(start)
 	if err != nil {
 		return ast.DeferStatement{}, err
 	}
-	if chain.Last() != exk.Call {
+	if exp.Kind() != exk.Call {
 		return ast.DeferStatement{}, fmt.Errorf("%s: only call statements can be deferred", pos.String())
 	}
 
@@ -66,7 +64,7 @@ func (p *Parser) deferStatement() (ast.DeferStatement, error) {
 
 	return ast.DeferStatement{
 		Pos:  pos,
-		Call: chain,
+		Call: exp.(ast.CallExp),
 	}, nil
 }
 
@@ -106,7 +104,7 @@ func (p *Parser) label() (ast.Label, error) {
 	case token.LabelNext:
 		p.advance()
 		return ast.ReservedLabel{Pos: pos, ResKind: lbl.Next}, nil
-	case token.LabelEnd:
+	case token.LabelOut:
 		p.advance()
 		return ast.ReservedLabel{Pos: pos, ResKind: lbl.End}, nil
 	default:
@@ -510,9 +508,10 @@ func (p *Parser) identifierStartStatement() (ast.Statement, error) {
 		return p.shortInitStatement()
 	}
 
-	idn := p.word()
+	word := p.word()
 	p.advance() // skip identifier
-	return p.chainStartStatement(idn)
+
+	return p.chainStartStatement(word)
 }
 
 func (p *Parser) shortInitStatement() (ast.ShortInitStatement, error) {
@@ -537,29 +536,30 @@ func (p *Parser) shortInitStatement() (ast.ShortInitStatement, error) {
 	}, nil
 }
 
-func (p *Parser) chainStartStatement(identifier ast.Identifier) (ast.Statement, error) {
-	chain := identifier.AsChainOperand()
-	err := p.chainOperand(&chain)
+func (p *Parser) chainStartStatement(word ast.Identifier) (ast.Statement, error) {
+	exp, err := p.chainExp(word)
 	if err != nil {
 		return nil, err
 	}
 	op, ok := aop.FromToken(p.tok.Kind)
 	if ok {
+		if exp.Kind() != exk.Chain {
+			return nil, fmt.Errorf("%s: cannot assign to %s expression", exp.Pin(), exp.Kind())
+		}
+
 		p.advance() // skip assign operator token
-		return p.assignStatement(op, chain)
+		return p.assignStatement(op, exp.(ast.ChainOperand))
 	}
 
-	return p.callStatement(chain)
+	if exp.Kind() != exk.Call {
+		return nil, fmt.Errorf("%s: standalone expression in statement must be call expression", exp.Pin())
+	}
+
+	return p.callStatement(exp.(ast.CallExp))
 }
 
-func (p *Parser) assignStatement(op aop.Kind, target ast.ChainOperand) (ast.AssignStatement, error) {
-	switch target.Last() {
-	case exk.Call, exk.Address, exk.Slice:
-		return ast.AssignStatement{}, fmt.Errorf("%s: cannot assign to %s operand",
-			target.Pin().String(), target.Last().String())
-	}
-
-	expr, err := p.exp()
+func (p *Parser) assignStatement(op aop.Kind, chain ast.ChainOperand) (ast.AssignStatement, error) {
+	exp, err := p.exp()
 	if err != nil {
 		return ast.AssignStatement{}, err
 	}
@@ -570,25 +570,19 @@ func (p *Parser) assignStatement(op aop.Kind, target ast.ChainOperand) (ast.Assi
 	p.advance() // skip ";"
 
 	return ast.AssignStatement{
-		Operator:   op,
-		Target:     target,
-		Expression: expr,
+		Operator: op,
+		Chain:    chain,
+		Exp:      exp,
 	}, nil
 }
 
-func (p *Parser) callStatement(chain ast.ChainOperand) (ast.CallStatement, error) {
-	if chain.Last() != exk.Call {
-		return ast.CallStatement{},
-			fmt.Errorf("%s: standalone expression in statement must be call expression",
-				chain.Pin().String())
-	}
-
+func (p *Parser) callStatement(exp ast.CallExp) (ast.CallStatement, error) {
 	if p.tok.Kind != token.Semicolon {
 		return ast.CallStatement{}, p.unexpected()
 	}
 	p.advance() // consume ";"
 
-	return ast.CallStatement{Call: chain}, nil
+	return ast.CallStatement{Call: exp}, nil
 }
 
 func (p *Parser) varStatement() (statement ast.VarStatement, err error) {

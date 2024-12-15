@@ -92,8 +92,8 @@ func (lx *Lexer) label() (tok token.Token) {
 	switch lit {
 	case "next":
 		tok.Kind = token.LabelNext
-	case "end":
-		tok.Kind = token.LabelEnd
+	case "out":
+		tok.Kind = token.LabelOut
 	default:
 		tok.Lit = lit
 		panic("arbitrary labels not implemented: " + lit)

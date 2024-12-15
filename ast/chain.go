@@ -5,13 +5,12 @@ import (
 	"github.com/mebyus/gizmo/source"
 )
 
-// <ChainOperand> = <Identifier> | <CallExpression> | <SelectorExpression> | <IndexExpression> | <IndirectExpression>
+// <ChainOperand> = <Identifier> | <SelectExp> | <IndirectExp> | <IndirectIndexExp> | <IndirectIndexExp>
 type ChainOperand struct {
 	NodeO
 
-	// Start of chain operand. Field Identifier.Lit can be empty in this
-	// context, if this is the case, then it is receiver, not identifier.
-	Identifier Identifier
+	// Start of chain operand.
+	Start Identifier
 
 	// Parts are arranged from left to right as in source text.
 	Parts []ChainPart
@@ -21,7 +20,7 @@ type ChainOperand struct {
 var _ Operand = ChainOperand{}
 
 func (o ChainOperand) Pin() source.Pos {
-	return o.Identifier.Pos
+	return o.Start.Pos
 }
 
 func (o ChainOperand) Kind() exk.Kind {
@@ -33,6 +32,13 @@ func (o ChainOperand) Last() exk.Kind {
 		return exk.Symbol
 	}
 	return o.Parts[len(o.Parts)-1].Kind()
+}
+
+func (o ChainOperand) LastPartPin() source.Pos {
+	if len(o.Parts) == 0 {
+		return o.Start.Pos
+	}
+	return o.Parts[len(o.Parts)-1].Pin()
 }
 
 type ChainPart interface {
@@ -71,31 +77,30 @@ func (p SelectPart) Pin() source.Pos {
 	return p.Name.Pos
 }
 
-// <CallPart> = "(" { <Expression> "," } ")"
-type CallPart struct {
-	NodeP
-
-	Pos source.Pos
+// <CallExp> = <ChainOperand> "(" { <Exp> "," } ")"
+type CallExp struct {
+	NodeO
 
 	Args []Exp
+
+	Callee ChainOperand
 }
 
 // Explicit interface implementation check.
-var _ ChainPart = CallPart{}
+var _ Operand = CallExp{}
 
-func (CallPart) Kind() exk.Kind {
+func (CallExp) Kind() exk.Kind {
 	return exk.Call
 }
 
-func (p CallPart) Pin() source.Pos {
-	return p.Pos
+func (p CallExp) Pin() source.Pos {
+	return p.Callee.LastPartPin()
 }
 
-// <IndexPart> = "[" <Expression> "]"
+// <IndexPart> = "[" <Exp> "]"
 type IndexPart struct {
 	NodeP
 
-	Pos   source.Pos
 	Index Exp
 }
 
@@ -107,7 +112,7 @@ func (IndexPart) Kind() exk.Kind {
 }
 
 func (p IndexPart) Pin() source.Pos {
-	return p.Pos
+	return p.Index.Pin()
 }
 
 // <IndirectPart> = ".@"
@@ -128,31 +133,29 @@ func (p IndirectPart) Pin() source.Pos {
 	return p.Pos
 }
 
-// <AddressPart> = ".&"
-type AddressPart struct {
-	NodeP
+// <AddressExp> = <ChainOperand> ".&"
+type AddressExp struct {
+	NodeO
 
-	Pos source.Pos
+	Chain ChainOperand
 }
 
 // Explicit interface implementation check.
-var _ ChainPart = AddressPart{}
+var _ Operand = AddressExp{}
 
-func (AddressPart) Kind() exk.Kind {
+func (AddressExp) Kind() exk.Kind {
 	return exk.Address
 }
 
-func (p AddressPart) Pin() source.Pos {
-	return p.Pos
+func (p AddressExp) Pin() source.Pos {
+	return p.Chain.LastPartPin()
 }
 
-// <IndirectIndexPart> = ".[" <Index> "]"
+// <IndirectIndexPart> => ".[" <Index> "]"
 //
-// <Index> = <Expression>
+// <Index> => <Exp>
 type IndirectIndexPart struct {
 	NodeP
-
-	Pos source.Pos
 
 	Index Exp
 }
@@ -165,14 +168,14 @@ func (IndirectIndexPart) Kind() exk.Kind {
 }
 
 func (p IndirectIndexPart) Pin() source.Pos {
-	return p.Pos
+	return p.Index.Pin()
 }
 
-// <SlicePart> = "[" [ <Start> ] ":" [ <End> ] "]"
-type SlicePart struct {
-	NodeP
+// <SliceExp> = "[" [ <Start> ] ":" [ <End> ] "]"
+type SliceExp struct {
+	NodeO
 
-	Pos source.Pos
+	Chain ChainOperand
 
 	// Part before ":". Can be nil if expression is omitted.
 	Start Exp
@@ -182,14 +185,14 @@ type SlicePart struct {
 }
 
 // Explicit interface implementation check.
-var _ ChainPart = SlicePart{}
+var _ Operand = SliceExp{}
 
-func (SlicePart) Kind() exk.Kind {
+func (SliceExp) Kind() exk.Kind {
 	return exk.Slice
 }
 
-func (p SlicePart) Pin() source.Pos {
-	return p.Pos
+func (p SliceExp) Pin() source.Pos {
+	return p.Chain.LastPartPin()
 }
 
 // <TestPart> => "." "test" "." <Name>

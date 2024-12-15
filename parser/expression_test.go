@@ -109,8 +109,8 @@ func bin(kind bop.Kind, left ast.Exp, right ast.Exp) ast.BinExp {
 
 func ch(start string, parts ...ast.ChainPart) ast.ChainOperand {
 	return ast.ChainOperand{
-		Identifier: word(start),
-		Parts:      parts,
+		Start: word(start),
+		Parts: parts,
 	}
 }
 
