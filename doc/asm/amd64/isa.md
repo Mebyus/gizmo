@@ -336,3 +336,33 @@ not r9  => r9   |  49 f7 d1
 not r15 => r15  |  49 f7 d7
 --------------------------------------------------------------
 ```
+
+
+```
+// from GAS
+// source => destination
+
+48 89 c0                mov    %rax,%rax
+48 89 c1                mov    %rax,%rcx
+48 89 c2                mov    %rax,%rdx
+48 89 c8                mov    %rcx,%rax
+48 89 c9                mov    %rcx,%rcx
+48 89 ca                mov    %rcx,%rdx
+4c 89 c0                mov    %r8,%rax
+4c 89 c1                mov    %r8,%rcx
+4c 89 c8                mov    %r9,%rax
+4c 89 c9                mov    %r9,%rcx
+4d 89 c0                mov    %r8,%r8
+4d 89 c1                mov    %r8,%r9
+4d 89 c8                mov    %r9,%r8
+4d 89 c9                mov    %r9,%r9
+49 89 c0                mov    %rax,%r8
+49 89 c1                mov    %rax,%r9
+49 89 c2                mov    %rax,%r10
+49 89 f0                mov    %rsi,%r8
+49 89 f1                mov    %rsi,%r9
+49 89 f2                mov    %rsi,%r10
+49 89 f8                mov    %rdi,%r8
+49 89 f9                mov    %rdi,%r9
+49 89 fa                mov    %rdi,%r10
+```

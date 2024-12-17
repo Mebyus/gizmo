@@ -1,6 +1,7 @@
 package elf64le
 
 import (
+	"bytes"
 	"encoding/binary"
 	"io"
 )
@@ -11,7 +12,7 @@ func (f *File) Encode(w io.Writer) error {
 
 func (f *File) EncodeBytes() ([]byte, error) {
 	encoder := NewEncoder(f)
-	encoder.Encode()
+	encoder.encode()
 	return encoder.Bytes(), nil
 }
 
@@ -19,7 +20,6 @@ type Encoder struct {
 	Map FileMap
 
 	buf []byte
-	pos int
 
 	file *File
 }
@@ -27,8 +27,15 @@ type Encoder struct {
 func NewEncoder(file *File) *Encoder {
 	e := &Encoder{file: file}
 	e.mapFile()
-	e.buf = make([]byte, e.Map.Size)
+	e.prepareProgramHeaders()
+	e.buf = make([]byte, 0, e.Map.Size)
 	return e
+}
+
+func (e *Encoder) Encode(w io.Writer) error {
+	e.encode()
+	_, err := io.Copy(w, bytes.NewReader(e.Bytes()))
+	return err
 }
 
 /*
@@ -46,9 +53,7 @@ program headers
 =======================
 section headers
 =======================
-program data
-=======================
-section data
+data
 =======================
 */
 type FileMap struct {
@@ -85,6 +90,9 @@ type FileMap struct {
 
 	// Number of bytes between end of components headers and start of components data.
 	DataAlignPaddingSize uint32
+
+	ProgramHeadersCount uint16
+	SectionHeadersCount uint16
 }
 
 type FileComponentMap struct {
@@ -105,13 +113,36 @@ func (e *Encoder) mapFile() {
 	e.Map.calc(e.file)
 }
 
+const (
+	SegmentTypeLoad = 1
+
+	SegmentFlagExec  = 1
+	SegmentFlagWrite = 2
+	SegmentFlagRead  = 4
+)
+
+func (e *Encoder) prepareProgramHeaders() {
+	offset := align(e.Map.HeadersEndOffset, e.file.Text.Alignment)
+
+	e.file.Programs = append(e.file.Programs, makeProgramHeaderFromText(&e.file.Text, offset))
+	e.file.Header.EntrypointVirtualAddress = e.file.Text.VirtualAddress + e.file.Text.EntrypointOffset
+}
+
 func (m *FileMap) calc(f *File) {
-	m.TotalProgramHeadersSize = ProgramHeadersSize * uint32(len(f.Programs))
-	m.TotalSectionHeadersSize = SectionHeadersSize * uint32(len(f.Sections))
+	m.ProgramHeadersCount = 1
+	m.SectionHeadersCount = 0
+
+	m.TotalProgramHeadersSize = ProgramHeadersSize * uint32(m.ProgramHeadersCount)
+	m.TotalSectionHeadersSize = SectionHeadersSize * uint32(m.SectionHeadersCount)
 
 	m.ProgramHeadersOffset = FileHeaderSize
-	m.SectionHeadersOffset = m.ProgramHeadersOffset + uint64(m.TotalProgramHeadersSize)
-	m.HeadersEndOffset = m.SectionHeadersOffset + uint64(m.TotalSectionHeadersSize)
+
+	if m.SectionHeadersCount != 0 {
+		m.SectionHeadersOffset = m.ProgramHeadersOffset + uint64(m.TotalProgramHeadersSize)
+		m.HeadersEndOffset = m.SectionHeadersOffset + uint64(m.TotalSectionHeadersSize)
+	} else {
+		m.HeadersEndOffset = m.ProgramHeadersOffset
+	}
 
 	m.ProgramDataOffset = alignBy16(m.HeadersEndOffset)
 	m.DataAlignPaddingSize = uint32(m.ProgramDataOffset - m.HeadersEndOffset)
@@ -125,8 +156,8 @@ func (m *FileMap) calc(f *File) {
 	if len(f.Programs) != 0 {
 		programs = make([]FileComponentMap, 0, len(f.Programs))
 
-		for _, p := range f.Programs {
-			size := uint32(len(p.Data))
+		for _, _ = range f.Programs {
+			size := uint32(0)
 			alignedSize := alignSizeBy16(size)
 
 			programs = append(programs, FileComponentMap{
@@ -150,8 +181,8 @@ func (m *FileMap) calc(f *File) {
 	if len(f.Sections) != 0 {
 		sections = make([]FileComponentMap, 0, len(f.Sections))
 
-		for _, s := range f.Sections {
-			size := uint32(len(s.Data))
+		for _, _ = range f.Sections {
+			size := uint32(0)
 			alignedSize := alignSizeBy16(size)
 
 			programs = append(programs, FileComponentMap{
@@ -174,23 +205,29 @@ func (m *FileMap) calc(f *File) {
 	m.Size = offset
 }
 
-func (e *Encoder) Encode() {
+func (e *Encoder) encode() {
 	e.header()
 	e.programHeaders()
 	e.sectionHeaders()
-	e.addDataAlignPadding()
-	e.programsData()
-	e.sectionsData()
+	// e.addDataAlignPadding()
+	e.fileData()
 }
 
 func (e *Encoder) Bytes() []byte {
-	return e.buf[:e.pos]
+	return e.buf[:]
 }
 
 func alignBy16(v uint64) uint64 {
 	a := v & 0xf
 	a = ((^a) + 1) & 0xf
 	return v + a
+}
+
+func align(v, a uint64) uint64 {
+	mask := a - 1
+	x := v & mask
+	x = ((^x) + 1) & mask
+	return v + x
 }
 
 func alignSizeBy16(v uint32) uint32 {
@@ -212,23 +249,31 @@ func (e *Encoder) sectionHeaders() {
 }
 
 func (e *Encoder) programHeader(i int) {
+	h := &e.file.Programs[i]
 
+	e.u32(h.Type)
+	e.u32(h.Flags)
+
+	e.u64(h.ImageOffset)
+	e.u64(h.VirtualAddress)
+	e.u64(h.PhysicalAddress)
+
+	e.u64(h.ImageSize)
+	e.u64(h.MemorySize)
+	e.u64(h.Alignment)
 }
 
 func (e *Encoder) sectionHeader(i int) {
-
+	e.pad(64)
 }
 
 func (e *Encoder) addDataAlignPadding() {
 	e.pad(e.Map.DataAlignPaddingSize)
 }
 
-func (e *Encoder) programsData() {
-
-}
-
-func (e *Encoder) sectionsData() {
-
+func (e *Encoder) fileData() {
+	e.pad(uint32(e.file.Programs[0].ImageOffset - uint64(len(e.buf))))
+	e.data(e.file.Text.Data)
 }
 
 // elf file header
@@ -239,7 +284,7 @@ func (e *Encoder) header() {
 	e.fileType()
 	e.machine()
 	e.version()
-	e.pad(8) // skip entrypoint address for now
+	e.entrypoint()
 	e.programHeadersOffset()
 	e.sectionHeadersOffset()
 	e.fileFlags()
@@ -248,6 +293,7 @@ func (e *Encoder) header() {
 	e.programHeadersNumber()
 	e.sectionHeadersSize()
 	e.sectionHeadersNumber()
+	e.sectionNamesHeaderIndex()
 }
 
 const (
@@ -278,6 +324,10 @@ func (e *Encoder) programHeadersNumber() {
 func (e *Encoder) sectionHeadersNumber() {
 	n := uint16(len(e.file.Sections))
 	e.u16(n)
+}
+
+func (e *Encoder) sectionNamesHeaderIndex() {
+	e.u16(0)
 }
 
 // elf identification
@@ -338,43 +388,50 @@ func (e *Encoder) version() {
 	e.u32(1)
 }
 
+func (e *Encoder) entrypoint() {
+	e.u64(e.file.Header.EntrypointVirtualAddress)
+}
+
 func (e *Encoder) programHeadersOffset() {
-	e.u64(0) // TODO: calc proper value
+	e.u64(e.Map.ProgramHeadersOffset)
 }
 
 func (e *Encoder) sectionHeadersOffset() {
-	e.u64(0) // TODO: calc proper value
+	e.u64(e.Map.SectionHeadersOffset)
 }
 
 func (e *Encoder) fileFlags() {
 	e.u32(0)
 }
 
-func (e *Encoder) bytes(b []byte) {
-	copy(e.buf[e.pos:], b)
-	e.pos += len(b)
+func (e *Encoder) data(b []byte) {
+	e.buf = append(e.buf, b...)
 }
 
 func (e *Encoder) pad(n uint32) {
-	e.pos += int(n)
+	for range n {
+		e.buf = append(e.buf, 0)
+	}
 }
 
 func (e *Encoder) u8(v uint8) {
-	e.buf[e.pos] = v
-	e.pos += 1
+	e.buf = append(e.buf, v)
 }
 
 func (e *Encoder) u16(v uint16) {
-	binary.LittleEndian.PutUint16(e.buf[e.pos:], v)
-	e.pos += 2
+	var buf [2]byte
+	binary.LittleEndian.PutUint16(buf[:], v)
+	e.buf = append(e.buf, buf[:]...)
 }
 
 func (e *Encoder) u32(v uint32) {
-	binary.LittleEndian.PutUint32(e.buf[e.pos:], v)
-	e.pos += 4
+	var buf [4]byte
+	binary.LittleEndian.PutUint32(buf[:], v)
+	e.buf = append(e.buf, buf[:]...)
 }
 
 func (e *Encoder) u64(v uint64) {
-	binary.LittleEndian.PutUint64(e.buf[e.pos:], v)
-	e.pos += 8
+	var buf [8]byte
+	binary.LittleEndian.PutUint64(buf[:], v)
+	e.buf = append(e.buf, buf[:]...)
 }
