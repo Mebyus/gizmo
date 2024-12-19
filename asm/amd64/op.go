@@ -1,142 +1,179 @@
 package amd64
 
-import (
-	"fmt"
-	"strconv"
+type ArgKind uint8
+
+const (
+	ArgNil ArgKind = iota
+
+	// Mnemonic argument.
+	ArgMne
+
+	ArgInteger
+	ArgRegister
+	ArgLabel
+	ArgFlag
 )
 
-// Operation acts as a prototype for concrete machine instruction.
-// It is an intermediate representation between assembly "instruction"
-// (written as text line in file) and machine instruction with binary
-// encoding.
-//
-// This abstraction is born from the fact that amd64 assembly has wildly
-// different encodings for "instructions" with the same mnemonic.
+type OpArg struct {
+	Val  uint64
+	Kind ArgKind
+}
+
+// Operation represents text line from assembly source text in compact way.
 type Operation struct {
-	// Operands. Unused Operands are set to nil.
-	Ops [3]bagOp
+	Args [2]OpArg
 
-	Me Me
+	// Meaning depends on Op field.
+	Val uint64
+
+	Op OpKind
+
+	// Number of arguments inside array.
+	Num uint8
 }
 
-// bagOp bag for operation operand (argument).
-type bagOp interface {
-	bagOp()
-}
-
-// Me assembly operation mnemonic acts as Operation discriminator.
-type Me uint32
+// OpKind specifies what assembly line does.
+type OpKind uint8
 
 const (
-	// Zero value of Mo. Should not be used explicitly.
+	OpNil OpKind = iota
+
+	// Operation acts as a prototype for concrete machine instruction.
+	// It is an intermediate representation between assembly "instruction"
+	// (written as text line in file) and machine instruction with binary
+	// encoding.
 	//
-	// Mostly a trick to detect places where OpKind is left unspecified.
-	MeNil Me = iota
+	// This abstraction is born from the fact that amd64 assembly has wildly
+	// different encodings for "instructions" with the same mnemonic.
+	OpProto
 
-	MeMov
-	MeSysCall
-	MeAdd
-	MeJump
-	MeTest
-	MeInc
-	MeXor
-	MeAnd
-	MeNot
+	// Label placement.
+	OpLabel
 )
 
-var meText = [...]string{
-	MeMov:     "mov",
-	MeSysCall: "syscall",
-	MeAdd:     "add",
-	MeJump:    "jump",
-	MeTest:    "test",
-	MeInc:     "inc",
-	MeXor:     "xor",
-	MeAnd:     "and",
-	MeNot:     "not",
-}
-
-var meLookup map[string]Me
-
-func init() {
-	meLookup = make(map[string]Me, len(meText))
-	for m, s := range meText {
-		if s == "" {
-			panic(fmt.Errorf("empty mnemonic (%d) text", m))
+func translate(o *Operation) Command {
+	switch o.Op {
+	case OpProto:
+		switch MneKind(o.Val) {
+		case MneSysCall:
+			return translateSysCall(o)
+		case MneMov:
+			return translateMov(o)
+		case MneXor:
+			return translateXor(o)
+		case MneDec:
+			return translateDec(o)
+		case MneTest:
+			return translateTest(o)
+		case MneJump:
+			return translateJump(o)
+		default:
+			panic("invalid mnemonic")
 		}
-		meLookup[s] = Me(m)
-	}
-}
-
-const (
-	PropPtr = 0
-	PropLen = 1
-)
-
-var propText = [...]string{
-	PropPtr: "ptr",
-	PropLen: "len",
-}
-
-const (
-	FlagZero    = 0
-	FlagNotZero = 1
-)
-
-var flagText = [...]string{
-	FlagZero:    "z",
-	FlagNotZero: "nz",
-}
-
-type Register uint16
-
-const (
-	RAX Register = 0x0
-	RCX Register = 0x1
-	RDX Register = 0x2
-	RBX Register = 0x3
-	RSP Register = 0x4
-	RBP Register = 0x5
-	RSI Register = 0x6
-	RDI Register = 0x7
-
-	R8  Register = 0x10
-	R9  Register = 0x11
-	R10 Register = 0x12
-	R11 Register = 0x13
-	R12 Register = 0x14
-	R13 Register = 0x15
-	R14 Register = 0x16
-	R15 Register = 0x17
-)
-
-// Num returns register number inside its family.
-func (r Register) Num() uint8 {
-	return uint8(r & 0xF)
-}
-
-func (r Register) Family() uint8 {
-	return uint8((r >> 4) & 0xF)
-}
-
-var family0RegText = [...]string{
-	RAX: "rax",
-	RCX: "rcx",
-	RDX: "rdx",
-	RBX: "rbx",
-	RSP: "rsp",
-	RBP: "rbp",
-	RSI: "rsi",
-	RDI: "rdi",
-}
-
-func (r Register) String() string {
-	switch f := r.Family(); f {
-	case 0:
-		return family0RegText[r.Num()]
-	case 1:
-		return "r" + strconv.FormatUint(8+uint64(r.Num()), 10)
+	case OpLabel:
+		return ComLabel{Label: o.Val}
 	default:
-		panic(fmt.Errorf("unknown family (%d)", f))
+		panic("invalid operation")
 	}
+}
+
+func translateJump(o *Operation) Command {
+	if o.Num == 1 {
+		panic("not implemented")
+	}
+
+	if o.Num != 2 {
+		panic("not enough args")
+	}
+
+	f := o.Args[0]
+	d := o.Args[1]
+	if f.Kind != ArgFlag {
+		panic("invalid arg")
+	}
+	if d.Kind != ArgLabel {
+		panic("invalid arg")
+	}
+
+	if f.Val != FlagNotZero {
+		panic("not implemented")
+	}
+
+	return Ins1Imm{
+		Kind: InsRelJumpNotZeroImm32,
+		Val:  d.Val, // label index
+	}
+}
+
+func translateTest(o *Operation) Command {
+	if o.Num != 2 {
+		panic("not enough args")
+	}
+
+	d := o.Args[0]
+	s := o.Args[1]
+	switch {
+	case d.Kind == ArgRegister && s.Kind == ArgRegister:
+		return Ins2RegReg{
+			Kind: InsTestFamily0Reg64Family0Reg64,
+			Reg0: Register(d.Val),
+			Reg1: Register(s.Val),
+		}
+	default:
+		panic("not implemented")
+	}
+}
+
+func translateXor(o *Operation) Command {
+	if o.Num != 2 {
+		panic("not enough args")
+	}
+
+	d := o.Args[0]
+	s := o.Args[1]
+	switch {
+	case d.Kind == ArgRegister && s.Kind == ArgRegister:
+		return Ins2RegReg{
+			Kind: InsXorFamily0Reg64Family0Reg64,
+			Reg0: Register(d.Val),
+			Reg1: Register(s.Val),
+		}
+	default:
+		panic("not implemented")
+	}
+}
+
+func translateMov(o *Operation) Command {
+	if o.Num != 2 {
+		panic("not enough args")
+	}
+
+	d := o.Args[0]
+	s := o.Args[1]
+	switch {
+	case d.Kind == ArgRegister && s.Kind == ArgInteger:
+		return Ins2RegImm{
+			Kind: InsMoveFamily0Reg64Imm32,
+			Reg:  Register(d.Val),
+			Val:  s.Val,
+		}
+	default:
+		panic("not implemented")
+	}
+}
+
+func translateDec(o *Operation) Command {
+	if o.Num != 1 {
+		panic("not enough args")
+	}
+
+	d := o.Args[0]
+	return Ins1Reg{
+		Kind: InsDecFamily0Reg64,
+		Reg:  Register(d.Val),
+	}
+}
+
+func translateSysCall(o *Operation) Command {
+	return Ins0{Kind: InsSystemCall}
 }

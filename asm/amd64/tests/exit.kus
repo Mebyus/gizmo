@@ -1,0 +1,26 @@
+// def $.EXIT_STATUS 	0x6
+// def $.SYSCALL_WRITE	0x1
+
+// let $.msg: "hello, world!\n"
+
+/*
+
+Test block comment
+
+*/
+
+// def $.LOOP_NUMBER		0x200
+
+@.start:
+	xor	rax, rax		// loop counter
+	mov rax, 0x5
+
+@.loop:
+	dec		rax
+	test	rax, rax
+	jump 	?.nz, @.loop
+
+@.exit:
+	mov		rax, 0x3C
+	mov		rdi, 0x30
+	syscall

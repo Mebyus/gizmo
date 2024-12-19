@@ -2,12 +2,6 @@ package amd64
 
 import "fmt"
 
-// Instruction represents machine instruction which has fixed binary layout and
-// concrete opcode (for CPU).
-type Instruction interface {
-	encode(*Encoder)
-}
-
 // Command is something that can operate Encoder.
 type Command interface {
 	do(*Encoder)
@@ -23,6 +17,8 @@ const (
 	// Invoke system call.
 	InsSystemCall
 
+	InsDecFamily0Reg64
+
 	// Perform bitwise not on Family0 64-bit register.
 	// Result is placed into the same register.
 	InsNotFamily0Reg64
@@ -35,6 +31,8 @@ const (
 	// Offset is relative to RIP (its would-be-value after jump instruction).
 	// Offset is signed and encoded as 2's complement 32-bit integer.
 	InsRelJumpImm32
+
+	InsRelJumpNotZeroImm32
 
 	// Place immediate 32-bit value into Family0 64-bit wide register.
 	InsMoveFamily0Reg64Imm32
@@ -49,6 +47,10 @@ const (
 	// Add immediate 32-bit value to Family1 64-bit wide register.
 	// Result is placed into the same register.
 	InsAddFamily1Reg64Imm32
+
+	InsXorFamily0Reg64Family0Reg64
+
+	InsTestFamily0Reg64Family0Reg64
 
 	// Copy Family0 64-bit register into Family0 64-bit.
 	InsCopyFamily0Reg64Family0Reg64
@@ -105,7 +107,7 @@ func invalid(kind InsKind) string {
 	return fmt.Sprintf("invalid instruction (%d)", kind)
 }
 
-func (g Ins0) encode(e *Encoder) {
+func (g Ins0) do(e *Encoder) {
 	switch g.Kind {
 	case InsSystemCall:
 		e.u8s(0x0F, 0x05)
@@ -114,38 +116,41 @@ func (g Ins0) encode(e *Encoder) {
 	}
 }
 
-func (g Ins1Reg) encode(e *Encoder) {
+func (g Ins1Reg) do(e *Encoder) {
 	switch g.Kind {
 	case InsNotFamily0Reg64:
 		e.u8s(0x48, 0xF7, 0xD0|g.Reg.Num())
 	case InsNotFamily1Reg64:
 		e.u8s(0x49, 0xF7, 0xD0|g.Reg.Num())
+	case InsDecFamily0Reg64:
+		e.u8s(0x48, 0xFF, 0xC8|g.Reg.Num())
 	default:
 		panic(invalid(g.Kind))
 	}
 }
 
-func (g Ins1Imm) encode(e *Encoder) {
+func (g Ins1Imm) do(e *Encoder) {
 	switch g.Kind {
 	case InsRelJumpImm32:
 		e.u8(0xE9)
 
 		// jump offset is late value: it may be unknown during
 		// encoder first pass
-		e.u32(0)       // adjust encoder position
 		label := g.Val // at this stage g.Val holds label index for this instruction
-		offset, ok := e.getRelOffset(label)
-		if ok {
-			e.putTail32(uint32(offset))
-		} else {
-			e.saveLabelBackpatchRel32(label, e.pos())
-		}
+		e.putBackRel32OffsetOrBackpatch(label)
+	case InsRelJumpNotZeroImm32:
+		e.u8s(0x0F, 0x85)
+
+		// jump offset is late value: it may be unknown during
+		// encoder first pass
+		label := g.Val // at this stage g.Val holds label index for this instruction
+		e.putBackRel32OffsetOrBackpatch(label)
 	default:
 		panic(invalid(g.Kind))
 	}
 }
 
-func (g Ins2RegImm) encode(e *Encoder) {
+func (g Ins2RegImm) do(e *Encoder) {
 	switch g.Kind {
 	case InsMoveFamily0Reg64Imm32:
 		e.u8s(0x48, 0xC7, 0xC0|g.Reg.Num())
@@ -162,4 +167,24 @@ func (g Ins2RegImm) encode(e *Encoder) {
 	default:
 		panic(invalid(g.Kind))
 	}
+}
+
+func (g Ins2RegReg) do(e *Encoder) {
+	switch g.Kind {
+	case InsXorFamily0Reg64Family0Reg64:
+		e.u8s(0x48, 0x31, 0xC0|(g.Reg1.Num()<<3)|g.Reg0.Num())
+	case InsTestFamily0Reg64Family0Reg64:
+		e.u8s(0x48, 0x85, 0xC0|(g.Reg1.Num()<<3)|g.Reg0.Num())
+	default:
+		panic(invalid(g.Kind))
+	}
+}
+
+// ComLabel command which places label at current Encoder position.
+type ComLabel struct {
+	Label uint64 // label index
+}
+
+func (g ComLabel) do(e *Encoder) {
+	e.placeLabel(g.Label)
 }

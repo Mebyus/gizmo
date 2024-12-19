@@ -365,4 +365,14 @@ not r15 => r15  |  49 f7 d7
 49 89 f8                mov    %rdi,%r8
 49 89 f9                mov    %rdi,%r9
 49 89 fa                mov    %rdi,%r10
+
+
+48 85 c0                test   %rax,%rax
+48 85 c1                test   %rax,%rcx
+48 85 c6                test   %rax,%rsi
+48 85 c7                test   %rax,%rdi
+48 85 c0                test   %rax,%rax
+48 85 c8                test   %rcx,%rax
+48 85 f0                test   %rsi,%rax
+48 85 f8                test   %rdi,%rax
 ```
