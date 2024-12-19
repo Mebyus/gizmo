@@ -60,7 +60,7 @@ func (lx *Lexer) codeToken() token.Token {
 			return lx.rawStringLiteral()
 		case '[':
 			return lx.twoBytesToken(token.PropStart)
-		case ':':
+		case '.':
 			return lx.macro()
 		default:
 			if char.IsLetterOrUnderscore(lx.Next) {
@@ -103,8 +103,8 @@ func (lx *Lexer) directive() (tok token.Token) {
 	switch lit {
 	case "if":
 		tok.Kind = token.DirIf
-	case "build":
-		tok.Kind = token.DirBuild
+	case "include":
+		tok.Kind = token.DirInclude
 	default:
 		tok.SetIllegalError(token.UnknownDirective)
 	}

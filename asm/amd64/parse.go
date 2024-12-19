@@ -10,6 +10,31 @@ func (p *Parser) Next(o *Operation) bool {
 		return false
 	}
 
+handleDirectives:
+	for {
+		switch p.tok.Kind {
+		case TokDef:
+			p.advance() // skip #def
+
+			if p.tok.Kind != TokMacro {
+				p.Error = fmt.Errorf("%s: unexpected %s token after \"#def\" directive", p.tok.Pos(), p.tok.Kind)
+				return false
+			}
+			name := p.tok.Text
+			p.advance() // skip macro
+
+			if p.tok.Kind != TokHexInteger {
+				p.Error = fmt.Errorf("%s: unexpected %s token instead of macro definition", p.tok.Pos(), p.tok.Kind)
+				return false
+			}
+
+			p.macros[name] = p.tok.Val
+			p.advance() // skip integer
+		default:
+			break handleDirectives
+		}
+	}
+
 	switch p.tok.Kind {
 	case TokEOF:
 		return false
@@ -49,6 +74,14 @@ func (p *Parser) Next(o *Operation) bool {
 				o.Args[k] = OpArg{Kind: ArgLabel, Val: p.tok.Val}
 			case TokFlag:
 				o.Args[k] = OpArg{Kind: ArgFlag, Val: p.tok.Val}
+			case TokMacro:
+				name := p.tok.Text
+				val, ok := p.macros[name]
+				if !ok {
+					p.Error = fmt.Errorf("%s: undefined \"%s\" macro", p.tok.Pos(), name)
+					return false
+				}
+				o.Args[k] = OpArg{Kind: ArgInteger, Val: val}
 			default:
 				p.Error = fmt.Errorf("%s: unexpected %s token in mnemonic argument", p.tok.Pos(), p.tok.Kind)
 				return false
@@ -78,6 +111,9 @@ type Parser struct {
 	next *Token
 
 	lx *Lexer
+
+	// maps macro name to its integer value
+	macros map[string]uint64
 }
 
 func NewParserFromFile(path string) (*Parser, error) {
@@ -90,7 +126,11 @@ func NewParserFromFile(path string) (*Parser, error) {
 }
 
 func NewParser(lx *Lexer) *Parser {
-	p := Parser{Labels: NewLabelMap()}
+	p := Parser{
+		Labels: NewLabelMap(),
+
+		macros: make(map[string]uint64),
+	}
 	p.init(lx)
 	return &p
 }

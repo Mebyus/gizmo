@@ -104,8 +104,8 @@ var Literal = [...]string{
 	LabelNext: "@.next",
 	LabelOut:  "@.out",
 
-	DirIf:    "#if",
-	DirBuild: "#build",
+	DirIf:      "#if",
+	DirInclude: "#include",
 
 	// Non static literals
 

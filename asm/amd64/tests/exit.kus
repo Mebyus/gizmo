@@ -1,4 +1,6 @@
-// def $.EXIT_STATUS 	0x6
+#def #.SYSCALL_EXIT 0x3C
+#def #.EXIT_STATUS 	0x6
+
 // def $.SYSCALL_WRITE	0x1
 
 // let $.msg: "hello, world!\n"
@@ -21,6 +23,6 @@ Test block comment
 	jump 	?.nz, @.loop
 
 @.exit:
-	mov		rax, 0x3C
-	mov		rdi, 0x30
+	mov		rax, #.SYSCALL_EXIT
+	mov		rdi, #.EXIT_STATUS
 	syscall

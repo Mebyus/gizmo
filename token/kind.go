@@ -127,8 +127,8 @@ const (
 	LabelNext // @.next
 	LabelOut  // @.out
 
-	DirIf    // #if
-	DirBuild // #build
+	DirIf      // #if
+	DirInclude // #include
 
 	noStaticLiteral
 

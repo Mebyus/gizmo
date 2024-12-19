@@ -3,6 +3,7 @@ package amd64
 import (
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 
 	"github.com/mebyus/gizmo/char"
@@ -36,6 +37,7 @@ const (
 	TokHexInteger
 	TokIdentifier
 	TokString
+	TokMacro
 	TokIllegal
 )
 
@@ -54,12 +56,12 @@ var tokKindLiteral = [...]string{
 	LeftSquare:  "[",
 	RightSquare: "]",
 
-	TokFun: "fun",
-	TokDef: "def",
-	TokLet: "let",
+	TokFun: "#fun",
+	TokDef: "#def",
+	TokLet: "#let",
 
 	TokRegister: "REG",
-	TokMnemonic: "ME",
+	TokMnemonic: "MNE",
 	TokProperty: "PROP",
 	TokFlag:     "FLAG",
 
@@ -68,6 +70,7 @@ var tokKindLiteral = [...]string{
 	TokHexInteger: "INT.HEX",
 	TokIdentifier: "IDN",
 	TokString:     "STR",
+	TokMacro:      "MACRO",
 }
 
 func (k TokKind) String() string {
@@ -118,6 +121,8 @@ func (t Token) Literal() string {
 		return "\"" + t.Text + "\""
 	case TokLabel:
 		return "@." + t.Text
+	case TokMacro:
+		return "#." + t.Text
 	case TokIllegal:
 		return "."
 	default:
@@ -140,6 +145,16 @@ func ListTokens(w io.Writer, lx *Lexer) error {
 			return nil
 		}
 	}
+}
+
+func ListTokensFromFile(w io.Writer, path string) error {
+	text, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	lx := NewLexer(text)
+
+	return ListTokens(w, lx)
 }
 
 func RenderToken(w io.Writer, tok *Token) error {
@@ -176,6 +191,16 @@ func (lx *Lexer) Lex() *Token {
 		return lx.stringLiteral()
 	}
 
+	if lx.C == '#' {
+		if lx.Next == '.' {
+			return lx.macro()
+		}
+		if char.IsLetter(lx.Next) {
+			return lx.directive()
+		}
+		return lx.illegalByteToken()
+	}
+
 	if char.IsLetter(lx.C) {
 		return lx.word()
 	}
@@ -201,6 +226,59 @@ func (lx *Lexer) tok() *Token {
 		Line: lx.Line,
 		Col:  lx.Col,
 	}
+}
+
+func (lx *Lexer) macro() *Token {
+	tok := lx.tok()
+
+	lx.Advance()
+	lx.Advance()
+
+	if !char.IsLetter(lx.C) {
+		tok.Kind = TokIllegal
+		return tok
+	}
+
+	lx.Start()
+	lx.SkipWord()
+
+	lit, ok := lx.Take()
+	if !ok {
+		panic("not implemented")
+	}
+
+	tok.Kind = TokMacro
+	tok.Text = lit
+
+	return tok
+}
+
+func (lx *Lexer) directive() *Token {
+	tok := lx.tok()
+
+	lx.Advance() // skip '#'
+
+	lx.Start()
+	lx.SkipWord()
+
+	lit, ok := lx.Take()
+	if !ok {
+		panic("not implemented")
+	}
+
+	switch lit {
+	case "fun":
+		tok.Kind = TokFun
+	case "def":
+		tok.Kind = TokDef
+	case "let":
+		tok.Kind = TokLet
+	default:
+		tok.Kind = TokIllegal
+		tok.Text = lit
+	}
+
+	return tok
 }
 
 func (lx *Lexer) stringLiteral() *Token {
@@ -256,12 +334,6 @@ func (lx *Lexer) word() *Token {
 	}
 
 	switch lit {
-	case "fun":
-		tok.Kind = TokFun
-	case "def":
-		tok.Kind = TokDef
-	case "let":
-		tok.Kind = TokLet
 	case "ptr":
 		tok.Kind = TokProperty
 		tok.Val = PropPtr
