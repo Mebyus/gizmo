@@ -24,7 +24,7 @@ func execute(r *butler.Lackey, files []string) error {
 }
 
 func lex(filename string) error {
-	includes, err := kbs.ParseFile(filename)
+	includes, err := kbs.Walk("src", filename)
 	if err != nil {
 		return err
 	}

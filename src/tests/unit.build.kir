@@ -1,0 +1,3 @@
+#include "1.kir";
+#include "tests/kir";
+#include "str.kir";
