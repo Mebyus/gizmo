@@ -2,6 +2,7 @@ package kbs
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/mebyus/gizmo/butler"
 	"github.com/mebyus/gizmo/kir/kbs"
@@ -28,8 +29,5 @@ func lex(filename string) error {
 	if err != nil {
 		return err
 	}
-	for _, include := range includes {
-		fmt.Println(include)
-	}
-	return nil
+	return kbs.Gen(os.Stdout, includes)
 }

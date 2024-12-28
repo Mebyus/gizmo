@@ -43,6 +43,7 @@ func (p *Parser) topFun(traits ast.Traits) error {
 		Body:      body,
 		Traits:    traits,
 	}
+	p.atom.Nodes = append(p.atom.Nodes, ast.TopIndex{Kind: ast.NodeFun, Index: uint32(len(p.atom.Funs))})
 	p.atom.Funs = append(p.atom.Funs, f)
 	return nil
 }

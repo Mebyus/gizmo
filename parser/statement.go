@@ -402,8 +402,8 @@ func (p *Parser) returnStatement() (statement ast.ReturnStatement, err error) {
 	}
 	p.advance() // consume ";"
 	statement = ast.ReturnStatement{
-		Pos:        pos,
-		Expression: expression,
+		Pos: pos,
+		Exp: expression,
 	}
 	return
 }

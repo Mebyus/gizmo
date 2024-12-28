@@ -81,13 +81,13 @@ func (g *Noder) VarStatement(node ast.VarStatement) {
 func (g *Noder) ReturnStatement(node ast.ReturnStatement) {
 	g.genpos(token.Return, node.Pos)
 
-	if node.Expression == nil {
+	if node.Exp == nil {
 		g.semi()
 		return
 	}
 
 	g.ss()
-	g.Expression(node.Expression)
+	g.Expression(node.Exp)
 	g.semi()
 }
 

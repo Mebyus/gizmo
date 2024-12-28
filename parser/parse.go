@@ -86,6 +86,7 @@ func (p *Parser) topVar(traits ast.Traits) error {
 		Var:    s.Var,
 		Traits: traits,
 	}
+	p.atom.Nodes = append(p.atom.Nodes, ast.TopIndex{Kind: ast.NodeVar, Index: uint32(len(p.atom.Vars))})
 	p.atom.Vars = append(p.atom.Vars, v)
 	return nil
 }
@@ -100,6 +101,7 @@ func (p *Parser) topConstant(traits ast.Traits) error {
 		Let:    s.Let,
 		Traits: traits,
 	}
+	p.atom.Nodes = append(p.atom.Nodes, ast.TopIndex{Kind: ast.NodeLet, Index: uint32(len(p.atom.Constants))})
 	p.atom.Constants = append(p.atom.Constants, c)
 	return nil
 }

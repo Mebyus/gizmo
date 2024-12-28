@@ -28,6 +28,7 @@ func (p *Parser) topType(traits ast.Traits) error {
 		Spec:   spec,
 		Traits: traits,
 	}
+	p.atom.Nodes = append(p.atom.Nodes, ast.TopIndex{Kind: ast.NodeType, Index: uint32(len(p.atom.Types))})
 	p.atom.Types = append(p.atom.Types, t)
 	return nil
 }

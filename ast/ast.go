@@ -9,6 +9,18 @@ type UnitClause struct {
 	Name Identifier
 }
 
+type TopIndex struct {
+	Index uint32
+	Kind  uint8
+}
+
+const (
+	NodeType = iota
+	NodeLet
+	NodeVar
+	NodeFun
+)
+
 // Atom smallest piece of processed source code inside a unit. In most
 // cases this represents a file with source code. Exceptions may include
 // source code generated at compile time.
@@ -18,6 +30,8 @@ type UnitClause struct {
 // All top nodes inside atom are listed in order they appear in source code.
 type Atom struct {
 	Header AtomHeader
+
+	Nodes []TopIndex
 
 	// List of top custom type definition nodes.
 	Types []TopType

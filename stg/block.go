@@ -397,7 +397,7 @@ func (b *Block) addIf(ctx *Context, stmt ast.IfStatement) error {
 func (b *Block) addReturn(ctx *Context, stmt ast.ReturnStatement) error {
 	pos := stmt.Pos
 
-	if stmt.Expression == nil {
+	if stmt.Exp == nil {
 		if ctx.ret != nil {
 			return fmt.Errorf("%s: empty return in function which return value is not empty", pos)
 		}
@@ -417,7 +417,7 @@ func (b *Block) addReturn(ctx *Context, stmt ast.ReturnStatement) error {
 		panic("unreachable: impossible condition")
 	}
 
-	exp, err := b.Scope.Scan(ctx, stmt.Expression)
+	exp, err := b.Scope.Scan(ctx, stmt.Exp)
 	if err != nil {
 		return err
 	}

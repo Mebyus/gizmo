@@ -52,7 +52,7 @@ type ReturnStatement struct {
 	Pos source.Pos
 
 	// Equals nil if return does not have expression.
-	Expression Exp
+	Exp Exp
 }
 
 var _ Statement = ReturnStatement{}
