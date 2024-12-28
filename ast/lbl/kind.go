@@ -12,7 +12,7 @@ const (
 	Named
 
 	Next
-	End
+	Out
 )
 
 var text = [...]string{
@@ -21,7 +21,7 @@ var text = [...]string{
 	Named: "named",
 
 	Next: "next",
-	End:  "end",
+	Out:  "out",
 }
 
 func (k Kind) String() string {

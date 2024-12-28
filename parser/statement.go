@@ -106,7 +106,7 @@ func (p *Parser) label() (ast.Label, error) {
 		return ast.ReservedLabel{Pos: pos, ResKind: lbl.Next}, nil
 	case token.LabelOut:
 		p.advance()
-		return ast.ReservedLabel{Pos: pos, ResKind: lbl.End}, nil
+		return ast.ReservedLabel{Pos: pos, ResKind: lbl.Out}, nil
 	default:
 		panic("not implemented for label " + p.tok.Kind.String())
 	}

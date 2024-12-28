@@ -1,1 +1,21 @@
-fun add() {}
+fun add() {
+    var i: uint = 0;
+    for {
+        if i >= 0x10 {
+            jump @.out;
+        }
+        i += 1;
+    }
+
+    for i < 20 {
+        i += 2;
+    }
+
+    return;
+}
+
+fun unsafe_copy(dest: [*]u8, src: [*]u8, n: uint) {
+    for i in range(n) {
+        dest.[i] = src.[i];
+    }
+}
