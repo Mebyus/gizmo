@@ -603,18 +603,6 @@ func (lx *Lexer) runeLiteral() (tok token.Token) {
 	return
 }
 
-func (s *Lexer) scanGreaterStart() (tok token.Token) {
-	if s.Next == '=' {
-		tok = s.create(token.GreaterOrEqual)
-		s.Advance()
-		s.Advance()
-	} else {
-		tok = s.create(token.RightAngle)
-		s.Advance()
-	}
-	return
-}
-
 func (lx *Lexer) oneByteToken(k token.Kind) token.Token {
 	tok := lx.create(k)
 	lx.Advance()
@@ -732,7 +720,14 @@ func (lx *Lexer) other() token.Token {
 			return lx.oneByteToken(token.LeftAngle)
 		}
 	case '>':
-		return lx.scanGreaterStart()
+		switch lx.Next {
+		case '=':
+			return lx.twoBytesToken(token.GreaterOrEqual)
+		case '>':
+			return lx.twoBytesToken(token.RightShift)
+		default:
+			return lx.oneByteToken(token.RightAngle)
+		}
 	case '+':
 		if lx.Next == '=' {
 			return lx.twoBytesToken(token.AddAssign)

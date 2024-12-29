@@ -80,11 +80,13 @@ func (g *Generator) Fun(node ast.TopFun) {
 }
 
 func (g *Generator) TopVar(node ast.TopVar) {
+	g.puts("static ")
 	g.Var(ast.VarStatement{Var: node.Var})
 	g.nl()
 }
 
 func (g *Generator) TopLet(node ast.TopLet) {
+	g.puts("static ")
 	g.Let(ast.LetStatement{Let: node.Let})
 	g.nl()
 }
@@ -150,7 +152,7 @@ func (g *Generator) Chunk(c ast.ChunkType) {
 	name := c.ElemType.(ast.TypeName).Name.Lit
 	switch name {
 	case "u8":
-		g.puts("bck")
+		g.puts("bx")
 	default:
 		panic(fmt.Sprintf("%s chunks not implemented", name))
 	}
@@ -194,6 +196,8 @@ func (g *Generator) Statement(s ast.Statement) {
 		g.Return(s)
 	case ast.VarStatement:
 		g.Var(s)
+	case ast.LetStatement:
+		g.Let(s)
 	case ast.AssignStatement:
 		g.Assign(s)
 	case ast.IfStatement:
@@ -317,6 +321,7 @@ func (g *Generator) Assign(s ast.AssignStatement) {
 }
 
 func (g *Generator) Let(s ast.LetStatement) {
+	g.indent()
 	g.puts("const ")
 	g.TypeSpec(s.Type)
 	g.space()
@@ -329,9 +334,14 @@ func (g *Generator) Let(s ast.LetStatement) {
 
 func (g *Generator) Var(s ast.VarStatement) {
 	g.indent()
-	g.TypeSpec(s.Type)
-	g.space()
-	g.puts(s.Name.Lit)
+	array, ok := s.Type.(ast.ArrayType)
+	if ok {
+		g.VarArray(s, array)
+	} else {
+		g.TypeSpec(s.Type)
+		g.space()
+		g.puts(s.Name.Lit)
+	}
 
 	_, dirty := s.Exp.(ast.Dirty)
 	if dirty {
@@ -344,6 +354,15 @@ func (g *Generator) Var(s ast.VarStatement) {
 	g.Exp(s.Exp)
 	g.semi()
 	g.nl()
+}
+
+func (g *Generator) VarArray(s ast.VarStatement, a ast.ArrayType) {
+	g.TypeSpec(a.ElemType)
+	g.space()
+	g.puts(s.Name.Lit)
+	g.puts("[")
+	g.Exp(a.Size)
+	g.puts("]")
 }
 
 func (g *Generator) Return(s ast.ReturnStatement) {
@@ -376,9 +395,29 @@ func (g *Generator) Exp(exp ast.Exp) {
 		g.CallExp(e)
 	case ast.BasicLiteral:
 		g.BasicLiteral(e)
+	case ast.TintExp:
+		g.TintExp(e)
+	case ast.CastExp:
+		g.CastExp(e)
 	default:
 		panic(fmt.Sprintf("unexpected %s expression", exp.Kind()))
 	}
+}
+
+func (g *Generator) CastExp(exp ast.CastExp) {
+	g.puts("cast(")
+	g.TypeSpec(exp.Type)
+	g.puts(", ")
+	g.Exp(exp.Target)
+	g.puts(")")
+}
+
+func (g *Generator) TintExp(exp ast.TintExp) {
+	g.puts("cast(")
+	g.TypeSpec(exp.Type)
+	g.puts(", ")
+	g.Exp(exp.Target)
+	g.puts(")")
 }
 
 func (g *Generator) CallExp(exp ast.CallExp) {

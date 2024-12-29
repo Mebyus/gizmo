@@ -1,0 +1,26 @@
+// Unused section.
+let ELF_SECTION_NULL: u32 = 0;
+
+// Program data.
+let ELF_SECTION_PROGBITS: u32 = 1;
+
+// Symbol table.
+let ELF_SECTION_SYMTAB: u32 = 2;
+
+// String table.
+let ELF_SECTION_STRTAB: u32 = 3;
+
+// Relocation entries.
+let ELF_SECTION_RELA: u32 = 4;
+
+// Symbol hash table.
+let ELF_SECTION_HASH: u32 = 5;
+
+// Dynamic linking information. SEE https://refspecs.linuxbase.org/elf/gabi4+/ch5.dynamic.html
+let ELF_SECTION_DYNAMIC: u32 = 6;
+
+// Program space with no data (bss).
+let ELF_SECTION_NOBITS: u32 = 8;
+
+// Dynamic linker symbol table.
+let ELF_SECTION_DYNSYM: u32 = 11;

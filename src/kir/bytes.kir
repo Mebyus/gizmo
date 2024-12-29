@@ -1,0 +1,229 @@
+// Basic assert function.
+fun must(c: bool) {
+	if c {
+		return;
+	}
+
+	panic_trap();
+}
+
+// Get unsigned 16-bit integer from first 2 bytes of a given bytes chunk.
+// Function assumes little endian order of bytes inside the chunk.
+fun unsafe_get_u16le(p: [*]u8) => u16 {
+	return (cast(u16, p.[0]) << 0) | (cast(u16, p.[1]) << 8);
+}
+
+// Get unsigned 32-bit integer from first 4 bytes of a given bytes chunk.
+// Function assumes little endian order of bytes inside the chunk.
+fun unsafe_get_u32le(p: [*]u8) => u32 {
+	return (cast(u32, p.[0]) << 0) | (cast(u32, p.[1]) << 8) |
+	       (cast(u32, p.[2]) << 16) | (cast(u32, p.[3]) << 24);
+}
+
+// Get unsigned 64-bit integer from first 8 bytes of a given bytes chunk.
+// Function assumes little endian order of bytes inside the chunk.
+fun unsafe_get_u64le(p: [*]u8) => u64 {
+	return (cast(u64, p.[0]) << 0) | (cast(u64, p.[1]) << 8) |
+	       (cast(u64, p.[2]) << 16) | (cast(u64, p.[3]) << 24) |
+	       (cast(u64, p.[4]) << 32) | (cast(u64, p.[5]) << 40) |
+	       (cast(u64, p.[6]) << 48) | (cast(u64, p.[7]) << 56);
+}
+
+/*
+Bytes chunk (alias to []u8)
+
+Represents continuous region in memory in form of raw bytes.
+Chunk by definition is nil when number of bytes in it equals zero.
+
+Meaning of chunk contents are dependant on its specific usage. For example
+bytes can represent a utf-8 string, bitmap of an image or a network packet.
+Users should specify meaning of chunk in place where they use it.
+
+Chunk can point to static, stack or heap allocated memory. It is
+responsibility of the user to keep track of different usages and deallocate
+backing memory.
+
+Depending on particular usage chunk may either be:
+  1. a view into memory owned by someone else
+  2. owned memory region
+*/
+type bx struct {
+    ptr: [*]u8,
+    len: uint,
+}
+
+type str []u8
+
+fun make_bx(ptr: [*]u8, len: uint) => []u8 {
+    var c: []u8 = dirty;
+	if len == 0 {
+		c.ptr = nil;
+		c.len = 0;
+		return c;
+	}
+
+    c.ptr = ptr;
+    c.len = len;
+    return c;
+}
+
+// Copies n bytes of memory from src to dest. Number of copied bytes
+// must be greater than zero.
+//
+// Do not use for overlapping memory regions. 
+fun unsafe_copy(dest: [*]u8, src: [*]u8, n: uint) {
+	for i in range(n) {
+		dest.[i] = src.[i];
+	}
+}
+
+// Same as unsafe_copy, but bytes are copied in reverse order.
+fun unsafe_reverse_copy(dest: [*]u8, src: [*]u8, n: uint) {
+	var i: uint = 0;
+	var j: uint = n - 1;
+	for i < n {
+		dest.[j] = src.[i];
+		i += 1;
+		j -= 1;
+	}
+}
+
+fun bx_slice_head(c: []u8, n: uint) => []u8 {
+	must(n <= c.len);
+	return make_bx(c.ptr, n);
+}
+
+fun bx_slice_tail(c: []u8, n: uint) => []u8 {
+	must(n <= c.len);
+	return make_bx(c.ptr + n, c.len - n);
+}
+
+/*
+Find and return index of the first occurrence of byte {x} inside a bytes chunk {b}.
+
+If view does not contain specified byte {x}, then fuction returns -1.
+Otherwise return value is guaranteed to satisfy 0 <= i < len.
+*/
+fun bx_index_byte(c: []u8, x: u8) => sint {
+	for i in range(c.len) {
+		if c.ptr.[i] == x {
+			return tint(sint, i);
+		}
+	}
+	return -1;
+}
+
+/*
+Returns true if two strings contain the same data.
+*/
+fun str_equal(a: str, b: str) => bool {
+	if a.len != b.len {
+		return false;
+	}
+	if a.ptr == b.ptr {
+		return true;
+	}
+
+	for i in range(a.len) {
+		if a.ptr.[i] != b.ptr.[i] {
+			return false;
+		}
+	}
+	return true;
+}
+
+fun make_str(ptr: [*]u8, len: uint) => str {
+    return make_bx(ptr, len);
+}
+
+fun unsafe_make_str_from_cstr_ptr(ptr: [*]u8) => str {
+	must(ptr != nil);
+
+	var i: uint = 0;
+	for ptr.[i] != 0 {
+		i += 1;
+	}
+
+	return make_str(ptr, i);
+}
+
+fun djb2_hash64(c: []u8) => u64 {
+    var h: u64 = 5381; // magic number
+    for i in range(c.len) {
+        h = ((h << 5) + h) + tint(u64, c.ptr.[i]);
+    }
+    return h;
+}
+
+fun fmt_dec_digit(x: u8) => u8 {
+	return x + tint(u8, '0');
+}
+
+fun fmt_hex_digit(x: u8) => u8 {
+	if x <= 9 {
+		return fmt_dec_digit(x);
+	}
+	return x - 10 + tint(u8, 'A');
+}
+
+fun unsafe_fmt_hex_byte(buf: []u8, x: u8) => uint {
+  	buf.ptr.[0] = fmt_hex_digit(x >> 4);
+	buf.ptr.[1] = fmt_hex_digit(x & 0xF);
+	return 2;
+}
+
+let max_u64_dec_length: uint = 20;
+
+/*
+Same as fmt_dec_u64, but has no buffer boundary checks.
+*/
+fun unsafe_fmt_dec_u64(buf: []u8, x: u64) => uint {
+	var digits: [max_u64_dec_length]u8 = dirty;
+	var i: uint = 0;
+	for {
+		let n: u8 = tint(u8, x % 10);
+		x /= 10;
+		digits.[i] = fmt_dec_digit(n);
+		i += 1;
+		if x == 0 {
+			let len: uint = i;
+			unsafe_reverse_copy(buf.ptr, digits, len);
+			return len;
+		}
+	}
+}
+
+/*
+Puts integer x into a given buffer as text in decimal format.
+
+Returns number of bytes written. Returns 0 if buffer does not
+have enough bytes for the operation.
+*/
+fun fmt_dec_u64(buf: []u8, x: u64) => uint {
+	if buf.len == 0 {
+		return 0;
+	}
+	must(buf.ptr != nil);
+	
+	if buf.len >= max_u64_dec_length {
+		return unsafe_fmt_dec_u64(buf, x);
+	}
+	
+	var digits: [max_u64_dec_length]u8 = dirty;
+	var i: uint = 0;
+	for {
+		let n: u8 = tint(u8, x % 10);
+		x /= 10;
+		digits.[i] = fmt_dec_digit(n);
+		i += 1;
+		if x == 0 {
+			let len: uint = i;
+			if len > buf.len {
+				// Not enough space in buffer to represent integer.
+				return 0;
+			}
+			unsafe_reverse_copy(buf.ptr, digits, len);
+			return len;
+		}
+	}
+}
