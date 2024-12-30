@@ -355,7 +355,7 @@ func (p *Parser) operand() (ast.Operand, error) {
 func isChainOperandToken(kind token.Kind) bool {
 	switch kind {
 	case token.LeftParentheses, token.Period, token.LeftSquare,
-		token.Indirect, token.Address, token.IndirectIndex:
+		token.Indirect, token.Address, token.IndirectIndex, token.IndirectSelect:
 
 		return true
 	default:
@@ -416,6 +416,18 @@ func (p *Parser) selectPart() (ast.SelectPart, error) {
 	return ast.SelectPart{Name: name}, nil
 }
 
+func (p *Parser) indirectFieldPart() (ast.IndirectFieldPart, error) {
+	p.advance() // skip ".@."
+	err := p.expect(token.Identifier)
+	if err != nil {
+		return ast.IndirectFieldPart{}, err
+	}
+	name := p.word()
+	p.advance() // skip name identifier
+
+	return ast.IndirectFieldPart{Name: name}, nil
+}
+
 func (p *Parser) indirectPart() ast.IndirectPart {
 	pos := p.pos()
 	p.advance() // skip ".@"
@@ -438,6 +450,8 @@ func (p *Parser) chainExp(start ast.Identifier) (ast.Operand, error) {
 			} else {
 				part, err = p.selectPart()
 			}
+		case token.IndirectSelect:
+			part, err = p.indirectFieldPart()
 		case token.Indirect:
 			part = p.indirectPart()
 		case token.Address:

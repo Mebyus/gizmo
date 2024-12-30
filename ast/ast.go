@@ -19,6 +19,7 @@ const (
 	NodeLet
 	NodeVar
 	NodeFun
+	NodeStub
 )
 
 // Atom smallest piece of processed source code inside a unit. In most

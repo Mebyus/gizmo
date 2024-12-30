@@ -1,0 +1,34 @@
+type FormatBuffer struct {
+	// Pointer to buffer memory.
+	// Always not nil for initialized struct.
+	ptr: [*]u8,
+
+	// Content length. How many bytes is already written to buffer.
+	// Length cannot be greater than capacity.
+	len: uint,
+
+	// Buffer storage capacity. Max bytes it can hold.
+	cap: uint,
+}
+
+fun fmt_buffer_init(buf: *FormatBuffer, c: []u8) {
+    must(c.ptr != nil);
+
+    buf.@.ptr = c.ptr;
+    buf.@.len = 0;
+    buf.@.cap = c.len;
+}
+
+fun make_fmt_buffer(c: []u8) => FormatBuffer {
+	var buf: FormatBuffer = dirty;
+    fmt_buffer_init(buf.&, c);
+	return buf;
+}
+
+fun fmt_buffer_head(buf: *FormatBuffer) => []u8 {
+	return make_bx(buf.@.ptr, buf.@.len);
+}
+
+fun fmt_buffer_tail(buf: *FormatBuffer) => []u8 {
+	return make_bx(buf.@.ptr + buf.@.len, buf.@.cap - buf.@.len);
+}

@@ -8,6 +8,7 @@ import (
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/bop"
 	"github.com/mebyus/gizmo/ast/lbl"
+	"github.com/mebyus/gizmo/token"
 )
 
 type Generator struct {
@@ -38,6 +39,8 @@ func (g *Generator) Atom(atom *ast.Atom) {
 			g.TopVar(atom.Vars[node.Index])
 		case ast.NodeFun:
 			g.Fun(atom.Funs[node.Index])
+		case ast.NodeStub:
+			g.Stub(atom.Decs[node.Index])
 		default:
 			panic(fmt.Sprintf("unknown node (%d)", node.Kind))
 		}
@@ -59,20 +62,31 @@ func (g *Generator) TopType(node ast.TopType) {
 	g.nl()
 }
 
-func (g *Generator) Fun(node ast.TopFun) {
-	if node.Signature.Never {
+func (g *Generator) funHeader(name ast.Identifier, signature ast.Signature) {
+	if signature.Never {
 		g.puts("_Noreturn ")
 	}
 	g.puts("static ")
-	if node.Signature.Result == nil {
+	if signature.Result == nil {
 		g.puts("void")
 	} else {
-		g.TypeSpec(node.Signature.Result)
+		g.TypeSpec(signature.Result)
 	}
 	g.nl()
 
-	g.puts(node.Name.Lit)
-	g.funParams(node.Signature.Params)
+	g.puts(name.Lit)
+	g.funParams(signature.Params)
+}
+
+func (g *Generator) Stub(node ast.TopDec) {
+	g.funHeader(node.Name, node.Signature)
+	g.semi()
+	g.nl()
+	g.nl()
+}
+
+func (g *Generator) Fun(node ast.TopFun) {
+	g.funHeader(node.Name, node.Signature)
 	g.space()
 	g.Block(node.Body)
 	g.nl()
@@ -393,6 +407,8 @@ func (g *Generator) Exp(exp ast.Exp) {
 		g.ChainOperand(e)
 	case ast.CallExp:
 		g.CallExp(e)
+	case ast.AddressExp:
+		g.AddressExp(e)
 	case ast.BasicLiteral:
 		g.BasicLiteral(e)
 	case ast.TintExp:
@@ -402,6 +418,11 @@ func (g *Generator) Exp(exp ast.Exp) {
 	default:
 		panic(fmt.Sprintf("unexpected %s expression", exp.Kind()))
 	}
+}
+
+func (g *Generator) AddressExp(exp ast.AddressExp) {
+	g.puts("&")
+	g.ChainOperand(exp.Chain)
 }
 
 func (g *Generator) CastExp(exp ast.CastExp) {
@@ -465,12 +486,25 @@ func (g *Generator) chainParts(start ast.Identifier, parts []ast.ChainPart) {
 		g.puts("[")
 		g.Exp(p.Index)
 		g.puts("]")
+	case ast.IndirectFieldPart:
+		g.chainParts(start, rest)
+		g.puts("->")
+		g.puts(p.Name.Lit)
 	default:
 		panic(fmt.Sprintf("unexpected %s chain part", part.Kind()))
 	}
 }
 
 func (g *Generator) BasicLiteral(lit ast.BasicLiteral) {
+	if lit.Token.Kind == token.String {
+		g.puts("make_ss(\"")
+		g.puts(lit.Token.Lit)
+		g.puts("\", ")
+		g.putn(lit.Token.Val)
+		g.puts(")")
+		return
+	}
+
 	g.puts(lit.Token.Literal())
 }
 

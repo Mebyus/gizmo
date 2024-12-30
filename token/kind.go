@@ -69,13 +69,14 @@ const (
 
 	PropStart // #[
 
-	Compound     // .{
-	Insist       // .!
-	Chain        // .?
-	Chunk        // []
-	AutoLen      // [_]
-	ArrayPointer // [*]
-	CapBuffer    // [^]
+	Compound      // .{
+	Insist        // .!
+	Chain         // .?
+	Chunk         // []
+	AutoLen       // [_]
+	ArrayPointer  // [*]
+	CapBuffer     // [^]
+	IndirectSelect // .@.
 
 	Nillable      // ?|
 	NillableChunk // [?]

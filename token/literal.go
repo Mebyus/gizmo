@@ -63,6 +63,7 @@ var Literal = [...]string{
 	CapBuffer:        "[^]",
 	Nillable:         "?|",
 	NillableChunk:    "[?]",
+	IndirectSelect:   ".@.",
 
 	// Keywords
 

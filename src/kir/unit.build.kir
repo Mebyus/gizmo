@@ -1,3 +1,5 @@
 #include "types_amd64.c";
 #include "bytes.kir";
+#include "fmt.kir";
 #include "elf.kir";
+#include "main.kir";

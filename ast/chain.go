@@ -213,3 +213,23 @@ func (TestPart) Kind() exk.Kind {
 func (p TestPart) Pin() source.Pos {
 	return p.Name.Pos
 }
+
+// <IndirectFieldPart> = ".@." <Name>
+//
+// <Name> = <Identifier>
+type IndirectFieldPart struct {
+	NodeP
+
+	Name Identifier
+}
+
+// Explicit interface implementation check.
+var _ ChainPart = IndirectFieldPart{}
+
+func (IndirectFieldPart) Kind() exk.Kind {
+	return exk.IndirectField
+}
+
+func (p IndirectFieldPart) Pin() source.Pos {
+	return p.Name.Pos
+}

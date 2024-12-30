@@ -764,7 +764,14 @@ func (lx *Lexer) other() token.Token {
 		case '&':
 			return lx.twoBytesToken(token.Address)
 		case '@':
-			return lx.twoBytesToken(token.Indirect)
+			pos := lx.pos()
+			lx.Advance()
+			lx.Advance()
+			if lx.C == '.' {
+				lx.Advance()
+				return token.Token{Kind: token.IndirectSelect, Pos: pos}
+			}
+			return token.Token{Kind: token.Indirect, Pos: pos}
 		case '{':
 			return lx.twoBytesToken(token.Compound)
 		case '[':

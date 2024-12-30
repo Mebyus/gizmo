@@ -1,3 +1,13 @@
+let max_integer_u8:  u8  = 0xFF;
+let max_integer_u16: u16 = 0xFFFF;
+let max_integer_u32: u32 = 0xFFFFFFFF;
+let max_integer_u64: u64 = 0xFFFFFFFFFFFFFFFF;
+
+let max_integer_s8:  s8  = 0x7F;
+let max_integer_s16: s16 = 0x7FFF;
+let max_integer_s32: s32 = 0x7FFFFFFF;
+let max_integer_s64: s64 = 0x7FFFFFFFFFFFFFFF;
+
 // Basic assert function.
 fun must(c: bool) {
 	if c {
@@ -6,6 +16,7 @@ fun must(c: bool) {
 
 	panic_trap();
 }
+
 
 // Get unsigned 16-bit integer from first 2 bytes of a given bytes chunk.
 // Function assumes little endian order of bytes inside the chunk.
@@ -53,6 +64,8 @@ type bx struct {
 }
 
 type str []u8
+
+fun print(s: str)
 
 fun make_bx(ptr: [*]u8, len: uint) => []u8 {
     var c: []u8 = dirty;

@@ -46,3 +46,6 @@ panic_trap(void) {
 	__builtin_trap();
 	__builtin_unreachable();
 }
+
+// Shorthand from C string literal to sized string (bytes chunk) conversion.
+#define make_ss(s, l) make_str((u8*)(u8##s), l)
