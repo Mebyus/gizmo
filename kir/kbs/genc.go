@@ -228,9 +228,66 @@ func (g *Generator) Statement(s ast.Statement) {
 		g.Never(s)
 	case ast.ForRange:
 		g.ForRange(s)
+	case ast.MatchStatement:
+		g.Match(s)
 	default:
 		panic(fmt.Sprintf("unexpected %s statement", s.Kind()))
 	}
+}
+
+func (g *Generator) Match(m ast.MatchStatement) {
+	g.indent()
+	g.puts("switch (")
+	g.Exp(m.Exp)
+	g.puts(") {")
+	g.nl()
+
+	for i := range len(m.Cases) {
+		c := m.Cases[i]
+		g.matchCase(c)
+		g.nl()
+	}
+	g.matchElseCase(m.Else)
+
+	g.indent()
+	g.puts("}")
+	g.nl()
+}
+
+func (g *Generator) matchCase(c ast.MatchCase) {
+	exp := c.ExpList[0]
+	g.indent()
+	g.puts("case ")
+	g.Exp(exp)
+	g.puts(":")
+	for _, exp := range c.ExpList[1:] {
+		g.nl()
+		g.indent()
+		g.puts("case ")
+		g.Exp(exp)
+		g.puts(":")
+	}
+
+	g.space()
+	g.Block(c.Body)
+	g.nl()
+	g.indent()
+	g.puts("break;")
+	g.nl()
+}
+
+func (g *Generator) matchElseCase(c *ast.Block) {
+	if c == nil {
+		return
+	}
+
+	g.indent()
+	g.puts("default: ")
+	g.Block(*c)
+	g.nl()
+	g.indent()
+	g.puts("break;")
+	g.nl()
 }
 
 func (g *Generator) ForRange(r ast.ForRange) {

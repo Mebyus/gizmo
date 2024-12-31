@@ -8,6 +8,26 @@ let max_integer_s16: s16 = 0x7FFF;
 let max_integer_s32: s32 = 0x7FFFFFFF;
 let max_integer_s64: s64 = 0x7FFFFFFFFFFFFFFF;
 
+fun min_uint(a: uint, b: uint) => uint {
+    if (a < b) {
+        return a;
+    }
+    return b;
+}
+
+fun max_uint(a: uint, b: uint) => uint {
+    if (a < b) {
+        return b;
+    }
+    return a;
+}
+
+fun align_uint(x: uint, a: uint) => uint [
+	let mask: uint = a - 1;
+	let delta: uint = (^x + 1) & mask;
+	return x + delta;
+]
+
 // Basic assert function.
 fun must(c: bool) {
 	if c {
@@ -101,6 +121,21 @@ fun unsafe_reverse_copy(dest: [*]u8, src: [*]u8, n: uint) {
 	}
 }
 
+// Returns number of bytes copied.
+fun copy(dest: []u8, src: []u8) => uint {
+    let n: uint = min_uint(dest.len, src.len);
+    if (n == 0) {
+        return 0;
+    }
+
+    must(dest.ptr != nil);
+    must(src.ptr != nil);
+	must(dest.ptr != src.ptr);
+
+    unsafe_copy(dest.ptr, src.ptr, n);
+	return n;
+}
+
 fun bx_slice_head(c: []u8, n: uint) => []u8 {
 	must(n <= c.len);
 	return make_bx(c.ptr, n);
@@ -166,77 +201,4 @@ fun djb2_hash64(c: []u8) => u64 {
         h = ((h << 5) + h) + tint(u64, c.ptr.[i]);
     }
     return h;
-}
-
-fun fmt_dec_digit(x: u8) => u8 {
-	return x + tint(u8, '0');
-}
-
-fun fmt_hex_digit(x: u8) => u8 {
-	if x <= 9 {
-		return fmt_dec_digit(x);
-	}
-	return x - 10 + tint(u8, 'A');
-}
-
-fun unsafe_fmt_hex_byte(buf: []u8, x: u8) => uint {
-  	buf.ptr.[0] = fmt_hex_digit(x >> 4);
-	buf.ptr.[1] = fmt_hex_digit(x & 0xF);
-	return 2;
-}
-
-let max_u64_dec_length: uint = 20;
-
-/*
-Same as fmt_dec_u64, but has no buffer boundary checks.
-*/
-fun unsafe_fmt_dec_u64(buf: []u8, x: u64) => uint {
-	var digits: [max_u64_dec_length]u8 = dirty;
-	var i: uint = 0;
-	for {
-		let n: u8 = tint(u8, x % 10);
-		x /= 10;
-		digits.[i] = fmt_dec_digit(n);
-		i += 1;
-		if x == 0 {
-			let len: uint = i;
-			unsafe_reverse_copy(buf.ptr, digits, len);
-			return len;
-		}
-	}
-}
-
-/*
-Puts integer x into a given buffer as text in decimal format.
-
-Returns number of bytes written. Returns 0 if buffer does not
-have enough bytes for the operation.
-*/
-fun fmt_dec_u64(buf: []u8, x: u64) => uint {
-	if buf.len == 0 {
-		return 0;
-	}
-	must(buf.ptr != nil);
-	
-	if buf.len >= max_u64_dec_length {
-		return unsafe_fmt_dec_u64(buf, x);
-	}
-	
-	var digits: [max_u64_dec_length]u8 = dirty;
-	var i: uint = 0;
-	for {
-		let n: u8 = tint(u8, x % 10);
-		x /= 10;
-		digits.[i] = fmt_dec_digit(n);
-		i += 1;
-		if x == 0 {
-			let len: uint = i;
-			if len > buf.len {
-				// Not enough space in buffer to represent integer.
-				return 0;
-			}
-			unsafe_reverse_copy(buf.ptr, digits, len);
-			return len;
-		}
-	}
 }
