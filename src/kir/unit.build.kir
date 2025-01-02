@@ -2,4 +2,4 @@
 #include "bytes.kir";
 #include "fmt.kir";
 #include "elf.kir";
-#include "main.kir";
+// #include "main.kir";

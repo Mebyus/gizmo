@@ -11,9 +11,7 @@ import (
 
 // Walk traverses includes from build files.
 // Start must point to project root directory.
-//
-// Returns ordered list of regular include file paths.
-func Walk(prefix string, start string) ([]string, error) {
+func Walk(prefix string, start string) (*ScriptOutput, error) {
 	var w Walker
 	w.prefix = prefix
 
@@ -21,25 +19,32 @@ func Walk(prefix string, start string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return w.includes, nil
+	return &w.out, nil
 }
 
 type Walker struct {
-	// Accumulated list of regular include file paths.
-	includes []string
+	// Accumulated output of scripts (includes, links, etc.).
+	out ScriptOutput
 
 	prefix string
 }
 
 func (w *Walker) Walk(start string) error {
-	includes, err := ParseFile(filepath.Join(w.prefix, start, "unit.build.kir"))
+	script, err := ParseFile(filepath.Join(w.prefix, start, "unit.build.kir"))
 	if err != nil {
 		return err
 	}
-	for _, include := range includes {
+
+	if w.out.Name == "" {
+		// assign script name to the first non-empty name in the tree
+		w.out.Name = script.Name
+	}
+	w.out.Links = append(w.out.Links, script.Links...)
+
+	for _, include := range script.Includes {
 		switch filepath.Ext(include) {
 		case ".kir", ".c":
-			w.includes = append(w.includes, filepath.Join(w.prefix, start, include))
+			w.out.Includes = append(w.out.Includes, filepath.Join(w.prefix, start, include))
 		default:
 			err = w.Walk(include)
 			if err != nil {
@@ -68,6 +73,16 @@ func Gen(w io.Writer, files []string) error {
 		}
 	}
 	return nil
+}
+
+func GenIntoFile(path string, files []string) error {
+	out, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	return Gen(out, files)
 }
 
 func copyFile(w io.Writer, path string) error {

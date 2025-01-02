@@ -1,1 +1,5 @@
+#name "kir_vk";
+
 #include "kir";
+
+#link "vulkan";

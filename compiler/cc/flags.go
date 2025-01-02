@@ -20,23 +20,34 @@ var warningFlags = []string{
 	"-Winit-self",
 	"-Wduplicated-branches",
 	"-Wduplicated-cond",
+	"-Wdouble-promotion",
 	"-Wnull-dereference",
-	"-Wvla",
+	"-Wstrict-prototypes",
+	// "-Wvla",
+	"-Wpointer-sign",
 	"-Wswitch-default",
 	"-Wshadow=local",
+
 	"-Wno-main",
 	"-Wno-shadow",
 	"-Wno-unused-parameter",
 	"-Wno-unused-function",
+	"-Wno-unused-const-variable",
 }
 
 var codegenFlags = []string{
 	"-fwrapv",
-	"-fno-asynchronous-unwind-tables",
 	"-funsigned-char",
+	"-fno-asynchronous-unwind-tables",
+	"-fno-stack-protector",
+	"-ffreestanding",
+	"-fno-builtin",
 }
 
 var customEntryLinkFlags = []string{
+	"-static",
+	"-ffreestanding",
+	"-fno-builtin",
 	"-nodefaultlibs",
 	"-nolibc",
 	"-nostdlib",
@@ -57,6 +68,7 @@ const wholeProgramOptimizations = "-fwhole-program"
 var otherFlags = []string{
 	"-Werror",
 	"-pipe",
+	"-fanalyzer",
 }
 
 func stdFlag(v string) string {

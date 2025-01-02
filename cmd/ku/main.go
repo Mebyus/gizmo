@@ -11,7 +11,7 @@ import (
 	"github.com/mebyus/gizmo/cmd/ku/clean"
 	"github.com/mebyus/gizmo/cmd/ku/format"
 	"github.com/mebyus/gizmo/cmd/ku/gen"
-	"github.com/mebyus/gizmo/cmd/ku/kbs"
+	"github.com/mebyus/gizmo/cmd/ku/kir"
 	"github.com/mebyus/gizmo/cmd/ku/lex"
 	"github.com/mebyus/gizmo/cmd/ku/rbs"
 	"github.com/mebyus/gizmo/cmd/ku/symlink"
@@ -38,7 +38,7 @@ var root = &butler.Lackey{
 	Usage: "ku <command> [arguments]",
 
 	Sub: []*butler.Lackey{
-		kbs.Kbs,
+		kir.Kir,
 		lex.Lex,
 		gen.Gen,
 		build.Build,

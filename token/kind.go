@@ -69,13 +69,13 @@ const (
 
 	PropStart // #[
 
-	Compound      // .{
-	Insist        // .!
-	Chain         // .?
-	Chunk         // []
-	AutoLen       // [_]
-	ArrayPointer  // [*]
-	CapBuffer     // [^]
+	Compound       // .{
+	Insist         // .!
+	Chain          // .?
+	Chunk          // []
+	AutoLen        // [_]
+	ArrayPointer   // [*]
+	CapBuffer      // [^]
 	IndirectSelect // .@.
 
 	Nillable      // ?|
@@ -128,8 +128,10 @@ const (
 	LabelNext // @.next
 	LabelOut  // @.out
 
-	DirIf      // #if
+	DirName    // #name
 	DirInclude // #include
+	DirLink    // #link
+	DirIf      // #if
 
 	noStaticLiteral
 

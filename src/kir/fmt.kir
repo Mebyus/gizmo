@@ -1,18 +1,78 @@
 fun fmt_dec_digit(x: u8) => u8 {
-	return x + tint(u8, '0');
+	ret x + tint(u8, '0');
 }
 
 fun fmt_hex_digit(x: u8) => u8 {
 	if x <= 9 {
-		return fmt_dec_digit(x);
+		ret fmt_dec_digit(x);
 	}
-	return x - 10 + tint(u8, 'A');
+	ret x - 10 + tint(u8, 'A');
 }
 
 fun unsafe_fmt_hex_byte(buf: []u8, x: u8) => uint {
   	buf.ptr.[0] = fmt_hex_digit(x >> 4);
 	buf.ptr.[1] = fmt_hex_digit(x & 0xF);
-	return 2;
+	ret 2;
+}
+
+let max_u16_hex_length: uint = 4;
+
+// Formats a given u16 integer as a hexadecimal number of
+// fixed width (=4) format, prefixing significant digits with
+// zeroes if necessary. Buffer must be at least 4 bytes
+// long.
+//
+// Returns number of bytes written to buffer (always 4).
+fun unsafe_fmt_hex_prefix_zeroes_u16(buf: []u8, x: u16) => uint {
+  var i: uint = max_u16_hex_length;
+  // digits are written from least to most significant bit
+  for i != 0 {
+    i -= 1;
+    let n: u8 = cast(u8, x & 0xF);
+    buf.ptr.[i] = fmt_hex_digit(n);
+    x = x >> 4;
+  }
+
+  ret max_u16_hex_length;
+}
+
+fun fmt_hex_prefix_zeroes_u16(buf: []u8, x: u16) => uint {
+	if buf.len < max_u16_hex_length {
+		ret 0;
+	}
+	must(buf.ptr != nil);
+
+	ret unsafe_fmt_hex_prefix_zeroes_u16(buf, x);
+}
+
+let max_u64_hex_length: uint = 16;
+
+// Formats a given u64 integer as a hexadecimal number of
+// fixed width (=16) format, prefixing significant digits with
+// zeroes if necessary. Buffer must be at least 16 bytes
+// long.
+//
+// Returns number of bytes written to buffer (always 16).
+fun unsafe_fmt_hex_prefix_zeroes_u64(buf: []u8, x: u64) => uint {
+  var i: uint = max_u64_hex_length;
+  // digits are written from least to most significant bit
+  for i != 0 {
+    i -= 1;
+    let n: u8 = cast(u8, x & 0xF);
+    buf.ptr.[i] = fmt_hex_digit(n);
+    x = x >> 4;
+  }
+
+  ret max_u64_hex_length;
+}
+
+fun fmt_hex_prefix_zeroes_u64(buf: []u8, x: u64) => uint {
+	if buf.len < max_u64_hex_length {
+		ret 0;
+	}
+	must(buf.ptr != nil);
+
+	ret unsafe_fmt_hex_prefix_zeroes_u64(buf, x);
 }
 
 let max_u64_dec_length: uint = 20;
@@ -31,7 +91,7 @@ fun unsafe_fmt_dec_u64(buf: []u8, x: u64) => uint {
 		if x == 0 {
 			let len: uint = i;
 			unsafe_reverse_copy(buf.ptr, digits, len);
-			return len;
+			ret len;
 		}
 	}
 }
@@ -44,12 +104,12 @@ have enough bytes for the operation.
 */
 fun fmt_dec_u64(buf: []u8, x: u64) => uint {
 	if buf.len == 0 {
-		return 0;
+		ret 0;
 	}
 	must(buf.ptr != nil);
 	
 	if buf.len >= max_u64_dec_length {
-		return unsafe_fmt_dec_u64(buf, x);
+		ret unsafe_fmt_dec_u64(buf, x);
 	}
 	
 	var digits: [max_u64_dec_length]u8 = dirty;
@@ -63,12 +123,29 @@ fun fmt_dec_u64(buf: []u8, x: u64) => uint {
 			let len: uint = i;
 			if len > buf.len {
 				// Not enough space in buffer to represent integer.
-				return 0;
+				ret 0;
 			}
 			unsafe_reverse_copy(buf.ptr, digits, len);
-			return len;
+			ret len;
 		}
 	}
+}
+
+fun fmt_dec_s64(buf: []u8, x: s64) => uint {
+	if x >= 0 {
+		ret fmt_dec_u64(buf, cast(u64, x));
+	}
+
+	if buf.len < 2 {
+		ret 0;
+	}
+
+	let n: uint = fmt_dec_u64(bx_slice_tail(buf, 1), cast(u64, -x));
+	if n == 0 {
+		ret 0;
+	}
+	buf.ptr.[0] = '-';
+	ret n + 1;
 }
 
 type FormatBuffer struct {
@@ -95,72 +172,72 @@ fun fmt_buffer_init(buf: *FormatBuffer, c: []u8) {
 fun make_fmt_buffer(c: []u8) => FormatBuffer {
 	var buf: FormatBuffer = dirty;
     fmt_buffer_init(buf.&, c);
-	return buf;
+	ret buf;
 }
 
 fun fmt_buffer_head(buf: *FormatBuffer) => []u8 {
-	return make_bx(buf.@.ptr, buf.@.len);
+	ret make_bx(buf.@.ptr, buf.@.len);
 }
 
 fun fmt_buffer_tail(buf: *FormatBuffer) => []u8 {
-	return make_bx(buf.@.ptr + buf.@.len, buf.@.cap - buf.@.len);
+	ret make_bx(buf.@.ptr + buf.@.len, buf.@.cap - buf.@.len);
 }
 
 // Returns actual number of bytes written to buffer.
 fun fmt_buffer_put_str(buf: *FormatBuffer, s: str) => uint {
 	let n: uint = copy(fmt_buffer_tail(buf), s);
 	buf.@.len += n;
-	return n;
+	ret n;
 }
 
 fun fmt_buffer_put_byte(buf: *FormatBuffer, b: u8) => uint {
 	var tail: []u8 = fmt_buffer_tail(buf);
-	if (tail.len == 0) {
-		return 0;
+	if tail.len == 0 {
+		ret 0;
 	}
-	tail.ptr[0] = b;
+	tail.ptr.[0] = b;
 	buf.@.len += 1;
-	return 1;
+	ret 1;
 }
 
 fun fmt_buffer_put_hex_byte(buf: *FormatBuffer, x: u8) => uint {
 	var tail: []u8 = fmt_buffer_tail(buf);
-	if (tail.len < 2) {
-		return 0;
+	if tail.len < 2 {
+		ret 0;
 	}
 	unsafe_fmt_hex_byte(tail, x);
 	buf.@.len += 2;
-	return 2;
+	ret 2;
 }
 
 fun fmt_buffer_put_nl(buf: *FormatBuffer) => uint {
-	return fmt_buffer_put_byte(buf, '\n');
+	ret fmt_buffer_put_byte(buf, '\n');
 }
 
-fun fmt_buffer_put_space(buf: *XkFormatBuffer) => uint {
-	return fmt_buffer_put_byte(buf, ' ');
+fun fmt_buffer_put_space(buf: *FormatBuffer) => uint {
+	ret fmt_buffer_put_byte(buf, ' ');
 }
 
 fun fmt_buffer_put_dec_u64(buf: *FormatBuffer, x: u64) => uint {
 	let n: uint = fmt_dec_u64(fmt_buffer_tail(buf), x);
 	buf.@.len += n;
-	return n;
+	ret n;
 }
 
-fun fmt_buffer_put_dec_s64(buf: FormatBuffer, x: s64) => uint {
+fun fmt_buffer_put_dec_s64(buf: *FormatBuffer, x: s64) => uint {
 	let n: uint = fmt_dec_s64(fmt_buffer_tail(buf), x);
 	buf.@.len += n;
-	return n;
+	ret n;
 }
 
 fun fmt_buffer_put_hex_prefix_zeroes_u16(buf: *FormatBuffer, x: u16) => uint {
 	let n: uint = fmt_hex_prefix_zeroes_u16(fmt_buffer_tail(buf), x);
 	buf.@.len += n;
-	return n;
+	ret n;
 }
 
 fun fmt_buffer_put_hex_prefix_zeroes_u64(buf: *FormatBuffer, x: u64) => uint {
 	let n: uint = fmt_hex_prefix_zeroes_u64(fmt_buffer_tail(buf), x);
 	buf.@.len += n;
-	return n;
+	ret n;
 }

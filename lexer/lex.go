@@ -105,6 +105,10 @@ func (lx *Lexer) directive() (tok token.Token) {
 		tok.Kind = token.DirIf
 	case "include":
 		tok.Kind = token.DirInclude
+	case "name":
+		tok.Kind = token.DirName
+	case "link":
+		tok.Kind = token.DirLink
 	default:
 		tok.SetIllegalError(token.UnknownDirective)
 	}

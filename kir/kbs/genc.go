@@ -8,6 +8,7 @@ import (
 	"github.com/mebyus/gizmo/ast"
 	"github.com/mebyus/gizmo/ast/bop"
 	"github.com/mebyus/gizmo/ast/lbl"
+	"github.com/mebyus/gizmo/ast/uop"
 	"github.com/mebyus/gizmo/token"
 )
 
@@ -66,6 +67,7 @@ func (g *Generator) funHeader(name ast.Identifier, signature ast.Signature) {
 	if signature.Never {
 		g.puts("_Noreturn ")
 	}
+	// if 
 	g.puts("static ")
 	if signature.Result == nil {
 		g.puts("void")
@@ -548,7 +550,7 @@ func (g *Generator) chainParts(start ast.Identifier, parts []ast.ChainPart) {
 		g.puts("->")
 		g.puts(p.Name.Lit)
 	default:
-		panic(fmt.Sprintf("unexpected %s chain part", part.Kind()))
+		panic(fmt.Sprintf("%s: unexpected %s chain part", part.Pin(), part.Kind()))
 	}
 }
 
@@ -576,7 +578,11 @@ func (g *Generator) ParenExp(exp ast.ParenExp) {
 }
 
 func (g *Generator) UnaryExp(exp *ast.UnaryExp) {
-	g.puts(exp.Operator.Kind.String())
+	if exp.Operator.Kind == uop.BitwiseNot {
+		g.puts("~")
+	} else {
+		g.puts(exp.Operator.Kind.String())
+	}
 	g.Exp(exp.Inner)
 }
 

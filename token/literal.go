@@ -70,7 +70,7 @@ var Literal = [...]string{
 	Import: "import",
 	Fun:    "fun",
 	Jump:   "jump",
-	Return: "return",
+	Return: "ret",
 	For:    "for",
 	Else:   "else",
 	If:     "if",
@@ -105,8 +105,10 @@ var Literal = [...]string{
 	LabelNext: "@.next",
 	LabelOut:  "@.out",
 
-	DirIf:      "#if",
+	DirName:    "#name",
 	DirInclude: "#include",
+	DirLink:    "#link",
+	DirIf:      "#if",
 
 	// Non static literals
 

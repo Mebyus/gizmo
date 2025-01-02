@@ -9,29 +9,29 @@ let max_integer_s32: s32 = 0x7FFFFFFF;
 let max_integer_s64: s64 = 0x7FFFFFFFFFFFFFFF;
 
 fun min_uint(a: uint, b: uint) => uint {
-    if (a < b) {
-        return a;
+    if a < b {
+        ret a;
     }
-    return b;
+    ret b;
 }
 
 fun max_uint(a: uint, b: uint) => uint {
-    if (a < b) {
-        return b;
+    if a < b {
+        ret b;
     }
-    return a;
+    ret a;
 }
 
-fun align_uint(x: uint, a: uint) => uint [
+fun align_uint(x: uint, a: uint) => uint {
 	let mask: uint = a - 1;
 	let delta: uint = (^x + 1) & mask;
-	return x + delta;
-]
+	ret x + delta;
+}
 
 // Basic assert function.
 fun must(c: bool) {
 	if c {
-		return;
+		ret;
 	}
 
 	panic_trap();
@@ -41,20 +41,20 @@ fun must(c: bool) {
 // Get unsigned 16-bit integer from first 2 bytes of a given bytes chunk.
 // Function assumes little endian order of bytes inside the chunk.
 fun unsafe_get_u16le(p: [*]u8) => u16 {
-	return (cast(u16, p.[0]) << 0) | (cast(u16, p.[1]) << 8);
+	ret (cast(u16, p.[0]) << 0) | (cast(u16, p.[1]) << 8);
 }
 
 // Get unsigned 32-bit integer from first 4 bytes of a given bytes chunk.
 // Function assumes little endian order of bytes inside the chunk.
 fun unsafe_get_u32le(p: [*]u8) => u32 {
-	return (cast(u32, p.[0]) << 0) | (cast(u32, p.[1]) << 8) |
+	ret (cast(u32, p.[0]) << 0) | (cast(u32, p.[1]) << 8) |
 	       (cast(u32, p.[2]) << 16) | (cast(u32, p.[3]) << 24);
 }
 
 // Get unsigned 64-bit integer from first 8 bytes of a given bytes chunk.
 // Function assumes little endian order of bytes inside the chunk.
 fun unsafe_get_u64le(p: [*]u8) => u64 {
-	return (cast(u64, p.[0]) << 0) | (cast(u64, p.[1]) << 8) |
+	ret (cast(u64, p.[0]) << 0) | (cast(u64, p.[1]) << 8) |
 	       (cast(u64, p.[2]) << 16) | (cast(u64, p.[3]) << 24) |
 	       (cast(u64, p.[4]) << 32) | (cast(u64, p.[5]) << 40) |
 	       (cast(u64, p.[6]) << 48) | (cast(u64, p.[7]) << 56);
@@ -92,12 +92,12 @@ fun make_bx(ptr: [*]u8, len: uint) => []u8 {
 	if len == 0 {
 		c.ptr = nil;
 		c.len = 0;
-		return c;
+		ret c;
 	}
 
     c.ptr = ptr;
     c.len = len;
-    return c;
+    ret c;
 }
 
 // Copies n bytes of memory from src to dest. Number of copied bytes
@@ -124,8 +124,8 @@ fun unsafe_reverse_copy(dest: [*]u8, src: [*]u8, n: uint) {
 // Returns number of bytes copied.
 fun copy(dest: []u8, src: []u8) => uint {
     let n: uint = min_uint(dest.len, src.len);
-    if (n == 0) {
-        return 0;
+    if n == 0 {
+        ret 0;
     }
 
     must(dest.ptr != nil);
@@ -133,17 +133,17 @@ fun copy(dest: []u8, src: []u8) => uint {
 	must(dest.ptr != src.ptr);
 
     unsafe_copy(dest.ptr, src.ptr, n);
-	return n;
+	ret n;
 }
 
 fun bx_slice_head(c: []u8, n: uint) => []u8 {
 	must(n <= c.len);
-	return make_bx(c.ptr, n);
+	ret make_bx(c.ptr, n);
 }
 
 fun bx_slice_tail(c: []u8, n: uint) => []u8 {
 	must(n <= c.len);
-	return make_bx(c.ptr + n, c.len - n);
+	ret make_bx(c.ptr + n, c.len - n);
 }
 
 /*
@@ -155,10 +155,10 @@ Otherwise return value is guaranteed to satisfy 0 <= i < len.
 fun bx_index_byte(c: []u8, x: u8) => sint {
 	for i in range(c.len) {
 		if c.ptr.[i] == x {
-			return tint(sint, i);
+			ret tint(sint, i);
 		}
 	}
-	return -1;
+	ret -1;
 }
 
 /*
@@ -166,22 +166,22 @@ Returns true if two strings contain the same data.
 */
 fun str_equal(a: str, b: str) => bool {
 	if a.len != b.len {
-		return false;
+		ret false;
 	}
 	if a.ptr == b.ptr {
-		return true;
+		ret true;
 	}
 
 	for i in range(a.len) {
 		if a.ptr.[i] != b.ptr.[i] {
-			return false;
+			ret false;
 		}
 	}
-	return true;
+	ret true;
 }
 
 fun make_str(ptr: [*]u8, len: uint) => str {
-    return make_bx(ptr, len);
+    ret make_bx(ptr, len);
 }
 
 fun unsafe_make_str_from_cstr_ptr(ptr: [*]u8) => str {
@@ -192,7 +192,7 @@ fun unsafe_make_str_from_cstr_ptr(ptr: [*]u8) => str {
 		i += 1;
 	}
 
-	return make_str(ptr, i);
+	ret make_str(ptr, i);
 }
 
 fun djb2_hash64(c: []u8) => u64 {
@@ -200,5 +200,5 @@ fun djb2_hash64(c: []u8) => u64 {
     for i in range(c.len) {
         h = ((h << 5) + h) + tint(u64, c.ptr.[i]);
     }
-    return h;
+    ret h;
 }

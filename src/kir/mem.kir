@@ -30,8 +30,8 @@ fun mem_arena_alloc(arena: *MemArenaAllocator, block: *MemBlock, size: uint) => 
 
     let aligned_size: uint = align_uint(size, 0x10);
 	let left_space: uint = arena.@.cap - arena.@.pos;
-	if (left_space < aligned_size) {
-		return MEM_ERROR_NO_SPACE;
+	if left_space < aligned_size {
+		ret MEM_ERROR_NO_SPACE;
 	}
 
 	block.mem.ptr = arena.@.ptr + arena.@.pos;
@@ -39,7 +39,7 @@ fun mem_arena_alloc(arena: *MemArenaAllocator, block: *MemBlock, size: uint) => 
     block.id.id = 0;
 	
 	arena.@.pos += aligned_size;
-	return nil;
+	ret nil;
 }
 
 type MemAllocatorKind uint
