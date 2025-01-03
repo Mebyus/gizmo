@@ -29,6 +29,8 @@ func (p *Parser) Statement() (ast.Statement, error) {
 		return p.jumpStatement()
 	case token.Never:
 		return p.neverStatement()
+	case token.Stub:
+		return p.stubStatement()
 	case token.Defer:
 		return p.deferStatement()
 	case token.Identifier:
@@ -66,6 +68,18 @@ func (p *Parser) deferStatement() (ast.DeferStatement, error) {
 		Pos:  pos,
 		Call: exp.(ast.CallExp),
 	}, nil
+}
+
+func (p *Parser) stubStatement() (ast.StubStatement, error) {
+	pos := p.pos()
+	p.advance() // skip "stub"
+
+	if p.tok.Kind != token.Semicolon {
+		return ast.StubStatement{}, p.unexpected()
+	}
+	p.advance() // skip ";"
+
+	return ast.StubStatement{Pos: pos}, nil
 }
 
 func (p *Parser) neverStatement() (ast.NeverStatement, error) {

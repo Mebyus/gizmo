@@ -65,7 +65,7 @@ func (s ReturnStatement) Pin() source.Pos {
 	return s.Pos
 }
 
-// <NeverStatement> = "never"
+// <NeverStatement> = "never" ";"
 type NeverStatement struct {
 	NodeS
 
@@ -79,6 +79,23 @@ func (NeverStatement) Kind() stm.Kind {
 }
 
 func (s NeverStatement) Pin() source.Pos {
+	return s.Pos
+}
+
+// <StubStatement> = "stub" ";"
+type StubStatement struct {
+	NodeS
+
+	Pos source.Pos
+}
+
+var _ Statement = StubStatement{}
+
+func (StubStatement) Kind() stm.Kind {
+	return stm.Stub
+}
+
+func (s StubStatement) Pin() source.Pos {
 	return s.Pos
 }
 

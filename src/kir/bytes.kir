@@ -37,7 +37,6 @@ fun must(c: bool) {
 	panic_trap();
 }
 
-
 // Get unsigned 16-bit integer from first 2 bytes of a given bytes chunk.
 // Function assumes little endian order of bytes inside the chunk.
 fun unsafe_get_u16le(p: [*]u8) => u16 {
@@ -86,6 +85,14 @@ type bx struct {
 type str []u8
 
 fun print(s: str)
+
+fun panic(s: str) {
+	panic_trap();
+}
+
+fun panic_stub() {
+	panic_trap();
+}
 
 fun make_bx(ptr: [*]u8, len: uint) => []u8 {
     var c: []u8 = dirty;

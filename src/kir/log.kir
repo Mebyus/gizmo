@@ -1,0 +1,60 @@
+type LogLevel u8
+
+let LOG_LEVEL_DEBUG: LogLevel = 0;
+let LOG_LEVEL_INFO:  LogLevel = 1;
+let LOG_LEVEL_WARN:  LogLevel = 2;
+let LOG_LEVEL_ERROR: LogLevel = 3;
+
+let log_buf_size: uint = 1 << 14;
+
+type Logger struct {
+    buf: [log_buf_size]u8,
+
+    name: str,
+
+    // Underlying open file descriptor.
+    // Log messages are saved to this file.
+    fd: uint,
+
+    level: LogLevel,
+}
+
+type LogFieldValue bag (u64, s64, str)
+
+type LogFieldKind u8
+
+let LOG_FIELD_U64: LogFieldKind = 1;
+let LOG_FIELD_S64: LogFieldKind = 2;
+let LOG_FIELD_F64: LogFieldKind = 3;
+let LOG_FIELD_STR: LogFieldKind = 4;
+
+type LogField struct {
+    val: LogFieldValue,
+    kind: LogFieldKind,
+}
+
+type LogFieldsChunk struct {
+    ptr: [*]LogField,
+    len: uint,
+}
+
+fun make_log_fields_chunk(ptr: [*]LogField, len: uint) => LogFieldsChunk {
+    var c: LogFieldsChunk = dirty;
+    c.ptr = ptr;
+    c.len = len;
+    ret c;
+}
+
+fun log_info(lg: *Logger, s: str) {
+    if lg.@.level > LOG_LEVEL_INFO {
+        ret;
+    }
+}
+
+fun log_info_fields(lg: *Logger, s: str, fields: LogFieldsChunk) {
+    must(fields.len != 0)
+
+    if lg.@.level > LOG_LEVEL_INFO {
+        ret;
+    }
+}

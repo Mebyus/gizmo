@@ -63,12 +63,13 @@ func (g *Generator) TopType(node ast.TopType) {
 	g.nl()
 }
 
-func (g *Generator) funHeader(name ast.Identifier, signature ast.Signature) {
+func (g *Generator) funHeader(name ast.Identifier, signature ast.Signature, traits ast.Traits) {
 	if signature.Never {
 		g.puts("_Noreturn ")
 	}
-	// if 
-	g.puts("static ")
+	if !traits.Pub {
+		g.puts("static ")
+	}
 	if signature.Result == nil {
 		g.puts("void")
 	} else {
@@ -81,14 +82,14 @@ func (g *Generator) funHeader(name ast.Identifier, signature ast.Signature) {
 }
 
 func (g *Generator) Stub(node ast.TopDec) {
-	g.funHeader(node.Name, node.Signature)
+	g.funHeader(node.Name, node.Signature, node.Traits)
 	g.semi()
 	g.nl()
 	g.nl()
 }
 
 func (g *Generator) Fun(node ast.TopFun) {
-	g.funHeader(node.Name, node.Signature)
+	g.funHeader(node.Name, node.Signature, node.Traits)
 	g.space()
 	g.Block(node.Body)
 	g.nl()
@@ -159,9 +160,15 @@ func (g *Generator) TypeSpec(spec ast.TypeSpec) {
 		g.PointerArray(s)
 	case ast.ChunkType:
 		g.Chunk(s)
+	case ast.AnyPointerType:
+		g.AnyPointer(s)
 	default:
 		panic(fmt.Sprintf("unexpected %s type", spec.Kind()))
 	}
+}
+
+func (g *Generator) AnyPointer(p ast.AnyPointerType) {
+	g.puts("void*")
 }
 
 func (g *Generator) Chunk(c ast.ChunkType) {
@@ -228,6 +235,8 @@ func (g *Generator) Statement(s ast.Statement) {
 		g.Jump(s)
 	case ast.NeverStatement:
 		g.Never(s)
+	case ast.StubStatement:
+		g.StubStatement(s)
 	case ast.ForRange:
 		g.ForRange(s)
 	case ast.MatchStatement:
@@ -314,6 +323,12 @@ func (g *Generator) ForRange(r ast.ForRange) {
 func (g *Generator) Never(s ast.NeverStatement) {
 	g.indent()
 	g.puts("panic_never();")
+	g.nl()
+}
+
+func (g *Generator) StubStatement(s ast.StubStatement) {
+	g.indent()
+	g.puts("panic_stub();")
 	g.nl()
 }
 

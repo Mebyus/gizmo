@@ -90,6 +90,7 @@ var Literal = [...]string{
 	// Special literals
 
 	Never: "never",
+	Stub:  "stub",
 	Dirty: "dirty",
 	Nil:   "nil",
 	True:  "true",

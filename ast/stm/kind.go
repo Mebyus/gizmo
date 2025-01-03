@@ -25,6 +25,7 @@ const (
 	MatchBool
 	Jump
 	Never
+	Stub
 
 	ShortInit
 
@@ -57,6 +58,7 @@ var text = [...]string{
 	Defer:    "defer",
 	Jump:     "jump",
 	Never:    "never",
+	Stub:     "stub",
 
 	ShortInit: "var.init.short",
 

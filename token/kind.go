@@ -113,6 +113,7 @@ const (
 	// Special literals
 
 	Never
+	Stub
 	Dirty
 	Nil
 	True

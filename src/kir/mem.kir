@@ -11,7 +11,7 @@ type MemError uint
 
 // Allocator does not have enough space to allocate new block
 // of specified size.
-let MEM_ERROR_NO_SPACE: MemError = 1
+let MEM_ERROR_NO_SPACE: MemError = 1;
 
 type MemArenaAllocator struct {
     ptr: [*]u8,
@@ -34,9 +34,9 @@ fun mem_arena_alloc(arena: *MemArenaAllocator, block: *MemBlock, size: uint) => 
 		ret MEM_ERROR_NO_SPACE;
 	}
 
-	block.mem.ptr = arena.@.ptr + arena.@.pos;
-	block.mem.len = aligned_size;
-    block.id.id = 0;
+	block.@.mem.ptr = arena.@.ptr + arena.@.pos;
+	block.@.mem.len = aligned_size;
+    block.@.id.id = 0;
 	
 	arena.@.pos += aligned_size;
 	ret nil;
@@ -52,18 +52,27 @@ type MemAllocator struct {
     kind: MemAllocatorKind,
 }
 
+fun wrap_mem_arena_allocator(arena: *MemArenaAllocator) => MemAllocator {
+    var al: MemAllocator = dirty;
+    al.ptr = cast(*any, arena);
+    al.kind = MEM_ALLOCATOR_ARENA;
+    ret al;
+}
+
+fun panic_mem_allocator_empty() => never {
+    panic("");
+}
+
 fun panic_mem_allocator_unknown(kind: MemAllocatorKind) => never {
-    panic();
+    panic("");
 }
 
 fun mem_alloc(al: MemAllocator, block: *MemBlock, size: uint) => MemError {
     if al.kind
-    => nil { panic(); }
+    => nil { panic_mem_allocator_empty(); }
     => MEM_ALLOCATOR_ARENA {
-        return mem_arena_alloc(cast(*MemArenaAllocator, al.ptr), block, size);
+        ret mem_arena_alloc(cast(*MemArenaAllocator, al.ptr), block, size);
     }
     => MEM_ALLOCATOR_GP { stub; }
-    else {
-        panic_mem_allocator_unknown(al.kind);
-    }
+    else { panic_mem_allocator_unknown(al.kind); }
 }

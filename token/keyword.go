@@ -16,6 +16,7 @@ var words = map[string]Kind{
 	"unit":   Unit,
 	"in":     In,
 	"var":    Var,
+	"let":    Let,
 	"type":   Type,
 	"enum":   Enum,
 	"struct": Struct,
@@ -23,11 +24,11 @@ var words = map[string]Kind{
 	"pub":    Pub,
 
 	"never": Never,
+	"stub":  Stub,
 	"dirty": Dirty,
 	"nil":   Nil,
 	"true":  True,
 	"false": False,
-	"let":   Let,
 
 	"cast":  Cast,
 	"tint":  Tint,
