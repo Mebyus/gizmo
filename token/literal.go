@@ -55,6 +55,7 @@ var Literal = [...]string{
 	PropStart:        "#[",
 	Compound:         ".{",
 	IndirectIndex:    ".[",
+	BagSelect:        ".(",
 	Insist:           ".!",
 	Chain:            ".?",
 	Chunk:            "[]",
@@ -108,6 +109,7 @@ var Literal = [...]string{
 
 	DirName:    "#name",
 	DirInclude: "#include",
+	DirDefine:  "#define",
 	DirLink:    "#link",
 	DirIf:      "#if",
 

@@ -48,11 +48,42 @@ func (p *Parser) DefTypeSpecifier() (ast.TypeSpec, error) {
 	return t, nil
 }
 
+// Parses type specifier in reference form, which is a restricted set of
+// type specifiers allowed in function signature return type, field definition, etc.
+func (p *Parser) typeSpecRef() (ast.TypeSpec, error) {
+	switch p.tok.Kind {
+	case token.Identifier:
+		if p.next.Kind == token.Period {
+			return p.importType()
+		}
+		return p.typeName()
+	case token.Asterisk:
+		if p.next.Kind == token.Any {
+			return p.rawMemoryPointerType()
+		}
+		return p.pointerType()
+	case token.ArrayPointer:
+		return p.arrayPointerType()
+	case token.Chunk:
+		return p.chunkType()
+	case token.LeftSquare:
+		return p.arrayType()
+	case token.LeftParentheses:
+		return p.tupleType()
+	default:
+		return nil, fmt.Errorf("other type specifiers not implemented (start from %s at %s)",
+			p.tok.Kind, p.tok.Pos)
+	}
+}
+
 func (p *Parser) typeSpecifier() (ast.TypeSpec, error) {
 	switch p.tok.Kind {
 	case token.Identifier:
 		if p.next.Kind == token.Period {
 			return p.importType()
+		}
+		if p.next.Kind == token.LeftCurly {
+			return p.enumType()
 		}
 		return p.typeName()
 	case token.Asterisk:
@@ -68,8 +99,6 @@ func (p *Parser) typeSpecifier() (ast.TypeSpec, error) {
 		return p.chunkType()
 	case token.LeftSquare:
 		return p.arrayType()
-	case token.Enum:
-		return p.enumType()
 	case token.Fun:
 		return p.fnType()
 	case token.Union:
@@ -103,8 +132,37 @@ func (p *Parser) bagType() (ast.BagType, error) {
 
 	p.advance() // skip "bag"
 
+	var types []ast.TypeSpec
+	if p.tok.Kind == token.LeftParentheses {
+		p.advance() // skip "("
+
+		for {
+			if p.tok.Kind == token.RightParentheses {
+				p.advance() // skip ")"
+				break
+			}
+
+			typ, err := p.typeSpecifier()
+			if err != nil {
+				return ast.BagType{}, err
+			}
+			types = append(types, typ)
+
+			if p.tok.Kind == token.Comma {
+				p.advance() // skip ","
+			} else if p.tok.Kind == token.RightParentheses {
+				// will be skipped at next iteration
+			} else {
+				return ast.BagType{}, p.unexpected()
+			}
+		}
+	}
+
 	if p.tok.Kind != token.LeftCurly {
-		return ast.BagType{}, p.unexpected()
+		return ast.BagType{
+			Pos:   pos,
+			Types: types,
+		}, nil
 	}
 	p.advance() // skip "{"
 
@@ -116,6 +174,7 @@ func (p *Parser) bagType() (ast.BagType, error) {
 			return ast.BagType{
 				Pos:     pos,
 				Methods: methods,
+				Types:   types,
 			}, nil
 		}
 
@@ -213,8 +272,6 @@ func (p *Parser) typeName() (ast.TypeName, error) {
 
 func (p *Parser) enumType() (ast.EnumType, error) {
 	pos := p.pos()
-
-	p.advance() // skip "enum"
 
 	base, err := p.typeName()
 	if err != nil {
@@ -399,7 +456,7 @@ func (p *Parser) chunkType() (ast.ChunkType, error) {
 
 	p.advance() // skip "[]"
 
-	elem, err := p.typeSpecifier()
+	elem, err := p.typeSpecRef()
 	if err != nil {
 		return ast.ChunkType{}, err
 	}

@@ -13,6 +13,8 @@ import (
 )
 
 type Generator struct {
+	mp MacroProcessor
+
 	buf []byte
 
 	// Indentation buffer.
@@ -162,9 +164,39 @@ func (g *Generator) TypeSpec(spec ast.TypeSpec) {
 		g.Chunk(s)
 	case ast.AnyPointerType:
 		g.AnyPointer(s)
+	case ast.BagType:
+		g.Bag(s)
 	default:
 		panic(fmt.Sprintf("unexpected %s type", spec.Kind()))
 	}
+}
+
+func (g *Generator) Bag(b ast.BagType) {
+	if len(b.Methods) != 0 {
+		panic("bag interfaces not implemented")
+	}
+	if len(b.Types) == 0 {
+		panic("any interface not implemented")
+	}
+
+	g.puts("union {")
+	g.nl()
+	g.inc()
+
+	for _, typ := range b.Types {
+		t, ok := typ.(ast.TypeName)
+		if !ok {
+			panic("only named types are implemented in unions")
+		}
+
+		g.indent()
+		g.field(ast.FieldDefinition{Name: t.Name, Type: typ})
+		g.semi()
+		g.nl()
+	}
+
+	g.dec()
+	g.puts("}")
 }
 
 func (g *Generator) AnyPointer(p ast.AnyPointerType) {
@@ -207,10 +239,24 @@ func (g *Generator) Struct(s ast.StructType) {
 	g.puts("}")
 }
 
-func (g *Generator) field(field ast.FieldDefinition) {
-	g.TypeSpec(field.Type)
+func (g *Generator) field(f ast.FieldDefinition) {
+	array, ok := f.Type.(ast.ArrayType)
+	if ok {
+		g.fieldArray(f.Name.Lit, array)
+	} else {
+		g.TypeSpec(f.Type)
+		g.space()
+		g.puts(f.Name.Lit)
+	}
+}
+
+func (g *Generator) fieldArray(name string, a ast.ArrayType) {
+	g.TypeSpec(a.ElemType)
 	g.space()
-	g.puts(field.Name.Lit)
+	g.puts(name)
+	g.puts("[")
+	g.Exp(a.Size)
+	g.puts("]")
 }
 
 func (g *Generator) Statement(s ast.Statement) {
@@ -422,14 +468,7 @@ func (g *Generator) Let(s ast.LetStatement) {
 
 func (g *Generator) Var(s ast.VarStatement) {
 	g.indent()
-	array, ok := s.Type.(ast.ArrayType)
-	if ok {
-		g.VarArray(s, array)
-	} else {
-		g.TypeSpec(s.Type)
-		g.space()
-		g.puts(s.Name.Lit)
-	}
+	g.field(ast.FieldDefinition{Name: s.Name, Type: s.Type})
 
 	_, dirty := s.Exp.(ast.Dirty)
 	if dirty {
@@ -442,15 +481,6 @@ func (g *Generator) Var(s ast.VarStatement) {
 	g.Exp(s.Exp)
 	g.semi()
 	g.nl()
-}
-
-func (g *Generator) VarArray(s ast.VarStatement, a ast.ArrayType) {
-	g.TypeSpec(a.ElemType)
-	g.space()
-	g.puts(s.Name.Lit)
-	g.puts("[")
-	g.Exp(a.Size)
-	g.puts("]")
 }
 
 func (g *Generator) Return(s ast.ReturnStatement) {

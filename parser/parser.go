@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/mebyus/gizmo/ast"
@@ -159,6 +160,9 @@ func (p *Parser) header() error {
 func (p *Parser) parse() error {
 	for {
 		if p.isEOF() {
+			if p.tok.Lit != "" {
+				return fmt.Errorf(p.tok.Lit)
+			}
 			return nil
 		}
 

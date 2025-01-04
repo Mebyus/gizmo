@@ -12,7 +12,7 @@ var Lex = &butler.Lackey{
 	Name: "lex",
 
 	Short: "list token stream produced by a given source file",
-	Usage: "gizmo lex [options] <file>",
+	Usage: "ku lex [options] <file>",
 
 	Exec: execute,
 }

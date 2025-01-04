@@ -75,6 +75,25 @@ fun fmt_hex_prefix_zeroes_u64(buf: []u8, x: u64) => uint {
 	ret unsafe_fmt_hex_prefix_zeroes_u64(buf, x);
 }
 
+// Puts decimal digits of a number in reverse order inside an array of bytes.
+// Returns number of digits written.
+//
+// Array must have enough space to hold produced bytes.
+//
+// To clarify: last (least significant) digit is placed at ptr.[0].
+fun unsafe_fmt_reverse_dec_u64(ptr: [*]u8, x: u64) => uint {
+	var i: uint = 0;
+	for {
+		let n: u8 = tint(u8, x % 10);
+		x /= 10;
+		ptr.[i] = fmt_dec_digit(n);
+		i += 1;
+		if x == 0 {
+			ret i;
+		}
+	}
+}
+
 let max_u64_dec_length: uint = 20;
 
 /*
@@ -82,18 +101,9 @@ Same as fmt_dec_u64, but has no buffer boundary checks.
 */
 fun unsafe_fmt_dec_u64(buf: []u8, x: u64) => uint {
 	var digits: [max_u64_dec_length]u8 = dirty;
-	var i: uint = 0;
-	for {
-		let n: u8 = tint(u8, x % 10);
-		x /= 10;
-		digits.[i] = fmt_dec_digit(n);
-		i += 1;
-		if x == 0 {
-			let len: uint = i;
-			unsafe_reverse_copy(buf.ptr, digits, len);
-			ret len;
-		}
-	}
+	let len: uint = unsafe_fmt_reverse_dec_u64(digits, x);
+	unsafe_reverse_copy(buf.ptr, digits, len);
+	ret len;
 }
 
 /*
@@ -113,22 +123,14 @@ fun fmt_dec_u64(buf: []u8, x: u64) => uint {
 	}
 	
 	var digits: [max_u64_dec_length]u8 = dirty;
-	var i: uint = 0;
-	for {
-		let n: u8 = tint(u8, x % 10);
-		x /= 10;
-		digits.[i] = fmt_dec_digit(n);
-		i += 1;
-		if x == 0 {
-			let len: uint = i;
-			if len > buf.len {
-				// Not enough space in buffer to represent integer.
-				ret 0;
-			}
-			unsafe_reverse_copy(buf.ptr, digits, len);
-			ret len;
-		}
+	let len: uint = unsafe_fmt_reverse_dec_u64(digits, x);
+	if len > buf.len {
+		// Not enough space in buffer to represent integer.
+		ret 0;
 	}
+
+	unsafe_reverse_copy(buf.ptr, digits, len);
+	ret len;
 }
 
 fun fmt_dec_s64(buf: []u8, x: s64) => uint {

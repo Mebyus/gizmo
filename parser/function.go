@@ -101,7 +101,7 @@ func (p *Parser) functionSignature() (ast.Signature, error) {
 		}, nil
 	}
 
-	result, err := p.typeSpecifier()
+	result, err := p.typeSpecRef()
 	if err != nil {
 		return ast.Signature{}, err
 	}

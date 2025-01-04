@@ -275,11 +275,13 @@ type BagMethodSpec struct {
 	Never bool
 }
 
-// <BagType> = <bag> "{" { <BagMethodSpec> "," } "}"
+// <BagType> = <bag> [ "(" { <TypeSpec> "," } ")" ] [ "{" { <BagMethodSpec> "," } "}" ]
 type BagType struct {
 	nodeTypeSpec
 
 	Pos source.Pos
+
+	Types []TypeSpec
 
 	Methods []BagMethodSpec
 }

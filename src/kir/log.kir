@@ -1,14 +1,14 @@
-type LogLevel u8
+type LogLevel u8 {
+    LOG_LEVEL_DEBUG = 0,
+    LOG_LEVEL_INFO  = 1,
+    LOG_LEVEL_WARN  = 2,
+    LOG_LEVEL_ERROR = 3,
+}
 
-let LOG_LEVEL_DEBUG: LogLevel = 0;
-let LOG_LEVEL_INFO:  LogLevel = 1;
-let LOG_LEVEL_WARN:  LogLevel = 2;
-let LOG_LEVEL_ERROR: LogLevel = 3;
-
-let log_buf_size: uint = 1 << 14;
+#define LOG_BUF_SIZE => { 1 << 14 }
 
 type Logger struct {
-    buf: [log_buf_size]u8,
+    buf: [#.LOG_BUF_SIZE]u8,
 
     name: str,
 
@@ -19,18 +19,27 @@ type Logger struct {
     level: LogLevel,
 }
 
-type LogFieldValue bag (u64, s64, str)
+type LogFieldValue bag (u64, s64, f64, str)
 
-type LogFieldKind u8
-
-let LOG_FIELD_U64: LogFieldKind = 1;
-let LOG_FIELD_S64: LogFieldKind = 2;
-let LOG_FIELD_F64: LogFieldKind = 3;
-let LOG_FIELD_STR: LogFieldKind = 4;
+type LogFieldKind u8 { // TODO: enum expansion into constants in genc
+    LOG_FIELD_U64 = 1,
+    LOG_FIELD_S64 = 2,
+    LOG_FIELD_F64 = 3,
+    LOG_FIELD_STR = 4,
+}
 
 type LogField struct {
     val: LogFieldValue,
+    name: str,
     kind: LogFieldKind,
+}
+
+fun log_field_u64(name: str, x: u64) => LogField {
+    var field: LogField = dirty;
+    field.val.(u64) = x; // TODO: syntax for accessing bag (union-style) field
+    field.name = name;
+    field.kind = LOG_FIELD_U64;
+    ret field;
 }
 
 type LogFieldsChunk struct {
@@ -52,7 +61,7 @@ fun log_info(lg: *Logger, s: str) {
 }
 
 fun log_info_fields(lg: *Logger, s: str, fields: LogFieldsChunk) {
-    must(fields.len != 0)
+    must(fields.len != 0);
 
     if lg.@.level > LOG_LEVEL_INFO {
         ret;

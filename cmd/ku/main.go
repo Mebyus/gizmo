@@ -13,6 +13,7 @@ import (
 	"github.com/mebyus/gizmo/cmd/ku/gen"
 	"github.com/mebyus/gizmo/cmd/ku/kir"
 	"github.com/mebyus/gizmo/cmd/ku/lex"
+	"github.com/mebyus/gizmo/cmd/ku/preproc"
 	"github.com/mebyus/gizmo/cmd/ku/rbs"
 	"github.com/mebyus/gizmo/cmd/ku/symlink"
 	"github.com/mebyus/gizmo/cmd/ku/unit"
@@ -39,6 +40,7 @@ var root = &butler.Lackey{
 
 	Sub: []*butler.Lackey{
 		kir.Kir,
+		preproc.Preproc,
 		lex.Lex,
 		gen.Gen,
 		build.Build,

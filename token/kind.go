@@ -16,6 +16,7 @@ const (
 	Address       // .&
 	Indirect      // .@
 	IndirectIndex // .[
+	BagSelect     // .(
 
 	Plus      // +
 	Minus     // -
@@ -131,6 +132,7 @@ const (
 
 	DirName    // #name
 	DirInclude // #include
+	DirDefine  // #define
 	DirLink    // #link
 	DirIf      // #if
 
@@ -149,7 +151,7 @@ const (
 	String     // "abc", "", "\t\n  42Hello\n"
 	RawString  // #"raw string literal"
 	FillString // "string with ${10 + 1} interpolated ${a - b} expressions"
-	Macro      // #:MACRO_NAME
+	Macro      // #.MACRO_NAME
 
 	// Comments
 	LineComment  // Line comment starts with //

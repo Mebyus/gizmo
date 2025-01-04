@@ -105,6 +105,8 @@ func (lx *Lexer) directive() (tok token.Token) {
 		tok.Kind = token.DirIf
 	case "include":
 		tok.Kind = token.DirInclude
+	case "define":
+		tok.Kind = token.DirDefine
 	case "name":
 		tok.Kind = token.DirName
 	case "link":
@@ -120,7 +122,7 @@ func (lx *Lexer) macro() (tok token.Token) {
 	tok.Pos = lx.pos()
 
 	lx.Advance() // skip '#'
-	lx.Advance() // skip ':'
+	lx.Advance() // skip '.'
 
 	if !char.IsLetterOrUnderscore(lx.C) {
 		tok.SetIllegalError(token.MalformedMacro)
@@ -780,6 +782,8 @@ func (lx *Lexer) other() token.Token {
 			return lx.twoBytesToken(token.Compound)
 		case '[':
 			return lx.twoBytesToken(token.IndirectIndex)
+		case '(':
+			return lx.twoBytesToken(token.BagSelect)
 		case '!':
 			return lx.twoBytesToken(token.Insist)
 		case '?':

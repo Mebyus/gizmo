@@ -14,7 +14,7 @@ var Kir = &butler.Lackey{
 	Name: "kir",
 
 	Short: "list includes produced by a given build script file",
-	Usage: "kir kir [options] <file>",
+	Usage: "ku kir [options] <file>",
 
 	Exec: execute,
 }
