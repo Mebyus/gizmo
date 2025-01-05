@@ -44,6 +44,12 @@ const (
 	//
 	Select
 
+	// Bag select chain on expression via construct:
+	//
+	//	exp.(name)
+	//
+	BagSelect
+
 	Index
 	Call
 
@@ -119,6 +125,7 @@ var text = [...]string{
 	Index:         "index",
 	Test:          "member.test",
 	IndirectIndex: "index.indirect",
+	BagSelect:     "select.bag",
 	ChunkIndex:    "index.chunk",
 	ChunkSlice:    "slice.chunk",
 	ArrayIndex:    "index.array",

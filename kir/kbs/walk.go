@@ -58,6 +58,7 @@ func (w *Walker) Walk(start string) error {
 
 func Gen(w io.Writer, files []string) error {
 	var gen Generator
+	gen.IncludeTests = true
 
 	for _, path := range files {
 		var err error
@@ -73,6 +74,14 @@ func Gen(w io.Writer, files []string) error {
 			return err
 		}
 	}
+
+	if gen.IncludeTests {
+		err := genTests(&gen, w)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -84,6 +93,12 @@ func GenIntoFile(path string, files []string) error {
 	defer out.Close()
 
 	return Gen(out, files)
+}
+
+func genTests(gen *Generator, w io.Writer) error {
+	gen.TestsAndDriver(gen.Tests)
+	_, err := gen.WriteTo(w)
+	return err
 }
 
 func copyFile(w io.Writer, path string) error {

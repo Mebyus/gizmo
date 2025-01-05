@@ -196,7 +196,7 @@ type EnumEntry struct {
 	Name Identifier
 
 	// Can be nil if entry does not have explicit assigned value
-	Expression Exp
+	Exp Exp
 }
 
 // Explicit interface implementation check

@@ -331,8 +331,8 @@ func (p *Parser) enumEntry() (ast.EnumEntry, error) {
 	}
 
 	return ast.EnumEntry{
-		Name:       name,
-		Expression: expr,
+		Name: name,
+		Exp:  expr,
 	}, nil
 }
 

@@ -15,6 +15,8 @@ import (
 type Generator struct {
 	mp MacroProcessor
 
+	Tests []ast.TopFun
+
 	buf []byte
 
 	// Indentation buffer.
@@ -22,9 +24,15 @@ type Generator struct {
 	// Stores sequence of bytes which is used for indenting current line
 	// in output. When a new line starts this buffer is used to add indentation.
 	ib []byte
+
+	IncludeTests bool
 }
 
 func (g *Generator) Reset() {
+	if len(g.ib) != 0 {
+		panic("indentation is not zeroed before reset")
+	}
+
 	// reset buffer position, but keep underlying memory
 	g.buf = g.buf[:0]
 }
@@ -48,6 +56,10 @@ func (g *Generator) Atom(atom *ast.Atom) {
 			panic(fmt.Sprintf("unknown node (%d)", node.Kind))
 		}
 	}
+
+	if g.IncludeTests {
+		g.Tests = append(g.Tests, atom.Tests...)
+	}
 }
 
 func (g *Generator) WriteTo(w io.Writer) (int64, error) {
@@ -56,6 +68,11 @@ func (g *Generator) WriteTo(w io.Writer) (int64, error) {
 }
 
 func (g *Generator) TopType(node ast.TopType) {
+	enum, ok := node.Spec.(ast.EnumType)
+	if ok {
+		g.EnumType(node.Name.Lit, enum)
+		return
+	}
 	g.puts("typedef ")
 	g.TypeSpec(node.Spec)
 	g.space()
@@ -63,6 +80,28 @@ func (g *Generator) TopType(node ast.TopType) {
 	g.semi()
 	g.nl()
 	g.nl()
+}
+
+func (g *Generator) EnumType(name string, spec ast.EnumType) {
+	g.puts("typedef ")
+	g.puts(spec.Base.Name.Lit)
+	g.space()
+	g.puts(name)
+	g.semi()
+	g.nl()
+	g.nl()
+
+	for _, entry := range spec.Entries {
+		g.puts("static const ")
+		g.puts(name)
+		g.space()
+		g.puts(entry.Name.Lit)
+		g.puts(" = ")
+		g.Exp(entry.Exp)
+		g.semi()
+		g.nl()
+		g.nl()
+	}
 }
 
 func (g *Generator) funHeader(name ast.Identifier, signature ast.Signature, traits ast.Traits) {
@@ -87,6 +126,97 @@ func (g *Generator) Stub(node ast.TopDec) {
 	g.funHeader(node.Name, node.Signature, node.Traits)
 	g.semi()
 	g.nl()
+	g.nl()
+}
+
+func (g *Generator) Test(node ast.TopFun) {
+	name := node.Name
+	name.Lit = "test_" + name.Lit
+	g.funHeader(name, node.Signature, node.Traits)
+	g.space()
+	g.Block(node.Body)
+	g.nl()
+	g.nl()
+}
+
+func (g *Generator) TestsAndDriver(tests []ast.TopFun) {
+	g.Reset()
+
+	for _, t := range tests {
+		g.Test(t)
+	}
+
+	g.puts("void main(void) {")
+	g.nl()
+	g.inc()
+
+	g.indent()
+	g.puts("uint fail_count = 0;")
+	g.nl()
+
+	g.indent()
+	g.puts("Test t;")
+	g.nl()
+	g.nl()
+
+	for _, t := range tests {
+		callName := "test_" + t.Name.Lit
+
+		g.indent()
+		g.puts("test_init(&t, make_ss(\"")
+		g.puts(t.Name.Lit)
+		g.puts("\", ")
+		g.putn(uint64(len(t.Name.Lit)))
+		g.puts("));")
+		g.nl()
+
+		g.indent()
+		g.puts(callName)
+		g.puts("(&t);")
+		g.nl()
+
+		g.indent()
+		g.puts("if (t.failed) {")
+		g.nl()
+		g.inc()
+
+		g.indent()
+		g.puts("fmt_buffer_put_test(&buf, &t);")
+		g.nl()
+
+		g.indent()
+		g.puts("fail_count += 1;")
+		g.nl()
+
+		g.dec()
+		g.indent()
+		g.puts("}")
+
+		g.nl()
+	}
+
+	g.nl()
+
+	g.indent()
+	g.puts("print(fmt_buffer_head(&buf));")
+	g.nl()
+
+	g.indent()
+	g.puts("if (fail_count != 0) {")
+	g.nl()
+	g.inc()
+
+	g.indent()
+	g.puts("os_exit(1);")
+	g.nl()
+
+	g.dec()
+	g.indent()
+	g.puts("}")
+	g.nl()
+
+	g.dec()
+	g.puts("}")
 	g.nl()
 }
 
@@ -519,9 +649,46 @@ func (g *Generator) Exp(exp ast.Exp) {
 		g.TintExp(e)
 	case ast.CastExp:
 		g.CastExp(e)
+	case ast.ObjectLiteral:
+		g.Object(e)
 	default:
 		panic(fmt.Sprintf("unexpected %s expression", exp.Kind()))
 	}
+}
+
+func (g *Generator) Object(exp ast.ObjectLiteral) {
+	if len(exp.Fields) == 0 {
+		g.puts("{}")
+		return
+	}
+	if len(exp.Fields) == 1 {
+		field := exp.Fields[0]
+		g.puts("{")
+		g.puts(".")
+		g.puts(field.Name.Lit)
+		g.puts(" = ")
+		g.Exp(field.Value)
+		g.puts("}")
+		return
+	}
+
+	g.puts("{")
+	g.nl()
+	g.inc()
+
+	for _, field := range exp.Fields {
+		g.indent()
+		g.puts(".")
+		g.puts(field.Name.Lit)
+		g.puts(" = ")
+		g.Exp(field.Value)
+		g.puts(",")
+		g.nl()
+	}
+
+	g.dec()
+	g.indent()
+	g.puts("}")
 }
 
 func (g *Generator) AddressExp(exp ast.AddressExp) {
@@ -593,6 +760,10 @@ func (g *Generator) chainParts(start ast.Identifier, parts []ast.ChainPart) {
 	case ast.IndirectFieldPart:
 		g.chainParts(start, rest)
 		g.puts("->")
+		g.puts(p.Name.Lit)
+	case ast.BagSelectPart:
+		g.chainParts(start, rest)
+		g.puts(".")
 		g.puts(p.Name.Lit)
 	default:
 		panic(fmt.Sprintf("%s: unexpected %s chain part", part.Pin(), part.Kind()))

@@ -209,7 +209,7 @@ func (x *TypeIndex) lookupEnum(ctx *Context, spec ast.EnumType) (*Type, error) {
 		entries = make([]EnumEntry, 0, len(entries))
 	}
 	for _, entry := range spec.Entries {
-		if entry.Expression != nil {
+		if entry.Exp != nil {
 			panic("not implemented")
 		}
 

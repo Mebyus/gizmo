@@ -458,6 +458,8 @@ func (p *Parser) chainExp(start ast.Identifier) (ast.Operand, error) {
 			return p.addressExp(chain)
 		case token.IndirectIndex:
 			part, err = p.indirectIndexPart()
+		case token.BagSelect:
+			part, err = p.bagSelectPart()
 		case token.LeftSquare:
 			var m SliceOrIndex
 			m, err = p.sliceOrIndexPart()
@@ -481,6 +483,24 @@ func (p *Parser) chainExp(start ast.Identifier) (ast.Operand, error) {
 		chain.Parts = append(chain.Parts, part)
 	}
 
+}
+
+func (p *Parser) bagSelectPart() (ast.BagSelectPart, error) {
+	p.advance() // skip ".("
+
+	if p.tok.Kind != token.Identifier {
+		return ast.BagSelectPart{}, p.unexpected()
+	}
+
+	name := p.word()
+	p.advance() // skip select name
+
+	if p.tok.Kind != token.RightParentheses {
+		return ast.BagSelectPart{}, p.unexpected()
+	}
+	p.advance() // skip ")"
+
+	return ast.BagSelectPart{Name: name}, nil
 }
 
 func (p *Parser) testPart() (ast.TestPart, error) {

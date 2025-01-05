@@ -21,7 +21,7 @@ type Logger struct {
 
 type LogFieldValue bag (u64, s64, f64, str)
 
-type LogFieldKind u8 { // TODO: enum expansion into constants in genc
+type LogFieldKind u8 {
     LOG_FIELD_U64 = 1,
     LOG_FIELD_S64 = 2,
     LOG_FIELD_F64 = 3,
@@ -36,7 +36,7 @@ type LogField struct {
 
 fun log_field_u64(name: str, x: u64) => LogField {
     var field: LogField = dirty;
-    field.val.(u64) = x; // TODO: syntax for accessing bag (union-style) field
+    field.val.(u64) = x;
     field.name = name;
     field.kind = LOG_FIELD_U64;
     ret field;

@@ -233,3 +233,23 @@ func (IndirectFieldPart) Kind() exk.Kind {
 func (p IndirectFieldPart) Pin() source.Pos {
 	return p.Name.Pos
 }
+
+// <BagSelectPart> = ".(" <Name> ")"
+//
+// <Name> = <Identifier>
+type BagSelectPart struct {
+	NodeP
+
+	Name Identifier
+}
+
+// Explicit interface implementation check.
+var _ ChainPart = BagSelectPart{}
+
+func (BagSelectPart) Kind() exk.Kind {
+	return exk.BagSelect
+}
+
+func (p BagSelectPart) Pin() source.Pos {
+	return p.Name.Pos
+}

@@ -150,6 +150,10 @@ fun fmt_dec_s64(buf: []u8, x: s64) => uint {
 	ret n + 1;
 }
 
+test fmt_dec_s64(t: *Test) {
+	test_fail(t, "hello error");
+}
+
 type FormatBuffer struct {
 	// Pointer to buffer memory.
 	// Always not nil for initialized struct.
