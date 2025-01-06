@@ -146,12 +146,28 @@ func (g *Generator) TestsAndDriver(tests []ast.TopFun) {
 		g.Test(t)
 	}
 
+	g.puts("#define TEST_OUTPUT_BUF_SIZE 1 << 16")
+	g.nl()
+	g.nl()
+
+	g.puts("static u8 test_output_buf[TEST_OUTPUT_BUF_SIZE];")
+	g.nl()
+	g.nl()
+
 	g.puts("void main(void) {")
 	g.nl()
 	g.inc()
 
 	g.indent()
 	g.puts("uint fail_count = 0;")
+	g.nl()
+
+	g.indent()
+	g.puts("FormatBuffer buf;")
+	g.nl()
+
+	g.indent()
+	g.puts("fmt_buffer_init(&buf, make_bx(test_output_buf, TEST_OUTPUT_BUF_SIZE));")
 	g.nl()
 
 	g.indent()

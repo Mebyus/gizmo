@@ -1,0 +1,22 @@
+fun os_exit(c: uint) => never {
+    platform_amd64_linux_syscall_exit(c);
+}
+
+let platform_linux_stdin: uint = 0;
+let platform_linux_stdout: uint = 1;
+let platform_linux_stderr: uint = 2;
+
+fun print(s: str) {
+	if (s.len == 0) {
+		ret;
+	}
+
+	var i: uint = 0;
+	for i < s.len {
+		let n: sint = platform_amd64_linux_syscall_write(platform_linux_stdout, s.ptr, s.len);
+		if (n < 0) {
+			ret;
+		}
+		i += tint(uint, n);
+	}
+}

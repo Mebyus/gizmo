@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/mebyus/gizmo/ast"
+	"github.com/mebyus/gizmo/ast/bop"
 	"github.com/mebyus/gizmo/lexer"
 	"github.com/mebyus/gizmo/token"
 )
@@ -213,5 +215,69 @@ func (p *Parser) block() (Block, error) {
 }
 
 func (p *Parser) exp() (Exp, error) {
-	return nil, nil
+	return p.pratt(0)
+}
+
+func (p *Parser) pratt(power int) (Exp, error) {
+	left, err := p.primary()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.tok.Kind.IsBinaryOperator() {
+		o := ast.BinaryOperatorFromToken(p.tok)
+		if o.Power() <= power {
+			break
+		}
+		p.advance() // skip binary operator
+
+		right, err := p.pratt(o.Power())
+		if err != nil {
+			return nil, err
+		}
+
+		left = bex(o.Kind, left, right)
+	}
+
+	return left, nil
+}
+
+func bex(op bop.Kind, left, right Exp) BinExp {
+	return BinExp{
+		Op:    op,
+		Left:  left,
+		Right: right,
+	}
+}
+
+func (p *Parser) primary() (Exp, error) {
+	// if p.tok.Kind.IsUnaryOperator() {
+	// 	unary, err := p.unary()
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	return unary, nil
+	// }
+	return p.operand()
+}
+
+func (p *Parser) operand() (Exp, error) {
+	switch p.tok.Kind {
+	case token.String:
+		exp := String{Pos: p.tok.Pos, Value: p.tok.Lit}
+		p.advance()
+		return exp, nil
+	case token.Env:
+		exp := EnvSymbol{Pos: p.tok.Pos, Name: p.tok.Lit}
+		p.advance()
+		return exp, nil
+	default:
+		return nil, fmt.Errorf("%s: unexpected %s token instead of operand", p.tok.Pos, p.tok.Kind)
+	}
+}
+
+// ParseExp function with pure output. Used for testing.
+func ParseExp(s string) (Exp, error) {
+	p := New(lexer.FromString(s))
+	return p.exp()
 }

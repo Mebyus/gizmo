@@ -15,6 +15,21 @@ import (
 func Walk(prefix string, start string) (*ScriptOutput, error) {
 	var w Walker
 	w.prefix = prefix
+	w.eval.env = nil
+
+	err := w.Walk(start)
+	if err != nil {
+		return nil, err
+	}
+	return &w.out, nil
+}
+
+func WalkWithTests(prefix string, start string) (*ScriptOutput, error) {
+	var w Walker
+	w.prefix = prefix
+	w.eval.env = map[string]string{
+		"BUILD_KIND": "test",
+	}
 
 	err := w.Walk(start)
 	if err != nil {
@@ -62,27 +77,39 @@ func (w *Walker) Walk(start string) error {
 	return nil
 }
 
-func Gen(w io.Writer, files []string) error {
+func GenWithTests(w io.Writer, files []string) error {
 	var gen Generator
 	gen.IncludeTests = true
 
+	err := driveGenerator(w, &gen, files)
+	if err != nil {
+		return err
+	}
+
+	err = genTests(&gen, w)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func Gen(w io.Writer, files []string) error {
+	var gen Generator
+	return driveGenerator(w, &gen, files)
+}
+
+func driveGenerator(w io.Writer, gen *Generator, files []string) error {
 	for _, path := range files {
 		var err error
 		switch filepath.Ext(path) {
 		case ".c":
 			err = copyFile(w, path)
 		case ".kir":
-			err = genFile(&gen, w, path)
+			err = genFile(gen, w, path)
 		default:
 			panic(fmt.Sprintf("unexpected file \"%s\" extension", path))
 		}
-		if err != nil {
-			return err
-		}
-	}
-
-	if gen.IncludeTests {
-		err := genTests(&gen, w)
 		if err != nil {
 			return err
 		}
@@ -99,6 +126,16 @@ func GenIntoFile(path string, files []string) error {
 	defer out.Close()
 
 	return Gen(out, files)
+}
+
+func GenWithTestsIntoFile(path string, files []string) error {
+	out, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	return GenWithTests(out, files)
 }
 
 func genTests(gen *Generator, w io.Writer) error {

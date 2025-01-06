@@ -8,6 +8,8 @@ let max_integer_s16: s16 = 0x7FFF;
 let max_integer_s32: s32 = 0x7FFFFFFF;
 let max_integer_s64: s64 = 0x7FFFFFFFFFFFFFFF;
 
+let min_integer_s64: s64 = cast(s64, 0x8000000000000000);
+
 fun min_uint(a: uint, b: uint) => uint {
     if a < b {
         ret a;

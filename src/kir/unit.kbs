@@ -1,5 +1,7 @@
 #include "types_amd64.c";
+#include "platform_amd64_linux_syscall.c";
 #include "bytes.kir";
+#include "platform_amd64_linux_syscall.kir";
 #include "mem.kir";
 #include "test.kir";
 #include "fmt.kir";

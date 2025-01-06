@@ -64,6 +64,8 @@ type Block struct {
 
 type Exp interface {
 	Exp()
+
+	String() string
 }
 
 type NodeExp struct{}
@@ -80,6 +82,10 @@ type String struct {
 
 var _ Exp = String{}
 
+func (s String) String() string {
+	return "\"" + s.Value + "\""
+}
+
 // Usage of env symbol in expression.
 type EnvSymbol struct {
 	NodeExp
@@ -91,6 +97,10 @@ type EnvSymbol struct {
 
 var _ Exp = EnvSymbol{}
 
+func (s EnvSymbol) String() string {
+	return "#:" + s.Name
+}
+
 type BinExp struct {
 	NodeExp
 
@@ -101,3 +111,27 @@ type BinExp struct {
 }
 
 var _ Exp = BinExp{}
+
+func (e BinExp) String() string {
+	return e.Left.String() + " " + e.Op.String() + " " + e.Right.String()
+}
+
+type True struct {
+	NodeExp
+
+	Pos source.Pos
+}
+
+func (True) String() string {
+	return "true"
+}
+
+type False struct {
+	NodeExp
+
+	Pos source.Pos
+}
+
+func (False) String() string {
+	return "false"
+}

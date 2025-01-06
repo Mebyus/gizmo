@@ -6,7 +6,7 @@ _start(void);
 At entrypoint function stack pointer is given to us by OS loader.
 Transfer the pointer to function "xk_start" as a first argument in "rdi" register.
 */
-__asm__ volatile (
+__asm__ (
 	".global _start\n"
 	"_start:\n\t"
     "xor %rbp, %rbp\n\t"

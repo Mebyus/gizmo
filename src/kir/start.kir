@@ -2,17 +2,63 @@ type ProcInitState struct {
     args: []str,
 }
 
+/*
+
+Layout of memory at stack_start
+
+***            --                                             -- low addresses
+argc           -- number of process args                      -- 8 bytes
+array_arg_ptr  -- array with argc number of pointers          -- 8 bytes each (times argc)
+0              -- array_arg_ptr is terminated by nil pointer  -- 8 bytes
+array_env_ptr  -- array with environment entry pointer        -- 8 bytes each (until nil terminator)
+0              -- array_env_ptr is terminated by nil pointer  -- 8 bytes
+***            --                                             -- high addresses
+
+Each arg_ptr leads to zero-terminated byte array (C string) with argument's string value.
+Each env_ptr leads to zero-terminated byte array (C string) with environment entry.
+
+Environment entry has the following form: "<name>=<value>".
+
+*/
+fun platform_amd64_linux_read_proc_init_state(state: *ProcInitState, stack_start: *any) {
+	let argc_ptr: *uint = cast(*uint, stack_start);
+	let argc: uint = argc_ptr.@;
+	must(argc <= state.@.args.len); // we provide only fixed amount of space in buffer to store chunk of strings
+
+	var arg_ptr: [*][*]u8 = cast([*][*]u8, stack_start);
+
+	// start index at 1 because we want to skip 8 bytes of argc
+	var i: uint = 1;
+	for i <= argc {
+		var cstr_ptr: [*]u8 = arg_ptr.[i]; // obtain pointer to C string with arg value
+		if (cstr_ptr == nil) {
+			// terminate early if we encounter nil pointer
+			//
+			// this is just a precaution, OS ABI (System V) guarantees
+			// that there will be exactly argc number of non-nil valid pointers
+			jump @.out;
+		}
+
+		state.@.args.ptr.[i-1] = unsafe_make_str_from_cstr_ptr(cstr_ptr);
+		i += 1;
+	}
+
+	state.@.args.len = i - 1;
+}
+
 fun main()
 
 #define MAX_PROC_ARGS => { 64 }
 
+
+pub // TODO: this function needs to be public while we use C compiler, because we place "static" by default for all functions 
 fun start(stack_start: *any) => never {
 	var args_buf: [#.MAX_PROC_ARGS]str = dirty;
-	var args: ProcArgs = dirty;
-	args.ptr = args_buf;
-	args.len = #.MAX_PROC_ARGS;
+	var state: ProcInitState = dirty;
+	state.args.ptr = args_buf;
+	state.args.len = #.MAX_PROC_ARGS;
 
-	platform_amd64_linux_read_proc_args(args.&, stack_start);
+	platform_amd64_linux_read_proc_init_state(state.&, stack_start);
 	main();
 	platform_amd64_linux_syscall_exit(0);
 }

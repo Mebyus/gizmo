@@ -12,6 +12,7 @@ import (
 	"github.com/mebyus/gizmo/cmd/ku/format"
 	"github.com/mebyus/gizmo/cmd/ku/gen"
 	"github.com/mebyus/gizmo/cmd/ku/kir"
+	"github.com/mebyus/gizmo/cmd/ku/kirtest"
 	"github.com/mebyus/gizmo/cmd/ku/lex"
 	"github.com/mebyus/gizmo/cmd/ku/preproc"
 	"github.com/mebyus/gizmo/cmd/ku/rbs"
@@ -40,6 +41,7 @@ var root = &butler.Lackey{
 
 	Sub: []*butler.Lackey{
 		kir.Kir,
+		kirtest.KirTest,
 		preproc.Preproc,
 		lex.Lex,
 		gen.Gen,
