@@ -247,3 +247,27 @@ fun fmt_buffer_put_hex_prefix_zeroes_u64(buf: *FormatBuffer, x: u64) => uint {
 	buf.@.len += n;
 	ret n;
 }
+
+fun fmt_buffer_put_test(buf: *FormatBuffer, t: *Test) => uint {
+    let start_len: uint = buf.@.len;
+
+    fmt_buffer_put_byte(buf, '[');
+    if t.@.failed {
+        fmt_buffer_put_byte(buf, '*');
+    } else {
+        fmt_buffer_put_byte(buf, ' ');
+    }
+    fmt_buffer_put_byte(buf, ']');
+    
+    fmt_buffer_put_byte(buf, ' ');
+    fmt_buffer_put_str(buf, t.@.name);
+    if t.@.failed {
+        fmt_buffer_put_byte(buf, ' ');
+        fmt_buffer_put_byte(buf, '(');
+        fmt_buffer_put_str(buf, t.@.error_text);
+        fmt_buffer_put_byte(buf, ')');
+    }
+    fmt_buffer_put_nl(buf);
+
+    ret buf.@.len - start_len;
+}

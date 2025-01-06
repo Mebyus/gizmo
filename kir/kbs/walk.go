@@ -27,11 +27,17 @@ type Walker struct {
 	// Accumulated output of scripts (includes, links, etc.).
 	out ScriptOutput
 
+	eval Evaluator
+
 	prefix string
 }
 
 func (w *Walker) Walk(start string) error {
-	script, err := ParseFile(filepath.Join(w.prefix, start, "unit.build.kir"))
+	directives, err := ParseFile(filepath.Join(w.prefix, start, "unit.kbs"))
+	if err != nil {
+		return err
+	}
+	script, err := w.eval.Eval(directives)
 	if err != nil {
 		return err
 	}

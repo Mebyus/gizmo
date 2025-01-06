@@ -127,6 +127,7 @@ var Literal = [...]string{
 	HexInteger: "INT.HEX",
 	DecFloat:   "FLT.DEC",
 	Macro:      "MACRO",
+	Env:        "ENV",
 
 	// Comments
 

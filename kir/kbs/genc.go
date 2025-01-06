@@ -338,6 +338,8 @@ func (g *Generator) Chunk(c ast.ChunkType) {
 	switch name {
 	case "u8":
 		g.puts("bx")
+	case "str":
+		g.puts("sx")
 	default:
 		panic(fmt.Sprintf("%s chunks not implemented", name))
 	}

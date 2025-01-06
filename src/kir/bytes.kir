@@ -202,6 +202,27 @@ fun unsafe_make_str_from_cstr_ptr(ptr: [*]u8) => str {
 	ret make_str(ptr, i);
 }
 
+/*
+Strings chunk (alias to []str)
+*/
+type sx struct {
+	ptr: [*]str,
+    len: uint,
+}
+
+fun make_sx(ptr: [*]str, len: uint) => []str {
+    var c: []str = dirty;
+	if len == 0 {
+		c.ptr = nil;
+		c.len = 0;
+		ret c;
+	}
+
+    c.ptr = ptr;
+    c.len = len;
+    ret c;
+}
+
 fun djb2_hash64(c: []u8) => u64 {
     var h: u64 = 5381; // magic number
     for i in range(c.len) {

@@ -62,6 +62,8 @@ func (lx *Lexer) codeToken() token.Token {
 			return lx.twoBytesToken(token.PropStart)
 		case '.':
 			return lx.macro()
+		case ':':
+			return lx.env()
 		default:
 			if char.IsLetterOrUnderscore(lx.Next) {
 				return lx.directive()
@@ -138,6 +140,31 @@ func (lx *Lexer) macro() (tok token.Token) {
 	}
 
 	tok.Kind = token.Macro
+	tok.Lit = lit
+
+	return
+}
+
+func (lx *Lexer) env() (tok token.Token) {
+	tok.Pos = lx.pos()
+
+	lx.Advance() // skip '#'
+	lx.Advance() // skip ':'
+
+	if !char.IsLetterOrUnderscore(lx.C) {
+		tok.SetIllegalError(token.MalformedMacro)
+		return
+	}
+
+	lx.Start()
+	lx.SkipWord()
+	lit, ok := lx.Take()
+	if !ok {
+		tok.SetIllegalError(token.LengthOverflow)
+		return
+	}
+
+	tok.Kind = token.Env
 	tok.Lit = lit
 
 	return

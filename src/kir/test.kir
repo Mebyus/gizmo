@@ -18,27 +18,3 @@ fun test_fail(t: *Test, s: str) {
     t.@.error_text = s;
     t.@.failed = true;
 }
-
-fun fmt_buffer_put_test(buf: *FormatBuffer, t: *Test) => uint {
-    let start_len: uint = buf.@.len;
-
-    fmt_buffer_put_byte(buf, '[');
-    if t.@.failed {
-        fmt_buffer_put_byte(buf, '*');
-    } else {
-        fmt_buffer_put_byte(buf, ' ');
-    }
-    fmt_buffer_put_byte(buf, ']');
-    
-    fmt_buffer_put_byte(buf, ' ');
-    fmt_buffer_put_str(buf, t.@.name);
-    if t.@.failed {
-        fmt_buffer_put_byte(buf, ' ');
-        fmt_buffer_put_byte(buf, '(');
-        fmt_buffer_put_str(buf, t.@.error_text);
-        fmt_buffer_put_byte(buf, ')');
-    }
-    fmt_buffer_put_nl();
-
-    ret buf.@.len - start_len;
-}

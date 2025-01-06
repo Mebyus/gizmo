@@ -5,3 +5,9 @@
 #include "fmt.kir";
 #include "elf.kir";
 #include "log.kir";
+
+#if #:BUILD_KIND == "test" {
+    #include "start.kir";
+    #include "entrypoint.c";
+    // #entrypoint "_start";
+}

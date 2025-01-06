@@ -1,0 +1,18 @@
+type ProcInitState struct {
+    args: []str,
+}
+
+fun main()
+
+#define MAX_PROC_ARGS => { 64 }
+
+fun start(stack_start: *any) => never {
+	var args_buf: [#.MAX_PROC_ARGS]str = dirty;
+	var args: ProcArgs = dirty;
+	args.ptr = args_buf;
+	args.len = #.MAX_PROC_ARGS;
+
+	platform_amd64_linux_read_proc_args(args.&, stack_start);
+	main();
+	platform_amd64_linux_syscall_exit(0);
+}

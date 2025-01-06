@@ -152,6 +152,7 @@ const (
 	RawString  // #"raw string literal"
 	FillString // "string with ${10 + 1} interpolated ${a - b} expressions"
 	Macro      // #.MACRO_NAME
+	Env        // #:ENV_NAME
 
 	// Comments
 	LineComment  // Line comment starts with //
