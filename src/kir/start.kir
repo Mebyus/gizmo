@@ -25,12 +25,12 @@ fun platform_amd64_linux_read_proc_init_state(state: *ProcInitState, stack_start
 	let argc: uint = argc_ptr.@;
 	must(argc <= state.@.args.len); // we provide only fixed amount of space in buffer to store chunk of strings
 
-	var arg_ptr: [*][*]u8 = cast([*][*]u8, stack_start);
+	// we want to skip 8 bytes of argc
+	var args_ptr: [*][*]u8 = cast([*][*]u8, unsafe_anyptr_add(stack_start, 8));
 
-	// start index at 1 because we want to skip 8 bytes of argc
-	var i: uint = 1;
-	for i <= argc {
-		var cstr_ptr: [*]u8 = arg_ptr.[i]; // obtain pointer to C string with arg value
+	var i: uint = 0;
+	for i < argc {
+		var cstr_ptr: [*]u8 = args_ptr.[i]; // obtain pointer to C string with arg value
 		if (cstr_ptr == nil) {
 			// terminate early if we encounter nil pointer
 			//
@@ -39,24 +39,23 @@ fun platform_amd64_linux_read_proc_init_state(state: *ProcInitState, stack_start
 			jump @.out;
 		}
 
-		state.@.args.ptr.[i-1] = unsafe_make_str_from_cstr_ptr(cstr_ptr);
+		state.@.args.ptr.[i] = unsafe_make_str_from_cstr_ptr(cstr_ptr);
 		i += 1;
 	}
 
-	state.@.args.len = i - 1;
+	state.@.args.len = i;
 }
 
 fun main()
 
-#define MAX_PROC_ARGS => { 64 }
-
+let max_proc_args: uint = 64;
 
 pub // TODO: this function needs to be public while we use C compiler, because we place "static" by default for all functions 
 fun start(stack_start: *any) => never {
-	var args_buf: [#.MAX_PROC_ARGS]str = dirty;
+	var args_buf: [max_proc_args]str = dirty;
 	var state: ProcInitState = dirty;
 	state.args.ptr = args_buf;
-	state.args.len = #.MAX_PROC_ARGS;
+	state.args.len = max_proc_args;
 
 	platform_amd64_linux_read_proc_init_state(state.&, stack_start);
 	main();

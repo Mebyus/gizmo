@@ -13,8 +13,6 @@ import (
 )
 
 type Generator struct {
-	mp MacroProcessor
-
 	Tests []ast.TopFun
 
 	buf []byte
@@ -25,12 +23,18 @@ type Generator struct {
 	// in output. When a new line starts this buffer is used to add indentation.
 	ib []byte
 
+	// table of global constant values
+	gtab map[ /* constant name */ string]ast.Exp
+
 	IncludeTests bool
 }
 
 func (g *Generator) Reset() {
 	if len(g.ib) != 0 {
 		panic("indentation is not zeroed before reset")
+	}
+	if g.gtab == nil {
+		g.gtab = make(map[string]ast.Exp)
 	}
 
 	// reset buffer position, but keep underlying memory
@@ -251,6 +255,9 @@ func (g *Generator) TopVar(node ast.TopVar) {
 }
 
 func (g *Generator) TopLet(node ast.TopLet) {
+	name := node.Name.Lit
+	g.gtab[name] = node.Exp
+
 	g.puts("static ")
 	g.Let(ast.LetStatement{Let: node.Let})
 	g.nl()
@@ -403,8 +410,21 @@ func (g *Generator) fieldArray(name string, a ast.ArrayType) {
 	g.space()
 	g.puts(name)
 	g.puts("[")
-	g.Exp(a.Size)
+	g.Exp(g.arraySize(a.Size))
 	g.puts("]")
+}
+
+func (g *Generator) arraySize(exp ast.Exp) ast.Exp {
+	s, ok := exp.(ast.SymbolExp)
+	if !ok {
+		return exp
+	}
+	name := s.Identifier.Lit
+	size, ok := g.gtab[name]
+	if !ok {
+		panic(fmt.Sprintf("%s: reference to undefinied \"%s\" symbol ", s.Identifier.Pos, name))
+	}
+	return size
 }
 
 func (g *Generator) Statement(s ast.Statement) {

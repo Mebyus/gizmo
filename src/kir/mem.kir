@@ -1,10 +1,10 @@
-type MemBlockID struct {
+type MemBlockTrace struct {
     id: u64,
 }
 
 type MemBlock struct {
     mem: []u8,
-    id:  MemBlockID,
+    trace: MemBlockTrace,
 }
 
 type MemError uint
@@ -36,16 +36,16 @@ fun mem_arena_alloc(arena: *MemArenaAllocator, block: *MemBlock, size: uint) => 
 
 	block.@.mem.ptr = arena.@.ptr + arena.@.pos;
 	block.@.mem.len = aligned_size;
-    block.@.id.id = 0;
+    block.@.trace.id = 0;
 	
 	arena.@.pos += aligned_size;
 	ret nil;
 }
 
-type MemAllocatorKind uint
-
-let MEM_ALLOCATOR_ARENA: MemAllocatorKind = 1;
-let MEM_ALLOCATOR_GP:    MemAllocatorKind = 2;
+type MemAllocatorKind uint {
+    MEM_ALLOCATOR_ARENA = 1,
+    MEM_ALLOCATOR_GP    = 2,
+}
 
 type MemAllocator struct {
     ptr: *any,

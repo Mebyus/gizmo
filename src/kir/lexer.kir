@@ -1,0 +1,30 @@
+type Lexer struct {
+    text: []u8,
+
+    // File id shifted to upper 32 bits of u64 number.
+    file_mask: u64,
+
+    // Lexer read position. Offset into text.
+    pos: u32,
+
+    // Marks lexer saved position. Used for scanning word tokens.
+    mark: u32,
+}
+
+/*
+Reads next token from underlying data stream.
+Result is stored in Token structure which is provided by the caller.
+
+.in  { lx }  : receiver
+.out { tok } : result
+*/
+fun lexer_next_token(lx: *Lexer, tok: *Token) {
+
+}
+
+/*
+Advance lexer read position by one byte forward.
+*/
+fun lexer_advance(lx: *Lexer) {
+
+}

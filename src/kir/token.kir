@@ -1,0 +1,29 @@
+type SourcePos struct {
+    offset: u32,
+    file_id: u32,
+}
+
+// Encodes source position in a single integer number.
+// Low 32 bits encode offset. High 32 bits encode file id.
+type SourcePin u64
+
+type TokenKind u8 {
+    TOKEN_EOF = 0,
+    TOKEN_WORD = 1,
+    TOKEN_ILLEGAL = 2,
+}
+
+type TokenDataFlag u32 {
+
+}
+
+type TokenData bag (u64, str)
+
+type Token struct {
+    data: TokenData,
+    pin: SourcePin,
+
+    // Affects how data field should be interpreted.
+    flags: TokenDataFlag,
+    kind: TokenKind,
+}

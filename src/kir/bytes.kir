@@ -39,6 +39,20 @@ fun must(c: bool) {
 	panic_trap();
 }
 
+// Shift pointer value up by specified number of bytes.
+// It is basically a type system satisfying wrapper around {ptr + x} opepation.
+fun unsafe_anyptr_add(ptr: *any, x: uint) => *any {
+	let p: pint = cast(pint, ptr);
+	ret cast(*any, p + x);
+}
+
+// Shift pointer value down by specified number of bytes.
+// It is basically a type system satisfying wrapper around {ptr - x} opepation.
+fun unsafe_anyptr_sub(ptr: *any, x: uint) => *any {
+	let p: pint = cast(pint, ptr);
+	ret cast(*any, p - x);
+}
+
 // Get unsigned 16-bit integer from first 2 bytes of a given bytes chunk.
 // Function assumes little endian order of bytes inside the chunk.
 fun unsafe_get_u16le(p: [*]u8) => u16 {

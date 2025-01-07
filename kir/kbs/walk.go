@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/mebyus/gizmo/lexer"
 	"github.com/mebyus/gizmo/parser"
 )
 
@@ -154,12 +153,7 @@ func copyFile(w io.Writer, path string) error {
 }
 
 func genFile(gen *Generator, w io.Writer, path string) error {
-	lx, err := lexer.FromFile(path)
-	if err != nil {
-		return err
-	}
-	gen.mp.SetInput(lx)
-	atom, err := parser.New(&gen.mp).FullParse()
+	atom, err := parser.ParseFile(path)
 	if err != nil {
 		return err
 	}

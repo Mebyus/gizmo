@@ -94,13 +94,13 @@ fun unsafe_fmt_reverse_dec_u64(ptr: [*]u8, x: u64) => uint {
 	}
 }
 
-#define MAX_U64_DEC_LENGTH => { 20 }
+let max_u64_dec_length: uint = 20;
 
 /*
 Same as fmt_dec_u64, but has no buffer boundary checks.
 */
 fun unsafe_fmt_dec_u64(buf: []u8, x: u64) => uint {
-	var digits: [#.MAX_U64_DEC_LENGTH]u8 = dirty;
+	var digits: [max_u64_dec_length]u8 = dirty;
 	let len: uint = unsafe_fmt_reverse_dec_u64(digits, x);
 	unsafe_reverse_copy(buf.ptr, digits, len);
 	ret len;
@@ -118,11 +118,11 @@ fun fmt_dec_u64(buf: []u8, x: u64) => uint {
 	}
 	must(buf.ptr != nil);
 	
-	if buf.len >= #.MAX_U64_DEC_LENGTH {
+	if buf.len >= max_u64_dec_length {
 		ret unsafe_fmt_dec_u64(buf, x);
 	}
 	
-	var digits: [#.MAX_U64_DEC_LENGTH]u8 = dirty;
+	var digits: [max_u64_dec_length]u8 = dirty;
 	let len: uint = unsafe_fmt_reverse_dec_u64(digits, x);
 	if len > buf.len {
 		// Not enough space in buffer to represent integer.

@@ -5,10 +5,10 @@ type LogLevel u8 {
     LOG_LEVEL_ERROR = 3,
 }
 
-#define LOG_BUF_SIZE => { 1 << 14 }
+let log_buf_size: uint = 1 << 14;
 
 type Logger struct {
-    buf: [#.LOG_BUF_SIZE]u8,
+    buf: [log_buf_size]u8,
 
     name: str,
 

@@ -1,0 +1,143 @@
+fun is_simple_whitespace(c: u8) => bool {
+	ret c == ' ' || c == '\n' || c == '\t' || c == '\r';
+}
+
+fun is_dec_digit(c: u8) => bool {
+	ret '0' <= c && c <= '9';
+}
+
+fun is_oct_digit(c: u8) => bool {
+	ret '0' <= c && c <= '7';
+}
+
+fun is_bin_digit(c: u8) => bool {
+	ret c == '0' || c == '1';
+}
+
+let capital_latin_letter_mask: u8 = 0xDF;
+
+// Transform ASCII latin letter character to its upper (capital) form.
+fun capital_latin_letter(c: u8) => u8 {
+	ret c & capital_latin_letter_mask;
+}
+
+fun is_hex_digit(c: u8) => bool {
+	if is_dec_digit(c) {
+		ret true;
+	}
+
+	let l: u8 = capital_latin_letter(c);
+	ret 'A' <= l && l <= 'F';
+}
+
+fun is_latin_letter(c: u8) => bool {
+	let l: u8 = capital_latin_letter(c);
+	ret 'A' <= l && l <= 'Z';
+}
+
+fun is_latin_letter_or_underscore(c: u8) => bool {
+	ret is_latin_letter(c) || c == '_';
+}
+
+fun is_alphanum(c: u8) => bool {
+	ret is_latin_letter_or_underscore(c) || is_dec_digit(c);
+}
+
+// utf-8 code point starts either from [0xxx xxxx] or [11xx xxxx].
+// Non-starting byte of non-ascii code point has form [10xx xxxx].
+// Thus we need to check that higher bits of a given byte are not 10.
+fun utf8_is_code_point_start(c: u8) => bool {
+	ret (c & 0b11000000) != 0b10000000;
+}
+
+// Transforms ASCII decimal digit character (0 - 9) to its number value.
+fun dec_digit_num(d: u8) => u8 {
+    ret d - cast(u8, '0');
+}
+
+// Transforms ASCII hexadecimal digit character (0 - 9, A - F, a - f) to its number value.
+// Small (a - f) and capital (A - F) letters produce identical results.
+fun hex_digit_num(d: u8) => u8 {
+    if d <= '9' {
+        ret dec_digit_num(d);
+    }
+    ret capital_latin_letter(d) - cast(u8, 'A') + 10;
+}
+
+type ResultParseU64 struct {
+    num: u64,
+    ok:  bool,
+}
+
+fun str_parse_dec_u64(s: str) => ResultParseU64 {
+    var r: ResultParseU64 = dirty;
+    r.num = 0;
+    r.ok = false;
+    
+    if s.len == 0 {
+        ret r;
+    }
+    
+    ret r;
+}
+
+type ResultParseS64 struct {
+    num: s64,
+    ok:  bool,
+}
+
+fun str_parse_dec_s64(s: str) => ResultParseS64 {
+    var r: ResultParseS64 = dirty;
+    r.num = 0;
+    r.ok = false;
+
+    if s.len == 0 {
+        ret r;
+    }
+
+    ret r;
+}
+
+fun unsafe_str_parse_dec_u64(s: str) => u64 {
+    must(s.len != 0);
+
+    var n: u64 = 0;
+    for i in range(s.len) {
+        n = n * 10;
+        n += dec_digit_num(s.ptr.[i]);
+    }
+    ret n;
+}
+
+fun unsafe_str_parse_bin_u64(s: str) => u64 {
+    must(s.len != 0);
+
+    var n: u64 = 0;
+    for i in range(s.len) {
+        n = n << 1;
+        n += dec_digit_num(s.ptr.[i]);
+    }
+    ret n;
+}
+
+fun unsafe_str_parse_oct_u64(s: str) => u64 {
+    must(s.len != 0);
+
+    var n: u64 = 0;
+    for i in range(s.len) {
+        n = n << 3;
+        n += dec_digit_num(s.ptr.[i]);
+    }
+    ret n;
+}
+
+fun unsafe_str_parse_hex_u64(s: str) => u64 {
+    must(s.len != 0);
+
+    var n: u64 = 0;
+    for i in range(s.len) {
+        n = n << 4;
+        n += hex_digit_num(s.ptr.[i]);
+    }
+    ret n;
+}
