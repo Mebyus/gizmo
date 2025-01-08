@@ -14,7 +14,9 @@ import (
 func Walk(prefix string, start string) (*ScriptOutput, error) {
 	var w Walker
 	w.prefix = prefix
-	w.eval.env = nil
+	w.eval.env = map[string]string{
+		"BUILD_KIND": "exe",
+	}
 
 	err := w.Walk(start)
 	if err != nil {

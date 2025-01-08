@@ -1,6 +1,8 @@
 type Lexer struct {
     text: []u8,
 
+    word_allocator: *MemArenaAllocator,
+
     // File id shifted to upper 32 bits of u64 number.
     file_mask: u64,
 

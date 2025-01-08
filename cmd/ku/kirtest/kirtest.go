@@ -45,7 +45,7 @@ func kirtest(filename string) error {
 		return err
 	}
 	outexe := filepath.Join("build/.test", script.Name)
-	err = cc.Link(build.Fast, outexe, "_start", []string{outobj})
+	err = cc.LinkStatic(build.Fast, outexe, "_start", []string{outobj})
 	if err != nil {
 		return err
 	}

@@ -1,0 +1,8 @@
+#name "kir_vk_link";
+
+#include "kir";
+#include "vulkan.kir";
+#include "main.kir";
+
+#link "shared";
+#link "vulkan"; //  /usr/lib/x86_64-linux-gnu/libvulkan.so.1

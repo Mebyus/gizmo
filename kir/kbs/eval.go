@@ -104,6 +104,29 @@ func evalSimpleBinExp(op bop.Kind, a, b Exp) (Exp, error) {
 		default:
 			panic(fmt.Errorf("unexpected %s expression %T", a, a))
 		}
+	case bop.Or:
+		switch a := a.(type) {
+		case True:
+			switch b.(type) {
+			case True:
+				return True{}, nil
+			case False:
+				return True{}, nil
+			default:
+				return nil, fmt.Errorf("%s: type %T is incompatible with || (logical or) operator", "???", b)
+			}
+		case False:
+			switch b.(type) {
+			case True:
+				return True{}, nil
+			case False:
+				return False{}, nil
+			default:
+				return nil, fmt.Errorf("%s: type %T is incompatible with || (logical or) operator", "???", b)
+			}
+		default:
+			panic(fmt.Errorf("unexpected %s expression %T", a, a))
+		}
 	default:
 		panic(fmt.Errorf("unexpected %s operator", op))
 	}

@@ -218,6 +218,10 @@ fun make_fmt_buffer(c: []u8) => FormatBuffer {
 	ret buf;
 }
 
+fun fmt_buffer_reset(buf: *FormatBuffer) {
+	buf.@.len = 0;
+}
+
 fun fmt_buffer_head(buf: *FormatBuffer) => []u8 {
 	ret make_bx(buf.@.ptr, buf.@.len);
 }

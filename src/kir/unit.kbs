@@ -12,7 +12,7 @@
 #include "token.kir";
 #include "lexer.kir";
 
-#if #:BUILD_KIND == "test" {
+#if #:BUILD_KIND == "test" || #:BUILD_KIND == "exe" {
     #include "start.kir";
     #include "entrypoint.c";
     // #entrypoint "_start";

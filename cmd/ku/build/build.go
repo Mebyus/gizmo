@@ -259,7 +259,7 @@ func compile(out string, cfile string) error {
 
 func link(out string, obj string) error {
 	start := time.Now()
-	err := cc.Link(build.Debug, out, "_start", []string{obj})
+	err := cc.LinkStatic(build.Debug, out, "_start", []string{obj})
 	if err != nil {
 		return err
 	}

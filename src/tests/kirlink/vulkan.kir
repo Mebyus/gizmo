@@ -1,0 +1,228 @@
+type VkResult s32 {
+    VK_SUCCESS = 0,
+    VK_NOT_READY = 1,
+    VK_TIMEOUT = 2,
+    VK_EVENT_SET = 3,
+    VK_EVENT_RESET = 4,
+    VK_INCOMPLETE = 5,
+    VK_ERROR_OUT_OF_HOST_MEMORY = -1,
+    VK_ERROR_OUT_OF_DEVICE_MEMORY = -2,
+    VK_ERROR_INITIALIZATION_FAILED = -3,
+    VK_ERROR_DEVICE_LOST = -4,
+    VK_ERROR_MEMORY_MAP_FAILED = -5,
+    VK_ERROR_LAYER_NOT_PRESENT = -6,
+    VK_ERROR_EXTENSION_NOT_PRESENT = -7,
+    VK_ERROR_FEATURE_NOT_PRESENT = -8,
+    VK_ERROR_INCOMPATIBLE_DRIVER = -9,
+    VK_ERROR_TOO_MANY_OBJECTS = -10,
+    VK_ERROR_FORMAT_NOT_SUPPORTED = -11,
+    VK_ERROR_FRAGMENTED_POOL = -12,
+    VK_ERROR_UNKNOWN = -13,
+    VK_ERROR_OUT_OF_POOL_MEMORY = -1000069000,
+    VK_ERROR_INVALID_EXTERNAL_HANDLE = -1000072003,
+    VK_ERROR_FRAGMENTATION = -1000161000,
+    VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS = -1000257000,
+    VK_PIPELINE_COMPILE_REQUIRED = 1000297000,
+    VK_RESULT_MAX_ENUM = 0x7FFFFFFF,
+}
+
+type VkInstance *any
+
+type VkStructureType u32 {
+    VK_STRUCTURE_TYPE_APPLICATION_INFO = 0,
+    VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO = 1,
+}
+
+type VkInstanceCreateFlags u32
+
+type VkApplicationInfo struct {
+    sType: VkStructureType,
+    pNext: *any,
+
+    pApplicationName: [*]u8,
+    applicationVersion: u32,
+
+    pEngineName: [*]u8,
+    engineVersion: u32,
+    apiVersion: u32,
+}
+
+type VkInstanceCreateInfo struct {
+    sType: VkStructureType,
+    pNext: *any,
+    flags: VkInstanceCreateFlags,
+
+    pApplicationInfo: *VkApplicationInfo,
+    
+    enabledLayerCount: u32,
+    ppEnabledLayerNames: [*][*]u8,
+
+    enabledExtensionCount: u32,
+    ppEnabledExtensionNames: [*][*]u8,
+}
+
+type VkPhysicalDevice *any
+
+type VkPhysicalDeviceLimits struct {
+    maxImageDimension1D:u32,
+    maxImageDimension2D:u32,
+    maxImageDimension3D:u32,
+    maxImageDimensionCube:u32,
+    maxImageArrayLayers:u32,
+    maxTexelBufferElements:u32,
+    maxUniformBufferRange:u32,
+    maxStorageBufferRange:u32,
+    maxPushConstantsSize:u32,
+    maxMemoryAllocationCount:u32,
+    maxSamplerAllocationCount:u32,
+
+    bufferImageGranularity: u64,
+    sparseAddressSpaceSize: u64,
+
+    maxBoundDescriptorSets:u32,
+    maxPerStageDescriptorSamplers:u32,
+    maxPerStageDescriptorUniformBuffers:u32,
+    maxPerStageDescriptorStorageBuffers:u32,
+    maxPerStageDescriptorSampledImages:u32,
+    maxPerStageDescriptorStorageImages:u32,
+    maxPerStageDescriptorInputAttachments:u32,
+    maxPerStageResources:u32,
+    maxDescriptorSetSamplers:u32,
+    maxDescriptorSetUniformBuffers:u32,
+    maxDescriptorSetUniformBuffersDynamic:u32,
+    maxDescriptorSetStorageBuffers:u32,
+    maxDescriptorSetStorageBuffersDynamic:u32,
+    maxDescriptorSetSampledImages:u32,
+    maxDescriptorSetStorageImages:u32,
+    maxDescriptorSetInputAttachments:u32,
+    maxVertexInputAttributes:u32,
+    maxVertexInputBindings:u32,
+    maxVertexInputAttributeOffset:u32,
+    maxVertexInputBindingStride:u32,
+    maxVertexOutputComponents:u32,
+    maxTessellationGenerationLevel:u32,
+    maxTessellationPatchSize:u32,
+    maxTessellationControlPerVertexInputComponents:u32,
+    maxTessellationControlPerVertexOutputComponents:u32,
+    maxTessellationControlPerPatchOutputComponents:u32,
+    maxTessellationControlTotalOutputComponents:u32,
+    maxTessellationEvaluationInputComponents:u32,
+    maxTessellationEvaluationOutputComponents:u32,
+    maxGeometryShaderInvocations:u32,
+    maxGeometryInputComponents:u32,
+    maxGeometryOutputComponents:u32,
+    maxGeometryOutputVertices:u32,
+    maxGeometryTotalOutputComponents:u32,
+    maxFragmentInputComponents:u32,
+    maxFragmentOutputAttachments:u32,
+    maxFragmentDualSrcAttachments:u32,
+    maxFragmentCombinedOutputResources:u32,
+    maxComputeSharedMemorySize:u32,
+    maxComputeWorkGroupCount: [3]u32;
+    maxComputeWorkGroupInvocations:u32,
+    maxComputeWorkGroupSize: [3]u32;
+    subPixelPrecisionBits:u32,
+    subTexelPrecisionBits:u32,
+    mipmapPrecisionBits:u32,
+    maxDrawIndexedIndexValue:u32,
+    maxDrawIndirectCount:u32,
+
+    float                    maxSamplerLodBias;
+    float                    maxSamplerAnisotropy;
+    u32                 maxViewports;
+    u32                 maxViewportDimensions [2];
+    float                  viewportBoundsRange [2];
+    u32                viewportSubPixelBits;
+    size_t               minMemoryMapAlignment;
+    u64         minTexelBufferOffsetAlignment;
+    u64         minUniformBufferOffsetAlignment;
+    u64         minStorageBufferOffsetAlignment;
+    int32_t                  minTexelOffset;
+    u32                 maxTexelOffset;
+    int32_t                  minTexelGatherOffset;
+    u32                 maxTexelGatherOffset;
+    float                    minInterpolationOffset;
+    float                    maxInterpolationOffset;
+    u32                subPixelInterpolationOffsetBits;
+    u32                 maxFramebufferWidth;
+    u32                 maxFramebufferHeight;
+    u32                 maxFramebufferLayers;
+    VkSampleCountFlags       framebufferColorSampleCounts;
+    VkSampleCountFlags       framebufferDepthSampleCounts;
+    VkSampleCountFlags       framebufferStencilSampleCounts;
+    VkSampleCountFlags       framebufferNoAttachmentsSampleCounts;
+    u32                 maxColorAttachments;
+    VkSampleCountFlags       sampledImageColorSampleCounts;
+    VkSampleCountFlags       sampledImageIntegerSampleCounts;
+    VkSampleCountFlags       sampledImageDepthSampleCounts;
+    VkSampleCountFlags       sampledImageStencilSampleCounts;
+    VkSampleCountFlags       storageImageSampleCounts;
+    u32                 maxSampleMaskWords;
+    VkBool32             timestampComputeAndGraphics;
+    float                timestampPeriod;
+    u32                 maxClipDistances;
+    u32                 maxCullDistances;
+    u32                 maxCombinedClipAndCullDistances;
+    u32                 discreteQueuePriorities;
+    float                  pointSizeRange [2];
+    float                  lineWidthRange [2];
+    float                pointSizeGranularity;
+    float                lineWidthGranularity;
+
+    strictLines: VkBool32,
+    standardSampleLocations: VkBool32,
+
+    u64         optimalBufferCopyOffsetAlignment;
+    u64         optimalBufferCopyRowPitchAlignment;
+    u64         nonCoherentAtomSize;
+}
+
+type VkPhysicalDeviceSparseProperties struct {
+    residencyStandard2DBlockShape: VkBool32,
+    residencyStandard2DMultisampleBlockShape: VkBool32, 
+    residencyStandard3DBlockShape: VkBool32,
+    residencyAlignedMipSize: VkBool32,
+    residencyNonResidentStrict: VkBool32,
+}
+
+type VkPhysicalDeviceType u32 {
+    VK_PHYSICAL_DEVICE_TYPE_OTHER = 0,
+    VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU = 1,
+    VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU = 2,
+    VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU = 3,
+    VK_PHYSICAL_DEVICE_TYPE_CPU = 4,
+    VK_PHYSICAL_DEVICE_TYPE_MAX_ENUM = 0x7FFFFFFF,
+}
+
+let vk_max_physical_device_name_size: uint = 256;
+let vk_uuid_size: uint = 16;
+
+type VkPhysicalDeviceProperties struct {
+    apiVersion: u32,
+    driverVersion: u32,
+    vendorID: u32,
+    deviceID: u32,
+    deviceType: VkPhysicalDeviceType,
+
+    deviceName: [vk_max_physical_device_name_size]u8,
+    pipelineCacheUUID: [vk_uuid_size]u8,
+    
+    limits: VkPhysicalDeviceLimits,
+    sparseProperties: VkPhysicalDeviceSparseProperties,
+}
+
+fun vk_make_version(major: u32, minor: u32, patch: u32) => u32 {
+    ret (major << 22) | (minor << 12) | patch;
+}
+
+fun vk_make_api_version(variant: u32, major: u32, minor: u32, patch: u32) => u32 {
+    ret (variant << 29) | (major << 22) | (minor << 12) | patch;
+}
+
+/* Loaded (from Vulkan shared object) function stubs */
+
+pub
+fun vkCreateInstance(create_info: *VkInstanceCreateInfo, something: *any, instance: *VkInstance) => VkResult
+
+pub
+fun vkEnumeratePhysicalDevices(instance: VkInstance, pPhysicalDeviceCount: *u32,  pPhysicalDevices: [*]VkPhysicalDevice) => VkResult

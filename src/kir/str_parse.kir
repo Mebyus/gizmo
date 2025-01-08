@@ -64,6 +64,17 @@ fun hex_digit_num(d: u8) => u8 {
     ret capital_latin_letter(d) - cast(u8, 'A') + 10;
 }
 
+// Returns true if a string of decimal formatted integer overflows u64 number.
+// This function assumes that string contains only decimal digit characters.
+fun unsafe_str_overflow_dec_u64(s: str) => bool {
+    if s.len < max_u64_dec_length {
+        ret false;
+    }
+    if s.len > max_u64_dec_length {
+        ret true;
+    }
+}
+
 type ResultParseU64 struct {
     num: u64,
     ok:  bool,

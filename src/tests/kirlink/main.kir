@@ -1,0 +1,51 @@
+pub
+fun shared_add(a: s32, b: s32) => s32
+
+let output_buffer_size: uint = 1 << 10;
+var output_buffer: [output_buffer_size]u8 = dirty;
+
+fun main() {
+    var buf: FormatBuffer = dirty;
+    fmt_buffer_init(buf.&, make_bx(output_buffer, output_buffer_size));
+    fmt_buffer_put_dec_u64(buf.&, cast(u64, shared_add(1, 14)));
+    fmt_buffer_put_nl(buf.&);
+    print(fmt_buffer_head(buf.&));
+
+    var app_name: str = "Hello Triangle";
+    var engine_name: str = "My Vulkan Engine";
+
+    var app_info: VkApplicationInfo = dirty;
+    app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    app_info.pNext = nil;
+    app_info.pApplicationName = app_name.ptr;
+    app_info.applicationVersion = vk_make_version(1, 0, 0);
+    app_info.pEngineName = engine_name.ptr;
+    app_info.engineVersion = vk_make_version(1, 0, 0);
+    app_info.apiVersion = vk_make_api_version(0, 1, 3, 0);
+
+    var instance_info: VkInstanceCreateInfo = dirty;
+    instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    instance_info.pNext = nil;
+    instance_info.flags = 0;
+    instance_info.pApplicationInfo = app_info.&;
+    instance_info.enabledExtensionCount = 0;
+    instance_info.ppEnabledExtensionNames = nil;
+    instance_info.enabledLayerCount = 0;
+    instance_info.ppEnabledLayerNames = nil;
+
+    var instance: VkInstance = dirty;
+    var r: VkResult = vkCreateInstance(instance_info.&, nil, instance.&);
+    fmt_buffer_reset(buf.&);
+    fmt_buffer_put_dec_s64(buf.&, r);
+    fmt_buffer_put_nl(buf.&);
+    print(fmt_buffer_head(buf.&));
+
+    var device_count: u32 = dirty;
+    r = vkEnumeratePhysicalDevices(instance, device_count.&, nil);
+    fmt_buffer_reset(buf.&);
+    fmt_buffer_put_dec_s64(buf.&, r);
+    fmt_buffer_put_byte(buf.&, ':');
+    fmt_buffer_put_dec_u64(buf.&, device_count);
+    fmt_buffer_put_nl(buf.&);
+    print(fmt_buffer_head(buf.&));
+}

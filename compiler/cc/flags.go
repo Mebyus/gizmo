@@ -44,8 +44,9 @@ var codegenFlags = []string{
 	"-fno-builtin",
 }
 
+const staticLinkFlag = "-static"
+
 var customEntryLinkFlags = []string{
-	"-static",
 	"-ffreestanding",
 	"-fno-builtin",
 	"-nodefaultlibs",
@@ -77,6 +78,14 @@ func stdFlag(v string) string {
 
 func optzFlag(v string) string {
 	return "-O" + v
+}
+
+func linkLibFlag(lib string) string {
+	return "-l" + lib
+}
+
+func linkLibSearchDirFlag(dir string) string {
+	return "-L" + dir
 }
 
 func compilerEntryFlag(entry string) string {

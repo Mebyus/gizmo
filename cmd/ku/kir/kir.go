@@ -38,5 +38,14 @@ func kir(filename string) error {
 		return err
 	}
 	outobj := filepath.Join("build/.cache", script.Name+".o")
-	return cc.CompileObj(build.Fast, outobj, outc)
+	err = cc.CompileObj(build.Fast, outobj, outc)
+	if err != nil {
+		return err
+	}
+	outexe := filepath.Join("build/bin", script.Name)
+	err = cc.LinkDynamic(build.Fast, outexe, "_start", []string{outobj}, "build/bin/lib", script.Links)
+	if err != nil {
+		return err
+	}
+	return nil
 }
